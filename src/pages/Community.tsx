@@ -97,7 +97,7 @@ export default function Community() {
           <h3 className="font-serif text-3xl font-bold mb-4">More Features Coming Soon</h3>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
             We're building an even richer community experience with social feeds, direct messaging, 
-            exclusive events, and member-only content drops.
+            exclusive events, and member only content drops.
           </p>
           <Button variant="outline" className="border-primary/30 hover:border-primary">
             Join Waitlist

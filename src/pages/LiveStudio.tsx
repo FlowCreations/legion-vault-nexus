@@ -48,7 +48,7 @@ export default function LiveStudio() {
                 </h2>
                 
                 <p className="text-muted-foreground mb-6 text-lg">
-                  Join us for an intimate acoustic performance featuring stripped-down versions 
+                  Join us for an intimate acoustic performance featuring stripped down versions 
                   of your favorite tracks and unreleased material.
                 </p>
 
@@ -183,7 +183,7 @@ const upcomingEvents = [
   {
     id: "1",
     title: "Virtual World Tour Finale",
-    description: "The grand finale of our virtual tour featuring special guests and never-before-performed tracks",
+    description: "The grand finale of our virtual tour featuring special guests and never before performed tracks",
     date: "Feb 15, 2025",
     time: "9:00 PM EST",
     price: "$19.99",

@@ -15,7 +15,7 @@ export default function Videos() {
             Videos
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Dive into exclusive series, music videos, and behind-the-scenes content
+            Dive into exclusive series, music videos, and behind the scenes content
           </p>
         </div>
 
@@ -133,7 +133,7 @@ const videoContent = [
   {
     id: "4",
     title: "Acoustic Sessions Vol. 1",
-    description: "Stripped-down versions of fan favorites",
+    description: "Stripped down versions of fan favorites",
     duration: "32:10",
     views: "456K",
     date: "1 week ago",
