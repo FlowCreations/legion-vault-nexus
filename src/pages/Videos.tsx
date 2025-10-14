@@ -1,182 +1,223 @@
 import { useState } from "react";
-import { Play, Clock, Eye } from "lucide-react";
+import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function Videos() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="font-serif text-5xl sm:text-6xl font-bold mb-4">
-            Videos
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl">
-            Dive into exclusive series, music videos, and behind the scenes content
-          </p>
+    <div className="min-h-screen">
+      {/* Hero Trailer Section */}
+      <div className="relative h-[85vh] overflow-hidden">
+        <div className="absolute inset-0 bg-black">
+          <iframe
+            className="w-full h-full"
+            src="https://www.youtube.com/embed/GXP2FEoBlIg?autoplay=1&mute=1&controls=0&loop=1&playlist=GXP2FEoBlIg&rel=0&modestbranding=1&showinfo=0"
+            title="Sons of Legion - Hero Trailer"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
         </div>
-
-        {/* Featured Video */}
-        <div className="relative rounded-3xl overflow-hidden mb-8 group cursor-pointer shadow-cosmic hover:shadow-glow transition-all duration-500">
-          <div className="aspect-[21/9] bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative">
-            <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-40 transition-opacity" />
-            
-            <div className="relative z-10 text-center px-8">
-              <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
-                Featured Series
-              </Badge>
-              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-balance">
-                The Making of Legion
-              </h2>
-              <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
-                An intimate documentary series following the creative process behind our latest album
-              </p>
-              <Button 
-                size="lg" 
-                className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Watch Now
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* YouTube Featured Video */}
-        <div className="relative rounded-3xl overflow-hidden mb-16 shadow-cosmic hover:shadow-glow transition-all duration-500">
-          <div className="aspect-video bg-black">
-            <iframe
-              className="w-full h-full"
-              src="https://www.youtube.com/embed/GXP2FEoBlIg?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1"
-              title="Sons of Legion - Carolina"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent p-6">
-            <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">
-              Latest Release
-            </Badge>
-            <h3 className="font-serif text-2xl sm:text-3xl font-bold mb-2">
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        
+        {/* Hero Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12 lg:p-16">
+          <div className="max-w-2xl">
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
               Carolina
-            </h3>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              145K views • Official music video
+            </h1>
+            <p className="text-muted-foreground text-lg mb-6">
+              Experience the power of Sons of Legion's latest release
             </p>
+            <Button 
+              size="lg" 
+              className="bg-white text-black hover:bg-white/90 transition-all duration-300"
+            >
+              <Play className="w-5 h-5 mr-2" />
+              Watch Now
+            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Video Grid */}
-        <div>
-          <h2 className="font-serif text-3xl font-bold mb-8">All Videos</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videoContent.map((video) => (
-              <div
-                key={video.id}
-                className="group cursor-pointer"
-                onMouseEnter={() => setHoveredId(video.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <div className="relative rounded-2xl overflow-hidden mb-4 bg-card shadow-cosmic group-hover:shadow-glow transition-all duration-500">
-                  {/* Thumbnail */}
-                  <div className="aspect-video bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative">
-                    <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-30 transition-opacity" />
-                    
-                    {/* Play button overlay */}
-                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                      hoveredId === video.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-                    }`}>
-                      <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center shadow-gold">
-                        <Play className="w-8 h-8 text-primary-foreground ml-1" />
-                      </div>
-                    </div>
+      {/* Content Rows */}
+      <div className="px-4 sm:px-8 lg:px-12 pb-16 space-y-12">
+        {/* Music Videos Row */}
+        <ContentRow
+          title="Music Videos"
+          items={musicVideos}
+          aspectRatio="portrait"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+        />
 
-                    {/* Duration badge */}
-                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-background-dark/90 rounded text-xs font-medium flex items-center space-x-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{video.duration}</span>
-                    </div>
-                  </div>
-                </div>
+        {/* Performances Row */}
+        <ContentRow
+          title="Performances"
+          items={performances}
+          aspectRatio="landscape"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+        />
 
-                {/* Video info */}
-                <div className="px-2">
-                  <h3 className="font-serif text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                    {video.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                    {video.description}
-                  </p>
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Eye className="w-3 h-3" />
-                      <span>{video.views}</span>
-                    </div>
-                    <span>•</span>
-                    <span>{video.date}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* BTS Row */}
+        <ContentRow
+          title="Behind The Scenes"
+          items={behindTheScenes}
+          aspectRatio="landscape"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+        />
+
+        {/* Documentary Row */}
+        <ContentRow
+          title="Documentary"
+          items={documentary}
+          aspectRatio="landscape"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+          isPremium
+        />
       </div>
     </div>
   );
 }
 
-const videoContent = [
-  {
-    id: "1",
-    title: "Studio Session: Creating 'Echoes'",
-    description: "Watch us craft the hit single from scratch in our home studio",
-    duration: "24:15",
-    views: "124K",
-    date: "2 weeks ago",
-  },
-  {
-    id: "2",
-    title: "Live from Red Rocks",
-    description: "Full concert recording from our sold-out Colorado show",
-    duration: "1:45:30",
-    views: "892K",
-    date: "1 month ago",
-  },
-  {
-    id: "3",
-    title: "The Story Behind the Album",
-    description: "Deep dive into the inspiration and meaning behind each track",
-    duration: "18:42",
-    views: "215K",
-    date: "3 weeks ago",
-  },
-  {
-    id: "4",
-    title: "Acoustic Sessions Vol. 1",
-    description: "Stripped down versions of fan favorites",
-    duration: "32:10",
-    views: "456K",
-    date: "1 week ago",
-  },
-  {
-    id: "5",
-    title: "Road Diaries: European Tour",
-    description: "Behind the scenes from our biggest tour yet",
-    duration: "15:28",
-    views: "328K",
-    date: "4 days ago",
-  },
-  {
-    id: "6",
-    title: "Collaboration: The Producer's Cut",
-    description: "Working with legendary producer on our newest sound",
-    duration: "27:55",
-    views: "167K",
-    date: "5 days ago",
-  },
+interface ContentRowProps {
+  title: string;
+  items: VideoItem[];
+  aspectRatio: "portrait" | "landscape";
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+  isPremium?: boolean;
+}
+
+function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium }: ContentRowProps) {
+  return (
+    <div>
+      <h2 className="text-2xl sm:text-3xl font-bold mb-6">{title}</h2>
+      
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-4">
+          {items.map((item) => (
+            <CarouselItem 
+              key={item.id} 
+              className={`pl-4 ${
+                aspectRatio === "portrait" 
+                  ? "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6" 
+                  : "basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+              }`}
+            >
+              <div
+                className="group cursor-pointer"
+                onMouseEnter={() => setHoveredId(item.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                <div className="relative rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 transform group-hover:scale-105">
+                  <div className={`${
+                    aspectRatio === "portrait" ? "aspect-[2/3]" : "aspect-video"
+                  } bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative`}>
+                    <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-30 transition-opacity" />
+                    
+                    {/* Play button overlay */}
+                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                      hoveredId === item.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                    }`}>
+                      <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                        <Play className="w-6 h-6 text-black ml-1" />
+                      </div>
+                    </div>
+
+                    {/* Premium Badge */}
+                    {isPremium && (
+                      <div className="absolute top-3 right-3">
+                        <Button 
+                          size="sm" 
+                          className="bg-primary/90 hover:bg-primary text-xs"
+                        >
+                          Start Free Trial
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Video info */}
+                <div className="space-y-1">
+                  <h3 className="font-medium text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm line-clamp-1">
+                    {item.subtitle}
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="left-0" />
+        <CarouselNext className="right-0" />
+      </Carousel>
+    </div>
+  );
+}
+
+interface VideoItem {
+  id: string;
+  title: string;
+  subtitle: string;
+}
+
+const musicVideos: VideoItem[] = [
+  { id: "mv1", title: "Carolina", subtitle: "Official Music Video" },
+  { id: "mv2", title: "Echoes", subtitle: "Official Music Video" },
+  { id: "mv3", title: "In The Air Tonight", subtitle: "Cover" },
+  { id: "mv4", title: "Legion Rising", subtitle: "Official Music Video" },
+  { id: "mv5", title: "Northern Lights", subtitle: "Official Music Video" },
+  { id: "mv6", title: "Thunder Road", subtitle: "Official Music Video" },
+  { id: "mv7", title: "Wildfire", subtitle: "Official Music Video" },
+  { id: "mv8", title: "Horizon", subtitle: "Official Music Video" },
 ];
+
+const performances: VideoItem[] = [
+  { id: "p1", title: "Live from Red Rocks", subtitle: "Full Concert" },
+  { id: "p2", title: "Austin City Limits", subtitle: "Festival Performance" },
+  { id: "p3", title: "Acoustic Sessions Vol. 1", subtitle: "Intimate Set" },
+  { id: "p4", title: "Madison Square Garden", subtitle: "Sold Out Show" },
+  { id: "p5", title: "BBC Live Lounge", subtitle: "Exclusive Performance" },
+  { id: "p6", title: "Coachella 2024", subtitle: "Main Stage" },
+];
+
+const behindTheScenes: VideoItem[] = [
+  { id: "bts1", title: "Studio Session: Creating 'Echoes'", subtitle: "24:15" },
+  { id: "bts2", title: "Road Diaries: European Tour", subtitle: "15:28" },
+  { id: "bts3", title: "The Producer's Cut", subtitle: "27:55" },
+  { id: "bts4", title: "Sound Check Rituals", subtitle: "12:40" },
+  { id: "bts5", title: "Life on the Tour Bus", subtitle: "18:22" },
+  { id: "bts6", title: "Merch Design Process", subtitle: "9:15" },
+];
+
+const documentary: VideoItem[] = [
+  { id: "doc1", title: "The Making of Legion", subtitle: "Limited Series • 6 Episodes" },
+  { id: "doc2", title: "Origins: The Early Years", subtitle: "Documentary Feature" },
+  { id: "doc3", title: "The Story Behind the Album", subtitle: "Deep Dive • 45 min" },
+  { id: "doc4", title: "Brothers in Music", subtitle: "Band Documentary" },
+  { id: "doc5", title: "From Garage to Glory", subtitle: "Career Retrospective" },
+  { id: "doc6", title: "The Creative Process", subtitle: "Songwriting Series" },
+];
+
