@@ -20,6 +20,32 @@ export default function Videos() {
         </div>
 
         {/* Featured Video */}
+        <div className="relative rounded-3xl overflow-hidden mb-8 group cursor-pointer shadow-cosmic hover:shadow-glow transition-all duration-500">
+          <div className="aspect-[21/9] bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative">
+            <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-40 transition-opacity" />
+            
+            <div className="relative z-10 text-center px-8">
+              <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
+                Featured Series
+              </Badge>
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-balance">
+                The Making of Legion
+              </h2>
+              <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
+                An intimate documentary series following the creative process behind our latest album
+              </p>
+              <Button 
+                size="lg" 
+                className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Watch Now
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* YouTube Featured Video */}
         <div className="relative rounded-3xl overflow-hidden mb-16 shadow-cosmic hover:shadow-glow transition-all duration-500">
           <div className="aspect-video bg-black">
             <iframe
@@ -31,14 +57,14 @@ export default function Videos() {
             />
           </div>
           
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent p-8">
-            <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">
-              Featured Video
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent p-6">
+            <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">
+              Latest Release
             </Badge>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold mb-2">
               In The Air Tonight
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg mb-4 max-w-2xl">
+            </h3>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Sons of Legion's powerful cover of the Phil Collins classic
             </p>
           </div>
