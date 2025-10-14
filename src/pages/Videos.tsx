@@ -51,15 +51,6 @@ export default function Videos() {
 
       {/* Content Rows */}
       <div className="px-4 sm:px-8 lg:px-12 pb-16 space-y-12">
-        {/* Music Videos Row */}
-        <ContentRow
-          title="Music Videos"
-          items={musicVideos}
-          aspectRatio="portrait"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-        />
-
         {/* Performances Row */}
         <ContentRow
           title="Performances"
@@ -74,6 +65,15 @@ export default function Videos() {
           title="Behind The Scenes"
           items={behindTheScenes}
           aspectRatio="landscape"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+        />
+
+        {/* Music Videos Row */}
+        <ContentRow
+          title="Music Videos"
+          items={musicVideos}
+          aspectRatio="portrait"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
         />
@@ -119,8 +119,8 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
               key={item.id} 
               className={`pl-4 ${
                 aspectRatio === "portrait" 
-                  ? "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6" 
-                  : "basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+                  ? "basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6 xl:basis-1/7" 
+                  : "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
               }`}
             >
               <div
