@@ -123,7 +123,7 @@ const features = [
     link: "/music",
   },
   {
-    title: "Vibrant Community",
+    title: "VIP Community",
     description: "Connect with fellow fans, earn badges, and get exclusive access to artist conversations and events.",
     icon: Sparkles,
     link: "/community",
