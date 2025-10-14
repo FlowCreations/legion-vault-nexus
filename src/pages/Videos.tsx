@@ -64,7 +64,7 @@ export default function Videos() {
         <ContentRow
           title="Behind The Scenes"
           items={behindTheScenes}
-          aspectRatio="landscape"
+          aspectRatio="portrait"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
         />
@@ -212,6 +212,8 @@ const behindTheScenes: VideoItem[] = [
   { id: "bts4", title: "Sound Check Rituals", subtitle: "12:40" },
   { id: "bts5", title: "Life on the Tour Bus", subtitle: "18:22" },
   { id: "bts6", title: "Merch Design Process", subtitle: "9:15" },
+  { id: "bts7", title: "Writing Camp Sessions", subtitle: "20:33" },
+  { id: "bts8", title: "Meet & Greet Moments", subtitle: "14:50" },
 ];
 
 const documentary: VideoItem[] = [
