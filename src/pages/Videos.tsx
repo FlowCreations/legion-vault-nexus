@@ -201,6 +201,8 @@ const performances: VideoItem[] = [
   { id: "p4", title: "Madison Square Garden", subtitle: "Sold Out Show" },
   { id: "p5", title: "BBC Live Lounge", subtitle: "Exclusive Performance" },
   { id: "p6", title: "Coachella 2024", subtitle: "Main Stage" },
+  { id: "p7", title: "Glastonbury Festival", subtitle: "Headline Set" },
+  { id: "p8", title: "Late Night TV Special", subtitle: "Studio Performance" },
 ];
 
 const behindTheScenes: VideoItem[] = [
