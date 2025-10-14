@@ -73,7 +73,7 @@ export default function Videos() {
         <ContentRow
           title="Music Videos"
           items={musicVideos}
-          aspectRatio="portrait"
+          aspectRatio="landscape-large"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
         />
@@ -95,7 +95,7 @@ export default function Videos() {
 interface ContentRowProps {
   title: string;
   items: VideoItem[];
-  aspectRatio: "portrait" | "landscape";
+  aspectRatio: "portrait" | "landscape" | "landscape-large";
   hoveredId: string | null;
   setHoveredId: (id: string | null) => void;
   isPremium?: boolean;
@@ -120,6 +120,8 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
               className={`pl-4 ${
                 aspectRatio === "portrait" 
                   ? "basis-1/2 sm:basis-1/3 md:basis-1/5 lg:basis-[12.5%]" 
+                  : aspectRatio === "landscape-large"
+                  ? "basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
                   : "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
               }`}
             >
