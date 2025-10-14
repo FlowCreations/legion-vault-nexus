@@ -8,6 +8,7 @@ import { Footer } from "./components/Footer";
 import Home from "./pages/Home";
 import Videos from "./pages/Videos";
 import Music from "./pages/Music";
+import Events from "./pages/Events";
 import Community from "./pages/Community";
 import Merch from "./pages/Merch";
 import LiveStudio from "./pages/LiveStudio";
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/music" element={<Music />} />
+          <Route path="/events" element={<Events />} />
           <Route path="/community" element={<Community />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/live" element={<LiveStudio />} />

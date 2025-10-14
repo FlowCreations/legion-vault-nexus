@@ -1,4 +1,4 @@
-import { Film, Music, Users, ShoppingBag, Radio, LogIn } from "lucide-react";
+import { Film, Music, Users, ShoppingBag, Radio, LogIn, Calendar } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
   { name: "Music", path: "/music", icon: Music },
+  { name: "Events", path: "/events", icon: Calendar },
   { name: "Community", path: "/community", icon: Users },
   { name: "Merch", path: "/merch", icon: ShoppingBag },
   { name: "Live Studio", path: "/live", icon: Radio },
