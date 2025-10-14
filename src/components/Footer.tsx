@@ -9,7 +9,7 @@ export const Footer = () => {
             <img 
               src="/src/assets/sol-logo.png" 
               alt="Sons of Legion" 
-              className="h-7 sm:h-8 w-auto object-contain"
+              className="h-10 sm:h-12 w-auto object-contain"
             />
           </Link>
           

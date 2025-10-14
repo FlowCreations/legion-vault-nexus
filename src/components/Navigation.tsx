@@ -24,7 +24,7 @@ export const Navigation = () => {
             <img 
               src="/src/assets/sol-logo.png" 
               alt="Sons of Legion" 
-              className="h-10 sm:h-12 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
+              className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
             />
           </Link>
 
