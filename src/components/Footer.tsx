@@ -5,13 +5,13 @@ export const Footer = () => {
     <footer className="border-t border-border bg-background-dark/50 backdrop-blur-sm mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
             <img 
-              src="/src/assets/sol-logo.jpg" 
+              src="/src/assets/sol-logo.png" 
               alt="Sons of Legion" 
-              className="h-8 w-auto object-contain"
+              className="h-7 sm:h-8 w-auto object-contain"
             />
-          </div>
+          </Link>
           
           <div className="flex items-center space-x-6 text-sm text-muted-foreground">
             <Link to="/about" className="hover:text-primary transition-colors">

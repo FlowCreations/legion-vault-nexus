@@ -20,11 +20,11 @@ export const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
+          <Link to="/" className="flex items-center group">
             <img 
-              src="/src/assets/sol-logo.jpg" 
+              src="/src/assets/sol-logo.png" 
               alt="Sons of Legion" 
-              className="h-12 w-auto object-contain transition-all duration-300 group-hover:brightness-110"
+              className="h-10 sm:h-12 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
             />
           </Link>
 
