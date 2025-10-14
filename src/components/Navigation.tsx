@@ -21,12 +21,11 @@ export const Navigation = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center shadow-gold group-hover:shadow-glow transition-all duration-300">
-              <span className="text-primary-foreground font-serif font-bold text-xl">S</span>
-            </div>
-            <span className="font-serif font-bold text-2xl bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              Sons of Legion
-            </span>
+            <img 
+              src="/src/assets/sol-logo.jpg" 
+              alt="Sons of Legion" 
+              className="h-12 w-auto object-contain transition-all duration-300 group-hover:brightness-110"
+            />
           </Link>
 
           {/* Navigation Links */}

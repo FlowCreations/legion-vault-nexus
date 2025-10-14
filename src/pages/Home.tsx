@@ -29,7 +29,8 @@ export default function Home() {
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in text-balance">
-            Experience premium streaming, exclusive content, and a vibrant community — all in one artist owned platform where creators control their narrative.
+            A powerhouse blend of rock, soul, and blues delivering raw energy and unforgettable music. 
+            Experience it all in one artist owned platform.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in">

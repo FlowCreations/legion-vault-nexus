@@ -8,52 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Cosmic dark base */
-    --background: 228 38% 6%;
-    --background-dark: 228 40% 4%;
-    --foreground: 45 40% 95%;
+    /* Dark rock/blues base - inspired by Sons of Legion YouTube */
+    --background: 220 20% 8%;
+    --background-dark: 220 25% 4%;
+    --foreground: 0 0% 98%;
 
-    /* Cards with cosmic overlay */
-    --card: 228 35% 10%;
-    --card-foreground: 45 40% 95%;
-    --card-hover: 228 32% 14%;
+    /* Cards with dark overlay */
+    --card: 220 18% 12%;
+    --card-foreground: 0 0% 98%;
+    --card-hover: 220 16% 16%;
 
-    --popover: 228 35% 10%;
-    --popover-foreground: 45 40% 95%;
+    --popover: 220 18% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Gold accent */
-    --primary: 45 65% 52%;
-    --primary-foreground: 228 40% 8%;
-    --primary-glow: 45 80% 65%;
+    /* Vintage gold accent - matching Sons of Legion logo */
+    --primary: 45 95% 55%;
+    --primary-foreground: 220 25% 8%;
+    --primary-glow: 45 100% 65%;
 
-    /* Muted cosmic tones */
-    --secondary: 228 25% 18%;
-    --secondary-foreground: 45 40% 95%;
+    /* Muted dark tones */
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 228 25% 16%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 45 65% 52%;
-    --accent-foreground: 228 40% 8%;
+    --accent: 45 95% 55%;
+    --accent-foreground: 220 25% 8%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 45 40% 95%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 228 25% 20%;
-    --input: 228 25% 16%;
-    --ring: 45 65% 52%;
+    --border: 220 15% 22%;
+    --input: 220 15% 18%;
+    --ring: 45 95% 55%;
 
     --radius: 0.75rem;
 
-    /* Custom gradients */
-    --gradient-cosmic: linear-gradient(135deg, hsl(228 38% 6%) 0%, hsl(228 35% 10%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 65% 52%) 0%, hsl(45 80% 65%) 100%);
-    --gradient-overlay: linear-gradient(180deg, transparent 0%, hsl(228 40% 4% / 0.8) 100%);
+    /* Custom gradients - rock/soul aesthetic */
+    --gradient-cosmic: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(220 18% 12%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(45 95% 55%) 0%, hsl(45 100% 65%) 100%);
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, hsl(220 25% 4% / 0.9) 100%);
 
-    /* Shadows */
-    --shadow-cosmic: 0 8px 32px hsl(228 40% 4% / 0.5);
-    --shadow-gold: 0 4px 24px hsl(45 65% 52% / 0.3);
-    --shadow-glow: 0 0 40px hsl(45 80% 65% / 0.15);
+    /* Shadows - dramatic rock aesthetic */
+    --shadow-cosmic: 0 8px 32px hsl(220 25% 2% / 0.6);
+    --shadow-gold: 0 4px 24px hsl(45 95% 55% / 0.25);
+    --shadow-glow: 0 0 40px hsl(45 100% 65% / 0.2);
 
     /* Animations */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -67,7 +67,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background: linear-gradient(135deg, #0C0F1A 0%, #191B2A 100%);
+    background: linear-gradient(135deg, #14161f 0%, #1a1d29 100%);
     background-attachment: fixed;
   }
 
