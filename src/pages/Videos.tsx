@@ -119,7 +119,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
               key={item.id} 
               className={`pl-4 ${
                 aspectRatio === "portrait" 
-                  ? "basis-1/3 sm:basis-1/4 md:basis-1/6 lg:basis-1/8" 
+                  ? "basis-1/2 sm:basis-1/3 md:basis-1/5 lg:basis-[12.5%]" 
                   : "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
               }`}
             >
