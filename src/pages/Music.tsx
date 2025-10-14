@@ -1,136 +1,239 @@
-import { Play, Heart, Plus } from "lucide-react";
+import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function Music() {
   return (
-    <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="font-serif text-5xl sm:text-6xl font-bold mb-4">
-            Music
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl">
-            Stream our complete discography with exclusive content and collaborator credits
-          </p>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <div className="relative h-[60vh] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background-dark">
+          {/* Background pattern or album art would go here */}
         </div>
-
-        {/* Latest Release - Featured */}
-        <div className="bg-gradient-to-br from-card to-card-hover rounded-3xl p-8 md:p-12 mb-16 shadow-cosmic border border-border">
-          <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
-            Latest Release
-          </Badge>
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        
+        {/* Hero Content */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 lg:px-12 pb-8">
+          <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
+            Sons of Legion
+          </h1>
           
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Album Art */}
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 to-primary-glow/10 shadow-gold flex items-center justify-center group hover:shadow-glow transition-all duration-500">
-              <div className="text-center">
-                <div className="w-24 h-24 bg-gradient-gold rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                  <Play className="w-12 h-12 text-primary-foreground ml-1" />
-                </div>
-                <p className="text-muted-foreground font-medium">Album Cover</p>
-              </div>
-            </div>
-
-            {/* Album Info */}
-            <div>
-              <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4">
-                Cosmic Echoes
-              </h2>
-              <p className="text-muted-foreground mb-6 text-lg">
-                Our most ambitious project yet, blending orchestral elements with modern production
-              </p>
-              
-              <div className="flex flex-wrap gap-3 mb-8">
-                <Button size="lg" className="bg-gradient-gold hover:shadow-glow transition-all">
-                  <Play className="w-5 h-5 mr-2" />
-                  Play Album
-                </Button>
-                <Button size="lg" variant="outline" className="border-primary/30 hover:border-primary">
-                  <Heart className="w-5 h-5 mr-2" />
-                  Save
-                </Button>
-                <Button size="lg" variant="outline" className="border-primary/30 hover:border-primary">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add to Playlist
-                </Button>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <span className="text-muted-foreground">Released:</span>
-                  <span className="font-medium">January 2025</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-muted-foreground">Tracks:</span>
-                  <span className="font-medium">12</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-muted-foreground">Duration:</span>
-                  <span className="font-medium">48:32</span>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <Button size="lg" className="bg-white text-black hover:bg-white/90 rounded-full px-8">
+              <Play className="w-5 h-5 mr-2 fill-black" />
+              Play
+            </Button>
+            <Button size="lg" variant="outline" className="rounded-full px-6">
+              <Shuffle className="w-5 h-5 mr-2" />
+              Shuffle
+            </Button>
+            <Button size="lg" variant="ghost" className="rounded-full">
+              <Plus className="w-5 h-5 mr-2" />
+              Follow
+            </Button>
+            <Button size="lg" variant="ghost" className="rounded-full">
+              <Share2 className="w-5 h-5 mr-2" />
+              Share
+            </Button>
+            <Button size="lg" variant="ghost" className="rounded-full w-12 h-12 p-0">
+              <MoreHorizontal className="w-5 h-5" />
+            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Albums Grid */}
-        <div>
-          <h2 className="font-serif text-3xl font-bold mb-8">All Albums</h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {albums.map((album) => (
+      {/* Main Content */}
+      <div className="px-4 sm:px-8 lg:px-12 pb-16">
+        {/* Top Tracks */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Top Tracks</h2>
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              View all
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {/* Table Header */}
+            <div className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
+              <div className="w-10"></div>
+              <div>TITLE</div>
+              <div className="hidden md:block">ARTIST</div>
+              <div className="hidden md:block">ALBUM</div>
+              <div>TIME</div>
+              <div className="w-10"></div>
+            </div>
+
+            {/* Track Rows */}
+            {topTracks.map((track, index) => (
               <div
-                key={album.id}
-                className="group cursor-pointer"
+                key={track.id}
+                className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer"
               >
-                {/* Album Cover */}
-                <div className="aspect-square rounded-2xl bg-gradient-to-br from-card to-card-hover mb-4 shadow-cosmic group-hover:shadow-glow transition-all duration-500 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-overlay opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  {/* Play button overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center shadow-gold">
-                      <Play className="w-8 h-8 text-primary-foreground ml-1" />
-                    </div>
-                  </div>
-
-                  {/* Placeholder content */}
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-card rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="font-serif text-2xl">{album.title[0]}</span>
-                      </div>
-                      <p className="text-xs opacity-50">Album Art</p>
-                    </div>
+                <div className="w-10 h-10 flex-shrink-0">
+                  <div className="w-full h-full bg-gradient-to-br from-card to-card-hover rounded flex items-center justify-center relative overflow-hidden">
+                    <span className="text-xs text-muted-foreground group-hover:opacity-0 transition-opacity">
+                      {index + 1}
+                    </span>
+                    <Play className="w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition-opacity fill-foreground" />
                   </div>
                 </div>
-
-                {/* Album Info */}
-                <div className="px-2">
-                  <h3 className="font-serif text-lg font-bold mb-1 group-hover:text-primary transition-colors line-clamp-1">
-                    {album.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-1">{album.year}</p>
-                  <p className="text-muted-foreground text-xs">{album.tracks} tracks</p>
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{track.title}</div>
+                  <div className="text-sm text-muted-foreground md:hidden truncate">{track.artist}</div>
+                </div>
+                <div className="hidden md:block text-muted-foreground truncate">{track.artist}</div>
+                <div className="hidden md:block text-muted-foreground truncate">{track.album}</div>
+                <div className="text-muted-foreground text-sm">{track.time}</div>
+                <div className="w-10 flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
                 </div>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* EP & Singles */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">EP & Singles</h2>
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              View all
+            </Button>
+          </div>
+
+          <Carousel
+            opts={{
+              align: "start",
+              loop: false,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {albums.map((album) => (
+                <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                  <div className="group cursor-pointer">
+                    <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 relative">
+                      <div className="w-full h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
+                        {/* Play button overlay */}
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                            <Play className="w-6 h-6 text-black ml-1 fill-black" />
+                          </div>
+                        </div>
+                        
+                        {/* Placeholder */}
+                        <div className="text-center text-muted-foreground">
+                          <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span className="font-serif text-2xl">{album.title[0]}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                        {album.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">{album.year}</p>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0" />
+            <CarouselNext className="right-0" />
+          </Carousel>
+        </div>
+
+        {/* Albums */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Albums</h2>
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              View all
+            </Button>
+          </div>
+
+          <Carousel
+            opts={{
+              align: "start",
+              loop: false,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {moreAlbums.map((album) => (
+                <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                  <div className="group cursor-pointer">
+                    <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 relative">
+                      <div className="w-full h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
+                        {/* Play button overlay */}
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                            <Play className="w-6 h-6 text-black ml-1 fill-black" />
+                          </div>
+                        </div>
+                        
+                        {/* Placeholder */}
+                        <div className="text-center text-muted-foreground">
+                          <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span className="font-serif text-2xl">{album.title[0]}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                        {album.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">{album.year} • {album.tracks} tracks</p>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0" />
+            <CarouselNext className="right-0" />
+          </Carousel>
         </div>
       </div>
     </div>
   );
 }
 
+const topTracks = [
+  { id: "1", title: "In The Air Tonight", artist: "Sons of Legion", album: "In The Air Tonight", time: "3:42" },
+  { id: "2", title: "Fire Starter", artist: "Sons of Legion", album: "Fire Starter", time: "2:28" },
+  { id: "3", title: "Power", artist: "Sons of Legion", album: "Power", time: "2:44" },
+  { id: "4", title: "Carolina", artist: "Sons of Legion", album: "Carolina", time: "4:32" },
+  { id: "5", title: "Echoes", artist: "Sons of Legion", album: "Cosmic Echoes", time: "3:58" },
+  { id: "6", title: "Northern Lights", artist: "Sons of Legion", album: "Stellar Dreams", time: "4:15" },
+];
+
 const albums = [
-  { id: "1", title: "Cosmic Echoes", year: "2025", tracks: 12 },
-  { id: "2", title: "Dawn of Legends", year: "2024", tracks: 10 },
-  { id: "3", title: "Midnight Chronicles", year: "2023", tracks: 14 },
-  { id: "4", title: "Stellar Dreams", year: "2023", tracks: 8 },
-  { id: "5", title: "Horizon's Edge", year: "2022", tracks: 11 },
-  { id: "6", title: "Ember & Ash", year: "2022", tracks: 9 },
-  { id: "7", title: "The First Legion", year: "2021", tracks: 13 },
-  { id: "8", title: "Origins", year: "2021", tracks: 7 },
+  { id: "1", title: "Walking On The Edge", year: "2024" },
+  { id: "2", title: "Angels", year: "2024" },
+  { id: "3", title: "Strange", year: "2024" },
+  { id: "4", title: "Wild Horse", year: "2024" },
+  { id: "5", title: "Carolina", year: "2024" },
+  { id: "6", title: "REAL THANG", year: "2024" },
+  { id: "7", title: "Leave The Light On", year: "2023" },
+  { id: "8", title: "In The Air Tonight", year: "2023" },
+];
+
+const moreAlbums = [
+  { id: "a1", title: "Cosmic Echoes", year: "2025", tracks: 12 },
+  { id: "a2", title: "Dawn of Legends", year: "2024", tracks: 10 },
+  { id: "a3", title: "Midnight Chronicles", year: "2023", tracks: 14 },
+  { id: "a4", title: "Stellar Dreams", year: "2023", tracks: 8 },
+  { id: "a5", title: "Horizon's Edge", year: "2022", tracks: 11 },
+  { id: "a6", title: "Ember & Ash", year: "2022", tracks: 9 },
 ];
