@@ -50,8 +50,8 @@ export default function Videos() {
           <div className="aspect-video bg-black">
             <iframe
               className="w-full h-full"
-              src="https://www.youtube.com/embed/jPGApBGmXQk?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1"
-              title="Sons of Legion - In The Air Tonight"
+              src="https://www.youtube.com/embed/GXP2FEoBlIg?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1"
+              title="Sons of Legion - Carolina"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -62,10 +62,10 @@ export default function Videos() {
               Latest Release
             </Badge>
             <h3 className="font-serif text-2xl sm:text-3xl font-bold mb-2">
-              In The Air Tonight
+              Carolina
             </h3>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Sons of Legion's powerful cover of the Phil Collins classic
+              145K views • Official music video
             </p>
           </div>
         </div>
