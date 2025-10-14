@@ -2,6 +2,7 @@ import { Film, Music, Users, ShoppingBag, Radio, LogIn, Calendar } from "lucide-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import solLogo from "@/assets/sol-logo.png";
 
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
@@ -22,7 +23,7 @@ export const Navigation = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center group">
             <img 
-              src="/src/assets/sol-logo.png" 
+              src={solLogo} 
               alt="Sons of Legion" 
               className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
             />

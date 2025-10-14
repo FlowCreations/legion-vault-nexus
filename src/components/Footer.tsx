@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import solLogo from "@/assets/sol-logo.png";
 
 export const Footer = () => {
   return (
@@ -7,7 +8,7 @@ export const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
             <img 
-              src="/src/assets/sol-logo.png" 
+              src={solLogo} 
               alt="Sons of Legion" 
               className="h-10 sm:h-12 w-auto object-contain"
             />
