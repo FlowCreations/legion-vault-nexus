@@ -20,7 +20,7 @@ export default function AlbumDetail() {
   // Album data
   const albumsData = [
     { 
-      id: "power", 
+      id: "a1", 
       title: "Power", 
       year: "2024", 
       tracks: 5, 
@@ -34,7 +34,7 @@ export default function AlbumDetail() {
       ]
     },
     { 
-      id: "outlaw", 
+      id: "a2", 
       title: "Outlaw", 
       year: "2024", 
       tracks: 8, 
@@ -51,7 +51,7 @@ export default function AlbumDetail() {
       ]
     },
     { 
-      id: "live-from-the-barn", 
+      id: "a3", 
       title: "Live from the Barn", 
       subtitle: "Acoustic Sessions - Nashville, TN", 
       year: "2023", 
@@ -69,7 +69,7 @@ export default function AlbumDetail() {
       ]
     },
     { 
-      id: "stripped", 
+      id: "a4", 
       title: "Stripped", 
       subtitle: "Intimate Performances", 
       year: "2023", 
