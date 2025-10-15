@@ -1,5 +1,9 @@
 import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import powerAlbum from "@/assets/power-album.jpg";
+import outlawAlbum from "@/assets/outlaw-album.jpg";
+import acousticAlbum from "@/assets/acoustic-album.jpg";
+import strippedAlbum from "@/assets/stripped-album.jpg";
 import {
   Carousel,
   CarouselContent,
@@ -173,27 +177,37 @@ export default function Music() {
               {moreAlbums.map((album) => (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div className="group cursor-pointer">
-                    <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 relative">
-                      <div className="w-full h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
-                        {/* Play button overlay */}
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                            <Play className="w-6 h-6 text-black ml-1 fill-black" />
+                    <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-cinematic group-hover:shadow-gold transition-all duration-200 relative">
+                      {album.image ? (
+                        <img 
+                          src={album.image} 
+                          alt={album.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
+                          <div className="text-center text-muted-foreground">
+                            <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-2">
+                              <span className="font-sans text-2xl">{album.title[0]}</span>
+                            </div>
                           </div>
                         </div>
-                        
-                        {/* Placeholder */}
-                        <div className="text-center text-muted-foreground">
-                          <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-2">
-                            <span className="font-serif text-2xl">{album.title[0]}</span>
-                          </div>
+                      )}
+                      
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center transform group-hover:scale-105 transition-transform">
+                          <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
                         </div>
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                      <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
                         {album.title}
                       </h3>
+                      {album.subtitle && (
+                        <p className="text-xs text-muted-foreground truncate">{album.subtitle}</p>
+                      )}
                       <p className="text-xs text-muted-foreground">{album.year} • {album.tracks} tracks</p>
                     </div>
                   </div>
@@ -230,10 +244,8 @@ const albums = [
 ];
 
 const moreAlbums = [
-  { id: "a1", title: "Cosmic Echoes", year: "2025", tracks: 12 },
-  { id: "a2", title: "Dawn of Legends", year: "2024", tracks: 10 },
-  { id: "a3", title: "Midnight Chronicles", year: "2023", tracks: 14 },
-  { id: "a4", title: "Stellar Dreams", year: "2023", tracks: 8 },
-  { id: "a5", title: "Horizon's Edge", year: "2022", tracks: 11 },
-  { id: "a6", title: "Ember & Ash", year: "2022", tracks: 9 },
+  { id: "a1", title: "Power", year: "2024", tracks: 12, image: powerAlbum },
+  { id: "a2", title: "Outlaw", year: "2024", tracks: 10, image: outlawAlbum },
+  { id: "a3", title: "Acoustic Album", subtitle: "Live from the Barn - Nashville, TN", year: "2023", tracks: 14, image: acousticAlbum },
+  { id: "a4", title: "Stripped Album", subtitle: "Recorded in Nashville, TN", year: "2023", tracks: 11, image: strippedAlbum },
 ];
