@@ -468,6 +468,15 @@ export default function Music() {
                       <p className="text-xs text-muted-foreground">
                         {album.year} • {album.tracks} tracks
                       </p>
+                      {isLocked && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="font-bold text-sm text-primary">${album.price}</span>
+                          <button className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                            <ShoppingCart className="w-3 h-3" />
+                            Add to cart
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CarouselItem>
