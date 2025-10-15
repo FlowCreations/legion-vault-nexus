@@ -148,7 +148,8 @@ export default function Music() {
 
           <div className="space-y-2">
             {/* Table Header */}
-            <div className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
+            <div className="grid grid-cols-[auto_auto_1fr_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
+              <div className="w-10"></div>
               <div className="w-10"></div>
               <div>TITLE</div>
               <div className="hidden md:block">ARTIST</div>
@@ -164,7 +165,7 @@ export default function Music() {
               <div
                 key={track.id}
                 onClick={() => handlePlayTrack(track, topTracks)}
-                className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer"
+                className="grid grid-cols-[auto_auto_1fr_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer"
               >
                 <div className="w-10 h-10 flex-shrink-0">
                   <div className="w-full h-full bg-gradient-to-br from-card to-card-hover rounded flex items-center justify-center relative overflow-hidden">
@@ -179,6 +180,17 @@ export default function Music() {
                       </>
                     )}
                   </div>
+                </div>
+                <div className="w-10 h-10 flex-shrink-0">
+                  {track.image ? (
+                    <img 
+                      src={track.image} 
+                      alt={track.album}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-card to-card-hover rounded" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <div className={`font-medium truncate ${isCurrentTrack && isPlaying ? 'text-primary' : ''}`}>
@@ -378,8 +390,8 @@ const topTracks = [
   { id: "2", title: "Fire Starter", artist: "Sons of Legion", album: "Power", time: "2:28", url: "https://adammac.disco.ac/play/162365031/alias_pv_id/67836118/download2/trackfiles/fad422fe-889a-4feb-a6ab-afa6c795c03d.mp3?signature=2jyR4puR2S8SE0M6T8RC0e2isT0%3AG8sbnoKx", image: powerAlbum },
   { id: "3", title: "Strange", artist: "Sons of Legion", album: "Outlaw", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC", image: outlawAlbum },
   { id: "4", title: "Power", artist: "Sons of Legion", album: "Power", time: "2:43", url: "https://adammac.disco.ac/play/162365030/alias_pv_id/67836118/download2/trackfiles/592c1148-afa2-419c-af96-b5ffd94896d3.mp3?signature=bweI6I_Fd48JRK0HOVen47fAiRQ%3AG8sbnoKx", image: powerAlbum },
-  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Outlaw", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC", image: outlawAlbum },
-  { id: "6", title: "Walking On The Edge", artist: "Sons of Legion", album: "Singles", time: "4:27" },
+  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Outlaw", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC", image: carolinaSingle },
+  { id: "6", title: "Walking On The Edge", artist: "Sons of Legion", album: "Singles", time: "4:27", url: "https://adammac.disco.ac/play/162200218/alias_pv_id/67836120/download2/trackfiles/4c2a9d4c-4a67-4a0e-b35c-2ef31bd8e9be.mp3?signature=K-TYpA8GqiVpwSaOx0aS-pUV2lw%3AT4ae0JGC", image: walkingOnTheEdge },
   { id: "7", title: "Remember My Name", artist: "Sons of Legion", album: "Outlaw", time: "3:44", url: "https://adammac.disco.ac/play/162200203/alias_pv_id/67836120/download2/trackfiles/de2c9cc6-a372-4ee2-980e-535a2f4a5f61.mp3?signature=Br_kLv18ECT8ZIJjPK9DJNARYto%3AT4ae0JGC", image: outlawAlbum },
   { id: "8", title: "Leave the Light On", artist: "Sons of Legion", album: "Outlaw", time: "2:52", url: "https://adammac.disco.ac/play/162200201/alias_pv_id/67836120/download2/trackfiles/ee52357d-7ec6-40bb-9a55-1f43a6ac2c2b.mp3?signature=EsxgCz-lmftjI79HWKC985brJis%3AT4ae0JGC", image: outlawAlbum },
 ];
