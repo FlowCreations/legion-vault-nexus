@@ -1,7 +1,9 @@
-import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause } from "lucide-react";
+import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { PurchaseModal } from "@/components/PurchaseModal";
+import { usePurchases } from "@/hooks/usePurchases";
 import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
@@ -29,6 +31,9 @@ export default function Music() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playlist, setPlaylist] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { isPurchased, purchaseAlbum } = usePurchases();
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
 
   const handleShuffle = () => {
     // Create a shuffled playlist from all available tracks
@@ -395,11 +400,23 @@ export default function Music() {
               {moreAlbums.map((album) => {
                 const firstTrack = album.trackList?.[0];
                 const isCurrentAlbum = currentTrack?.id === `${album.id}-0`;
+                const albumPurchased = isPurchased(album.id);
+                const isLocked = album.forSale && !albumPurchased;
+                
+                const handleAlbumClick = () => {
+                  if (isLocked) {
+                    setSelectedAlbum(album);
+                    setShowPurchaseModal(true);
+                  } else {
+                    navigate(`/music/album/${album.id}`);
+                  }
+                };
+                
                 return (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div 
-                    className="group cursor-pointer"
-                    onClick={() => navigate(`/music/album/${album.id}`)}
+                    className="group cursor-pointer relative"
+                    onClick={handleAlbumClick}
                   >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-cinematic group-hover:shadow-gold transition-all duration-200 relative">
                       {album.image ? (
@@ -418,25 +435,41 @@ export default function Music() {
                         </div>
                       )}
                       
-                      {/* Play button overlay */}
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center transform group-hover:scale-105 transition-transform">
-                          {isCurrentAlbum && isPlaying ? (
-                            <Pause className="w-6 h-6 text-primary-foreground fill-primary-foreground" />
-                          ) : (
-                            <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
-                          )}
+                      {/* Lock overlay for locked albums */}
+                      {isLocked && (
+                        <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
+                          <Lock className="w-8 h-8 text-white mb-2" />
+                          <span className="text-white font-bold text-lg">${album.price}</span>
                         </div>
-                      </div>
+                      )}
+                      
+                      {/* Play button overlay */}
+                      {!isLocked && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center transform group-hover:scale-105 transition-transform">
+                            {isCurrentAlbum && isPlaying ? (
+                              <Pause className="w-6 h-6 text-primary-foreground fill-primary-foreground" />
+                            ) : (
+                              <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
-                        {album.title}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                          {album.title}
+                        </h3>
+                        {isLocked && <Lock className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
+                      </div>
                       {album.subtitle && (
                         <p className="text-xs text-muted-foreground truncate">{album.subtitle}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">{album.year} • {album.tracks} tracks</p>
+                      <p className="text-xs text-muted-foreground">
+                        {album.year} • {album.tracks} tracks
+                        {isLocked && ` • $${album.price}`}
+                      </p>
                     </div>
                   </div>
                 </CarouselItem>
@@ -458,6 +491,15 @@ export default function Music() {
         onPrevious={handlePrevious}
         allTracks={playlist}
       />
+
+      {selectedAlbum && (
+        <PurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          onPurchase={() => purchaseAlbum(selectedAlbum.id)}
+          album={selectedAlbum}
+        />
+      )}
     </div>
   );
 }
@@ -493,6 +535,8 @@ const moreAlbums = [
     year: "2024", 
     tracks: 5, 
     image: powerAlbum,
+    price: 12,
+    forSale: true,
     discoUrl: "https://s.disco.ac/docvmkfmfdlv",
     trackList: [
       { title: "Power", time: "2:43", url: "https://adammac.disco.ac/play/162365030/alias_pv_id/67836118/download2/trackfiles/592c1148-afa2-419c-af96-b5ffd94896d3.mp3?signature=bweI6I_Fd48JRK0HOVen47fAiRQ%3AG8sbnoKx" },
@@ -508,6 +552,8 @@ const moreAlbums = [
     year: "2024", 
     tracks: 8, 
     image: outlawAlbum,
+    price: 12,
+    forSale: true,
     discoUrl: "https://s.disco.ac/oqixhqdabaqb",
     trackList: [
       { title: "Remember My Name", time: "3:44", url: "https://adammac.disco.ac/play/162200203/alias_pv_id/67836120/download2/trackfiles/de2c9cc6-a372-4ee2-980e-535a2f4a5f61.mp3?signature=Br_kLv18ECT8ZIJjPK9DJNARYto%3AT4ae0JGC" },
@@ -527,6 +573,8 @@ const moreAlbums = [
     year: "2023", 
     tracks: 8, 
     image: acousticAlbum,
+    price: 15,
+    forSale: true,
     discoUrl: "https://s.disco.ac/ksoaykgawuro",
     trackList: [
       { title: "Outlaw", time: "3:04", url: "https://adammac.disco.ac/play/162974091/alias_pv_id/67836113/download2/trackfiles/d6eefac5-ba37-4aac-b4a5-dd79c5d8d1fa.mp3?signature=wU5LzTKfYLyXuRco56rQWBxEGG8%3AXKvIltzO" },
@@ -546,6 +594,8 @@ const moreAlbums = [
     year: "2023", 
     tracks: 8, 
     image: strippedAlbum,
+    price: 12,
+    forSale: true,
     discoUrl: "https://s.disco.ac/vmgbpqtmvdtu",
     trackList: [
       { title: "Carry Me Home (Stripped)", time: "2:25", url: "https://adammac.disco.ac/play/163224609/alias_pv_id/67836117/download2/trackfiles/730f5670-d9d3-413d-8fd7-64449f49953b.mp3?signature=EJ3P4dMKRSLg4v4QJeTZScCzndw%3A9rXnXUXm" },

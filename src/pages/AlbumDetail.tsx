@@ -1,7 +1,10 @@
-import { Play, Heart, Share2, MoreHorizontal, Pause, ArrowLeft } from "lucide-react";
+import { Play, Heart, Share2, MoreHorizontal, Pause, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { PurchaseModal } from "@/components/PurchaseModal";
+import { usePurchases } from "@/hooks/usePurchases";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
@@ -16,6 +19,8 @@ export default function AlbumDetail() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playlist, setPlaylist] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { isPurchased, purchaseAlbum } = usePurchases();
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   // Album data
   const albumsData = [
@@ -25,6 +30,8 @@ export default function AlbumDetail() {
       year: "2024", 
       tracks: 5, 
       image: powerAlbum,
+      price: 12,
+      forSale: true,
       trackList: [
         { title: "Power", time: "2:43", url: "https://adammac.disco.ac/play/162365030/alias_pv_id/67836118/download2/trackfiles/592c1148-afa2-419c-af96-b5ffd94896d3.mp3?signature=bweI6I_Fd48JRK0HOVen47fAiRQ%3AG8sbnoKx" },
         { title: "Firestarter (Savage Remix)", time: "2:35", url: "https://adammac.disco.ac/play/162365031/alias_pv_id/67836118/download2/trackfiles/fad422fe-889a-4feb-a6ab-afa6c795c03d.mp3?signature=2jyR4puR2S8SE0M6T8RC0e2isT0%3AG8sbnoKx" },
@@ -39,6 +46,8 @@ export default function AlbumDetail() {
       year: "2024", 
       tracks: 8, 
       image: outlawAlbum,
+      price: 12,
+      forSale: true,
       trackList: [
         { title: "Remember My Name", time: "3:44", url: "https://adammac.disco.ac/play/162200203/alias_pv_id/67836120/download2/trackfiles/de2c9cc6-a372-4ee2-980e-535a2f4a5f61.mp3?signature=Br_kLv18ECT8ZIJjPK9DJNARYto%3AT4ae0JGC" },
         { title: "Carolina", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC" },
@@ -57,6 +66,8 @@ export default function AlbumDetail() {
       year: "2023", 
       tracks: 8, 
       image: acousticAlbum,
+      price: 15,
+      forSale: true,
       trackList: [
         { title: "Outlaw", time: "3:04", url: "https://adammac.disco.ac/play/162974091/alias_pv_id/67836113/download2/trackfiles/d6eefac5-ba37-4aac-b4a5-dd79c5d8d1fa.mp3?signature=wU5LzTKfYLyXuRco56rQWBxEGG8%3AXKvIltzO" },
         { title: "Carolina", time: "4:27", url: "https://adammac.disco.ac/play/162974101/alias_pv_id/67836113/download2/trackfiles/53e37644-b0fb-4445-b2af-f42c4b406219.mp3?signature=vmoyFd9YkzBeH2wqGCENgmfl0P8%3AXKvIltzO" },
@@ -75,6 +86,8 @@ export default function AlbumDetail() {
       year: "2023", 
       tracks: 8, 
       image: strippedAlbum,
+      price: 12,
+      forSale: true,
       trackList: [
         { title: "Carry Me Home (Stripped)", time: "2:25", url: "https://adammac.disco.ac/play/163224609/alias_pv_id/67836117/download2/trackfiles/730f5670-d9d3-413d-8fd7-64449f49953b.mp3?signature=EJ3P4dMKRSLg4v4QJeTZScCzndw%3A9rXnXUXm" },
         { title: "Fall From Grace (Stripped)", time: "3:58", url: "https://adammac.disco.ac/play/163224610/alias_pv_id/67836117/download2/trackfiles/d000279c-4158-4e81-a41a-db14a4c880a4.mp3?signature=_Eb1bX4lViaXMT1oSeOsOYN-dkw%3A9rXnXUXm" },
@@ -89,8 +102,11 @@ export default function AlbumDetail() {
   ];
 
   const album = albumsData.find(a => a.id === albumId);
+  const albumPurchased = album ? isPurchased(album.id) : false;
+  const isLocked = album?.forSale && !albumPurchased;
 
   const handlePlayTrack = (track: any, trackList?: any[]) => {
+    if (isLocked) return;
     if (!track.url) return;
     
     if (trackList) {
@@ -182,6 +198,10 @@ export default function AlbumDetail() {
   }, [currentIndex, playlist]);
 
   const handlePlayAll = () => {
+    if (isLocked) {
+      setShowPurchaseModal(true);
+      return;
+    }
     if (album?.trackList && album.trackList.length > 0) {
       const tracksWithMetadata = album.trackList.map((track, i) => ({
         ...track,
@@ -285,14 +305,25 @@ export default function AlbumDetail() {
       {/* Controls */}
       <div className="px-4 sm:px-8 lg:px-12 py-6 bg-background/95 backdrop-blur sticky top-16 z-10 border-b border-border">
         <div className="flex items-center gap-4">
-          <Button 
-            size="lg" 
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
-            onClick={handlePlayAll}
-          >
-            <Play className="w-5 h-5 mr-2 fill-current" />
-            Play
-          </Button>
+          {isLocked ? (
+            <Button 
+              size="lg" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
+              onClick={() => setShowPurchaseModal(true)}
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Buy Album ${album.price}
+            </Button>
+          ) : (
+            <Button 
+              size="lg" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
+              onClick={handlePlayAll}
+            >
+              <Play className="w-5 h-5 mr-2 fill-current" />
+              Play
+            </Button>
+          )}
           <Button 
             size="lg" 
             variant="ghost" 
@@ -310,7 +341,34 @@ export default function AlbumDetail() {
 
       {/* Tracklist */}
       <div className="px-4 sm:px-8 lg:px-12 py-8">
-        <div className="space-y-2">
+        {isLocked ? (
+          <Card className="border-primary/20">
+            <CardContent className="p-12 text-center">
+              <Lock className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-2xl font-bold mb-2">Album Locked</h3>
+              <p className="text-muted-foreground mb-6">
+                Purchase this album to unlock all {album.tracks} tracks
+              </p>
+              <div className="space-y-3 mb-6 max-w-sm mx-auto">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Album Price:</span>
+                  <span className="font-bold text-xl text-primary">${album.price}</span>
+                </div>
+              </div>
+              <Button 
+                size="lg"
+                onClick={() => setShowPurchaseModal(true)}
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Purchase Album
+              </Button>
+              <p className="text-xs text-muted-foreground mt-4">
+                🎭 Demo Mode - No actual payment required
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
           {/* Table Header */}
           <div className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
             <div className="w-10 text-center">#</div>
@@ -361,7 +419,8 @@ export default function AlbumDetail() {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
       </div>
 
       <MusicPlayer
@@ -373,6 +432,18 @@ export default function AlbumDetail() {
         onPrevious={handlePrevious}
         allTracks={tracksWithMetadata}
       />
+
+      {album && (
+        <PurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          onPurchase={() => {
+            purchaseAlbum(album.id);
+            setShowPurchaseModal(false);
+          }}
+          album={album}
+        />
+      )}
     </div>
   );
 }
