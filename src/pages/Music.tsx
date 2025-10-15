@@ -63,7 +63,10 @@ export default function Music() {
 
 
   const handlePlayTrack = (track: any, trackList?: any[]) => {
-    if (!track.url) return;
+    if (!track.url) {
+      console.warn('Track has no URL:', track);
+      return;
+    }
     
     if (trackList) {
       setPlaylist(trackList);
@@ -78,8 +81,23 @@ export default function Music() {
       setCurrentTrack(track);
       if (audioRef.current) {
         const audio = audioRef.current;
+        
+        // Reset audio element
+        audio.pause();
+        audio.currentTime = 0;
+        
+        // Set new source
         audio.src = track.url;
         audio.load();
+        
+        // Error handling
+        const handleError = (e: Event) => {
+          console.error("Audio load error:", e, "URL:", track.url);
+          setIsPlaying(false);
+          audio.removeEventListener('error', handleError);
+        };
+        
+        audio.addEventListener('error', handleError, { once: true });
         
         // Wait for audio to be ready to play
         const attemptPlay = () => {
@@ -88,6 +106,7 @@ export default function Music() {
             playPromise
               .then(() => {
                 setIsPlaying(true);
+                audio.removeEventListener('error', handleError);
               })
               .catch(error => {
                 console.error("Error playing audio:", error);
@@ -157,7 +176,7 @@ export default function Music() {
 
   return (
     <div className="min-h-screen pb-24">
-      <audio ref={audioRef} />
+      <audio ref={audioRef} crossOrigin="anonymous" preload="metadata" />
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
         <div className="absolute inset-0">
