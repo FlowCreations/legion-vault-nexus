@@ -28,6 +28,38 @@ export default function Music() {
   const [playlist, setPlaylist] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const handleShuffle = () => {
+    // Create a shuffled playlist from all available tracks
+    const allTracks = [...topTracks, ...albums.filter(a => a.url)];
+    const shuffled = [...allTracks].sort(() => Math.random() - 0.5);
+    setPlaylist(shuffled);
+    setCurrentIndex(0);
+    if (shuffled.length > 0) {
+      handlePlayTrack(shuffled[0], shuffled);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Sons of Legion - Music',
+      text: 'Check out Sons of Legion music!',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
+
   const handlePlayTrack = (track: any, trackList?: any[]) => {
     if (!track.url) return;
     
@@ -148,15 +180,21 @@ export default function Music() {
               <Play className="w-5 h-5 mr-2 fill-black" />
               Play
             </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-6">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="rounded-full px-6"
+              onClick={handleShuffle}
+            >
               <Shuffle className="w-5 h-5 mr-2" />
               Shuffle
             </Button>
-            <Button size="lg" variant="ghost" className="rounded-full">
-              <Plus className="w-5 h-5 mr-2" />
-              Follow
-            </Button>
-            <Button size="lg" variant="ghost" className="rounded-full">
+            <Button 
+              size="lg" 
+              variant="ghost" 
+              className="rounded-full"
+              onClick={handleShare}
+            >
               <Share2 className="w-5 h-5 mr-2" />
               Share
             </Button>
