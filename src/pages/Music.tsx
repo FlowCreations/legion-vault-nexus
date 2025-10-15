@@ -6,6 +6,7 @@ import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
 import strippedAlbum from "@/assets/stripped-album.jpg";
+import walkingOnTheEdge from "@/assets/walking-on-the-edge.jpg";
 import {
   Carousel,
   CarouselContent,
@@ -380,7 +381,7 @@ const topTracks = [
 
 // EP & Singles
 const albums = [
-  { id: "1", title: "Walking On The Edge", artist: "Sons of Legion", album: "Walking On The Edge", year: "2024", time: "4:27", url: "https://adammac.disco.ac/play/162200218/alias_pv_id/67836120/download2/trackfiles/4c2a9d4c-4a67-4a0e-b35c-2ef31bd8e9be.mp3?signature=K-TYpA8GqiVpwSaOx0aS-pUV2lw%3AT4ae0JGC" },
+  { id: "1", title: "Walking On The Edge", artist: "Sons of Legion", album: "Walking On The Edge", year: "2024", time: "4:27", url: "https://adammac.disco.ac/play/162200218/alias_pv_id/67836120/download2/trackfiles/4c2a9d4c-4a67-4a0e-b35c-2ef31bd8e9be.mp3?signature=K-TYpA8GqiVpwSaOx0aS-pUV2lw%3AT4ae0JGC", image: walkingOnTheEdge },
   { id: "2", title: "Angels", artist: "Sons of Legion", album: "Angels", year: "2024", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO" },
   { id: "3", title: "Strange", artist: "Sons of Legion", album: "Strange", year: "2024", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC" },
   { id: "4", title: "Wild Horse", artist: "Sons of Legion", album: "Wild Horse", year: "2024", time: "3:35", url: "https://adammac.disco.ac/play/162200222/alias_pv_id/67836120/download2/trackfiles/6812a269-4c33-400e-b0c5-7b815f2bd26d.mp3?signature=OuIt55T1lWxYJ-0BRiFDUe-i9_M%3AT4ae0JGC" },
