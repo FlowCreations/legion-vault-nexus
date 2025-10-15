@@ -12,6 +12,7 @@ import strangeSingle from "@/assets/strange-single.jpg";
 import wildHorseSingle from "@/assets/wild-horse-single.jpg";
 import carolinaSingle from "@/assets/carolina-single.jpg";
 import realThangSingle from "@/assets/real-thang-single.jpg";
+import musicHero from "@/assets/music-hero.jpg";
 import {
   Carousel,
   CarouselContent,
@@ -125,8 +126,12 @@ export default function Music() {
       <audio ref={audioRef} />
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background-dark">
-          {/* Background pattern or album art would go here */}
+        <div className="absolute inset-0">
+          <img 
+            src={musicHero} 
+            alt="Sons of Legion"
+            className="w-full h-full object-cover"
+          />
         </div>
         
         {/* Gradient Overlay */}
