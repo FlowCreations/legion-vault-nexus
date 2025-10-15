@@ -106,6 +106,10 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "slide-in-bottom": {
+          "0%": { transform: "translateY(100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -114,6 +118,7 @@ export default {
         "scale-in": "scale-in 0.3s ease-out",
         "glow-pulse": "glow-pulse 3s ease-in-out infinite",
         "shimmer": "shimmer 3s linear infinite",
+        "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
       },
     },
   },

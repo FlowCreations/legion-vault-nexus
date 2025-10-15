@@ -1,0 +1,165 @@
+import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { useEffect, useState } from "react";
+
+interface Track {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  time: string;
+  url?: string;
+}
+
+interface MusicPlayerProps {
+  currentTrack: Track | null;
+  isPlaying: boolean;
+  audioRef: React.RefObject<HTMLAudioElement>;
+  onPlayPause: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+  allTracks: Track[];
+}
+
+export function MusicPlayer({
+  currentTrack,
+  isPlaying,
+  audioRef,
+  onPlayPause,
+  onNext,
+  onPrevious,
+}: MusicPlayerProps) {
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(80);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateProgress = () => {
+      setProgress((audio.currentTime / audio.duration) * 100 || 0);
+    };
+
+    const updateDuration = () => {
+      setDuration(audio.duration || 0);
+    };
+
+    audio.addEventListener("timeupdate", updateProgress);
+    audio.addEventListener("loadedmetadata", updateDuration);
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateProgress);
+      audio.removeEventListener("loadedmetadata", updateDuration);
+    };
+  }, [audioRef]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+    }
+  }, [volume, audioRef]);
+
+  const handleSeek = (value: number[]) => {
+    if (audioRef.current && duration) {
+      audioRef.current.currentTime = (value[0] / 100) * duration;
+      setProgress(value[0]);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  if (!currentTrack) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-graphite border-t border-border backdrop-blur-lg bg-opacity-95 z-50 animate-slide-in-bottom">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center gap-4">
+          {/* Track Info */}
+          <div className="flex-1 min-w-0 flex items-center gap-3">
+            <div className="w-12 h-12 bg-card rounded flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-semibold text-muted-foreground">
+                {currentTrack.title[0]}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium text-sm truncate">{currentTrack.title}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {currentTrack.artist}
+              </p>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex-1 flex flex-col items-center gap-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onPrevious}
+              >
+                <SkipBack className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="default"
+                size="icon"
+                className="h-10 w-10 rounded-full bg-white hover:bg-white/90 text-black"
+                onClick={onPlayPause}
+              >
+                {isPlaying ? (
+                  <Pause className="h-5 w-5 fill-black" />
+                ) : (
+                  <Play className="h-5 w-5 fill-black ml-0.5" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onNext}
+              >
+                <SkipForward className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full flex items-center gap-2">
+              <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
+                {formatTime((progress / 100) * duration)}
+              </span>
+              <Slider
+                value={[progress]}
+                onValueChange={handleSeek}
+                max={100}
+                step={0.1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
+                {formatTime(duration)}
+              </span>
+            </div>
+          </div>
+
+          {/* Volume */}
+          <div className="flex-1 flex items-center justify-end gap-2">
+            <Volume2 className="h-4 w-4 text-muted-foreground" />
+            <Slider
+              value={[volume]}
+              onValueChange={(v) => setVolume(v[0])}
+              max={100}
+              step={1}
+              className="w-24 hidden sm:flex"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

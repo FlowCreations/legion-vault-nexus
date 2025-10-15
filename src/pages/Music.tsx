@@ -1,6 +1,7 @@
 import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { MusicPlayer } from "@/components/MusicPlayer";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -14,33 +15,64 @@ import {
 } from "@/components/ui/carousel";
 
 export default function Music() {
-  const [currentTrack, setCurrentTrack] = useState<string | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<any | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [playlist, setPlaylist] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handlePlayTrack = (url: string | undefined, trackId: string) => {
-    if (!url) return;
+  const handlePlayTrack = (track: any, trackList?: any[]) => {
+    if (!track.url) return;
     
-    if (currentTrack === trackId && isPlaying) {
+    if (trackList) {
+      setPlaylist(trackList);
+      const index = trackList.findIndex(t => t.id === track.id);
+      setCurrentIndex(index);
+    }
+    
+    if (currentTrack?.id === track.id && isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
     } else {
-      if (currentTrack !== trackId) {
-        setCurrentTrack(trackId);
-        if (audioRef.current) {
-          audioRef.current.src = url;
-        }
+      setCurrentTrack(track);
+      if (audioRef.current) {
+        audioRef.current.src = track.url;
       }
       audioRef.current?.play();
       setIsPlaying(true);
     }
   };
 
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      audioRef.current?.pause();
+    } else {
+      audioRef.current?.play();
+    }
+  };
+
+  const handleNext = () => {
+    if (playlist.length === 0) return;
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    setCurrentIndex(nextIndex);
+    handlePlayTrack(playlist[nextIndex], playlist);
+  };
+
+  const handlePrevious = () => {
+    if (playlist.length === 0) return;
+    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
+    setCurrentIndex(prevIndex);
+    handlePlayTrack(playlist[prevIndex], playlist);
+  };
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      handleNext();
+    };
     const handlePause = () => setIsPlaying(false);
     const handlePlay = () => setIsPlaying(true);
 
@@ -53,10 +85,10 @@ export default function Music() {
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('play', handlePlay);
     };
-  }, []);
+  }, [currentIndex, playlist]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24">
       <audio ref={audioRef} />
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
@@ -120,15 +152,17 @@ export default function Music() {
             </div>
 
             {/* Track Rows */}
-            {topTracks.map((track, index) => (
+            {topTracks.map((track, index) => {
+              const isCurrentTrack = currentTrack?.id === track.id;
+              return (
               <div
                 key={track.id}
-                onClick={() => handlePlayTrack(track.url, track.id)}
+                onClick={() => handlePlayTrack(track, topTracks)}
                 className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer"
               >
                 <div className="w-10 h-10 flex-shrink-0">
                   <div className="w-full h-full bg-gradient-to-br from-card to-card-hover rounded flex items-center justify-center relative overflow-hidden">
-                    {currentTrack === track.id && isPlaying ? (
+                    {isCurrentTrack && isPlaying ? (
                       <Pause className="w-4 h-4 fill-primary text-primary" />
                     ) : (
                       <>
@@ -141,7 +175,7 @@ export default function Music() {
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className={`font-medium truncate ${currentTrack === track.id && isPlaying ? 'text-primary' : ''}`}>
+                  <div className={`font-medium truncate ${isCurrentTrack && isPlaying ? 'text-primary' : ''}`}>
                     {track.title}
                   </div>
                   <div className="text-sm text-muted-foreground md:hidden truncate">{track.artist}</div>
@@ -153,7 +187,8 @@ export default function Music() {
                   <Heart className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
 
@@ -174,18 +209,20 @@ export default function Music() {
             className="w-full"
           >
             <CarouselContent className="-ml-4">
-              {albums.map((album) => (
+              {albums.map((album) => {
+                const isCurrentTrack = currentTrack?.id === album.id;
+                return (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div 
                     className="group cursor-pointer"
-                    onClick={() => handlePlayTrack(album.url, album.id)}
+                    onClick={() => album.url && handlePlayTrack(album, albums.filter(a => a.url))}
                   >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 relative">
                       <div className="w-full h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
                         {/* Play button overlay */}
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                            {currentTrack === album.id && isPlaying ? (
+                            {isCurrentTrack && isPlaying ? (
                               <Pause className="w-6 h-6 text-black fill-black" />
                             ) : (
                               <Play className="w-6 h-6 text-black ml-1 fill-black" />
@@ -209,7 +246,8 @@ export default function Music() {
                     </div>
                   </div>
                 </CarouselItem>
-              ))}
+              );
+              })}
             </CarouselContent>
             <CarouselPrevious className="left-0" />
             <CarouselNext className="right-0" />
@@ -233,11 +271,19 @@ export default function Music() {
             className="w-full"
           >
             <CarouselContent className="-ml-4">
-              {moreAlbums.map((album) => (
+              {moreAlbums.map((album) => {
+                const firstTrack = album.trackList?.[0];
+                const isCurrentAlbum = currentTrack?.id === `${album.id}-0`;
+                return (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div 
                     className="group cursor-pointer"
-                    onClick={() => album.trackList?.[0]?.url && handlePlayTrack(album.trackList[0].url, `${album.id}-0`)}
+                    onClick={() => {
+                      if (firstTrack?.url) {
+                        const albumTrackWithId = { ...firstTrack, id: `${album.id}-0`, album: album.title };
+                        handlePlayTrack(albumTrackWithId, album.trackList?.map((t, i) => ({ ...t, id: `${album.id}-${i}`, album: album.title, artist: "Sons of Legion" })));
+                      }
+                    }}
                   >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-cinematic group-hover:shadow-gold transition-all duration-200 relative">
                       {album.image ? (
@@ -259,7 +305,7 @@ export default function Music() {
                       {/* Play button overlay */}
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center transform group-hover:scale-105 transition-transform">
-                          {currentTrack === `${album.id}-0` && isPlaying ? (
+                          {isCurrentAlbum && isPlaying ? (
                             <Pause className="w-6 h-6 text-primary-foreground fill-primary-foreground" />
                           ) : (
                             <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
@@ -278,13 +324,24 @@ export default function Music() {
                     </div>
                   </div>
                 </CarouselItem>
-              ))}
+              );
+              })}
             </CarouselContent>
             <CarouselPrevious className="left-0" />
             <CarouselNext className="right-0" />
           </Carousel>
         </div>
       </div>
+
+      <MusicPlayer
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        audioRef={audioRef}
+        onPlayPause={handlePlayPause}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        allTracks={playlist}
+      />
     </div>
   );
 }
