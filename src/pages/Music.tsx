@@ -438,8 +438,7 @@ export default function Music() {
                       {/* Lock overlay for locked albums */}
                       {isLocked && (
                         <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
-                          <Lock className="w-8 h-8 text-white mb-2" />
-                          <span className="text-white font-bold text-lg">${album.price}</span>
+                          <Lock className="w-8 h-8 text-white" />
                         </div>
                       )}
                       
