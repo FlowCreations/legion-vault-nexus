@@ -79,48 +79,54 @@ export default function Music() {
       setIsPlaying(false);
     } else {
       setCurrentTrack(track);
+      setIsPlaying(false);
+      
       if (audioRef.current) {
         const audio = audioRef.current;
         
-        // Reset audio element
+        // Clear any existing source
         audio.pause();
-        audio.currentTime = 0;
-        
-        // Set new source
-        audio.src = track.url;
+        audio.src = '';
         audio.load();
         
-        // Error handling
-        const handleError = (e: Event) => {
-          console.error("Audio load error:", e, "URL:", track.url);
-          setIsPlaying(false);
-          audio.removeEventListener('error', handleError);
-        };
-        
-        audio.addEventListener('error', handleError, { once: true });
-        
-        // Wait for audio to be ready to play
-        const attemptPlay = () => {
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise
+        // Small delay to ensure cleanup
+        setTimeout(() => {
+          // Set new source directly
+          audio.src = track.url;
+          
+          // Error event
+          const handleError = (e: any) => {
+            console.error("Audio error:", {
+              error: e,
+              code: audio.error?.code,
+              message: audio.error?.message,
+              url: track.url,
+              networkState: audio.networkState,
+              readyState: audio.readyState
+            });
+            setIsPlaying(false);
+          };
+          
+          audio.onerror = handleError;
+          
+          // Load and play
+          audio.load();
+          
+          const handleCanPlay = () => {
+            console.log('Audio can play, attempting playback');
+            audio.play()
               .then(() => {
+                console.log('Playback started successfully');
                 setIsPlaying(true);
-                audio.removeEventListener('error', handleError);
               })
-              .catch(error => {
-                console.error("Error playing audio:", error);
+              .catch(err => {
+                console.error('Play error:', err);
                 setIsPlaying(false);
               });
-          }
-        };
-        
-        // Try to play as soon as we can
-        if (audio.readyState >= 2) {
-          attemptPlay();
-        } else {
-          audio.addEventListener('canplay', attemptPlay, { once: true });
-        }
+          };
+          
+          audio.addEventListener('canplay', handleCanPlay, { once: true });
+        }, 100);
       }
     }
   };
@@ -176,7 +182,7 @@ export default function Music() {
 
   return (
     <div className="min-h-screen pb-24">
-      <audio ref={audioRef} crossOrigin="anonymous" preload="metadata" />
+      <audio ref={audioRef} preload="auto" />
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
         <div className="absolute inset-0">
