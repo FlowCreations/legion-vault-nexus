@@ -468,7 +468,6 @@ export default function Music() {
                       )}
                       <p className="text-xs text-muted-foreground">
                         {album.year} • {album.tracks} tracks
-                        {isLocked && ` • $${album.price}`}
                       </p>
                     </div>
                   </div>
