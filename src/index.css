@@ -8,55 +8,68 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark rock/blues base - inspired by Sons of Legion YouTube */
-    --background: 220 20% 8%;
-    --background-dark: 220 25% 4%;
-    --foreground: 0 0% 98%;
+    /* Sons of Legion Brand Kit - Apple TV Cinematic Aesthetic */
+    
+    /* Core Palette (dark-first) */
+    --deep-onyx: 0 0% 0%;           /* #000000 - true black for immersive hero */
+    --graphite: 240 2% 12%;         /* #1D1D1F - Apple's signature near-black */
+    --fog: 210 20% 97%;             /* #F5F5F7 - cool off-white for text */
+    --steel-grey: 240 2% 44%;       /* #6E6E73 - secondary body text */
+    
+    /* SOL Signature Accents */
+    --legion-brown: 30 55% 19%;     /* #492E15 - leather, wood, vintage */
+    --anthem-gold: 45 100% 56%;     /* #FFCD1D - CTAs, highlights */
+    --crimson-echo: 0 63% 30%;      /* #7A1C1C - warnings, drama */
 
-    /* Cards with dark overlay */
-    --card: 220 18% 12%;
-    --card-foreground: 0 0% 98%;
-    --card-hover: 220 16% 16%;
+    /* Semantic Mappings */
+    --background: var(--graphite);
+    --background-dark: var(--deep-onyx);
+    --foreground: var(--fog);
 
-    --popover: 220 18% 12%;
-    --popover-foreground: 0 0% 98%;
+    --card: 240 2% 15%;
+    --card-foreground: var(--fog);
+    --card-hover: 240 2% 18%;
 
-    /* Vintage gold accent - matching Sons of Legion logo */
-    --primary: 45 95% 55%;
-    --primary-foreground: 220 25% 8%;
+    --popover: var(--graphite);
+    --popover-foreground: var(--fog);
+
+    --primary: var(--anthem-gold);
+    --primary-foreground: var(--graphite);
     --primary-glow: 45 100% 65%;
 
-    /* Muted dark tones */
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: var(--legion-brown);
+    --secondary-foreground: var(--fog);
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 240 2% 20%;
+    --muted-foreground: var(--steel-grey);
 
-    --accent: 45 95% 55%;
-    --accent-foreground: 220 25% 8%;
+    --accent: var(--anthem-gold);
+    --accent-foreground: var(--graphite);
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: var(--crimson-echo);
+    --destructive-foreground: var(--fog);
 
-    --border: 220 15% 22%;
-    --input: 220 15% 18%;
-    --ring: 45 95% 55%;
+    --border: 240 2% 22%;
+    --input: 240 2% 18%;
+    --ring: var(--anthem-gold);
 
-    --radius: 0.75rem;
+    /* Brand Radii - Apple TV Style */
+    --radius: 1rem;           /* 16px for cards */
+    --radius-button: 0.75rem; /* 12px for buttons */
 
-    /* Custom gradients - rock/soul aesthetic */
-    --gradient-cosmic: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(220 18% 12%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 95% 55%) 0%, hsl(45 100% 65%) 100%);
-    --gradient-overlay: linear-gradient(180deg, transparent 0%, hsl(220 25% 4% / 0.9) 100%);
+    /* Brand Gradients - Cinematic */
+    --gradient-hero: linear-gradient(180deg, transparent 0%, hsl(var(--deep-onyx) / 0.6) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(var(--anthem-gold)) 0%, hsl(45 100% 65%) 100%);
+    --gradient-leather: linear-gradient(135deg, hsl(var(--legion-brown)) 0%, hsl(30 55% 25%) 100%);
 
-    /* Shadows - dramatic rock aesthetic */
-    --shadow-cosmic: 0 8px 32px hsl(220 25% 2% / 0.6);
-    --shadow-gold: 0 4px 24px hsl(45 95% 55% / 0.25);
-    --shadow-glow: 0 0 40px hsl(45 100% 65% / 0.2);
+    /* Brand Shadows - Cinematic Depth */
+    --shadow-cinematic: 0 8px 24px hsl(0 0% 0% / 0.35);
+    --shadow-gold-glow: 0 4px 16px hsl(var(--anthem-gold) / 0.3);
+    --shadow-focus: 0 0 0 3px hsl(var(--anthem-gold) / 0.25);
 
-    /* Animations */
-    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Brand Motion - Apple TV Polish */
+    --transition-smooth: all 200ms ease-in-out;
+    --transition-focus: transform 200ms ease-in-out, box-shadow 200ms ease-in-out;
   }
 }
 
@@ -67,22 +80,33 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background: linear-gradient(135deg, #14161f 0%, #1a1d29 100%);
+    background: hsl(var(--graphite));
     background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    @apply font-sans font-semibold;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
-  .cosmic-glow {
-    box-shadow: 0 0 40px hsl(var(--primary-glow) / 0.2);
+  .cinematic-glow {
+    box-shadow: var(--shadow-cinematic);
   }
 
   .gold-glow {
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-gold-glow);
+  }
+
+  .focus-lift {
+    transition: var(--transition-focus);
+  }
+  
+  .focus-lift:hover,
+  .focus-lift:focus {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: var(--shadow-gold-glow);
   }
 
   .text-balance {

@@ -14,8 +14,16 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ['"Playfair Display"', 'serif'],
-        sans: ['Inter', 'sans-serif'],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          '"SF Pro Text"',
+          'system-ui',
+          'Roboto',
+          'sans-serif',
+        ],
+        display: ['"SF Pro Display"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -58,19 +66,20 @@ export default {
         },
       },
       backgroundImage: {
-        'gradient-cosmic': 'var(--gradient-cosmic)',
+        'gradient-hero': 'var(--gradient-hero)',
         'gradient-gold': 'var(--gradient-gold)',
-        'gradient-overlay': 'var(--gradient-overlay)',
+        'gradient-leather': 'var(--gradient-leather)',
       },
       boxShadow: {
-        'cosmic': 'var(--shadow-cosmic)',
-        'gold': 'var(--shadow-gold)',
-        'glow': 'var(--shadow-glow)',
+        'cinematic': 'var(--shadow-cinematic)',
+        'gold': 'var(--shadow-gold-glow)',
+        'focus': 'var(--shadow-focus)',
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
+        button: "var(--radius-button)",
       },
       keyframes: {
         "accordion-down": {
