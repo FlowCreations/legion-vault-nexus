@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
@@ -63,9 +63,9 @@ export function MusicPlayer({
   }, [volume, audioRef]);
 
   const handleSeek = (value: number[]) => {
-    if (audioRef.current && duration) {
-      audioRef.current.currentTime = (value[0] / 100) * duration;
-      setProgress(value[0]);
+    if (audioRef.current && duration && !isNaN(duration)) {
+      const newTime = (value[0] / 100) * duration;
+      audioRef.current.currentTime = newTime;
     }
   };
 
@@ -160,7 +160,13 @@ export function MusicPlayer({
 
           {/* Volume */}
           <div className="flex-1 flex items-center justify-end gap-2">
-            <Volume2 className="h-4 w-4 text-muted-foreground" />
+            <Flame 
+              className="h-4 w-4 transition-all duration-300" 
+              style={{ 
+                color: volume > 0 ? `hsl(${20 + (volume * 0.8)}, 90%, ${50 + (volume * 0.2)}%)` : 'hsl(var(--muted-foreground))',
+                filter: volume > 70 ? 'drop-shadow(0 0 4px hsla(25, 95%, 60%, 0.6))' : 'none'
+              }}
+            />
             <Slider
               value={[volume]}
               onValueChange={(v) => setVolume(v[0])}
