@@ -6,12 +6,6 @@ import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
 import strippedAlbum from "@/assets/stripped-album.jpg";
-import walkingOnTheEdge from "@/assets/walking-on-the-edge.jpg";
-import angelsSingle from "@/assets/angels-single.jpg";
-import strangeSingle from "@/assets/strange-single.jpg";
-import wildHorseSingle from "@/assets/wild-horse-single.jpg";
-import carolinaSingle from "@/assets/carolina-single.jpg";
-import realThangSingle from "@/assets/real-thang-single.jpg";
 import {
   Carousel,
   CarouselContent,
@@ -386,12 +380,12 @@ const topTracks = [
 
 // EP & Singles
 const albums = [
-  { id: "1", title: "Walking On The Edge", artist: "Sons of Legion", album: "Walking On The Edge", year: "2024", time: "4:27", image: walkingOnTheEdge },
-  { id: "2", title: "Angels", artist: "Sons of Legion", album: "Angels", year: "2024", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO", image: angelsSingle },
-  { id: "3", title: "Strange", artist: "Sons of Legion", album: "Strange", year: "2024", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC", image: strangeSingle },
-  { id: "4", title: "Wild Horse", artist: "Sons of Legion", album: "Wild Horse", year: "2024", time: "3:35", url: "https://adammac.disco.ac/play/162200222/alias_pv_id/67836120/download2/trackfiles/6812a269-4c33-400e-b0c5-7b815f2bd26d.mp3?signature=OuIt55T1lWxYJ-0BRiFDUe-i9_M%3AT4ae0JGC", image: wildHorseSingle },
-  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Carolina", year: "2024", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC", image: carolinaSingle },
-  { id: "6", title: "REAL THANG", artist: "Sons of Legion", album: "REAL THANG", year: "2024", time: "2:25", url: "https://adammac.disco.ac/play/162200215/alias_pv_id/67836120/download2/trackfiles/74baf186-745d-49c2-88a5-5346063f14e8.mp3?signature=dyPzPJS6lDUDqPpuwVg3rcxNp6A%3AT4ae0JGC", image: realThangSingle },
+  { id: "1", title: "Walking On The Edge", artist: "Sons of Legion", album: "Walking On The Edge", year: "2024", time: "4:27", url: "https://adammac.disco.ac/play/162200218/alias_pv_id/67836120/download2/trackfiles/4c2a9d4c-4a67-4a0e-b35c-2ef31bd8e9be.mp3?signature=K-TYpA8GqiVpwSaOx0aS-pUV2lw%3AT4ae0JGC" },
+  { id: "2", title: "Angels", artist: "Sons of Legion", album: "Angels", year: "2024", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO" },
+  { id: "3", title: "Strange", artist: "Sons of Legion", album: "Strange", year: "2024", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC" },
+  { id: "4", title: "Wild Horse", artist: "Sons of Legion", album: "Wild Horse", year: "2024", time: "3:35", url: "https://adammac.disco.ac/play/162200222/alias_pv_id/67836120/download2/trackfiles/6812a269-4c33-400e-b0c5-7b815f2bd26d.mp3?signature=OuIt55T1lWxYJ-0BRiFDUe-i9_M%3AT4ae0JGC" },
+  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Carolina", year: "2024", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC" },
+  { id: "6", title: "REAL THANG", artist: "Sons of Legion", album: "REAL THANG", year: "2024", time: "2:25", url: "https://adammac.disco.ac/play/162200215/alias_pv_id/67836120/download2/trackfiles/74baf186-745d-49c2-88a5-5346063f14e8.mp3?signature=dyPzPJS6lDUDqPpuwVg3rcxNp6A%3AT4ae0JGC" },
   { id: "7", title: "Leave the Light On", artist: "Sons of Legion", album: "Leave the Light On", year: "2023", time: "2:52", url: "https://adammac.disco.ac/play/162200201/alias_pv_id/67836120/download2/trackfiles/ee52357d-7ec6-40bb-9a55-1f43a6ac2c2b.mp3?signature=EsxgCz-lmftjI79HWKC985brJis%3AT4ae0JGC", image: outlawAlbum },
   { id: "8", title: "In The Air Tonight", artist: "Sons of Legion", album: "In The Air Tonight", year: "2023", time: "3:39", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3?signature=qQuWgSRrvsTyT4ogVUhd-q7IZPY%3AG8sbnoKx", image: powerAlbum },
 ];
