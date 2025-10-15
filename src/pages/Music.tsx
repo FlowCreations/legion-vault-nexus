@@ -347,8 +347,6 @@ export default function Music() {
               );
               })}
             </CarouselContent>
-            <CarouselPrevious className="left-0" />
-            <CarouselNext className="right-0" />
           </Carousel>
         </div>
 
