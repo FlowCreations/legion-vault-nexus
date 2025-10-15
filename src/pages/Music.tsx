@@ -1,7 +1,7 @@
 import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
