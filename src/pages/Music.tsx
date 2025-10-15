@@ -42,20 +42,30 @@ export default function Music() {
     } else {
       setCurrentTrack(track);
       if (audioRef.current) {
-        audioRef.current.src = track.url;
-        audioRef.current.load();
+        const audio = audioRef.current;
+        audio.src = track.url;
+        audio.load();
         
-        // Wait for the audio to be ready before playing
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch(error => {
-              console.error("Error playing audio:", error);
-              setIsPlaying(false);
-            });
+        // Wait for audio to be ready to play
+        const attemptPlay = () => {
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                setIsPlaying(true);
+              })
+              .catch(error => {
+                console.error("Error playing audio:", error);
+                setIsPlaying(false);
+              });
+          }
+        };
+        
+        // Try to play as soon as we can
+        if (audio.readyState >= 2) {
+          attemptPlay();
+        } else {
+          audio.addEventListener('canplay', attemptPlay, { once: true });
         }
       }
     }
