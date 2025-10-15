@@ -43,9 +43,21 @@ export default function Music() {
       setCurrentTrack(track);
       if (audioRef.current) {
         audioRef.current.src = track.url;
+        audioRef.current.load();
+        
+        // Wait for the audio to be ready before playing
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch(error => {
+              console.error("Error playing audio:", error);
+              setIsPlaying(false);
+            });
+        }
       }
-      audioRef.current?.play();
-      setIsPlaying(true);
     }
   };
 
@@ -53,7 +65,12 @@ export default function Music() {
     if (isPlaying) {
       audioRef.current?.pause();
     } else {
-      audioRef.current?.play();
+      const playPromise = audioRef.current?.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("Error playing audio:", error);
+        });
+      }
     }
   };
 
