@@ -1,5 +1,6 @@
 import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/carousel";
 
 export default function Music() {
+  const navigate = useNavigate();
   const [currentTrack, setCurrentTrack] = useState<any | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -374,24 +376,7 @@ export default function Music() {
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div 
                     className="group cursor-pointer"
-                    onClick={() => {
-                      if (firstTrack?.url) {
-                        const albumTrackWithId = { 
-                          ...firstTrack, 
-                          id: `${album.id}-0`, 
-                          album: album.title, 
-                          artist: "Sons of Legion",
-                          image: album.image 
-                        };
-                        handlePlayTrack(albumTrackWithId, album.trackList?.map((t, i) => ({ 
-                          ...t, 
-                          id: `${album.id}-${i}`, 
-                          album: album.title, 
-                          artist: "Sons of Legion",
-                          image: album.image 
-                        })));
-                      }
-                    }}
+                    onClick={() => navigate(`/music/album/${album.id}`)}
                   >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-cinematic group-hover:shadow-gold transition-all duration-200 relative">
                       {album.image ? (
