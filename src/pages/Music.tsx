@@ -280,8 +280,20 @@ export default function Music() {
                     className="group cursor-pointer"
                     onClick={() => {
                       if (firstTrack?.url) {
-                        const albumTrackWithId = { ...firstTrack, id: `${album.id}-0`, album: album.title };
-                        handlePlayTrack(albumTrackWithId, album.trackList?.map((t, i) => ({ ...t, id: `${album.id}-${i}`, album: album.title, artist: "Sons of Legion" })));
+                        const albumTrackWithId = { 
+                          ...firstTrack, 
+                          id: `${album.id}-0`, 
+                          album: album.title, 
+                          artist: "Sons of Legion",
+                          image: album.image 
+                        };
+                        handlePlayTrack(albumTrackWithId, album.trackList?.map((t, i) => ({ 
+                          ...t, 
+                          id: `${album.id}-${i}`, 
+                          album: album.title, 
+                          artist: "Sons of Legion",
+                          image: album.image 
+                        })));
                       }
                     }}
                   >
@@ -348,26 +360,26 @@ export default function Music() {
 
 // Top tracks based on Spotify popularity
 const topTracks = [
-  { id: "1", title: "In The Air Tonight", artist: "Sons of Legion", album: "Power", time: "3:42", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3?signature=qQuWgSRrvsTyT4ogVUhd-q7IZPY%3AG8sbnoKx" },
-  { id: "2", title: "Fire Starter", artist: "Sons of Legion", album: "Power", time: "2:28", url: "https://adammac.disco.ac/play/162365031/alias_pv_id/67836118/download2/trackfiles/fad422fe-889a-4feb-a6ab-afa6c795c03d.mp3?signature=2jyR4puR2S8SE0M6T8RC0e2isT0%3AG8sbnoKx" },
-  { id: "3", title: "Strange", artist: "Sons of Legion", album: "Outlaw", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC" },
-  { id: "4", title: "Power", artist: "Sons of Legion", album: "Power", time: "2:43", url: "https://adammac.disco.ac/play/162365030/alias_pv_id/67836118/download2/trackfiles/592c1148-afa2-419c-af96-b5ffd94896d3.mp3?signature=bweI6I_Fd48JRK0HOVen47fAiRQ%3AG8sbnoKx" },
-  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Outlaw", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC" },
+  { id: "1", title: "In The Air Tonight", artist: "Sons of Legion", album: "Power", time: "3:42", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3?signature=qQuWgSRrvsTyT4ogVUhd-q7IZPY%3AG8sbnoKx", image: powerAlbum },
+  { id: "2", title: "Fire Starter", artist: "Sons of Legion", album: "Power", time: "2:28", url: "https://adammac.disco.ac/play/162365031/alias_pv_id/67836118/download2/trackfiles/fad422fe-889a-4feb-a6ab-afa6c795c03d.mp3?signature=2jyR4puR2S8SE0M6T8RC0e2isT0%3AG8sbnoKx", image: powerAlbum },
+  { id: "3", title: "Strange", artist: "Sons of Legion", album: "Outlaw", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC", image: outlawAlbum },
+  { id: "4", title: "Power", artist: "Sons of Legion", album: "Power", time: "2:43", url: "https://adammac.disco.ac/play/162365030/alias_pv_id/67836118/download2/trackfiles/592c1148-afa2-419c-af96-b5ffd94896d3.mp3?signature=bweI6I_Fd48JRK0HOVen47fAiRQ%3AG8sbnoKx", image: powerAlbum },
+  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Outlaw", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC", image: outlawAlbum },
   { id: "6", title: "Walking On The Edge", artist: "Sons of Legion", album: "Singles", time: "4:27" },
-  { id: "7", title: "Remember My Name", artist: "Sons of Legion", album: "Outlaw", time: "3:44", url: "https://adammac.disco.ac/play/162200203/alias_pv_id/67836120/download2/trackfiles/de2c9cc6-a372-4ee2-980e-535a2f4a5f61.mp3?signature=Br_kLv18ECT8ZIJjPK9DJNARYto%3AT4ae0JGC" },
-  { id: "8", title: "Leave the Light On", artist: "Sons of Legion", album: "Outlaw", time: "2:52", url: "https://adammac.disco.ac/play/162200201/alias_pv_id/67836120/download2/trackfiles/ee52357d-7ec6-40bb-9a55-1f43a6ac2c2b.mp3?signature=EsxgCz-lmftjI79HWKC985brJis%3AT4ae0JGC" },
+  { id: "7", title: "Remember My Name", artist: "Sons of Legion", album: "Outlaw", time: "3:44", url: "https://adammac.disco.ac/play/162200203/alias_pv_id/67836120/download2/trackfiles/de2c9cc6-a372-4ee2-980e-535a2f4a5f61.mp3?signature=Br_kLv18ECT8ZIJjPK9DJNARYto%3AT4ae0JGC", image: outlawAlbum },
+  { id: "8", title: "Leave the Light On", artist: "Sons of Legion", album: "Outlaw", time: "2:52", url: "https://adammac.disco.ac/play/162200201/alias_pv_id/67836120/download2/trackfiles/ee52357d-7ec6-40bb-9a55-1f43a6ac2c2b.mp3?signature=EsxgCz-lmftjI79HWKC985brJis%3AT4ae0JGC", image: outlawAlbum },
 ];
 
 // EP & Singles
 const albums = [
   { id: "1", title: "Walking On The Edge", year: "2024", time: "4:27" },
-  { id: "2", title: "Angels", year: "2024", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO" },
-  { id: "3", title: "Strange", year: "2024", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC" },
-  { id: "4", title: "Wild Horse", year: "2024", time: "3:35", url: "https://adammac.disco.ac/play/162200222/alias_pv_id/67836120/download2/trackfiles/6812a269-4c33-400e-b0c5-7b815f2bd26d.mp3?signature=OuIt55T1lWxYJ-0BRiFDUe-i9_M%3AT4ae0JGC" },
-  { id: "5", title: "Carolina", year: "2024", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC" },
-  { id: "6", title: "REAL THANG", year: "2024", time: "2:25", url: "https://adammac.disco.ac/play/162200215/alias_pv_id/67836120/download2/trackfiles/74baf186-745d-49c2-88a5-5346063f14e8.mp3?signature=dyPzPJS6lDUDqPpuwVg3rcxNp6A%3AT4ae0JGC" },
-  { id: "7", title: "Leave the Light On", year: "2023", time: "2:52", url: "https://adammac.disco.ac/play/162200201/alias_pv_id/67836120/download2/trackfiles/ee52357d-7ec6-40bb-9a55-1f43a6ac2c2b.mp3?signature=EsxgCz-lmftjI79HWKC985brJis%3AT4ae0JGC" },
-  { id: "8", title: "In The Air Tonight", year: "2023", time: "3:39", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3?signature=qQuWgSRrvsTyT4ogVUhd-q7IZPY%3AG8sbnoKx" },
+  { id: "2", title: "Angels", year: "2024", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO", image: acousticAlbum },
+  { id: "3", title: "Strange", year: "2024", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC", image: outlawAlbum },
+  { id: "4", title: "Wild Horse", year: "2024", time: "3:35", url: "https://adammac.disco.ac/play/162200222/alias_pv_id/67836120/download2/trackfiles/6812a269-4c33-400e-b0c5-7b815f2bd26d.mp3?signature=OuIt55T1lWxYJ-0BRiFDUe-i9_M%3AT4ae0JGC", image: outlawAlbum },
+  { id: "5", title: "Carolina", year: "2024", time: "4:31", url: "https://adammac.disco.ac/play/115244079/alias_pv_id/67836120/download2/trackfiles/b6462d0d-e71d-4d43-aa49-dbba3514f862.mp3?signature=uNIfHQIlgHyN0K_4wgN-v_bOMtY%3AT4ae0JGC", image: outlawAlbum },
+  { id: "6", title: "REAL THANG", year: "2024", time: "2:25", url: "https://adammac.disco.ac/play/162200215/alias_pv_id/67836120/download2/trackfiles/74baf186-745d-49c2-88a5-5346063f14e8.mp3?signature=dyPzPJS6lDUDqPpuwVg3rcxNp6A%3AT4ae0JGC", image: outlawAlbum },
+  { id: "7", title: "Leave the Light On", year: "2023", time: "2:52", url: "https://adammac.disco.ac/play/162200201/alias_pv_id/67836120/download2/trackfiles/ee52357d-7ec6-40bb-9a55-1f43a6ac2c2b.mp3?signature=EsxgCz-lmftjI79HWKC985brJis%3AT4ae0JGC", image: outlawAlbum },
+  { id: "8", title: "In The Air Tonight", year: "2023", time: "3:39", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3?signature=qQuWgSRrvsTyT4ogVUhd-q7IZPY%3AG8sbnoKx", image: powerAlbum },
 ];
 
 const moreAlbums = [

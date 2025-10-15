@@ -10,6 +10,7 @@ interface Track {
   album: string;
   time: string;
   url?: string;
+  image?: string;
 }
 
 interface MusicPlayerProps {
@@ -83,10 +84,20 @@ export function MusicPlayer({
         <div className="flex items-center gap-4">
           {/* Track Info */}
           <div className="flex-1 min-w-0 flex items-center gap-3">
-            <div className="w-12 h-12 bg-card rounded flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-muted-foreground">
-                {currentTrack.title[0]}
-              </span>
+            <div className="w-14 h-14 bg-card rounded overflow-hidden flex-shrink-0">
+              {currentTrack.image ? (
+                <img 
+                  src={currentTrack.image} 
+                  alt={currentTrack.album}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {currentTrack.title[0]}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="min-w-0">
               <p className="font-medium text-sm truncate">{currentTrack.title}</p>
