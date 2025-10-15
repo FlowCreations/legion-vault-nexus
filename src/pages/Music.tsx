@@ -1,4 +1,5 @@
-import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus } from "lucide-react";
+import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
@@ -13,8 +14,50 @@ import {
 } from "@/components/ui/carousel";
 
 export default function Music() {
+  const [currentTrack, setCurrentTrack] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const handlePlayTrack = (url: string | undefined, trackId: string) => {
+    if (!url) return;
+    
+    if (currentTrack === trackId && isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    } else {
+      if (currentTrack !== trackId) {
+        setCurrentTrack(trackId);
+        if (audioRef.current) {
+          audioRef.current.src = url;
+        }
+      }
+      audioRef.current?.play();
+      setIsPlaying(true);
+    }
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => setIsPlaying(false);
+    const handlePause = () => setIsPlaying(false);
+    const handlePlay = () => setIsPlaying(true);
+
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('play', handlePlay);
+
+    return () => {
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('play', handlePlay);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen">
+      <audio ref={audioRef} />
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background-dark">
@@ -80,18 +123,27 @@ export default function Music() {
             {topTracks.map((track, index) => (
               <div
                 key={track.id}
+                onClick={() => handlePlayTrack(track.url, track.id)}
                 className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer"
               >
                 <div className="w-10 h-10 flex-shrink-0">
                   <div className="w-full h-full bg-gradient-to-br from-card to-card-hover rounded flex items-center justify-center relative overflow-hidden">
-                    <span className="text-xs text-muted-foreground group-hover:opacity-0 transition-opacity">
-                      {index + 1}
-                    </span>
-                    <Play className="w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition-opacity fill-foreground" />
+                    {currentTrack === track.id && isPlaying ? (
+                      <Pause className="w-4 h-4 fill-primary text-primary" />
+                    ) : (
+                      <>
+                        <span className="text-xs text-muted-foreground group-hover:opacity-0 transition-opacity">
+                          {index + 1}
+                        </span>
+                        <Play className="w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition-opacity fill-foreground" />
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{track.title}</div>
+                  <div className={`font-medium truncate ${currentTrack === track.id && isPlaying ? 'text-primary' : ''}`}>
+                    {track.title}
+                  </div>
                   <div className="text-sm text-muted-foreground md:hidden truncate">{track.artist}</div>
                 </div>
                 <div className="hidden md:block text-muted-foreground truncate">{track.artist}</div>
@@ -124,13 +176,20 @@ export default function Music() {
             <CarouselContent className="-ml-4">
               {albums.map((album) => (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                  <div className="group cursor-pointer">
+                  <div 
+                    className="group cursor-pointer"
+                    onClick={() => handlePlayTrack(album.url, album.id)}
+                  >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 relative">
                       <div className="w-full h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
                         {/* Play button overlay */}
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                            <Play className="w-6 h-6 text-black ml-1 fill-black" />
+                            {currentTrack === album.id && isPlaying ? (
+                              <Pause className="w-6 h-6 text-black fill-black" />
+                            ) : (
+                              <Play className="w-6 h-6 text-black ml-1 fill-black" />
+                            )}
                           </div>
                         </div>
                         
@@ -176,7 +235,10 @@ export default function Music() {
             <CarouselContent className="-ml-4">
               {moreAlbums.map((album) => (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                  <div className="group cursor-pointer">
+                  <div 
+                    className="group cursor-pointer"
+                    onClick={() => album.trackList?.[0]?.url && handlePlayTrack(album.trackList[0].url, `${album.id}-0`)}
+                  >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-cinematic group-hover:shadow-gold transition-all duration-200 relative">
                       {album.image ? (
                         <img 
@@ -197,7 +259,11 @@ export default function Music() {
                       {/* Play button overlay */}
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center transform group-hover:scale-105 transition-transform">
-                          <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
+                          {currentTrack === `${album.id}-0` && isPlaying ? (
+                            <Pause className="w-6 h-6 text-primary-foreground fill-primary-foreground" />
+                          ) : (
+                            <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
+                          )}
                         </div>
                       </div>
                     </div>
