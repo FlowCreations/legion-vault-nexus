@@ -75,9 +75,8 @@ export default function Community() {
                 
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start space-x-2 text-sm">
-                      <span className="mt-0.5">{feature.emoji}</span>
-                      <span className="text-muted-foreground">{feature.text}</span>
+                    <li key={idx} className="text-sm text-muted-foreground">
+                      {feature}
                     </li>
                   ))}
                 </ul>
@@ -145,9 +144,9 @@ const memberTiers = [
     price: "$10",
     subtitle: "For those who've been with us from the beginning.",
     features: [
-      { emoji: "🔓", text: "Access behind-the-scenes content & exclusive updates" },
-      { emoji: "💬", text: "Join the Heartbeat Community App – connect directly with the band and other fans" },
-      { emoji: "🎥", text: "Unlimited replays of all private online concerts" },
+      "Access behind-the-scenes content & exclusive updates",
+      "Join the Heartbeat Community App – connect directly with the band and other fans",
+      "Unlimited replays of all private online concerts",
     ],
     featured: true,
   },
@@ -156,11 +155,11 @@ const memberTiers = [
     price: "$25",
     subtitle: "For the dedicated fans who want more.",
     features: [
-      { emoji: "✓", text: "Includes everything in Rebels" },
-      { emoji: "📹", text: "Monthly live video hangout with the band and fellow fans" },
-      { emoji: "🎟️", text: "Two guest passes for friends/family to future online concerts" },
-      { emoji: "🛍️", text: "20% off all limited edition merch drops" },
-      { emoji: "🗳️", text: "Join the Fan Voting Squad – help choose which songs we release next" },
+      "Includes everything in Rebels",
+      "Monthly live video hangout with the band and fellow fans",
+      "Two guest passes for friends/family to future online concerts",
+      "20% off all limited edition merch drops",
+      "Join the Fan Voting Squad – help choose which songs we release next",
     ],
     featured: false,
   },
@@ -169,24 +168,12 @@ const memberTiers = [
     price: "$50",
     subtitle: "For the die-hards who want all-access.",
     features: [
-      { emoji: "✓", text: "Includes everything in Outlaws" },
-      { emoji: "🎧", text: "Early access to unreleased demos – give your feedback before we hit the studio" },
-      { emoji: "📥", text: "Exclusive digital song downloads before official release" },
-      { emoji: "🎟️", text: "Four guest passes for future online concerts" },
-      { emoji: "✍️", text: "Your name featured in the credits of our Day in the Life Vlogs" },
-      { emoji: "🎛️", text: "Monthly access to a virtual studio session with the band" },
-    ],
-    featured: false,
-  },
-  {
-    name: "Inner Circle",
-    price: "$500",
-    subtitle: "You're officially part of the team.",
-    features: [
-      { emoji: "✓", text: "Includes everything in Legionnaires" },
-      { emoji: "🏆", text: "Credited in the \"Thank You\" section of all music videos and album artwork (vinyl & CDs) recorded during your membership year" },
-      { emoji: "🎟️", text: "Eight VIP guest passes for future online concerts" },
-      { emoji: "🎸", text: "After 12 months of membership, receive a signed guitar from Sons of Legion" },
+      "Includes everything in Outlaws",
+      "Early access to unreleased demos – give your feedback before we hit the studio",
+      "Exclusive digital song downloads before official release",
+      "Four guest passes for future online concerts",
+      "Your name featured in the credits of our Day in the Life Vlogs",
+      "Monthly access to a virtual studio session with the band",
     ],
     featured: false,
   },
