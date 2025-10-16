@@ -12,6 +12,7 @@ import AlbumDetail from "./pages/AlbumDetail";
 import Shows from "./pages/Shows";
 import Community from "./pages/Community";
 import Merch from "./pages/Merch";
+import Merchant from "./pages/Merchant";
 import LiveStudio from "./pages/LiveStudio";
 import NotFound from "./pages/NotFound";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/shows" element={<Shows />} />
           <Route path="/community" element={<Community />} />
           <Route path="/merch" element={<Merch />} />
+          <Route path="/merchant" element={<Merchant />} />
           <Route path="/live" element={<LiveStudio />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

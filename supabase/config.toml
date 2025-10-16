@@ -1,1 +1,10 @@
 project_id = "dlwyndcvnunvomgkbkhn"
+
+[functions.create-album-checkout]
+verify_jwt = false
+
+[functions.track-event]
+verify_jwt = false
+
+[functions.analyze-user-behavior]
+verify_jwt = true
