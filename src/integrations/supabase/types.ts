@@ -14,16 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      user_analytics: {
+        Row: {
+          ai_insights: Json | null
+          created_at: string | null
+          engagement_score: number | null
+          favorite_pages: string[] | null
+          id: string
+          is_super_fan: boolean | null
+          last_activity: string | null
+          location_city: string | null
+          location_country: string | null
+          total_purchases: number | null
+          total_spent: number | null
+          total_visits: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_insights?: Json | null
+          created_at?: string | null
+          engagement_score?: number | null
+          favorite_pages?: string[] | null
+          id?: string
+          is_super_fan?: boolean | null
+          last_activity?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          total_purchases?: number | null
+          total_spent?: number | null
+          total_visits?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_insights?: Json | null
+          created_at?: string | null
+          engagement_score?: number | null
+          favorite_pages?: string[] | null
+          id?: string
+          is_super_fan?: boolean | null
+          last_activity?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          total_purchases?: number | null
+          total_spent?: number | null
+          total_visits?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          location_data: Json | null
+          page_url: string | null
+          session_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          location_data?: Json | null
+          page_url?: string | null
+          session_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          location_data?: Json | null
+          page_url?: string | null
+          session_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "merchant" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +266,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "merchant", "user"],
+    },
   },
 } as const
