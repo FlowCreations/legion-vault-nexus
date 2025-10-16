@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play } from "lucide-react";
+import { Play, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -115,8 +115,28 @@ export default function Videos() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+  };
+
   return (
     <div className="min-h-screen">
+      {/* Logout Button */}
+      {isAuthenticated && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            size="sm"
+            className="bg-black/50 border-white/20 text-white hover:bg-black/70"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      )}
+
       {/* Hero Trailer Section - Apple TV Style */}
       <div className="relative h-screen w-full overflow-hidden">
         <div className="absolute inset-0 bg-black">
