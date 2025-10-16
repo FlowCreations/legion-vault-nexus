@@ -2,6 +2,13 @@ import { useState, useEffect } from "react";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -9,6 +16,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface VideoItem {
   id: string;
@@ -25,10 +33,19 @@ export default function Videos() {
   const [behindTheScenes, setBehindTheScenes] = useState<VideoItem[]>([]);
   const [performances, setPerformances] = useState<VideoItem[]>([]);
   const [documentary, setDocumentary] = useState<VideoItem[]>([]);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    checkAuth();
     loadVideos();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsAuthenticated(!!session);
+  };
 
   const loadVideos = async () => {
     // Load hero video
@@ -89,6 +106,12 @@ export default function Videos() {
     }
   };
 
+  const handleVideoClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Trailer Section - Apple TV Style */}
@@ -131,6 +154,38 @@ export default function Videos() {
         </div>
       </div>
 
+
+      {/* Auth Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-md bg-black/95 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-white">
+              Start Watching
+            </DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Sign up to access exclusive content and start watching.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Button 
+              className="w-full bg-white hover:bg-gray-100 text-black font-semibold"
+              onClick={() => navigate('/auth')}
+            >
+              Sign Up
+            </Button>
+            <p className="text-center text-sm text-gray-400">
+              Already have an account?{" "}
+              <button 
+                onClick={() => navigate('/auth')}
+                className="text-white hover:underline font-medium"
+              >
+                Sign In
+              </button>
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Content Rows */}
       <div className="px-4 sm:px-8 lg:px-12 pb-16 space-y-12">
         {/* Performances Row */}
@@ -140,6 +195,7 @@ export default function Videos() {
           aspectRatio="portrait"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
+          onVideoClick={handleVideoClick}
         />
 
         {/* BTS Row */}
@@ -149,6 +205,7 @@ export default function Videos() {
           aspectRatio="portrait"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
+          onVideoClick={handleVideoClick}
         />
 
         {/* Music Videos Row */}
@@ -158,6 +215,7 @@ export default function Videos() {
           aspectRatio="landscape-large"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
+          onVideoClick={handleVideoClick}
         />
 
         {/* Documentary Row */}
@@ -168,6 +226,7 @@ export default function Videos() {
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
           isPremium
+          onVideoClick={handleVideoClick}
         />
       </div>
     </div>
@@ -181,9 +240,10 @@ interface ContentRowProps {
   hoveredId: string | null;
   setHoveredId: (id: string | null) => void;
   isPremium?: boolean;
+  onVideoClick: () => void;
 }
 
-function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium }: ContentRowProps) {
+function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium, onVideoClick }: ContentRowProps) {
   return (
     <div>
       <h2 className="text-2xl sm:text-3xl font-bold mb-6">{title}</h2>
@@ -211,6 +271,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                 className="group cursor-pointer"
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
+                onClick={onVideoClick}
               >
                 <div className="relative rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 transform group-hover:scale-105">
                   <div className={`${
