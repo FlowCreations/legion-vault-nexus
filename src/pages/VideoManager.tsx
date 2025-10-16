@@ -5,6 +5,7 @@ import { Trash2, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { ThumbnailUpdater } from "@/components/ThumbnailUpdater";
 
 interface Video {
   id: string;
@@ -170,7 +171,11 @@ export default function VideoManager() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-2">
+                    <ThumbnailUpdater 
+                      videoId={video.id}
+                      videoTitle={video.title}
+                    />
                     <Button
                       variant="destructive"
                       size="sm"
