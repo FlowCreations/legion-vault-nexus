@@ -61,9 +61,9 @@ async function uploadThumbnails() {
   setTimeout(() => window.location.reload(), 1000);
 }
 
-// Auto-run on page load
-if (window.location.pathname === '/videos/manage') {
-  uploadThumbnails();
-}
+// Auto-run disabled - thumbnails already uploaded
+// if (window.location.pathname === '/videos/manage') {
+//   uploadThumbnails();
+// }
 
 export { uploadThumbnails };
