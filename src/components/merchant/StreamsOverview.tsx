@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { TrendingDown } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 export const StreamsOverview = () => {
   const [timeFilter, setTimeFilter] = useState<"7days" | "28days" | "alltime">("28days");
 
   const streamData = {
     current: 15847,
-    trend: -5.02,
+    trend: 12.5,
     allTime: 94301,
   };
 
@@ -52,10 +52,10 @@ export const StreamsOverview = () => {
         
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-gray-400">
-            <span>Trending down</span>
-            <span className="text-red-500 font-semibold flex items-center gap-1">
-              <TrendingDown className="h-4 w-4" />
-              {Math.abs(streamData.trend)}%
+            <span>Trending up</span>
+            <span className="text-green-500 font-semibold flex items-center gap-1">
+              <TrendingUp className="h-4 w-4" />
+              {streamData.trend}%
             </span>
             <span>for the 28 days ending {new Date().toLocaleDateString()} as compared to the previous 28 days.</span>
           </div>

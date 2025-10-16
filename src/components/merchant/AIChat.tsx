@@ -17,7 +17,7 @@ export const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm your AI assistant. Ask me anything about your fan engagement, metrics, or marketing strategies.",
+      content: "Hi! I analyze user behavior on your site to provide actionable insights. I track how fans interact with your music, which pages they visit most, and what drives engagement. Ask me about trends, user patterns, or recommendations!",
       timestamp: new Date()
     }
   ]);
@@ -80,14 +80,17 @@ export const AIChat = () => {
 
   return (
     <Card className="h-[600px] flex flex-col">
-      <CardHeader className="border-b">
+      <CardHeader className="border-b flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          AI Marketing Assistant
+          User Behavior Insights
         </CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          AI-powered analysis of how fans interact with your platform
+        </p>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.map((msg, idx) => (
               <div
@@ -95,13 +98,13 @@ export const AIChat = () => {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
+                  className={`max-w-[85%] rounded-lg p-3 break-words ${
                     msg.role === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                   <span className="text-xs opacity-70 mt-1 block">
                     {msg.timestamp.toLocaleTimeString([], { 
                       hour: '2-digit', 
@@ -120,13 +123,13 @@ export const AIChat = () => {
             )}
           </div>
         </ScrollArea>
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <div className="flex gap-2">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask about your metrics, fan engagement, or marketing strategies..."
+              placeholder="Ask about user patterns, behavior trends, or engagement insights..."
               disabled={isLoading}
             />
             <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>

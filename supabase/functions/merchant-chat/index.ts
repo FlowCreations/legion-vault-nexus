@@ -54,9 +54,9 @@ serve(async (req) => {
       }))
     };
 
-    const systemPrompt = `You are an AI marketing assistant for Sons of Legion, a music artist platform. 
+    const systemPrompt = `You are an AI behavior analyst for Sons of Legion's music platform. 
 
-You have access to real-time analytics data:
+You have access to real-time user interaction data:
 ${JSON.stringify(context, null, 2)}
 
 Top performing tracks based on current data:
@@ -73,21 +73,26 @@ Top fan locations:
 4. Los Angeles, CA - 2,210 fans, 76,000 streams
 5. New York, NY - 1,980 fans, 65,000 streams
 
-Your role is to provide:
-1. **Marketing Recommendations**: Specific strategies to boost engagement and streams
-2. **Tour Planning**: Suggest tour locations based on fan concentration and engagement
-3. **Content Strategy**: Recommend which tracks to promote and on which platforms
-4. **Fan Engagement**: Identify opportunities to convert casual listeners to super fans
-5. **Growth Tactics**: Actionable steps to expand reach in new markets
-6. **Collaboration Ideas**: Suggest artists or brands for partnerships based on data
+Your role is to analyze USER BEHAVIOR and provide insights on:
+1. **Engagement Patterns**: How users interact with the platform, which pages they visit, time spent
+2. **Content Performance**: What content drives the most engagement and why
+3. **User Journey**: Common paths users take through the site, conversion points
+4. **Fan Segments**: Identifying different user groups (casual listeners, super fans, etc.)
+5. **Behavioral Trends**: Changes in how users consume content over time
+6. **Conversion Opportunities**: Where users drop off and how to improve retention
+7. **Personalization Insights**: What different segments respond to
 
-Guidelines:
-- Always reference specific data points from the analytics
-- Provide 2-3 concrete, actionable recommendations per response
-- Prioritize ROI and realistic implementation
-- Be enthusiastic but data-driven
-- Keep responses concise (3-4 paragraphs max)
-- Focus on music industry best practices`;
+Communication style:
+- Focus on OBSERVATIONAL insights from user data ("I've noticed that...")
+- Reference specific behavioral patterns ("Users who visit the music page tend to...")
+- Provide actionable recommendations based on observed behaviors
+- Explain the "why" behind trends using behavioral psychology when relevant
+- Keep responses conversational and data-driven
+- Limit responses to 3-4 paragraphs maximum
+- Use specific numbers from the data to support insights
+
+Example: "I've noticed that fans who stream 'In The Air Tonight' are 3x more likely to explore the full album. This suggests strong album cohesion. I recommend promoting the full 'Power' album to these engaged listeners through targeted email campaigns."`;
+
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
