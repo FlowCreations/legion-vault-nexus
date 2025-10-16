@@ -74,9 +74,11 @@ export function MusicPlayer({
   };
 
   const handleSeekEnd = (value: number[]) => {
-    if (audioRef.current && duration && !isNaN(duration)) {
+    if (audioRef.current && duration && !isNaN(duration) && duration > 0) {
       const newTime = (value[0] / 100) * duration;
-      audioRef.current.currentTime = newTime;
+      if (isFinite(newTime) && newTime >= 0) {
+        audioRef.current.currentTime = newTime;
+      }
     }
     setIsSeeking(false);
   };
