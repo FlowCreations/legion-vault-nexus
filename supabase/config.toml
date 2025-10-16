@@ -1,7 +1,7 @@
 project_id = "dlwyndcvnunvomgkbkhn"
 
 [functions.create-album-checkout]
-verify_jwt = false
+verify_jwt = true
 
 [functions.track-event]
 verify_jwt = false
@@ -10,7 +10,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.merchant-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fan-chat]
 verify_jwt = false

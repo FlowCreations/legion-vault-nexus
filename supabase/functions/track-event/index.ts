@@ -6,6 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Allowed event types for validation
+const ALLOWED_EVENT_TYPES = [
+  'page_view',
+  'music_play',
+  'music_pause',
+  'album_view',
+  'purchase_started',
+  'purchase_completed',
+  'video_view',
+  'merch_view',
+  'show_view',
+  'chat_interaction'
+];
+
+const MAX_EVENT_DATA_SIZE = 10000; // 10KB max for event data
+const MAX_URL_LENGTH = 2048;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,6 +30,42 @@ serve(async (req) => {
 
   try {
     const { eventType, eventData, pageUrl, sessionId } = await req.json();
+
+    // Input validation
+    if (!eventType || typeof eventType !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid event type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!ALLOWED_EVENT_TYPES.includes(eventType)) {
+      return new Response(
+        JSON.stringify({ error: `Event type must be one of: ${ALLOWED_EVENT_TYPES.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (eventData && JSON.stringify(eventData).length > MAX_EVENT_DATA_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'Event data too large' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (pageUrl && pageUrl.length > MAX_URL_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: 'Page URL too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid session ID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -24,10 +77,17 @@ serve(async (req) => {
     let userId = null;
     
     if (authHeader) {
-      const { data: { user } } = await supabaseClient.auth.getUser(
-        authHeader.replace('Bearer ', '')
-      );
-      userId = user?.id || null;
+      try {
+        const { data: { user }, error } = await supabaseClient.auth.getUser(
+          authHeader.replace('Bearer ', '')
+        );
+        if (!error && user) {
+          userId = user.id;
+        }
+      } catch (e) {
+        console.error('Auth error:', e);
+        // Continue with null userId for anonymous tracking
+      }
     }
 
     // Insert event
