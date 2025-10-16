@@ -32,19 +32,21 @@ export default function Videos() {
         {/* Hero Content */}
         <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12 lg:p-16">
           <div className="max-w-2xl">
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
-              Carolina
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 text-foreground">
+              Get SOL Portal for free for 7 days.
             </h1>
-            <p className="text-muted-foreground text-lg mb-6">
-              Experience the power of Sons of Legion's latest release
+            <p className="text-foreground/80 text-lg mb-6">
+              Stream hundreds of content, with new releases every week.
             </p>
             <Button 
               size="lg" 
-              className="bg-white text-black hover:bg-white/90 transition-all duration-300"
+              className="bg-foreground/10 backdrop-blur-sm text-foreground border border-foreground/20 hover:bg-foreground/20 transition-all duration-300 rounded-full px-8"
             >
-              <Play className="w-5 h-5 mr-2" />
-              Watch Now
+              Accept Free Trial
             </Button>
+            <p className="text-foreground/60 text-sm mt-4">
+              7 days free, then $12.99/month.
+            </p>
           </div>
         </div>
       </div>
