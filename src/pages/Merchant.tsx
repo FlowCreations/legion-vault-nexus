@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, MapPin, Sparkles, Activity, LayoutDashboard, MessageSquare } from "lucide-react";
+import { Activity, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { MetricsGrid } from "@/components/merchant/MetricsGrid";
 import { AIChat } from "@/components/merchant/AIChat";
+import { TopPlatforms } from "@/components/merchant/TopPlatforms";
+import { TopTracks } from "@/components/merchant/TopTracks";
+import { StreamsOverview } from "@/components/merchant/StreamsOverview";
+import { Geography } from "@/components/merchant/Geography";
 
 interface AnalyticsData {
   events: number;
@@ -31,6 +32,7 @@ const Merchant = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     checkAuthorization();
@@ -173,8 +175,8 @@ const Merchant = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 mt-20">
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-4 py-8 mt-20 max-w-7xl">
         {isDemoMode && (
           <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <p className="text-sm text-center">
@@ -184,172 +186,60 @@ const Merchant = () => {
         )}
         
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Merchant Dashboard</h1>
-              <p className="text-muted-foreground">AI-powered insights into your fan engagement</p>
+              <h1 className="text-5xl font-bold mb-3">Analytics Dashboard</h1>
+              <p className="text-gray-400 text-lg">Track your fan engagement and platform performance</p>
             </div>
-            <Button onClick={loadAnalytics} disabled={refreshing}>
-              {refreshing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <Activity className="mr-2 h-4 w-4" />
-                  Refresh Analytics
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={loadAnalytics} 
+                disabled={refreshing}
+                variant="outline"
+                className="border-white/20 hover:bg-white/10"
+              >
+                {refreshing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="mr-2 h-4 w-4" />
+                    Refresh Data
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={() => setShowChat(!showChat)}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                {showChat ? "Hide" : "Show"} AI Assistant
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="dashboard">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="chat">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              AI Assistant
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
+            <div className="space-y-12">
+              <TopPlatforms />
+              <StreamsOverview />
+              <TopTracks period="7days" />
+              <Geography />
+            </div>
+          </div>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Metrics Grid */}
-            <MetricsGrid
-              totalEvents={analyticsData?.events || 0}
-              totalUsers={analyticsData?.analytics || 0}
-              superFans={analyticsData?.superFans || 0}
-              avgEngagement={
-                analyticsData?.analysis?.insights?.length 
-                  ? analyticsData.analysis.insights.length * 10 
-                  : 0
-              }
-            />
-
-            {/* AI Insights */}
-            <Tabs defaultValue="patterns" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="patterns">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Patterns
-                </TabsTrigger>
-                <TabsTrigger value="insights">
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Insights
-                </TabsTrigger>
-                <TabsTrigger value="recommendations">
-                  <Activity className="mr-2 h-4 w-4" />
-                  Recommendations
-                </TabsTrigger>
-                <TabsTrigger value="geographic">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Geographic
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="patterns">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Behavioral Patterns</CardTitle>
-                    <CardDescription>AI-detected patterns in user behavior</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analyticsData?.analysis?.patterns?.length > 0 ? (
-                      <ul className="space-y-2">
-                        {analyticsData.analysis.patterns.map((pattern, idx) => (
-                          <li key={idx} className="flex items-start">
-                            <span className="text-primary mr-2">•</span>
-                            <span>{pattern}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-muted-foreground">No patterns detected yet. More data needed.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="insights">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Engagement Insights</CardTitle>
-                    <CardDescription>Key findings about fan engagement</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analyticsData?.analysis?.insights?.length > 0 ? (
-                      <ul className="space-y-2">
-                        {analyticsData.analysis.insights.map((insight, idx) => (
-                          <li key={idx} className="flex items-start">
-                            <span className="text-primary mr-2">•</span>
-                            <span>{insight}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-muted-foreground">No insights available yet. Continue building engagement!</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="recommendations">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>AI Recommendations</CardTitle>
-                    <CardDescription>Actionable strategies to boost engagement</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analyticsData?.analysis?.recommendations?.length > 0 ? (
-                      <ul className="space-y-2">
-                        {analyticsData.analysis.recommendations.map((rec, idx) => (
-                          <li key={idx} className="flex items-start">
-                            <span className="text-primary mr-2">•</span>
-                            <span>{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-muted-foreground">Gathering data to generate recommendations...</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="geographic">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Geographic Distribution</CardTitle>
-                    <CardDescription>Where your fans are located</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analyticsData?.analysis?.geographic && Object.keys(analyticsData.analysis.geographic).length > 0 ? (
-                      <div className="space-y-2">
-                        {Object.entries(analyticsData.analysis.geographic).map(([location, data]: [string, any]) => (
-                          <div key={location} className="flex justify-between items-center border-b pb-2">
-                            <span className="font-medium">{location}</span>
-                            <span className="text-muted-foreground">{JSON.stringify(data)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">No geographic data available yet.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="chat">
-            <AIChat />
-          </TabsContent>
-        </Tabs>
+          {showChat && (
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                <AIChat />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
