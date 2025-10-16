@@ -8,6 +8,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import heroVideo from "@/assets/hero-video.mp4";
 
 export default function Videos() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -17,12 +18,13 @@ export default function Videos() {
       {/* Hero Trailer Section */}
       <div className="relative h-[85vh] overflow-hidden">
         <div className="absolute inset-0 bg-black">
-          <iframe
-            className="w-full h-full"
-            src="https://www.youtube.com/embed/GXP2FEoBlIg?autoplay=1&mute=1&controls=0&loop=1&playlist=GXP2FEoBlIg&rel=0&modestbranding=1&showinfo=0"
-            title="Sons of Legion - Hero Trailer"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+          <video
+            className="w-full h-full object-cover"
+            src={heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
           />
         </div>
         
