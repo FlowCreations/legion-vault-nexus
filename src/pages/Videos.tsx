@@ -91,8 +91,8 @@ export default function Videos() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Trailer Section */}
-      <div className="relative h-screen overflow-hidden">
+      {/* Hero Trailer Section - Apple TV Style */}
+      <div className="relative min-h-[85vh] lg:min-h-[90vh] overflow-hidden">
         <div className="absolute inset-0 bg-black">
           <video
             className="w-full h-full object-cover opacity-100"
@@ -104,27 +104,27 @@ export default function Videos() {
           />
         </div>
         
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        {/* Gradient Overlay - More subtle like Apple TV */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         
-        {/* Hero Content - Positioned at bottom left like Apple TV */}
-        <div className="absolute inset-0 flex items-end justify-start p-8 sm:p-12 lg:p-20 pb-16 sm:pb-20 lg:pb-28">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 text-white leading-tight">
+        {/* Hero Content - Positioned at bottom like Apple TV */}
+        <div className="absolute inset-0 flex items-end justify-center p-6 sm:p-8 lg:p-12 pb-12 sm:pb-16 lg:pb-20">
+          <div className="max-w-2xl text-center">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-6 sm:mb-8 text-white leading-tight">
               Enter the Sol Portal...
             </h1>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+            <div className="flex flex-col items-center gap-3 sm:gap-4">
               <Button 
                 size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-6 text-base rounded-lg shadow-lg"
+                className="bg-white hover:bg-gray-100 text-black font-semibold px-10 py-6 text-base sm:text-lg rounded-lg shadow-lg transition-all"
               >
                 Accept Free Trial
               </Button>
-              <div className="flex flex-col">
-                <p className="text-white text-lg sm:text-xl font-semibold leading-tight">
+              <div className="flex flex-col items-center">
+                <p className="text-white text-base sm:text-lg font-medium">
                   Free for seven days
                 </p>
-                <p className="text-gray-200 text-base sm:text-lg">
+                <p className="text-gray-300 text-sm sm:text-base">
                   Then $12.99/mo
                 </p>
               </div>
@@ -258,5 +258,3 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
     </div>
   );
 }
-
-
