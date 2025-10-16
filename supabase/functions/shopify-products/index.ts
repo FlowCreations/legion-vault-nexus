@@ -53,7 +53,7 @@ serve(async (req) => {
   try {
     console.log('Fetching products from Shopify...');
 
-    const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+    const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
