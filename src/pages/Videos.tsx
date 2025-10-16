@@ -32,10 +32,10 @@ export default function Videos() {
         {/* Hero Content */}
         <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12 lg:p-16">
           <div className="max-w-2xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 text-foreground">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold mb-3 text-foreground">
               Get SOL Portal for free for 7 days.
             </h1>
-            <p className="text-foreground/80 text-lg mb-6">
+            <p className="text-foreground/70 text-base sm:text-lg mb-6 font-light">
               Stream hundreds of content, with new releases every week.
             </p>
             <Button 
@@ -44,7 +44,7 @@ export default function Videos() {
             >
               Accept Free Trial
             </Button>
-            <p className="text-foreground/60 text-sm mt-4">
+            <p className="text-foreground/50 text-xs sm:text-sm mt-4 font-light">
               7 days free, then $12.99/month.
             </p>
           </div>
