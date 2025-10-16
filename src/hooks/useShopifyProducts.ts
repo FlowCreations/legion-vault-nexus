@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const SHOPIFY_DOMAIN = 'sonsoflegion.com';
-const STOREFRONT_ACCESS_TOKEN = 'ca6f21479ccf44c8b5817bd8e966c594';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ShopifyProduct {
   id: string;
@@ -44,43 +42,6 @@ interface Product {
   handle: string;
 }
 
-const PRODUCTS_QUERY = `
-  query getProducts($first: Int!) {
-    products(first: $first) {
-      edges {
-        node {
-          id
-          title
-          description
-          handle
-          priceRange {
-            minVariantPrice {
-              amount
-              currencyCode
-            }
-          }
-          compareAtPriceRange {
-            minVariantPrice {
-              amount
-            }
-          }
-          images(first: 1) {
-            edges {
-              node {
-                url
-                altText
-              }
-            }
-          }
-          tags
-          productType
-          availableForSale
-        }
-      }
-    }
-  }
-`;
-
 export function useShopifyProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,25 +50,11 @@ export function useShopifyProducts() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN,
-          },
-          body: JSON.stringify({
-            query: PRODUCTS_QUERY,
-            variables: { first: 50 },
-          }),
-        });
+        const { data, error } = await supabase.functions.invoke('shopify-products');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch products from Shopify');
-        }
+        if (error) throw error;
 
-        const { data } = await response.json();
-        
-        const formattedProducts: Product[] = data.products.edges.map((edge: any) => {
+        const formattedProducts: Product[] = data.data.products.edges.map((edge: any) => {
           const product: ShopifyProduct = edge.node;
           const price = parseFloat(product.priceRange.minVariantPrice.amount);
           const compareAtPrice = product.compareAtPriceRange?.minVariantPrice?.amount
