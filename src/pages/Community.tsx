@@ -46,10 +46,10 @@ export default function Community() {
         {/* Member Tiers */}
         <div className="mb-16">
           <h2 className="font-serif text-3xl font-bold mb-8 text-center">
-            🔥 Sons of Legion Private Community Tiers 🔥
+            Sons of Legion Private Community Tiers
           </h2>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {memberTiers.map((tier) => (
               <div
                 key={tier.name}
