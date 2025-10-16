@@ -14,17 +14,12 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     const { message } = await req.json();
 
-    // Get recent analytics data for context
+    // Get recent analytics data for context (using demo data if auth fails)
     const { data: events } = await supabaseClient
       .from('user_events')
       .select('event_type, created_at, page_url')

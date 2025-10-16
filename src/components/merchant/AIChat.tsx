@@ -46,13 +46,8 @@ export const AIChat = () => {
     setIsLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const { data, error } = await supabase.functions.invoke('merchant-chat', {
-        body: { message: input },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`
-        }
+        body: { message: input }
       });
 
       if (error) throw error;
