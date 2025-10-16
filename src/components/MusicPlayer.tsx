@@ -167,6 +167,7 @@ export function MusicPlayer({
                 max={100}
                 step={0.1}
                 className="flex-1"
+                disabled={!duration || isNaN(duration) || duration === 0}
               />
               <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
                 {formatTime(duration)}
