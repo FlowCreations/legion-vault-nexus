@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Users, TrendingUp, MapPin, Sparkles, Activity } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { TrendingUp, MapPin, Sparkles, Activity, LayoutDashboard, MessageSquare } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { MetricsGrid } from "@/components/merchant/MetricsGrid";
+import { AIChat } from "@/components/merchant/AIChat";
 
 interface AnalyticsData {
   events: number;
@@ -124,7 +126,7 @@ const Merchant = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-20">
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
@@ -147,153 +149,149 @@ const Merchant = () => {
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-              <BarChart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analyticsData?.events?.toLocaleString() || 0}</div>
-              <p className="text-xs text-muted-foreground">User interactions tracked</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analyticsData?.analytics?.toLocaleString() || 0}</div>
-              <p className="text-xs text-muted-foreground">Unique visitors</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Super Fans</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analyticsData?.superFans || 0}</div>
-              <p className="text-xs text-muted-foreground">Highly engaged users</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* AI Insights Tabs */}
-        <Tabs defaultValue="patterns" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="patterns">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Patterns
+        {/* Main Tabs */}
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dashboard">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              Dashboard
             </TabsTrigger>
-            <TabsTrigger value="insights">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Insights
-            </TabsTrigger>
-            <TabsTrigger value="recommendations">
-              <Activity className="mr-2 h-4 w-4" />
-              Recommendations
-            </TabsTrigger>
-            <TabsTrigger value="geographic">
-              <MapPin className="mr-2 h-4 w-4" />
-              Geographic
+            <TabsTrigger value="chat">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              AI Assistant
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="patterns">
-            <Card>
-              <CardHeader>
-                <CardTitle>Behavioral Patterns</CardTitle>
-                <CardDescription>AI-detected patterns in user behavior</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {analyticsData?.analysis?.patterns?.length > 0 ? (
-                  <ul className="space-y-2">
-                    {analyticsData.analysis.patterns.map((pattern, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <span className="text-primary mr-2">•</span>
-                        <span>{pattern}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-muted-foreground">No patterns detected yet. More data needed.</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Metrics Grid */}
+            <MetricsGrid
+              totalEvents={analyticsData?.events || 0}
+              totalUsers={analyticsData?.analytics || 0}
+              superFans={analyticsData?.superFans || 0}
+              avgEngagement={
+                analyticsData?.analysis?.insights?.length 
+                  ? analyticsData.analysis.insights.length * 10 
+                  : 0
+              }
+            />
 
-          <TabsContent value="insights">
-            <Card>
-              <CardHeader>
-                <CardTitle>Engagement Insights</CardTitle>
-                <CardDescription>Key findings about fan engagement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {analyticsData?.analysis?.insights?.length > 0 ? (
-                  <ul className="space-y-2">
-                    {analyticsData.analysis.insights.map((insight, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <span className="text-primary mr-2">•</span>
-                        <span>{insight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-muted-foreground">No insights available yet. Continue building engagement!</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {/* AI Insights */}
+            <Tabs defaultValue="patterns" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="patterns">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Patterns
+                </TabsTrigger>
+                <TabsTrigger value="insights">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Insights
+                </TabsTrigger>
+                <TabsTrigger value="recommendations">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Recommendations
+                </TabsTrigger>
+                <TabsTrigger value="geographic">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Geographic
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="recommendations">
-            <Card>
-              <CardHeader>
-                <CardTitle>AI Recommendations</CardTitle>
-                <CardDescription>Actionable strategies to boost engagement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {analyticsData?.analysis?.recommendations?.length > 0 ? (
-                  <ul className="space-y-2">
-                    {analyticsData.analysis.recommendations.map((rec, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <span className="text-primary mr-2">•</span>
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-muted-foreground">Gathering data to generate recommendations...</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <TabsContent value="patterns">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Behavioral Patterns</CardTitle>
+                    <CardDescription>AI-detected patterns in user behavior</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {analyticsData?.analysis?.patterns?.length > 0 ? (
+                      <ul className="space-y-2">
+                        {analyticsData.analysis.patterns.map((pattern, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-primary mr-2">•</span>
+                            <span>{pattern}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">No patterns detected yet. More data needed.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          <TabsContent value="geographic">
-            <Card>
-              <CardHeader>
-                <CardTitle>Geographic Distribution</CardTitle>
-                <CardDescription>Where your fans are located</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {analyticsData?.analysis?.geographic && Object.keys(analyticsData.analysis.geographic).length > 0 ? (
-                  <div className="space-y-2">
-                    {Object.entries(analyticsData.analysis.geographic).map(([location, data]: [string, any]) => (
-                      <div key={location} className="flex justify-between items-center border-b pb-2">
-                        <span className="font-medium">{location}</span>
-                        <span className="text-muted-foreground">{JSON.stringify(data)}</span>
+              <TabsContent value="insights">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Engagement Insights</CardTitle>
+                    <CardDescription>Key findings about fan engagement</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {analyticsData?.analysis?.insights?.length > 0 ? (
+                      <ul className="space-y-2">
+                        {analyticsData.analysis.insights.map((insight, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-primary mr-2">•</span>
+                            <span>{insight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">No insights available yet. Continue building engagement!</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="recommendations">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AI Recommendations</CardTitle>
+                    <CardDescription>Actionable strategies to boost engagement</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {analyticsData?.analysis?.recommendations?.length > 0 ? (
+                      <ul className="space-y-2">
+                        {analyticsData.analysis.recommendations.map((rec, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-primary mr-2">•</span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">Gathering data to generate recommendations...</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="geographic">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Geographic Distribution</CardTitle>
+                    <CardDescription>Where your fans are located</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {analyticsData?.analysis?.geographic && Object.keys(analyticsData.analysis.geographic).length > 0 ? (
+                      <div className="space-y-2">
+                        {Object.entries(analyticsData.analysis.geographic).map(([location, data]: [string, any]) => (
+                          <div key={location} className="flex justify-between items-center border-b pb-2">
+                            <span className="font-medium">{location}</span>
+                            <span className="text-muted-foreground">{JSON.stringify(data)}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No geographic data available yet.</p>
-                )}
-              </CardContent>
-            </Card>
+                    ) : (
+                      <p className="text-muted-foreground">No geographic data available yet.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="chat">
+            <AIChat />
           </TabsContent>
         </Tabs>
       </div>
