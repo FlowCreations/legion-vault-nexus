@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Upload } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { setVideoThumbnail } from "@/utils/thumbnailHelper";
 
 interface SimpleThumbnailUploaderProps {
   videoId: string;
@@ -24,7 +23,6 @@ export function SimpleThumbnailUploader({
     try {
       setUploading(true);
 
-      // Check if it's an image
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Invalid file",
@@ -34,49 +32,13 @@ export function SimpleThumbnailUploader({
         return;
       }
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Upload image to thumbnails bucket
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}_thumb.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('thumbnails')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('thumbnails')
-        .getPublicUrl(fileName);
-
-      // Update video record
-      const { error: updateError } = await supabase
-        .from('videos')
-        .update({ thumbnail_url: publicUrl })
-        .eq('id', videoId);
-
-      if (updateError) throw updateError;
+      await setVideoThumbnail(videoId, file);
 
       toast({
         title: "Success!",
         description: "Thumbnail uploaded successfully",
       });
 
-      // Reload to show new thumbnail
       setTimeout(() => window.location.reload(), 500);
 
     } catch (error) {
