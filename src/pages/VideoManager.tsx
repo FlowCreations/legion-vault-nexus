@@ -5,7 +5,7 @@ import { Trash2, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { ThumbnailUpdater } from "@/components/ThumbnailUpdater";
+import { VideoThumbnailGenerator } from "@/components/VideoThumbnailGenerator";
 
 interface Video {
   id: string;
@@ -172,8 +172,9 @@ export default function VideoManager() {
 
                   {/* Actions */}
                   <div className="flex flex-col items-end gap-2">
-                    <ThumbnailUpdater 
+                    <VideoThumbnailGenerator
                       videoId={video.id}
+                      videoUrl={getVideoUrl(video.storage_path)}
                       videoTitle={video.title}
                     />
                     <Button
