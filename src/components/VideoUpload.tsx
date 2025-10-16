@@ -279,7 +279,12 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
 
         {/* Upload Button */}
         <Button
-          onClick={handleUpload}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleUpload();
+          }}
           disabled={uploading || !selectedFile || !title || !category}
           className="w-full"
         >
