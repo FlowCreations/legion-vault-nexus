@@ -36,7 +36,7 @@ export const Footer = () => {
               asChild 
               variant="outline" 
               size="sm"
-              className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
+              className="bg-gradient-gold hover:shadow-glow transition-all duration-300 text-black hover:text-black"
             >
               <Link to="/merchant">
                 <BarChart className="w-4 h-4 mr-2" />
