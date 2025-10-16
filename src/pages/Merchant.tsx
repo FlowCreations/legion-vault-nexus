@@ -30,6 +30,7 @@ const Merchant = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     checkAuthorization();
@@ -40,12 +41,11 @@ const Merchant = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast({
-          title: "Access Denied",
-          description: "Please log in to access the merchant dashboard",
-          variant: "destructive",
-        });
-        navigate('/');
+        // Demo mode - allow access without auth
+        setIsDemoMode(true);
+        setIsAuthorized(true);
+        setAnalyticsData(getDemoData());
+        setIsLoading(false);
         return;
       }
 
@@ -55,36 +55,83 @@ const Merchant = () => {
         .select('role')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Role check error:', error);
+        // If error checking roles, allow demo mode
+        setIsDemoMode(true);
+        setIsAuthorized(true);
+        setAnalyticsData(getDemoData());
+        setIsLoading(false);
+        return;
+      }
 
       const hasAccess = roles?.some(r => r.role === 'admin' || r.role === 'merchant');
       
       if (!hasAccess) {
-        toast({
-          title: "Access Denied",
-          description: "You don't have permission to access this area",
-          variant: "destructive",
-        });
-        navigate('/');
+        // User logged in but no access - show demo mode
+        setIsDemoMode(true);
+        setIsAuthorized(true);
+        setAnalyticsData(getDemoData());
+        setIsLoading(false);
         return;
       }
 
       setIsAuthorized(true);
+      setIsDemoMode(false);
       loadAnalytics();
     } catch (error) {
       console.error('Authorization error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify access permissions",
-        variant: "destructive",
-      });
-      navigate('/');
+      // On error, allow demo mode
+      setIsDemoMode(true);
+      setIsAuthorized(true);
+      setAnalyticsData(getDemoData());
     } finally {
       setIsLoading(false);
     }
   };
 
+  const getDemoData = (): AnalyticsData => ({
+    events: 15847,
+    analytics: 3421,
+    superFans: 234,
+    analysis: {
+      patterns: [
+        "Peak engagement occurs on Friday evenings (8-10 PM), with 3x higher activity compared to weekdays",
+        "Mobile users account for 68% of traffic, with iOS devices showing 2x longer session times",
+        "Music streaming peaks during commute hours (7-9 AM, 5-7 PM) across all demographics",
+        "Video content has 45% higher completion rates when under 3 minutes in length"
+      ],
+      insights: [
+        "Super fans generate 78% of total revenue despite being only 6.8% of the user base",
+        "Album purchases increase by 34% when bundled with exclusive behind-the-scenes content",
+        "Community engagement drives a 2.3x increase in merchandise sales within 48 hours",
+        "Users who attend virtual live shows are 5x more likely to become super fans"
+      ],
+      recommendations: [
+        "Launch targeted Friday evening campaigns featuring new releases and exclusive content",
+        "Optimize mobile experience with vertical video formats and one-tap purchasing",
+        "Create VIP bundles combining albums with exclusive merchandise for super fan segments",
+        "Schedule tour announcements during peak engagement windows for maximum impact",
+        "Implement referral program targeting super fans with incentives for friend invitations"
+      ],
+      segments: [],
+      targets: [],
+      geographic: {
+        "Los Angeles, CA": { fans: 487, superFans: 34, revenue: "$12,450" },
+        "New York, NY": { fans: 423, superFans: 28, revenue: "$10,890" },
+        "Austin, TX": { fans: 312, superFans: 21, revenue: "$8,234" },
+        "Nashville, TN": { fans: 289, superFans: 19, revenue: "$7,567" },
+        "Chicago, IL": { fans: 256, superFans: 16, revenue: "$6,890" }
+      }
+    }
+  });
+
   const loadAnalytics = async () => {
+    if (isDemoMode) {
+      setAnalyticsData(getDemoData());
+      return;
+    }
+
     setRefreshing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -101,9 +148,10 @@ const Merchant = () => {
       console.error('Analytics error:', error);
       toast({
         title: "Error",
-        description: "Failed to load analytics data",
+        description: "Failed to load analytics data. Showing demo data.",
         variant: "destructive",
       });
+      setAnalyticsData(getDemoData());
     } finally {
       setRefreshing(false);
     }
@@ -127,6 +175,14 @@ const Merchant = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 mt-20">
+        {isDemoMode && (
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-sm text-center">
+              <span className="font-semibold">Demo Mode</span> - Showing sample analytics data for presentation
+            </p>
+          </div>
+        )}
+        
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
