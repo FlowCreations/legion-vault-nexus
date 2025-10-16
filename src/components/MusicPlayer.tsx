@@ -34,13 +34,16 @@ export function MusicPlayer({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
+  const [isSeeking, setIsSeeking] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateProgress = () => {
-      setProgress((audio.currentTime / audio.duration) * 100 || 0);
+      if (!isSeeking) {
+        setProgress((audio.currentTime / audio.duration) * 100 || 0);
+      }
     };
 
     const updateDuration = () => {
@@ -63,10 +66,19 @@ export function MusicPlayer({
   }, [volume, audioRef]);
 
   const handleSeek = (value: number[]) => {
+    setProgress(value[0]);
+  };
+
+  const handleSeekStart = () => {
+    setIsSeeking(true);
+  };
+
+  const handleSeekEnd = (value: number[]) => {
     if (audioRef.current && duration && !isNaN(duration)) {
       const newTime = (value[0] / 100) * duration;
       audioRef.current.currentTime = newTime;
     }
+    setIsSeeking(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -148,6 +160,8 @@ export function MusicPlayer({
               <Slider
                 value={[progress]}
                 onValueChange={handleSeek}
+                onValueCommit={handleSeekEnd}
+                onPointerDown={handleSeekStart}
                 max={100}
                 step={0.1}
                 className="flex-1"
