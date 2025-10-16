@@ -92,10 +92,10 @@ export default function Videos() {
   return (
     <div className="min-h-screen">
       {/* Hero Trailer Section - Apple TV Style */}
-      <div className="relative min-h-[85vh] lg:min-h-[90vh] overflow-hidden">
+      <div className="relative h-screen w-full overflow-hidden">
         <div className="absolute inset-0 bg-black">
           <video
-            className="w-full h-full object-cover opacity-100"
+            className="absolute top-0 left-0 w-full h-full object-cover"
             src={heroVideoUrl}
             autoPlay
             muted
@@ -104,30 +104,28 @@ export default function Videos() {
           />
         </div>
         
-        {/* Gradient Overlay - More subtle like Apple TV */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        {/* Gradient Overlay - Subtle bottom fade */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
-        {/* Hero Content - Positioned at bottom like Apple TV */}
-        <div className="absolute inset-0 flex items-end justify-center p-6 sm:p-8 lg:p-12 pb-12 sm:pb-16 lg:pb-20">
-          <div className="max-w-2xl text-center">
-            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-6 sm:mb-8 text-white leading-tight">
+        {/* Hero Content - Bottom left like Apple TV */}
+        <div className="absolute inset-0 flex items-end justify-start p-8 sm:p-12 lg:p-16 pb-16 sm:pb-20 lg:pb-24">
+          <div className="max-w-xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 text-white leading-tight">
               Enter the Sol Portal...
             </h1>
-            <div className="flex flex-col items-center gap-3 sm:gap-4">
+            <p className="text-base sm:text-lg text-gray-200 mb-6 max-w-md">
+              Stream exclusive content and experience the music like never before.
+            </p>
+            <div className="flex flex-col items-start gap-3">
               <Button 
                 size="lg" 
-                className="bg-white hover:bg-gray-100 text-black font-semibold px-10 py-6 text-base sm:text-lg rounded-lg shadow-lg transition-all"
+                className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 text-base rounded-lg shadow-lg transition-all"
               >
                 Accept Free Trial
               </Button>
-              <div className="flex flex-col items-center">
-                <p className="text-white text-base sm:text-lg font-medium">
-                  Free for seven days
-                </p>
-                <p className="text-gray-300 text-sm sm:text-base">
-                  Then $12.99/mo
-                </p>
-              </div>
+              <p className="text-sm text-gray-300">
+                7 days free, then $12.99/month.
+              </p>
             </div>
           </div>
         </div>
