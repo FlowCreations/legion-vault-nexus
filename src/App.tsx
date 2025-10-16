@@ -8,6 +8,7 @@ import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
 import Home from "./pages/Home";
 import Videos from "./pages/Videos";
+import VideoManager from "./pages/VideoManager";
 import Music from "./pages/Music";
 import AlbumDetail from "./pages/AlbumDetail";
 import Shows from "./pages/Shows";
@@ -30,6 +31,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/videos" element={<Videos />} />
+          <Route path="/videos/manage" element={<VideoManager />} />
           <Route path="/music" element={<Music />} />
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
