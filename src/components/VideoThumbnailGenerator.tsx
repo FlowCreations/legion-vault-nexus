@@ -21,6 +21,8 @@ export function VideoThumbnailGenerator({
   const { toast } = useToast();
 
   const generateThumbnail = async () => {
+    console.log('Starting thumbnail generation for:', videoTitle);
+    
     try {
       setGenerating(true);
 
@@ -31,17 +33,38 @@ export function VideoThumbnailGenerator({
         throw new Error("Video or canvas not ready");
       }
 
+      console.log('Loading video from:', videoUrl);
+
+      // Load video
+      video.src = videoUrl;
+      
       // Wait for video to load
-      await new Promise((resolve, reject) => {
-        video.onloadeddata = resolve;
-        video.onerror = reject;
-        video.load();
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Video loading timeout'));
+        }, 10000); // 10 second timeout
+        
+        video.onloadeddata = () => {
+          console.log('Video loaded, dimensions:', video.videoWidth, 'x', video.videoHeight);
+          clearTimeout(timeout);
+          resolve();
+        };
+        video.onerror = (e) => {
+          clearTimeout(timeout);
+          console.error('Video load error:', e);
+          reject(new Error('Failed to load video'));
+        };
       });
 
       // Seek to 2 seconds into the video for a better thumbnail
+      console.log('Seeking to 2 seconds...');
       video.currentTime = 2;
-      await new Promise(resolve => {
-        video.onseeked = resolve;
+      
+      await new Promise<void>((resolve) => {
+        video.onseeked = () => {
+          console.log('Video seeked successfully');
+          resolve();
+        };
       });
 
       // Draw video frame to canvas
@@ -117,9 +140,14 @@ export function VideoThumbnailGenerator({
   return (
     <div>
       <Button
+        type="button"
         size="sm"
         variant="outline"
-        onClick={generateThumbnail}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          generateThumbnail();
+        }}
         disabled={generating}
       >
         <ImageIcon className="w-4 h-4 mr-2" />
@@ -130,9 +158,9 @@ export function VideoThumbnailGenerator({
       <video
         ref={videoRef}
         src={videoUrl}
-        crossOrigin="anonymous"
         className="hidden"
         muted
+        playsInline
       />
       <canvas ref={canvasRef} className="hidden" />
     </div>
