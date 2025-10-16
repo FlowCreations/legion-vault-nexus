@@ -70,9 +70,9 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
         return;
       }
 
-      // Upload video to storage
+      // Upload video to storage with category folder structure
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${category}/${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('videos')
