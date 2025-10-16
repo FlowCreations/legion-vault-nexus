@@ -106,7 +106,10 @@ export default function Videos() {
     }
   };
 
-  const handleVideoClick = () => {
+  const handleVideoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Video clicked, authenticated:', isAuthenticated);
     if (!isAuthenticated) {
       setShowAuthDialog(true);
     }
@@ -240,7 +243,7 @@ interface ContentRowProps {
   hoveredId: string | null;
   setHoveredId: (id: string | null) => void;
   isPremium?: boolean;
-  onVideoClick: () => void;
+  onVideoClick: (e: React.MouseEvent) => void;
 }
 
 function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium, onVideoClick }: ContentRowProps) {
@@ -271,7 +274,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                 className="group cursor-pointer"
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                onClick={onVideoClick}
+                onClick={(e) => onVideoClick(e)}
               >
                 <div className="relative rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 transform group-hover:scale-105">
                   <div className={`${
