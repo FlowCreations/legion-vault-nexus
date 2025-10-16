@@ -93,7 +93,7 @@ export default function Videos() {
         <div className="absolute inset-0 flex items-end justify-start p-8 sm:p-12 lg:p-20 pb-16 sm:pb-20 lg:pb-28">
           <div className="max-w-3xl">
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 text-white leading-tight">
-              Enter the sole portal...
+              Enter the Sol Portal...
             </h1>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
               <Button 
