@@ -17,11 +17,14 @@ export const TopTracks = ({ period }: TopTracksProps) => {
   const [activeTab, setActiveTab] = useState<"7days" | "28days" | "alltime">(period);
 
   const tracks: TopTrack[] = [
-    { rank: 1, title: "Soul of a Fighter", streams: 1247, change: 16.7, percentOfTotal: 24.5 },
-    { rank: 2, title: "Find Your Stillness", streams: 1043, change: 0, percentOfTotal: 20.4 },
-    { rank: 3, title: "Walking on the Edge", streams: 892, change: -25, percentOfTotal: 14.3 },
-    { rank: 4, title: "Awakening", streams: 634, change: -62.5, percentOfTotal: 12.2 },
-    { rank: 5, title: "Stay Relentless", streams: 523, change: -66.7, percentOfTotal: 10.1 },
+    { rank: 1, title: "In The Air Tonight", streams: 234567, change: 12, percentOfTotal: 18.5 },
+    { rank: 2, title: "Fire Starter", streams: 198543, change: 8, percentOfTotal: 15.7 },
+    { rank: 3, title: "Strange", streams: 176234, change: 5, percentOfTotal: 13.9 },
+    { rank: 4, title: "Power", streams: 154321, change: -2, percentOfTotal: 12.2 },
+    { rank: 5, title: "Carolina", streams: 142109, change: 3, percentOfTotal: 11.2 },
+    { rank: 6, title: "Walking On The Edge", streams: 128456, change: 6, percentOfTotal: 10.1 },
+    { rank: 7, title: "Remember My Name", streams: 115678, change: 1, percentOfTotal: 9.1 },
+    { rank: 8, title: "Leave the Light On", streams: 98234, change: -1, percentOfTotal: 7.8 },
   ];
 
   const getChangeIcon = (change?: number) => {

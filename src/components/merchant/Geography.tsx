@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { MapPin } from "lucide-react";
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import type { LatLngExpression } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface CityData {
   rank: number;
@@ -7,6 +10,8 @@ interface CityData {
   state?: string;
   streams: number;
   fans: number;
+  lat: number;
+  lng: number;
 }
 
 export const Geography = () => {
@@ -14,11 +19,14 @@ export const Geography = () => {
   const [timeFilter, setTimeFilter] = useState<"7days" | "28days" | "alltime">("7days");
 
   const cities: CityData[] = [
-    { rank: 1, city: "Los Angeles", state: "CA", streams: 487, fans: 234 },
-    { rank: 2, city: "New York", state: "NY", streams: 423, fans: 198 },
-    { rank: 3, city: "Austin", state: "TX", streams: 312, fans: 156 },
-    { rank: 4, city: "Nashville", state: "TN", streams: 289, fans: 142 },
-    { rank: 5, city: "Chicago", state: "IL", streams: 256, fans: 128 },
+    { rank: 1, city: "Nashville", state: "TN", streams: 125000, fans: 3420, lat: 36.1627, lng: -86.7816 },
+    { rank: 2, city: "Austin", state: "TX", streams: 98000, fans: 2890, lat: 30.2672, lng: -97.7431 },
+    { rank: 3, city: "Atlanta", state: "GA", streams: 87000, fans: 2560, lat: 33.7490, lng: -84.3880 },
+    { rank: 4, city: "Los Angeles", state: "CA", streams: 76000, fans: 2210, lat: 34.0522, lng: -118.2437 },
+    { rank: 5, city: "New York", state: "NY", streams: 65000, fans: 1980, lat: 40.7128, lng: -74.0060 },
+    { rank: 6, city: "Chicago", state: "IL", streams: 54000, fans: 1750, lat: 41.8781, lng: -87.6298 },
+    { rank: 7, city: "Dallas", state: "TX", streams: 48000, fans: 1620, lat: 32.7767, lng: -96.7970 },
+    { rank: 8, city: "Denver", state: "CO", streams: 42000, fans: 1450, lat: 39.7392, lng: -104.9903 },
   ];
 
   return (
@@ -84,13 +92,41 @@ export const Geography = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Map placeholder */}
-        <div className="bg-white/5 rounded-lg p-8 flex items-center justify-center min-h-[400px] border border-white/10">
-          <div className="text-center">
-            <MapPin className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-            <p className="text-gray-500">Interactive map visualization</p>
-            <p className="text-sm text-gray-600 mt-2">Fan distribution across regions</p>
-          </div>
+        {/* Interactive Map */}
+        <div className="rounded-lg overflow-hidden min-h-[400px] border border-white/10 relative z-0">
+          <MapContainer 
+            center={[37.0902, -95.7129] as LatLngExpression} 
+            zoom={4} 
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={false}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            />
+            {cities.map((city) => (
+              <CircleMarker
+                key={city.rank}
+                center={[city.lat, city.lng] as LatLngExpression}
+                pathOptions={{
+                  fillColor: "#3b82f6",
+                  color: "#1e40af",
+                  weight: 1,
+                  opacity: 0.8,
+                  fillOpacity: 0.5,
+                }}
+                radius={Math.sqrt(city.fans) / 5}
+              >
+                <Popup>
+                  <div className="text-sm text-black">
+                    <strong>{city.city}, {city.state}</strong><br/>
+                    {city.fans.toLocaleString()} fans<br/>
+                    {city.streams.toLocaleString()} streams
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
         </div>
 
         {/* Cities list */}
