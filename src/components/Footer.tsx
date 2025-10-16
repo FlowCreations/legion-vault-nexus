@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { BarChart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
 
 export const Footer = () => {
@@ -14,19 +16,33 @@ export const Footer = () => {
             />
           </Link>
           
-          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-            <Link to="/about" className="hover:text-primary transition-colors">
-              About
-            </Link>
-            <Link to="/terms" className="hover:text-primary transition-colors">
-              Terms
-            </Link>
-            <Link to="/privacy" className="hover:text-primary transition-colors">
-              Privacy
-            </Link>
-            <Link to="/support" className="hover:text-primary transition-colors">
-              Support
-            </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+              <Link to="/about" className="hover:text-primary transition-colors">
+                About
+              </Link>
+              <Link to="/terms" className="hover:text-primary transition-colors">
+                Terms
+              </Link>
+              <Link to="/privacy" className="hover:text-primary transition-colors">
+                Privacy
+              </Link>
+              <Link to="/support" className="hover:text-primary transition-colors">
+                Support
+              </Link>
+            </div>
+            
+            <Button 
+              asChild 
+              variant="outline" 
+              size="sm"
+              className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
+            >
+              <Link to="/merchant">
+                <BarChart className="w-4 h-4 mr-2" />
+                Merchant Dashboard
+              </Link>
+            </Button>
           </div>
           
           <p className="text-sm text-muted-foreground">
