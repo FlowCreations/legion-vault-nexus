@@ -14,6 +14,7 @@ import Community from "./pages/Community";
 import Merch from "./pages/Merch";
 import LiveStudio from "./pages/LiveStudio";
 import NotFound from "./pages/NotFound";
+import PurchaseSuccess from "./pages/PurchaseSuccess";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/videos" element={<Videos />} />
           <Route path="/music" element={<Music />} />
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
+          <Route path="/music/success" element={<PurchaseSuccess />} />
           <Route path="/events" element={<Events />} />
           <Route path="/community" element={<Community />} />
           <Route path="/merch" element={<Merch />} />

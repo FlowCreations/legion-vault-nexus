@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { PurchaseModal } from "@/components/PurchaseModal";
 import { usePurchases } from "@/hooks/usePurchases";
+import { StripeCheckout } from "@/components/StripeCheckout";
 import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
@@ -470,11 +471,15 @@ export default function Music() {
                       </p>
                       {isLocked && (
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="font-bold text-sm text-primary">${album.price}</span>
-                          <button className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                            <ShoppingCart className="w-3 h-3" />
-                            Add to cart
-                          </button>
+                          <StripeCheckout
+                            albumId={album.id}
+                            albumTitle={album.title}
+                            price={album.price}
+                            onSuccess={() => {
+                              purchaseAlbum(album.id);
+                            }}
+                            className="h-7 text-xs px-3"
+                          />
                         </div>
                       )}
                     </div>

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { PurchaseModal } from "@/components/PurchaseModal";
 import { usePurchases } from "@/hooks/usePurchases";
+import { StripeCheckout } from "@/components/StripeCheckout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import powerAlbum from "@/assets/power-album.jpg";
@@ -306,14 +307,15 @@ export default function AlbumDetail() {
       <div className="px-4 sm:px-8 lg:px-12 py-6 bg-background/95 backdrop-blur sticky top-16 z-10 border-b border-border">
         <div className="flex items-center gap-4">
           {isLocked ? (
-            <Button 
-              size="lg" 
+            <StripeCheckout
+              albumId={album.id}
+              albumTitle={album.title}
+              price={album.price}
+              onSuccess={() => {
+                purchaseAlbum(album.id);
+              }}
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
-              onClick={() => setShowPurchaseModal(true)}
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Buy Album ${album.price}
-            </Button>
+            />
           ) : (
             <Button 
               size="lg" 
