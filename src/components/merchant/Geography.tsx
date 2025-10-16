@@ -1,7 +1,5 @@
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import { MapPin } from "lucide-react";
-
-const FanMap = lazy(() => import('./FanMap').then(module => ({ default: module.FanMap })));
 
 interface CityData {
   rank: number;
@@ -91,18 +89,73 @@ export const Geography = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Interactive Map */}
-        <div className="rounded-lg overflow-hidden min-h-[400px] border border-white/10 relative z-0">
-          <Suspense fallback={
-            <div className="h-full w-full flex items-center justify-center bg-white/5">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-600 animate-pulse" />
-                <p className="text-gray-500">Loading map...</p>
-              </div>
-            </div>
-          }>
-            <FanMap cities={cities} />
-          </Suspense>
+        {/* Interactive Map Visualization */}
+        <div className="rounded-lg overflow-hidden min-h-[400px] border border-white/10 relative bg-gradient-to-br from-blue-950/30 to-purple-950/30">
+          {/* Map SVG visualization */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <svg viewBox="0 0 800 400" className="w-full h-full opacity-40">
+              {/* US map outline simplified */}
+              <path 
+                d="M100,200 Q150,150 200,180 L250,170 L300,190 L350,160 L400,180 L450,170 L500,190 L550,180 L600,200 L650,180 L700,190" 
+                stroke="currentColor" 
+                fill="none" 
+                strokeWidth="2"
+                className="text-blue-400"
+              />
+            </svg>
+          </div>
+          
+          {/* Fan location markers */}
+          <div className="absolute inset-0">
+            {cities.map((city, idx) => {
+              // Simple positioning based on rough US geography
+              const positions: Record<number, { top: string; left: string }> = {
+                0: { top: '45%', left: '65%' }, // Nashville
+                1: { top: '70%', left: '50%' }, // Austin
+                2: { top: '60%', left: '75%' }, // Atlanta
+                3: { top: '45%', left: '15%' }, // LA
+                4: { top: '20%', left: '85%' }, // NY
+                5: { top: '35%', left: '70%' }, // Chicago
+                6: { top: '65%', left: '55%' }, // Dallas
+                7: { top: '40%', left: '30%' }, // Denver
+              };
+              const pos = positions[idx] || { top: '50%', left: '50%' };
+              const size = Math.sqrt(city.fans) / 10;
+              
+              return (
+                <div
+                  key={city.rank}
+                  className="absolute group cursor-pointer"
+                  style={{ 
+                    top: pos.top, 
+                    left: pos.left,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                >
+                  <div 
+                    className="rounded-full bg-blue-500/60 border-2 border-blue-400 animate-pulse hover:bg-blue-400 transition-all"
+                    style={{ 
+                      width: `${size}px`, 
+                      height: `${size}px`,
+                      minWidth: '12px',
+                      minHeight: '12px'
+                    }}
+                  />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div className="bg-black/90 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                      <strong>{city.city}, {city.state}</strong><br/>
+                      {city.fans.toLocaleString()} fans
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="absolute bottom-4 left-4 text-xs text-gray-400">
+            <MapPin className="h-3 w-3 inline mr-1" />
+            Fan distribution map (hover markers for details)
+          </div>
         </div>
 
         {/* Cities list */}
