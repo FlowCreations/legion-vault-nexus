@@ -45,6 +45,46 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
     }
   };
 
+  const generateThumbnail = async (videoFile: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+
+      video.preload = 'metadata';
+      video.muted = true;
+      
+      video.onloadeddata = () => {
+        video.currentTime = 1; // Capture frame at 1 second
+      };
+      
+      video.onseeked = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create thumbnail'));
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      
+      video.onerror = () => {
+        reject(new Error('Failed to load video'));
+      };
+      
+      video.src = URL.createObjectURL(videoFile);
+    });
+  };
+
   const handleUpload = async () => {
     if (!selectedFile || !title || !category) {
       toast({
@@ -85,10 +125,24 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Generate and upload thumbnail
+      const thumbnailBlob = await generateThumbnail(selectedFile);
+      const thumbnailFileName = `${category}/${user.id}/${Date.now()}_thumb.jpg`;
+      
+      const { error: thumbUploadError } = await supabase.storage
         .from('videos')
-        .getPublicUrl(fileName);
+        .upload(thumbnailFileName, thumbnailBlob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/jpeg'
+        });
+
+      if (thumbUploadError) throw thumbUploadError;
+
+      // Get thumbnail public URL
+      const { data: { publicUrl: thumbnailUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(thumbnailFileName);
 
       // Save video metadata to database
       const { error: dbError } = await supabase
@@ -98,7 +152,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
           subtitle,
           category,
           storage_path: fileName,
-          thumbnail_url: publicUrl,
+          thumbnail_url: thumbnailUrl,
           is_premium: isPremium,
           uploaded_by: user.id
         });
