@@ -80,7 +80,7 @@ serve(async (req) => {
     console.error('Error fetching from Shopify:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         details: 'Failed to fetch products from Shopify'
       }),
       {
