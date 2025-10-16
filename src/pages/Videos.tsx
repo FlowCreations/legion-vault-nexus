@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,9 +9,67 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import heroVideo from "@/assets/hero-video.mp4";
+import { supabase } from "@/integrations/supabase/client";
+
+interface VideoItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  thumbnail_url: string;
+  is_premium: boolean;
+}
 
 export default function Videos() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
+  const [behindTheScenes, setBehindTheScenes] = useState<VideoItem[]>([]);
+  const [performances, setPerformances] = useState<VideoItem[]>([]);
+  const [documentary, setDocumentary] = useState<VideoItem[]>([]);
+
+  useEffect(() => {
+    loadVideos();
+  }, []);
+
+  const loadVideos = async () => {
+    const { data } = await supabase
+      .from('videos')
+      .select('id, title, subtitle, category, thumbnail_url, is_premium')
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setMusicVideos(data.filter(v => v.category === 'music_videos').map(v => ({
+        id: v.id,
+        title: v.title,
+        subtitle: v.subtitle || '',
+        thumbnail_url: v.thumbnail_url || '',
+        is_premium: v.is_premium || false
+      })));
+      
+      setBehindTheScenes(data.filter(v => v.category === 'behind_the_scenes').map(v => ({
+        id: v.id,
+        title: v.title,
+        subtitle: v.subtitle || '',
+        thumbnail_url: v.thumbnail_url || '',
+        is_premium: v.is_premium || false
+      })));
+      
+      setPerformances(data.filter(v => v.category === 'performances').map(v => ({
+        id: v.id,
+        title: v.title,
+        subtitle: v.subtitle || '',
+        thumbnail_url: v.thumbnail_url || '',
+        is_premium: v.is_premium || false
+      })));
+      
+      setDocumentary(data.filter(v => v.category === 'documentary').map(v => ({
+        id: v.id,
+        title: v.title,
+        subtitle: v.subtitle || '',
+        thumbnail_url: v.thumbnail_url || '',
+        is_premium: v.is_premium || false
+      })));
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -137,7 +195,14 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                 <div className="relative rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 transform group-hover:scale-105">
                   <div className={`${
                     aspectRatio === "portrait" ? "aspect-[2/3]" : "aspect-video"
-                  } bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative`}>
+                   } bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative`}>
+                    {item.thumbnail_url && (
+                      <img 
+                        src={item.thumbnail_url} 
+                        alt={item.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-30 transition-opacity" />
                     
                     {/* Play button overlay */}
@@ -150,7 +215,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                     </div>
 
                     {/* Premium Badge */}
-                    {isPremium && (
+                    {item.is_premium && (
                       <div className="absolute top-3 right-3">
                         <Button 
                           size="sm" 
@@ -183,51 +248,4 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
   );
 }
 
-interface VideoItem {
-  id: string;
-  title: string;
-  subtitle: string;
-}
-
-const musicVideos: VideoItem[] = [
-  { id: "mv1", title: "Carolina", subtitle: "Official Music Video" },
-  { id: "mv2", title: "Echoes", subtitle: "Official Music Video" },
-  { id: "mv3", title: "In The Air Tonight", subtitle: "Cover" },
-  { id: "mv4", title: "Legion Rising", subtitle: "Official Music Video" },
-  { id: "mv5", title: "Northern Lights", subtitle: "Official Music Video" },
-  { id: "mv6", title: "Thunder Road", subtitle: "Official Music Video" },
-  { id: "mv7", title: "Wildfire", subtitle: "Official Music Video" },
-  { id: "mv8", title: "Horizon", subtitle: "Official Music Video" },
-];
-
-const performances: VideoItem[] = [
-  { id: "p1", title: "Live from Red Rocks", subtitle: "Full Concert" },
-  { id: "p2", title: "Austin City Limits", subtitle: "Festival Performance" },
-  { id: "p3", title: "Acoustic Sessions Vol. 1", subtitle: "Intimate Set" },
-  { id: "p4", title: "Madison Square Garden", subtitle: "Sold Out Show" },
-  { id: "p5", title: "BBC Live Lounge", subtitle: "Exclusive Performance" },
-  { id: "p6", title: "Coachella 2024", subtitle: "Main Stage" },
-  { id: "p7", title: "Glastonbury Festival", subtitle: "Headline Set" },
-  { id: "p8", title: "Late Night TV Special", subtitle: "Studio Performance" },
-];
-
-const behindTheScenes: VideoItem[] = [
-  { id: "bts1", title: "Studio Session: Creating 'Echoes'", subtitle: "24:15" },
-  { id: "bts2", title: "Road Diaries: European Tour", subtitle: "15:28" },
-  { id: "bts3", title: "The Producer's Cut", subtitle: "27:55" },
-  { id: "bts4", title: "Sound Check Rituals", subtitle: "12:40" },
-  { id: "bts5", title: "Life on the Tour Bus", subtitle: "18:22" },
-  { id: "bts6", title: "Merch Design Process", subtitle: "9:15" },
-  { id: "bts7", title: "Writing Camp Sessions", subtitle: "20:33" },
-  { id: "bts8", title: "Meet & Greet Moments", subtitle: "14:50" },
-];
-
-const documentary: VideoItem[] = [
-  { id: "doc1", title: "The Making of Legion", subtitle: "Limited Series • 6 Episodes" },
-  { id: "doc2", title: "Origins: The Early Years", subtitle: "Documentary Feature" },
-  { id: "doc3", title: "The Story Behind the Album", subtitle: "Deep Dive • 45 min" },
-  { id: "doc4", title: "Brothers in Music", subtitle: "Band Documentary" },
-  { id: "doc5", title: "From Garage to Glory", subtitle: "Career Retrospective" },
-  { id: "doc6", title: "The Creative Process", subtitle: "Songwriting Series" },
-];
 
