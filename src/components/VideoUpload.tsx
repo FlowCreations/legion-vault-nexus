@@ -127,10 +127,10 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
 
       // Generate and upload thumbnail
       const thumbnailBlob = await generateThumbnail(selectedFile);
-      const thumbnailFileName = `${category}/${user.id}/${Date.now()}_thumb.jpg`;
+      const thumbnailFileName = `${user.id}/${Date.now()}_thumb.jpg`;
       
       const { error: thumbUploadError } = await supabase.storage
-        .from('videos')
+        .from('thumbnails')
         .upload(thumbnailFileName, thumbnailBlob, {
           cacheControl: '3600',
           upsert: false,
@@ -141,7 +141,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
 
       // Get thumbnail public URL
       const { data: { publicUrl: thumbnailUrl } } = supabase.storage
-        .from('videos')
+        .from('thumbnails')
         .getPublicUrl(thumbnailFileName);
 
       // Save video metadata to database
@@ -216,7 +216,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
                 <Input
                   id="video-file"
                   type="file"
-                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,video/*"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
