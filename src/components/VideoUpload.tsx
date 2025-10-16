@@ -67,6 +67,8 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
           description: "Please sign in to upload videos",
           variant: "destructive",
         });
+        setUploading(false);
+        window.location.href = "/auth";
         return;
       }
 
