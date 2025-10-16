@@ -46,42 +46,56 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
   };
 
   const generateThumbnail = async (videoFile: File): Promise<Blob> => {
+    console.log('Generating thumbnail for:', videoFile.name);
+    
     return new Promise((resolve, reject) => {
       const video = document.createElement('video');
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
+        console.error('Could not get canvas context');
         reject(new Error('Could not get canvas context'));
         return;
       }
 
       video.preload = 'metadata';
       video.muted = true;
+      video.playsInline = true;
       
       video.onloadeddata = () => {
-        video.currentTime = 1; // Capture frame at 1 second
+        console.log('Video loaded, seeking to 2 seconds');
+        video.currentTime = 2; // Capture frame at 2 seconds
       };
       
       video.onseeked = () => {
+        console.log('Video seeked, capturing frame');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
+        
+        console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+        
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         canvas.toBlob((blob) => {
           if (blob) {
+            console.log('Thumbnail blob created, size:', blob.size);
+            URL.revokeObjectURL(video.src);
             resolve(blob);
           } else {
+            console.error('Failed to create thumbnail blob');
             reject(new Error('Failed to create thumbnail'));
           }
-        }, 'image/jpeg', 0.8);
+        }, 'image/jpeg', 0.85);
       };
       
-      video.onerror = () => {
+      video.onerror = (e) => {
+        console.error('Video load error:', e);
         reject(new Error('Failed to load video'));
       };
       
       video.src = URL.createObjectURL(videoFile);
+      console.log('Video source set, waiting for load');
     });
   };
 
@@ -125,26 +139,42 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
 
       if (uploadError) throw uploadError;
 
+      console.log('Video uploaded, generating thumbnail...');
+
       // Generate and upload thumbnail
-      const thumbnailBlob = await generateThumbnail(selectedFile);
-      const thumbnailFileName = `${user.id}/${Date.now()}_thumb.jpg`;
-      
-      const { error: thumbUploadError } = await supabase.storage
-        .from('thumbnails')
-        .upload(thumbnailFileName, thumbnailBlob, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'image/jpeg'
-        });
+      let thumbnailUrl = '';
+      try {
+        const thumbnailBlob = await generateThumbnail(selectedFile);
+        const thumbnailFileName = `${user.id}/${Date.now()}_thumb.jpg`;
+        
+        console.log('Uploading thumbnail to storage...');
+        const { error: thumbUploadError } = await supabase.storage
+          .from('thumbnails')
+          .upload(thumbnailFileName, thumbnailBlob, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: 'image/jpeg'
+          });
 
-      if (thumbUploadError) throw thumbUploadError;
+        if (thumbUploadError) {
+          console.error('Thumbnail upload error:', thumbUploadError);
+          throw thumbUploadError;
+        }
 
-      // Get thumbnail public URL
-      const { data: { publicUrl: thumbnailUrl } } = supabase.storage
-        .from('thumbnails')
-        .getPublicUrl(thumbnailFileName);
+        // Get thumbnail public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('thumbnails')
+          .getPublicUrl(thumbnailFileName);
+        
+        thumbnailUrl = publicUrl;
+        console.log('Thumbnail uploaded successfully:', thumbnailUrl);
+      } catch (thumbError) {
+        console.error('Failed to generate/upload thumbnail:', thumbError);
+        // Continue without thumbnail rather than failing the whole upload
+      }
 
       // Save video metadata to database
+      console.log('Saving video metadata to database...');
       const { error: dbError } = await supabase
         .from('videos')
         .insert({
@@ -152,12 +182,14 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
           subtitle,
           category,
           storage_path: fileName,
-          thumbnail_url: thumbnailUrl,
+          thumbnail_url: thumbnailUrl || null,
           is_premium: isPremium,
           uploaded_by: user.id
         });
 
       if (dbError) throw dbError;
+
+      console.log('Video upload complete!');
 
       toast({
         title: "Upload successful",
