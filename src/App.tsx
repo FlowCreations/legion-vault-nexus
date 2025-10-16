@@ -9,7 +9,7 @@ import Home from "./pages/Home";
 import Videos from "./pages/Videos";
 import Music from "./pages/Music";
 import AlbumDetail from "./pages/AlbumDetail";
-import Events from "./pages/Events";
+import Shows from "./pages/Shows";
 import Community from "./pages/Community";
 import Merch from "./pages/Merch";
 import LiveStudio from "./pages/LiveStudio";
@@ -31,7 +31,7 @@ const App = () => (
           <Route path="/music" element={<Music />} />
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
-          <Route path="/events" element={<Events />} />
+          <Route path="/shows" element={<Shows />} />
           <Route path="/community" element={<Community />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/live" element={<LiveStudio />} />

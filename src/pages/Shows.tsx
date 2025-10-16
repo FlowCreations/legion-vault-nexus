@@ -2,7 +2,7 @@ import { MapPin, Calendar, ShoppingBag, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-export default function Events() {
+export default function Shows() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -14,9 +14,6 @@ export default function Events() {
             </h1>
 
             <nav className="hidden md:flex items-center gap-6 text-sm">
-              <button className="hover:text-primary transition-colors font-medium">
-                Home
-              </button>
               <button className="text-primary font-medium border-b-2 border-primary pb-1">
                 Shows
               </button>
@@ -69,7 +66,7 @@ export default function Events() {
                 LIVE
               </Badge>
               <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-                Photo Gallery
+                Tour Gallery
               </h2>
               <p className="text-muted-foreground mb-4">
                 Columbus, OH

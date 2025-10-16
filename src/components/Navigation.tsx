@@ -7,7 +7,7 @@ import solLogo from "@/assets/sol-logo.png";
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
   { name: "Music", path: "/music", icon: Music },
-  { name: "Events", path: "/events", icon: Calendar },
+  { name: "Shows", path: "/shows", icon: Calendar },
   { name: "Community", path: "/community", icon: Users },
   { name: "Merch", path: "/merch", icon: ShoppingBag },
   { name: "Live Studio", path: "/live", icon: Radio },
