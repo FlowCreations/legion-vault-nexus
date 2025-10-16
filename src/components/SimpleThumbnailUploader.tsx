@@ -92,29 +92,27 @@ export function SimpleThumbnailUploader({
   };
 
   return (
-    <div>
-      <Input
+    <div className="flex items-center gap-2">
+      <input
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         onChange={handleImageUpload}
         disabled={uploading}
         className="hidden"
         id={`thumb-upload-${videoId}`}
       />
-      <label htmlFor={`thumb-upload-${videoId}`}>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={uploading}
-          asChild
-        >
-          <span className="cursor-pointer">
-            <Upload className="w-4 h-4 mr-2" />
-            {uploading ? "Uploading..." : "Upload Thumbnail"}
-          </span>
-        </Button>
-      </label>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={uploading}
+        onClick={() => {
+          document.getElementById(`thumb-upload-${videoId}`)?.click();
+        }}
+      >
+        <Upload className="w-4 h-4 mr-2" />
+        {uploading ? "Uploading..." : "Upload Thumbnail"}
+      </Button>
     </div>
   );
 }
