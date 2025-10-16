@@ -156,8 +156,8 @@ export default function Videos() {
         {/* Hero Content - Bottom left like Apple TV */}
         <div className="absolute inset-0 flex items-end justify-start p-8 sm:p-12 lg:p-16 pb-16 sm:pb-20 lg:pb-24">
           <div className="max-w-xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 text-white leading-tight">
-              Enter the Sol Portal...
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-white leading-tight">
+              Enter the Sol Portal
             </h1>
             <p className="text-base sm:text-lg text-gray-200 mb-6 max-w-md">
               Stream exclusive content and experience the music like never before.
