@@ -9,6 +9,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import outlawAlbum from "@/assets/outlaw-album.jpg";
+import powerAlbum from "@/assets/power-album.jpg";
+import strippedAlbum from "@/assets/stripped-album.jpg";
+import acousticAlbum from "@/assets/acoustic-album.jpg";
 
 export default function Merch() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -141,15 +145,23 @@ export default function Merch() {
                     <Heart className="w-4 h-4 text-black" />
                   </button>
 
-                  {/* Product Image Placeholder */}
-                  <div className="h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500">
-                    <div className="text-center w-full">
-                      <div className="w-full aspect-square max-w-[100px] mx-auto bg-background/50 rounded-xl flex items-center justify-center mb-2 border border-border">
-                        <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+                  {/* Product Image */}
+                  {product.image ? (
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500">
+                      <div className="text-center w-full">
+                        <div className="w-full aspect-square max-w-[100px] mx-auto bg-background/50 rounded-xl flex items-center justify-center mb-2 border border-border">
+                          <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-muted-foreground/50">Product Image</p>
                       </div>
-                      <p className="text-xs text-muted-foreground/50">Product Image</p>
                     </div>
-                  </div>
+                  )}
 
                   {/* Quick Add Overlay */}
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -193,12 +205,9 @@ export default function Merch() {
 
 const categories = [
   { id: "all", label: "ALL" },
-  { id: "new", label: "NEW ARRIVALS" },
-  { id: "apparel", label: "APPAREL" },
-  { id: "accessories", label: "ACCESSORIES" },
-  { id: "music", label: "MUSIC" },
-  { id: "posters", label: "POSTERS" },
-  { id: "sale", label: "SALE" },
+  { id: "albums-digital", label: "ALBUMS - DIGITAL" },
+  { id: "albums-cds", label: "ALBUMS - CDS" },
+  { id: "merch", label: "MERCH" },
 ];
 
 const heroSlides = [
@@ -219,139 +228,124 @@ const heroSlides = [
   },
 ];
 
-const allProducts = [
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  originalPrice?: number;
+  inStock: boolean;
+  badge?: string;
+  onSale?: boolean;
+  image?: string;
+}
+
+const allProducts: Product[] = [
+  // Digital Albums
   { 
     id: "1", 
-    name: "Cosmic Echoes Limited Edition Hoodie", 
-    category: "apparel", 
-    price: 89.99, 
+    name: "Digital - Outlaw Album", 
+    category: "albums-digital", 
+    price: 10.00, 
+    originalPrice: 12.00,
     inStock: true, 
-    badge: "LIMITED",
+    badge: "SALE",
+    onSale: true,
+    image: outlawAlbum
   },
   { 
     id: "2", 
-    name: "Classic Tour T-Shirt Black", 
-    category: "apparel", 
-    price: 34.99, 
-    inStock: true,
+    name: "Digital - Power Album", 
+    category: "albums-digital", 
+    price: 10.00, 
+    originalPrice: 12.00,
+    inStock: true, 
+    badge: "SALE",
+    onSale: true,
+    image: powerAlbum
   },
   { 
     id: "3", 
-    name: "Signed Album Bundle", 
-    category: "music", 
-    price: 149.99, 
-    originalPrice: 199.99,
+    name: "Digital - Stripped Album", 
+    category: "albums-digital", 
+    price: 15.00, 
+    originalPrice: 25.00,
     inStock: true, 
     badge: "SALE",
-    onSale: true
+    onSale: true,
+    image: strippedAlbum
   },
   { 
     id: "4", 
-    name: "2025 World Tour Poster", 
-    category: "posters", 
+    name: "Digital - Acoustic Album", 
+    category: "albums-digital", 
     price: 10.00, 
-    originalPrice: 25.00,
-    inStock: true,
+    originalPrice: 12.00,
+    inStock: true, 
     badge: "SALE",
-    onSale: true
+    onSale: true,
+    image: acousticAlbum
   },
+  // Physical CDs
   { 
     id: "5", 
-    name: "Embroidered Snapback Cap", 
-    category: "accessories", 
-    price: 39.99, 
+    name: "Outlaw Album - CD", 
+    category: "albums-cds", 
+    price: 15.00, 
     inStock: true,
-    badge: "NEW"
+    image: outlawAlbum
   },
   { 
     id: "6", 
-    name: "Vinyl Box Set Complete Collection", 
-    category: "music", 
-    price: 199.99, 
-    inStock: true, 
-    badge: "LIMITED" 
+    name: "Power Album - CD", 
+    category: "albums-cds", 
+    price: 15.00, 
+    inStock: true,
+    image: powerAlbum
   },
   { 
     id: "7", 
-    name: "Legion Crest Beanie", 
-    category: "accessories", 
-    price: 29.99, 
+    name: "Stripped Album - CD", 
+    category: "albums-cds", 
+    price: 18.00, 
     inStock: true,
+    image: strippedAlbum
   },
   { 
     id: "8", 
-    name: "Phone Case Collection", 
-    category: "accessories", 
-    price: 24.99, 
-    inStock: true 
+    name: "Acoustic Album - CD", 
+    category: "albums-cds", 
+    price: 15.00, 
+    inStock: true,
+    image: acousticAlbum
   },
+  // Merch
   { 
     id: "9", 
-    name: "Long Sleeve Performance Tee", 
-    category: "apparel", 
-    price: 44.99, 
-    originalPrice: 59.99,
+    name: "Sons of Legion T-Shirt", 
+    category: "merch", 
+    price: 25.00, 
     inStock: true,
-    onSale: true,
-    badge: "SALE"
   },
   { 
     id: "10", 
-    name: "Red Rocks Show Poster", 
-    category: "posters", 
-    price: 10.00, 
-    originalPrice: 25.00,
+    name: "Sons of Legion Hoodie", 
+    category: "merch", 
+    price: 45.00, 
     inStock: true,
-    badge: "SALE",
-    onSale: true
   },
   { 
     id: "11", 
-    name: "Deluxe Crewneck Sweatshirt", 
-    category: "apparel", 
-    price: 69.99, 
+    name: "Legion Cap", 
+    category: "merch", 
+    price: 20.00, 
     inStock: true,
   },
   { 
     id: "12", 
-    name: "Gold Edition Vinyl", 
-    category: "music", 
-    price: 49.99, 
+    name: "Tour Poster Set", 
+    category: "merch", 
+    price: 30.00, 
     inStock: true,
-    badge: "NEW"
-  },
-  { 
-    id: "13", 
-    name: "Leather Keychain Set", 
-    category: "accessories", 
-    price: 19.99, 
-    inStock: true 
-  },
-  { 
-    id: "14", 
-    name: "Stadium Tour Raglan", 
-    category: "apparel", 
-    price: 39.99, 
-    inStock: true,
-  },
-  { 
-    id: "15", 
-    name: "Concert Series Poster Set", 
-    category: "posters", 
-    price: 10.00, 
-    originalPrice: 30.00,
-    inStock: true,
-    badge: "SALE",
-    onSale: true
-  },
-  { 
-    id: "16", 
-    name: "Premium Tote Bag", 
-    category: "accessories", 
-    price: 34.99, 
-    originalPrice: 44.99,
-    inStock: true,
-    onSale: true,
-    badge: "SALE"
   },
 ];
