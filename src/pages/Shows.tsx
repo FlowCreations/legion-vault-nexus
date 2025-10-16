@@ -1,6 +1,9 @@
 import { MapPin, Calendar, ShoppingBag, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import show1 from "@/assets/shows/show-1.jpg";
+import show2 from "@/assets/shows/show-2.jpg";
+import show3 from "@/assets/shows/show-3.jpg";
 
 export default function Shows() {
   return (
@@ -47,17 +50,16 @@ export default function Shows() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col md:flex-row gap-6 items-center">
             {/* Gallery Images */}
-            <div className="flex-1 grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-square rounded-lg bg-card overflow-hidden"
-                >
-                  <div className="h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
-                    <Calendar className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                </div>
-              ))}
+            <div className="flex-1 grid grid-cols-3 gap-2">
+              <div className="aspect-square rounded-lg bg-card overflow-hidden">
+                <img src={show1} alt="Sons of Legion live performance" className="w-full h-full object-cover" />
+              </div>
+              <div className="aspect-square rounded-lg bg-card overflow-hidden">
+                <img src={show2} alt="Sons of Legion on stage" className="w-full h-full object-cover" />
+              </div>
+              <div className="aspect-square rounded-lg bg-card overflow-hidden">
+                <img src={show3} alt="Sons of Legion performing" className="w-full h-full object-cover" />
+              </div>
             </div>
 
             {/* Gallery Info */}
