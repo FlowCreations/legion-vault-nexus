@@ -9,10 +9,10 @@ export default function Community() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="font-serif text-5xl sm:text-6xl font-bold mb-4">
-            Community
+            Join The Community
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Connect with fellow fans, earn rewards, and get exclusive access to artist experiences
+            Your SOL family is waiting to connect with you!
           </p>
         </div>
 
@@ -45,9 +45,11 @@ export default function Community() {
 
         {/* Member Tiers */}
         <div className="mb-16">
-          <h2 className="font-serif text-3xl font-bold mb-8 text-center">Membership Tiers</h2>
+          <h2 className="font-serif text-3xl font-bold mb-8 text-center">
+            🔥 Sons of Legion Private Community Tiers 🔥
+          </h2>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {memberTiers.map((tier) => (
               <div
                 key={tier.name}
@@ -59,21 +61,23 @@ export default function Community() {
               >
                 {tier.featured && (
                   <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
-                    Most Popular
+                    Popular
                   </Badge>
                 )}
                 
                 <h3 className="font-serif text-2xl font-bold mb-2">{tier.name}</h3>
-                <div className="text-3xl font-bold mb-4">
+                <div className="text-3xl font-bold mb-1">
                   {tier.price}
-                  <span className="text-lg text-muted-foreground font-normal">/month</span>
                 </div>
+                <div className="text-sm text-muted-foreground mb-4">per month</div>
+                
+                <p className="text-sm font-semibold mb-4">{tier.subtitle}</p>
                 
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start space-x-2 text-sm">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span className="text-muted-foreground">{feature}</span>
+                      <span className="mt-0.5">{feature.emoji}</span>
+                      <span className="text-muted-foreground">{feature.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -82,7 +86,7 @@ export default function Community() {
                   className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
                   variant={tier.featured ? 'default' : 'outline'}
                 >
-                  {tier.cta}
+                  Subscribe
                 </Button>
               </div>
             ))}
@@ -137,44 +141,53 @@ const communityFeatures = [
 
 const memberTiers = [
   {
-    name: "Free",
-    price: "$0",
+    name: "Rebels",
+    price: "$10",
+    subtitle: "For those who've been with us from the beginning.",
     features: [
-      "Access to public content",
-      "Community feed participation",
-      "Basic achievement tracking",
-      "Monthly newsletter",
+      { emoji: "🔓", text: "Access behind-the-scenes content & exclusive updates" },
+      { emoji: "💬", text: "Join the Heartbeat Community App – connect directly with the band and other fans" },
+      { emoji: "🎥", text: "Unlimited replays of all private online concerts" },
     ],
-    cta: "Get Started",
-    featured: false,
-  },
-  {
-    name: "Premium",
-    price: "$9.99",
-    features: [
-      "Full catalog access",
-      "Early releases & exclusives",
-      "Priority event access",
-      "10% merch discount",
-      "HD streaming quality",
-      "Advanced achievements",
-    ],
-    cta: "Start Free Trial",
     featured: true,
   },
   {
-    name: "VIP",
-    price: "$24.99",
+    name: "Outlaws",
+    price: "$25",
+    subtitle: "For the dedicated fans who want more.",
     features: [
-      "Everything in Premium",
-      "Private VIP chat groups",
-      "Virtual meet & greets",
-      "20% merch discount",
-      "Free live stream tickets",
-      "Exclusive behind-the-scenes",
-      "Artist direct messages",
+      { emoji: "✓", text: "Includes everything in Rebels" },
+      { emoji: "📹", text: "Monthly live video hangout with the band and fellow fans" },
+      { emoji: "🎟️", text: "Two guest passes for friends/family to future online concerts" },
+      { emoji: "🛍️", text: "20% off all limited edition merch drops" },
+      { emoji: "🗳️", text: "Join the Fan Voting Squad – help choose which songs we release next" },
     ],
-    cta: "Go VIP",
+    featured: false,
+  },
+  {
+    name: "Legionnaires",
+    price: "$50",
+    subtitle: "For the die-hards who want all-access.",
+    features: [
+      { emoji: "✓", text: "Includes everything in Outlaws" },
+      { emoji: "🎧", text: "Early access to unreleased demos – give your feedback before we hit the studio" },
+      { emoji: "📥", text: "Exclusive digital song downloads before official release" },
+      { emoji: "🎟️", text: "Four guest passes for future online concerts" },
+      { emoji: "✍️", text: "Your name featured in the credits of our Day in the Life Vlogs" },
+      { emoji: "🎛️", text: "Monthly access to a virtual studio session with the band" },
+    ],
+    featured: false,
+  },
+  {
+    name: "Inner Circle",
+    price: "$500",
+    subtitle: "You're officially part of the team.",
+    features: [
+      { emoji: "✓", text: "Includes everything in Legionnaires" },
+      { emoji: "🏆", text: "Credited in the \"Thank You\" section of all music videos and album artwork (vinyl & CDs) recorded during your membership year" },
+      { emoji: "🎟️", text: "Eight VIP guest passes for future online concerts" },
+      { emoji: "🎸", text: "After 12 months of membership, receive a signed guitar from Sons of Legion" },
+    ],
     featured: false,
   },
 ];
