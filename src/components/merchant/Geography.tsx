@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { MapPin } from "lucide-react";
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-import type { LatLngExpression } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+
+const FanMap = lazy(() => import('./FanMap').then(module => ({ default: module.FanMap })));
 
 interface CityData {
   rank: number;
@@ -94,39 +93,16 @@ export const Geography = () => {
       <div className="grid md:grid-cols-2 gap-8">
         {/* Interactive Map */}
         <div className="rounded-lg overflow-hidden min-h-[400px] border border-white/10 relative z-0">
-          <MapContainer 
-            center={[37.0902, -95.7129] as LatLngExpression} 
-            zoom={4} 
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={false}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            />
-            {cities.map((city) => (
-              <CircleMarker
-                key={city.rank}
-                center={[city.lat, city.lng] as LatLngExpression}
-                pathOptions={{
-                  fillColor: "#3b82f6",
-                  color: "#1e40af",
-                  weight: 1,
-                  opacity: 0.8,
-                  fillOpacity: 0.5,
-                }}
-                radius={Math.sqrt(city.fans) / 5}
-              >
-                <Popup>
-                  <div className="text-sm text-black">
-                    <strong>{city.city}, {city.state}</strong><br/>
-                    {city.fans.toLocaleString()} fans<br/>
-                    {city.streams.toLocaleString()} streams
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))}
-          </MapContainer>
+          <Suspense fallback={
+            <div className="h-full w-full flex items-center justify-center bg-white/5">
+              <div className="text-center">
+                <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-600 animate-pulse" />
+                <p className="text-gray-500">Loading map...</p>
+              </div>
+            </div>
+          }>
+            <FanMap cities={cities} />
+          </Suspense>
         </div>
 
         {/* Cities list */}
