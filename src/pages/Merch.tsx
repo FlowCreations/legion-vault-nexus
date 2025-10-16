@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, Heart, Search, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, Heart, Search, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,17 +9,19 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import outlawAlbum from "@/assets/outlaw-album.jpg";
-import powerAlbum from "@/assets/power-album.jpg";
-import strippedAlbum from "@/assets/stripped-album.jpg";
-import acousticAlbum from "@/assets/acoustic-album.jpg";
+import { useShopifyProducts } from "@/hooks/useShopifyProducts";
 
 export default function Merch() {
   const [activeCategory, setActiveCategory] = useState("all");
+  const { products, loading, error } = useShopifyProducts();
 
   const filteredProducts = activeCategory === "all" 
-    ? allProducts 
-    : allProducts.filter(p => p.category.toLowerCase() === activeCategory);
+    ? products 
+    : products.filter(p => p.category.toLowerCase() === activeCategory);
+
+  const handleProductClick = (handle: string) => {
+    window.open(`https://sonsoflegion.com/products/${handle}`, '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,12 +125,27 @@ export default function Merch() {
             MERCHANDISE
           </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="group cursor-pointer"
-              >
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-20">
+              <p className="text-destructive mb-4">{error}</p>
+              <p className="text-muted-foreground">Please try again later.</p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="group cursor-pointer"
+                  onClick={() => handleProductClick(product.handle)}
+                >
                 {/* Product Image */}
                 <div className="relative aspect-square rounded-lg overflow-hidden mb-4 bg-card">
                   {/* Badges */}
@@ -195,8 +212,9 @@ export default function Merch() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
@@ -213,8 +231,8 @@ const categories = [
 const heroSlides = [
   {
     id: "1",
-    title: "SALE\n$10 POSTERS",
-    subtitle: "Limited time offer on select poster designs",
+    title: "OFFICIAL STORE",
+    subtitle: "Shop exclusive Sons of Legion merchandise",
   },
   {
     id: "2",
@@ -223,129 +241,7 @@ const heroSlides = [
   },
   {
     id: "3",
-    title: "EXCLUSIVE VINYL",
-    subtitle: "Limited edition vinyl pressing now available",
-  },
-];
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  originalPrice?: number;
-  inStock: boolean;
-  badge?: string;
-  onSale?: boolean;
-  image?: string;
-}
-
-const allProducts: Product[] = [
-  // Digital Albums
-  { 
-    id: "1", 
-    name: "Digital - Outlaw Album", 
-    category: "albums-digital", 
-    price: 10.00, 
-    originalPrice: 12.00,
-    inStock: true, 
-    badge: "SALE",
-    onSale: true,
-    image: outlawAlbum
-  },
-  { 
-    id: "2", 
-    name: "Digital - Power Album", 
-    category: "albums-digital", 
-    price: 10.00, 
-    originalPrice: 12.00,
-    inStock: true, 
-    badge: "SALE",
-    onSale: true,
-    image: powerAlbum
-  },
-  { 
-    id: "3", 
-    name: "Digital - Stripped Album", 
-    category: "albums-digital", 
-    price: 15.00, 
-    originalPrice: 25.00,
-    inStock: true, 
-    badge: "SALE",
-    onSale: true,
-    image: strippedAlbum
-  },
-  { 
-    id: "4", 
-    name: "Digital - Acoustic Album", 
-    category: "albums-digital", 
-    price: 10.00, 
-    originalPrice: 12.00,
-    inStock: true, 
-    badge: "SALE",
-    onSale: true,
-    image: acousticAlbum
-  },
-  // Physical CDs
-  { 
-    id: "5", 
-    name: "Outlaw Album - CD", 
-    category: "albums-cds", 
-    price: 15.00, 
-    inStock: true,
-    image: outlawAlbum
-  },
-  { 
-    id: "6", 
-    name: "Power Album - CD", 
-    category: "albums-cds", 
-    price: 15.00, 
-    inStock: true,
-    image: powerAlbum
-  },
-  { 
-    id: "7", 
-    name: "Stripped Album - CD", 
-    category: "albums-cds", 
-    price: 18.00, 
-    inStock: true,
-    image: strippedAlbum
-  },
-  { 
-    id: "8", 
-    name: "Acoustic Album - CD", 
-    category: "albums-cds", 
-    price: 15.00, 
-    inStock: true,
-    image: acousticAlbum
-  },
-  // Merch
-  { 
-    id: "9", 
-    name: "Sons of Legion T-Shirt", 
-    category: "merch", 
-    price: 25.00, 
-    inStock: true,
-  },
-  { 
-    id: "10", 
-    name: "Sons of Legion Hoodie", 
-    category: "merch", 
-    price: 45.00, 
-    inStock: true,
-  },
-  { 
-    id: "11", 
-    name: "Legion Cap", 
-    category: "merch", 
-    price: 20.00, 
-    inStock: true,
-  },
-  { 
-    id: "12", 
-    name: "Tour Poster Set", 
-    category: "merch", 
-    price: 30.00, 
-    inStock: true,
+    title: "LIMITED EDITION",
+    subtitle: "Exclusive items available for a limited time",
   },
 ];
