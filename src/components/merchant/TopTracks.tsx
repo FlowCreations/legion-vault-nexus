@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Music2, Users, TrendingUp, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import powerAlbum from "@/assets/power-album.jpg";
+import outlawAlbum from "@/assets/outlaw-album.jpg";
+import walkingOnTheEdge from "@/assets/walking-on-the-edge.jpg";
+import carolinaSingle from "@/assets/carolina-single.jpg";
 
 interface TopTrack {
   rank: number;
@@ -7,6 +11,7 @@ interface TopTrack {
   streams: number;
   change?: number;
   percentOfTotal?: number;
+  image?: string;
 }
 
 interface TopTracksProps {
@@ -17,14 +22,14 @@ export const TopTracks = ({ period }: TopTracksProps) => {
   const [activeTab, setActiveTab] = useState<"7days" | "28days" | "alltime">(period);
 
   const tracks: TopTrack[] = [
-    { rank: 1, title: "In The Air Tonight", streams: 234567, change: 12, percentOfTotal: 18.5 },
-    { rank: 2, title: "Fire Starter", streams: 198543, change: 8, percentOfTotal: 15.7 },
-    { rank: 3, title: "Strange", streams: 176234, change: 5, percentOfTotal: 13.9 },
-    { rank: 4, title: "Power", streams: 154321, change: -2, percentOfTotal: 12.2 },
-    { rank: 5, title: "Carolina", streams: 142109, change: 3, percentOfTotal: 11.2 },
-    { rank: 6, title: "Walking On The Edge", streams: 128456, change: 6, percentOfTotal: 10.1 },
-    { rank: 7, title: "Remember My Name", streams: 115678, change: 1, percentOfTotal: 9.1 },
-    { rank: 8, title: "Leave the Light On", streams: 98234, change: -1, percentOfTotal: 7.8 },
+    { rank: 1, title: "In The Air Tonight", streams: 234567, change: 12, percentOfTotal: 18.5, image: powerAlbum },
+    { rank: 2, title: "Fire Starter", streams: 198543, change: 8, percentOfTotal: 15.7, image: powerAlbum },
+    { rank: 3, title: "Strange", streams: 176234, change: 5, percentOfTotal: 13.9, image: outlawAlbum },
+    { rank: 4, title: "Power", streams: 154321, change: -2, percentOfTotal: 12.2, image: powerAlbum },
+    { rank: 5, title: "Carolina", streams: 142109, change: 3, percentOfTotal: 11.2, image: carolinaSingle },
+    { rank: 6, title: "Walking On The Edge", streams: 128456, change: 6, percentOfTotal: 10.1, image: walkingOnTheEdge },
+    { rank: 7, title: "Remember My Name", streams: 115678, change: 1, percentOfTotal: 9.1, image: outlawAlbum },
+    { rank: 8, title: "Leave the Light On", streams: 98234, change: -1, percentOfTotal: 7.8, image: outlawAlbum },
   ];
 
   const getChangeIcon = (change?: number) => {
@@ -90,8 +95,18 @@ export const TopTracks = ({ period }: TopTracksProps) => {
           >
             <div className="col-span-6 flex items-center gap-4">
               <span className="text-2xl font-bold text-gray-400 w-8">{track.rank}</span>
-              <div className="w-14 h-14 rounded bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <Music2 className="h-6 w-6 text-primary" />
+              <div className="w-14 h-14 rounded overflow-hidden flex-shrink-0">
+                {track.image ? (
+                  <img 
+                    src={track.image} 
+                    alt={track.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Music2 className="h-6 w-6 text-primary" />
+                  </div>
+                )}
               </div>
               <span className="font-medium">{track.title}</span>
             </div>
