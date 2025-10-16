@@ -8,7 +8,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import heroVideo from "@/assets/hero-video.mp4";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VideoItem {
@@ -21,6 +20,7 @@ interface VideoItem {
 
 export default function Videos() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [heroVideoUrl, setHeroVideoUrl] = useState<string>("");
   const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
   const [behindTheScenes, setBehindTheScenes] = useState<VideoItem[]>([]);
   const [performances, setPerformances] = useState<VideoItem[]>([]);
@@ -31,9 +31,27 @@ export default function Videos() {
   }, []);
 
   const loadVideos = async () => {
+    // Load hero video
+    const { data: heroData } = await supabase
+      .from('videos')
+      .select('storage_path')
+      .eq('category', 'hero')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (heroData) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(heroData.storage_path);
+      setHeroVideoUrl(publicUrl);
+    }
+
+    // Load all other videos (excluding hero)
     const { data } = await supabase
       .from('videos')
       .select('id, title, subtitle, category, thumbnail_url, is_premium')
+      .neq('category', 'hero')
       .order('created_at', { ascending: false });
 
     if (data) {
@@ -78,7 +96,7 @@ export default function Videos() {
         <div className="absolute inset-0 bg-black">
           <video
             className="w-full h-full object-cover opacity-100"
-            src={heroVideo}
+            src={heroVideoUrl}
             autoPlay
             muted
             loop
