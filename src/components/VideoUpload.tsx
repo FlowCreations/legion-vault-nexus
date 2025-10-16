@@ -289,6 +289,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="hero">Hero Video</SelectItem>
               <SelectItem value="music_videos">Music Videos</SelectItem>
               <SelectItem value="performances">Performances</SelectItem>
               <SelectItem value="behind_the_scenes">Behind The Scenes</SelectItem>
