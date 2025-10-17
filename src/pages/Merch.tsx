@@ -343,7 +343,7 @@ export default function Merch() {
                         size="sm"
                         onClick={() => handleCustomizeProduct(product)}
                       >
-                        Customize
+                        Add to Cart
                       </Button>
                     </div>
                   </div>
@@ -398,7 +398,7 @@ export default function Merch() {
                       handleCustomizeProduct(quickViewProduct);
                     }}
                   >
-                    Customize This Product
+                    Add to Cart
                   </Button>
                 </div>
               </div>
