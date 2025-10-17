@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/carousel";
 import { supabase } from "@/integrations/supabase/client";
 import { ShopAssistant } from "@/components/ShopAssistant";
-import { GalleryImagePicker } from "@/components/GalleryImagePicker";
+import { ProductCustomizer } from "@/components/ProductCustomizer";
 import { toast } from "sonner";
-import { StripeCheckout } from "@/components/StripeCheckout";
 
 interface Product {
   id: string;
@@ -34,10 +33,6 @@ export default function Merch() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<string>('');
-  const [customImage, setCustomImage] = useState<string>('');
-  const [customImageName, setCustomImageName] = useState<string>('');
-  const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -69,35 +64,15 @@ export default function Merch() {
 
   const handleCustomizeProduct = (product: Product) => {
     setSelectedProduct(product);
-    if (product.variants && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0].id);
-    }
-    setImagePickerOpen(true);
   };
 
-  const handleImageSelect = (imageUrl: string, imageName: string) => {
-    setCustomImage(imageUrl);
-    setCustomImageName(imageName);
-  };
-
-  const calculatePrice = () => {
-    if (!selectedProduct) return 0;
-    let price = selectedProduct.base_price;
-    if (selectedVariant && selectedProduct.variants) {
-      const variant = selectedProduct.variants.find(v => v.id === selectedVariant);
-      if (variant) {
-        price += variant.price_modifier;
-      }
-    }
-    return price;
+  const handleCustomizerClose = () => {
+    setSelectedProduct(null);
   };
 
   const handlePurchaseSuccess = () => {
     toast.success('Order placed successfully!');
     setSelectedProduct(null);
-    setCustomImage('');
-    setCustomImageName('');
-    setSelectedVariant('');
   };
 
   return (
@@ -251,90 +226,14 @@ export default function Merch() {
         </div>
       </section>
 
-      {/* Customization Modal */}
+      {/* Product Customizer */}
       {selectedProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Customize {selectedProduct.title}</h2>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => {
-                    setSelectedProduct(null);
-                    setCustomImage('');
-                    setCustomImageName('');
-                  }}
-                >
-                  ×
-                </Button>
-              </div>
-
-              {/* Image Preview */}
-              <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                {customImage ? (
-                  <img src={customImage} alt={customImageName} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="h-16 w-16 text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => setImagePickerOpen(true)}
-              >
-                <ImageIcon className="mr-2 h-4 w-4" />
-                {customImage ? 'Change Gallery Image' : 'Choose Gallery Image'}
-              </Button>
-
-              {/* Variant Selection */}
-              {selectedProduct.variants && selectedProduct.variants.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Size</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {selectedProduct.variants.map((variant) => (
-                      <Button
-                        key={variant.id}
-                        variant={selectedVariant === variant.id ? 'default' : 'outline'}
-                        onClick={() => setSelectedVariant(variant.id)}
-                        className="w-full"
-                      >
-                        {variant.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Price and Checkout */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center justify-between text-lg">
-                  <span className="font-medium">Total:</span>
-                  <span className="font-bold">${calculatePrice().toFixed(2)}</span>
-                </div>
-                <StripeCheckout
-                  albumId={selectedProduct.id}
-                  albumTitle={`${selectedProduct.title}${customImageName ? ` - ${customImageName}` : ''}`}
-                  price={calculatePrice()}
-                  onSuccess={handlePurchaseSuccess}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </Card>
-        </div>
+        <ProductCustomizer
+          product={selectedProduct}
+          onClose={handleCustomizerClose}
+          onSuccess={handlePurchaseSuccess}
+        />
       )}
-
-      {/* Gallery Image Picker */}
-      <GalleryImagePicker
-        open={imagePickerOpen}
-        onOpenChange={setImagePickerOpen}
-        onSelect={handleImageSelect}
-      />
 
       {/* AI Shop Assistant */}
       <ShopAssistant />
