@@ -1,8 +1,105 @@
-import { Radio, Calendar, Clock, Users, Ticket } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Radio, Calendar, Clock, Users, Ticket, Mail, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LiveStudio() {
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsAuthenticated(!!session);
+  };
+
+  const handleGetAccess = () => {
+    setShowEmailDialog(true);
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_events')
+        .insert({
+          session_id: crypto.randomUUID(),
+          event_type: 'live_studio_signup',
+          event_data: {
+            email: email,
+            event_name: 'Acoustic Sessions Live'
+          }
+        });
+
+      if (error) throw error;
+
+      toast.success("Access granted!", {
+        description: "We'll send you the stream link before it starts."
+      });
+      
+      setShowEmailDialog(false);
+      setEmail("");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetReminder = () => {
+    // Create calendar event
+    const eventDetails = {
+      title: 'Acoustic Sessions Live',
+      description: 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.',
+      location: 'Online - Live Stream',
+      startDate: '2025-01-25T20:00:00',
+      endDate: '2025-01-25T22:00:00'
+    };
+
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//SØL Live Studio//EN
+BEGIN:VEVENT
+UID:${crypto.randomUUID()}@sol-live-studio.com
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTSTART:${eventDetails.startDate.replace(/[-:]/g, '').split('.')[0]}Z
+DTEND:${eventDetails.endDate.replace(/[-:]/g, '').split('.')[0]}Z
+SUMMARY:${eventDetails.title}
+DESCRIPTION:${eventDetails.description}
+LOCATION:${eventDetails.location}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'acoustic-sessions-live.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Calendar invite downloaded!", {
+      description: "The event has been added to your calendar."
+    });
+  };
+
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -86,11 +183,23 @@ export default function LiveStudio() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Button size="lg" className="bg-gradient-gold hover:shadow-glow transition-all">
-                    <Ticket className="w-5 h-5 mr-2" />
-                    Get Free Access
-                  </Button>
-                  <Button size="lg" variant="outline" className="border-primary/30 hover:border-primary">
+                  {!isAuthenticated && (
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-gold hover:shadow-glow transition-all"
+                      onClick={handleGetAccess}
+                    >
+                      <Ticket className="w-5 h-5 mr-2" />
+                      Get Free Access
+                    </Button>
+                  )}
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-primary/30 hover:border-primary"
+                    onClick={handleSetReminder}
+                  >
+                    <Download className="w-5 h-5 mr-2" />
                     Set Reminder
                   </Button>
                 </div>
@@ -175,6 +284,47 @@ export default function LiveStudio() {
           </Button>
         </div>
       </div>
+
+      {/* Email Signup Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Get Free Access</DialogTitle>
+            <DialogDescription>
+              Enter your email to receive the live stream link
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                "Registering..."
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Get Access Link
+                </>
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
