@@ -84,8 +84,9 @@ export default function Merch() {
     const isNewYorkProduct = titleUpper.includes('NYC') || 
                              titleUpper.includes('NEW YORK') || 
                              titleUpper.includes('NY ');
-    const isTourMerch = titleUpper.includes('TOUR');
-    return p.category === activeCategory && !isNewYorkProduct && !isTourMerch;
+    // Only exclude tour merchandise from apparel, not tour posters from prints
+    const isTourApparel = p.category === 'apparel' && titleUpper.includes('TOUR');
+    return p.category === activeCategory && !isNewYorkProduct && !isTourApparel;
   });
 
   const searchedProducts = searchQuery
