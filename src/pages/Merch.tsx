@@ -79,10 +79,13 @@ export default function Merch() {
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.category === activeCategory && 
-    !p.title.toUpperCase().includes('NYC')
-  );
+  const filteredProducts = products.filter(p => {
+    const titleUpper = p.title.toUpperCase();
+    const isNewYorkProduct = titleUpper.includes('NYC') || 
+                             titleUpper.includes('NEW YORK') || 
+                             titleUpper.includes('NY ');
+    return p.category === activeCategory && !isNewYorkProduct;
+  });
 
   const searchedProducts = searchQuery
     ? filteredProducts.filter(p => 
