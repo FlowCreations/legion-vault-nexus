@@ -8,13 +8,23 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import liveAcousticSession from "@/assets/live-acoustic-session.png";
+import { useCartStore } from "@/stores/cartStore";
+import { ShopifyProduct } from "@/lib/shopify";
 
 export default function LiveStudio() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [showAlbumDialog, setShowAlbumDialog] = useState(false);
+  const [showVIPDialog, setShowVIPDialog] = useState(false);
   const [reminderEmail, setReminderEmail] = useState("");
   const [albumEmail, setAlbumEmail] = useState("");
+  const [vipFormData, setVipFormData] = useState({
+    name: "",
+    email: "",
+    country: "",
+    zipCode: "",
+    phone: ""
+  });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,7 +35,9 @@ export default function LiveStudio() {
   const [isLoading, setIsLoading] = useState(false);
   const [isReminderLoading, setIsReminderLoading] = useState(false);
   const [isAlbumLoading, setIsAlbumLoading] = useState(false);
+  const [isVIPLoading, setIsVIPLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const addItem = useCartStore(state => state.addItem);
   const [countdown, setCountdown] = useState({
     days: "03",
     hours: "14",
@@ -188,6 +200,106 @@ export default function LiveStudio() {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsAlbumLoading(false);
+    }
+  };
+
+  const handleAddToCart = () => {
+    // Create a Shopify-compatible product for the tour finale ticket
+    const mockShopifyProduct: ShopifyProduct = {
+      node: {
+        id: 'world-tour-finale',
+        title: 'Virtual World Tour Finale Ticket',
+        description: 'The grand finale of our virtual tour featuring special guests and never before performed tracks',
+        handle: 'virtual-world-tour-finale',
+        priceRange: {
+          minVariantPrice: {
+            amount: '19.99',
+            currencyCode: 'USD'
+          }
+        },
+        images: {
+          edges: [{
+            node: {
+              url: liveAcousticSession,
+              altText: 'Virtual World Tour Finale'
+            }
+          }]
+        },
+        variants: {
+          edges: [{
+            node: {
+              id: 'gid://shopify/ProductVariant/world-tour-finale',
+              title: 'Default',
+              price: {
+                amount: '19.99',
+                currencyCode: 'USD'
+              },
+              availableForSale: true,
+              selectedOptions: []
+            }
+          }]
+        },
+        options: []
+      }
+    };
+    
+    const variant = mockShopifyProduct.node.variants.edges[0].node;
+    
+    addItem({
+      product: mockShopifyProduct,
+      variantId: variant.id,
+      variantTitle: variant.title,
+      price: variant.price,
+      quantity: 1,
+      selectedOptions: variant.selectedOptions
+    });
+    
+    toast.success("Ticket added to cart!");
+  };
+
+  const handleVIPSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vipFormData.email || !vipFormData.name || !vipFormData.country) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsVIPLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_events')
+        .insert({
+          session_id: crypto.randomUUID(),
+          event_type: 'vip_signup',
+          event_data: {
+            name: vipFormData.name,
+            email: vipFormData.email,
+            country: vipFormData.country,
+            zipCode: vipFormData.zipCode,
+            phone: vipFormData.phone,
+            event_name: 'Q&A with the Band - VIP'
+          }
+        });
+
+      if (error) throw error;
+
+      toast.success("VIP Access Granted!", {
+        description: "We'll send you the exclusive VIP event details."
+      });
+      
+      setShowVIPDialog(false);
+      setVipFormData({
+        name: "",
+        email: "",
+        country: "",
+        zipCode: "",
+        phone: ""
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsVIPLoading(false);
     }
   };
 
@@ -355,20 +467,23 @@ export default function LiveStudio() {
                     {event.id === "1" && (
                       <Button 
                         className="bg-gradient-gold hover:shadow-glow transition-all"
-                        onClick={() => toast.info("Add to cart functionality coming soon")}
+                        onClick={handleAddToCart}
                       >
                         Add to Cart
                       </Button>
                     )}
                     {event.id === "2" && (
-                      <Button className="bg-gradient-gold hover:shadow-glow transition-all">
+                      <Button 
+                        className="bg-gradient-gold hover:shadow-glow transition-all"
+                        onClick={() => setShowVIPDialog(true)}
+                      >
                         Join VIP Today
                       </Button>
                     )}
                     {event.id === "3" && (
                       <Button 
                         className="bg-gradient-gold hover:shadow-glow transition-all"
-                        onClick={handleAlbumRegistration}
+                        onClick={() => setShowEmailDialog(true)}
                       >
                         Register Free
                       </Button>
@@ -555,6 +670,94 @@ export default function LiveStudio() {
                 <>
                   <Mail className="w-4 h-4 mr-2" />
                   Register Free
+                </>
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* VIP Signup Dialog */}
+      <Dialog open={showVIPDialog} onOpenChange={setShowVIPDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Join VIP Today</DialogTitle>
+            <DialogDescription>
+              Enter your details to get exclusive VIP access
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleVIPSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="vipName">Name *</Label>
+              <Input
+                id="vipName"
+                type="text"
+                placeholder="Your name"
+                value={vipFormData.name}
+                onChange={(e) => setVipFormData({ ...vipFormData, name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vipEmail">Email Address *</Label>
+              <Input
+                id="vipEmail"
+                type="email"
+                placeholder="your@email.com"
+                value={vipFormData.email}
+                onChange={(e) => setVipFormData({ ...vipFormData, email: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vipCountry">Country *</Label>
+              <Input
+                id="vipCountry"
+                type="text"
+                placeholder="United States"
+                value={vipFormData.country}
+                onChange={(e) => setVipFormData({ ...vipFormData, country: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vipZipCode">Zip Code (Optional)</Label>
+              <Input
+                id="vipZipCode"
+                type="text"
+                placeholder="12345"
+                value={vipFormData.zipCode}
+                onChange={(e) => setVipFormData({ ...vipFormData, zipCode: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vipPhone">Phone (Optional)</Label>
+              <Input
+                id="vipPhone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={vipFormData.phone}
+                onChange={(e) => setVipFormData({ ...vipFormData, phone: e.target.value })}
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg"
+              disabled={isVIPLoading}
+            >
+              {isVIPLoading ? (
+                "Processing..."
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Join VIP
                 </>
               )}
             </Button>
