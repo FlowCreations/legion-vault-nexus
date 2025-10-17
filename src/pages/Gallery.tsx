@@ -158,7 +158,7 @@ const socialReadyPhotos = [
   },
   {
     id: "3",
-    title: "High Resolution Print Photo Set 1",
+    title: "High resolution print quality photos",
     image: show3,
     price: "$14.99",
   },
