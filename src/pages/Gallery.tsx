@@ -83,9 +83,9 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Concert Photos */}
+        {/* Download Print Quality Photos */}
         <div className="mb-16">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">New York Concert Photos</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Download Print Quality Photos</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {concertPhotos.map((item) => (
               <div
@@ -156,34 +156,34 @@ const socialReadyPhotos = [
     id: "1",
     title: "Download social ready photos",
     image: show1,
-    price: "Free",
+    price: "FREE",
   },
 ];
 
 const concertPhotos = [
   {
     id: "1",
-    title: "MSG Live Performance Photo",
+    title: "High-Resolution Print Photo Set 1",
     image: show1,
-    price: "$9.99",
+    price: "$14.99",
   },
   {
     id: "2",
-    title: "New York Stage Moments",
+    title: "High-Resolution Print Photo Set 2",
     image: show2,
-    price: "$9.99",
+    price: "$14.99",
   },
   {
     id: "3",
-    title: "Concert Highlights",
+    title: "High-Resolution Print Photo Set 3",
     image: show3,
-    price: "$9.99",
+    price: "$14.99",
   },
   {
     id: "4",
-    title: "Crowd Energy Shots",
+    title: "High-Resolution Print Photo Set 4",
     image: show1,
-    price: "$9.99",
+    price: "$14.99",
   },
 ];
 
