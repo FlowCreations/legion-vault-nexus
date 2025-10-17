@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
+import heroImage from "@/assets/shows-hero.png";
 
 export default function Shows() {
   return (
@@ -16,13 +17,12 @@ export default function Shows() {
 
       {/* Hero Image */}
       <section className="relative aspect-[16/9] sm:aspect-[21/9] bg-background-dark overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-background-dark via-card to-background-dark">
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-          {/* Placeholder for hero image */}
-          <div className="h-full flex items-center justify-center opacity-10">
-            <div className="text-9xl font-serif text-foreground">SOL</div>
-          </div>
-        </div>
+        <img 
+          src={heroImage} 
+          alt="Sons of Legion performing live" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       </section>
 
       {/* Photo Gallery Promo */}
