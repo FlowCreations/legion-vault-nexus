@@ -279,7 +279,10 @@ export default function Merch() {
                       <Button 
                         size="lg" 
                         className="bg-white text-black hover:bg-white/90 font-medium px-12 py-6 text-base"
-                        onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}
+                        onClick={() => {
+                          setActiveCategory("albums");
+                          window.scrollTo({ top: 600, behavior: 'smooth' });
+                        }}
                       >
                         SHOP NOW
                       </Button>
