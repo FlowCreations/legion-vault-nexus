@@ -50,6 +50,115 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
     return price;
   };
 
+  const getProductMockup = () => {
+    const productTitle = product.title.toLowerCase();
+    const category = product.category.toLowerCase();
+
+    // Determine product type from title or category
+    if (productTitle.includes('mug')) {
+      return renderMugMockup();
+    } else if (productTitle.includes('poster') || productTitle.includes('print') || category === 'prints') {
+      return renderPosterMockup();
+    } else if (productTitle.includes('hoodie') || productTitle.includes('zip hoodie')) {
+      return renderHoodieMockup();
+    } else if (productTitle.includes('pillow') || productTitle.includes('blanket') || productTitle.includes('tapestry')) {
+      return renderHomeMockup();
+    } else if (productTitle.includes('hat') || productTitle.includes('cap')) {
+      return renderHatMockup();
+    } else if (productTitle.includes('bag') || productTitle.includes('tote')) {
+      return renderBagMockup();
+    } else {
+      // Default to t-shirt/apparel mockup
+      return renderTShirtMockup();
+    }
+  };
+
+  const renderTShirtMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="40" y="60" width="120" height="150" rx="5" />
+      <rect x="10" y="60" width="35" height="60" rx="5" />
+      <rect x="155" y="60" width="35" height="60" rx="5" />
+      <path d="M 80 60 Q 100 50 120 60" fill="none" strokeWidth="2" />
+    </svg>
+  );
+
+  const renderHoodieMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="40" y="70" width="120" height="150" rx="5" />
+      <rect x="10" y="70" width="35" height="70" rx="5" />
+      <rect x="155" y="70" width="35" height="70" rx="5" />
+      <path d="M 70 70 Q 75 50 85 55 Q 95 40 100 40 Q 105 40 115 55 Q 125 50 130 70" fill="none" strokeWidth="2" />
+      <ellipse cx="100" cy="100" rx="8" ry="15" fill="none" strokeWidth="2" />
+    </svg>
+  );
+
+  const renderMugMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-2/3 h-2/3 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <ellipse cx="100" cy="80" rx="50" ry="10" />
+      <rect x="50" y="80" width="100" height="100" />
+      <ellipse cx="100" cy="180" rx="50" ry="10" />
+      <path d="M 150 100 Q 170 100 170 130 Q 170 160 150 160" fill="none" strokeWidth="3" />
+    </svg>
+  );
+
+  const renderPosterMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="40" y="30" width="120" height="180" rx="2" strokeWidth="3" />
+      <rect x="35" y="25" width="130" height="190" rx="2" fill="none" strokeWidth="8" />
+    </svg>
+  );
+
+  const renderHomeMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="30" y="30" width="140" height="140" rx="8" strokeWidth="2" />
+      <path d="M 40 40 Q 50 35 60 40" fill="none" strokeWidth="1" opacity="0.3" />
+      <path d="M 140 40 Q 150 35 160 40" fill="none" strokeWidth="1" opacity="0.3" />
+    </svg>
+  );
+
+  const renderHatMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <ellipse cx="100" cy="140" rx="70" ry="15" />
+      <path d="M 30 140 Q 30 80 100 60 Q 170 80 170 140" strokeWidth="2" />
+      <ellipse cx="100" cy="60" rx="30" ry="8" />
+    </svg>
+  );
+
+  const renderBagMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="45" y="80" width="110" height="130" rx="5" strokeWidth="2" />
+      <path d="M 65 80 Q 65 50 100 50 Q 135 50 135 80" fill="none" strokeWidth="3" />
+    </svg>
+  );
+
   const getSizePercentage = () => {
     switch (imageSize) {
       case 'small': return 25;
@@ -82,24 +191,11 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Preview</h3>
                 <div className="relative aspect-square bg-gradient-to-br from-muted to-card rounded-lg overflow-hidden border-2 border-border">
-                  {/* T-shirt mockup background */}
+                  {/* Product mockup */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="relative w-full h-full">
-                      {/* Simple t-shirt shape representation */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <svg 
-                          viewBox="0 0 200 240" 
-                          className="w-3/4 h-3/4 fill-background stroke-border"
-                          style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
-                        >
-                          {/* T-shirt body */}
-                          <rect x="40" y="60" width="120" height="150" rx="5" />
-                          {/* Sleeves */}
-                          <rect x="10" y="60" width="35" height="60" rx="5" />
-                          <rect x="155" y="60" width="35" height="60" rx="5" />
-                          {/* Collar */}
-                          <path d="M 80 60 Q 100 50 120 60" fill="none" strokeWidth="2" />
-                        </svg>
+                        {getProductMockup()}
                       </div>
 
                       {/* Custom image overlay */}
