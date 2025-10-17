@@ -6,6 +6,7 @@ import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
 import nyCap from "@/assets/merch/ny-cap.png";
+import nyTshirt from "@/assets/merch/ny-tshirt.png";
 
 export default function Gallery() {
   const navigate = useNavigate();
@@ -198,5 +199,11 @@ const nyMerch = [
     title: "SOL NYC Cap",
     image: nyCap,
     price: "$29.99",
+  },
+  {
+    id: "2",
+    title: "LEGION NYC T-Shirt",
+    image: nyTshirt,
+    price: "$34.99",
   },
 ];
