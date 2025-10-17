@@ -157,7 +157,7 @@ export default function Videos() {
         <div className="absolute inset-0 flex items-end justify-start pl-4 sm:pl-6 lg:pl-8 pr-8 pb-8 sm:pb-10 lg:pb-12">
           <div className="max-w-xl">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
-              Enter the Sol Portal
+              Enter the SØL Portal
             </h1>
             <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
               Stream exclusive content and experience the music like never before.
