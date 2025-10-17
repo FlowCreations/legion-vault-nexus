@@ -10,27 +10,7 @@ export default function Shows() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
-            <h1 className="font-bold text-xl sm:text-2xl tracking-wide">
-              SONS OF LEGION
-            </h1>
-
-            <nav className="hidden md:flex items-center gap-6 text-sm">
-              <button className="text-primary font-medium border-b-2 border-primary pb-1">
-                Shows
-              </button>
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <button className="p-2 hover:bg-card rounded-lg transition-colors">
-                <ShoppingBag className="w-5 h-5" />
-              </button>
-              <button className="p-2 hover:bg-card rounded-lg transition-colors md:hidden">
-                <Menu className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         </div>
       </header>
 
