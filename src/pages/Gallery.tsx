@@ -7,6 +7,7 @@ import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
 import nyCap from "@/assets/merch/ny-cap.png";
 import nyTshirt from "@/assets/merch/ny-tshirt.png";
+import nyTshirt2 from "@/assets/merch/ny-tshirt-2.png";
 
 export default function Gallery() {
   const navigate = useNavigate();
@@ -128,7 +129,7 @@ export default function Gallery() {
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
@@ -205,5 +206,11 @@ const nyMerch = [
     title: "LEGION NYC T-Shirt",
     image: nyTshirt,
     price: "$34.99",
+  },
+  {
+    id: "3",
+    title: "Sons of Legion Tour T-Shirt",
+    image: nyTshirt2,
+    price: "$39.99",
   },
 ];
