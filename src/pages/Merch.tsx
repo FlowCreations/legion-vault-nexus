@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, User, Loader2, Image as ImageIcon } from "lucide-react";
+import { Search, User, Loader2, Image as ImageIcon, X, Eye, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,6 +13,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { ShopAssistant } from "@/components/ShopAssistant";
 import { ProductCustomizer } from "@/components/ProductCustomizer";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface Product {
   id: string;
@@ -33,6 +48,10 @@ export default function Merch() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "price-low" | "price-high">("newest");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -61,6 +80,30 @@ export default function Merch() {
   const filteredProducts = activeCategory === "all" 
     ? products 
     : products.filter(p => p.category === activeCategory);
+
+  const searchedProducts = searchQuery
+    ? filteredProducts.filter(p => 
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : filteredProducts;
+
+  const priceFilteredProducts = searchedProducts.filter(
+    p => p.base_price >= priceRange[0] && p.base_price <= priceRange[1]
+  );
+
+  const sortedProducts = [...priceFilteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case "price-low":
+        return a.base_price - b.base_price;
+      case "price-high":
+        return b.base_price - a.base_price;
+      default:
+        return 0;
+    }
+  });
+
+  const featuredProducts = products.slice(0, 3);
 
   const handleCustomizeProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -91,9 +134,16 @@ export default function Merch() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Search */}
-            <button className="p-2 hover:bg-card rounded-lg transition-colors">
-              <Search className="w-5 h-5" />
-            </button>
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
 
             {/* Logo/Title */}
             <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider text-center">
@@ -102,6 +152,46 @@ export default function Merch() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <SlidersHorizontal className="w-5 h-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-6 py-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Sort By</label>
+                      <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="newest">Newest</SelectItem>
+                          <SelectItem value="price-low">Price: Low to High</SelectItem>
+                          <SelectItem value="price-high">Price: High to Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Price Range: ${priceRange[0]} - ${priceRange[1]}
+                      </label>
+                      <Slider
+                        value={priceRange}
+                        onValueChange={(value) => setPriceRange(value as [number, number])}
+                        min={0}
+                        max={100}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
               <button className="p-2 hover:bg-card rounded-lg transition-colors">
                 <User className="w-5 h-5" />
               </button>
@@ -166,12 +256,59 @@ export default function Merch() {
         </Carousel>
       </section>
 
+      {/* Featured Products */}
+      {!loading && featuredProducts.length > 0 && activeCategory === "all" && (
+        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/30">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-center text-2xl sm:text-3xl font-bold mb-8 tracking-wide">
+              FEATURED GEAR
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {featuredProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden group cursor-pointer" onClick={() => handleCustomizeProduct(product)}>
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                      <Button variant="secondary" size="sm" className="w-full">
+                        Customize Now
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <h3 className="font-bold text-xl">{product.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-2xl">${product.base_price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Products Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center text-2xl sm:text-3xl font-bold mb-12 tracking-wide text-muted-foreground">
-            LEGION GEAR
-          </h2>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-wide text-muted-foreground">
+              LEGION GEAR
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {sortedProducts.length} {sortedProducts.length === 1 ? 'product' : 'products'}
+            </p>
+          </div>
 
           {loading && (
             <div className="flex items-center justify-center py-20">
@@ -179,7 +316,7 @@ export default function Merch() {
             </div>
           )}
 
-          {!loading && filteredProducts.length === 0 && (
+          {!loading && sortedProducts.length === 0 && (
             <div className="text-center py-20">
               <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-2xl font-bold mb-2">No products available</h3>
@@ -189,10 +326,10 @@ export default function Merch() {
             </div>
           )}
 
-          {!loading && filteredProducts.length > 0 && (
+          {!loading && sortedProducts.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden group">
+              {sortedProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden group relative">
                   <div className="relative aspect-square overflow-hidden bg-muted">
                     {product.image_url ? (
                       <img
@@ -205,6 +342,17 @@ export default function Merch() {
                         <ImageIcon className="h-12 w-12 text-muted-foreground" />
                       </div>
                     )}
+                    {/* Quick View Button */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setQuickViewProduct(product)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Quick View
+                      </Button>
+                    </div>
                   </div>
                   <div className="p-4 space-y-3">
                     <h3 className="font-semibold text-sm sm:text-base">{product.title}</h3>
@@ -225,6 +373,59 @@ export default function Merch() {
           )}
         </div>
       </section>
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="max-w-4xl w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">{quickViewProduct.title}</h2>
+                <Button variant="ghost" size="icon" onClick={() => setQuickViewProduct(null)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                  {quickViewProduct.image_url ? (
+                    <img src={quickViewProduct.image_url} alt={quickViewProduct.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">{quickViewProduct.description}</p>
+                  <div className="text-3xl font-bold">${quickViewProduct.base_price.toFixed(2)}</div>
+                  {quickViewProduct.variants && quickViewProduct.variants.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Available Sizes</label>
+                      <div className="flex flex-wrap gap-2">
+                        {quickViewProduct.variants.map((variant) => (
+                          <div key={variant.id} className="px-3 py-1 border rounded text-sm">
+                            {variant.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => {
+                      setQuickViewProduct(null);
+                      handleCustomizeProduct(quickViewProduct);
+                    }}
+                  >
+                    Customize This Product
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Product Customizer */}
       {selectedProduct && (
