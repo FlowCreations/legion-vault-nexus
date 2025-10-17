@@ -138,6 +138,62 @@ export default function Gallery() {
     }
   };
 
+  const handleAddPhotoToCart = (item: GalleryItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Create a Shopify-compatible product structure for the photo
+    const mockShopifyProduct: ShopifyProduct = {
+      node: {
+        id: item.id,
+        title: item.title,
+        description: 'High resolution print quality photo',
+        handle: item.title.toLowerCase().replace(/\s+/g, '-'),
+        priceRange: {
+          minVariantPrice: {
+            amount: item.price.replace('$', ''),
+            currencyCode: 'USD'
+          }
+        },
+        images: {
+          edges: [{
+            node: {
+              url: item.image,
+              altText: item.title
+            }
+          }]
+        },
+        variants: {
+          edges: [{
+            node: {
+              id: `gid://shopify/ProductVariant/${item.id}`,
+              title: 'Default',
+              price: {
+                amount: item.price.replace('$', ''),
+                currencyCode: 'USD'
+              },
+              availableForSale: true,
+              selectedOptions: []
+            }
+          }]
+        },
+        options: []
+      }
+    };
+    
+    const variant = mockShopifyProduct.node.variants.edges[0].node;
+    
+    addItem({
+      product: mockShopifyProduct,
+      variantId: variant.id,
+      variantTitle: variant.title,
+      price: variant.price,
+      quantity: 1,
+      selectedOptions: variant.selectedOptions
+    });
+    
+    toast.success(`${item.title} added to cart!`);
+  };
+
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -245,10 +301,9 @@ export default function Gallery() {
         <div className="mb-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {socialReadyPhotos.map((item) => (
-              <div
+              <Card
                 key={item.id}
-                onClick={() => handleItemClick(item)}
-                className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
+                className="overflow-hidden group"
               >
                 <div className="aspect-square relative overflow-hidden bg-background-dark">
                   <img
@@ -256,19 +311,36 @@ export default function Gallery() {
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      {item.isFree ? 'Get Free Download' : 'Purchase'}
-                    </span>
-                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="text-sm font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                <div className="p-4 space-y-3">
+                  <h3 className="text-sm font-medium line-clamp-2">
                     {item.title}
                   </h3>
-                  <p className="text-lg font-bold text-primary">{item.price}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-primary">{item.price}</span>
+                    {item.isFree ? (
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleItemClick(item)}
+                        className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Get Free
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => handleAddPhotoToCart(item, e)}
+                        className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
+                      >
+                        Add to Cart
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
