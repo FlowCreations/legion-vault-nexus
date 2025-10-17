@@ -12,7 +12,7 @@ export default function Community() {
             Join The Community
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Your SOL family is waiting to connect with you!
+            Your SØL family is waiting to connect with you!
           </p>
         </div>
 
