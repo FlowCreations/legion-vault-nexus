@@ -20,7 +20,7 @@ export default function Shows() {
         <img 
           src={heroImage} 
           alt="Sons of Legion performing live" 
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent pointer-events-none" />
       </section>
