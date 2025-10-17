@@ -109,44 +109,35 @@ export default function LiveStudio() {
     }
   };
 
-  const handleSetReminder = () => {
-    // Create calendar event
-    const eventDetails = {
-      title: 'Acoustic Sessions Live',
-      description: 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.',
-      location: 'Online - Live Stream',
-      startDate: '2025-01-25T20:00:00',
-      endDate: '2025-01-25T22:00:00'
-    };
+  const handleSetReminder = async () => {
+    // Show dialog to get user's email for calendar invite
+    const email = prompt("Enter your email to receive the calendar invite:");
+    
+    if (!email) return;
 
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//SØL Live Studio//EN
-BEGIN:VEVENT
-UID:${crypto.randomUUID()}@sol-live-studio.com
-DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-DTSTART:${eventDetails.startDate.replace(/[-:]/g, '').split('.')[0]}Z
-DTEND:${eventDetails.endDate.replace(/[-:]/g, '').split('.')[0]}Z
-SUMMARY:${eventDetails.title}
-DESCRIPTION:${eventDetails.description}
-LOCATION:${eventDetails.location}
-STATUS:CONFIRMED
-END:VEVENT
-END:VCALENDAR`;
+    try {
+      const { error } = await supabase.functions.invoke('send-calendar-invite', {
+        body: {
+          email: email,
+          eventDetails: {
+            title: 'Acoustic Sessions Live',
+            description: 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.',
+            location: 'Online - Live Stream',
+            startDate: '2025-12-23T20:00:00-05:00',
+            endDate: '2025-12-23T22:00:00-05:00'
+          }
+        }
+      });
 
-    const blob = new Blob([icsContent], { type: 'text/calendar' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'acoustic-sessions-live.ics';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+      if (error) throw error;
 
-    toast.success("Calendar invite downloaded!", {
-      description: "The event has been added to your calendar."
-    });
+      toast.success("Calendar invite sent!", {
+        description: "Check your email for the calendar invite."
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to send calendar invite. Please try again.");
+    }
   };
 
   return (
@@ -158,7 +149,9 @@ END:VCALENDAR`;
             Live Studio
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Experience live performances, intimate sessions, and exclusive concerts from anywhere
+            Experience live performances, intimate sessions,{" "}
+            <br className="hidden sm:inline" />
+            and exclusive concerts from anywhere.
           </p>
         </div>
 
@@ -200,7 +193,7 @@ END:VCALENDAR`;
                 <div className="space-y-3 mb-8">
                   <div className="flex items-center space-x-3 text-sm">
                     <Calendar className="w-5 h-5 text-primary" />
-                    <span>Saturday, January 25, 2025</span>
+                    <span>Tuesday, December 23, 2025</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm">
                     <Clock className="w-5 h-5 text-primary" />
