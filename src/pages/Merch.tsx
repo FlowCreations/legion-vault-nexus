@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, Loader2, Image as ImageIcon, X, Eye, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import spinningRecord from "@/assets/spinning-record.mp4";
 import {
   Carousel,
   CarouselContent,
@@ -224,7 +225,18 @@ export default function Merch() {
           <CarouselContent>
             {heroSlides.map((slide) => (
               <CarouselItem key={slide.id}>
-                <div className="relative aspect-[16/9] sm:aspect-[21/9] bg-gradient-to-br from-card to-card-hover flex items-center justify-center">
+                <div className="relative aspect-[16/9] sm:aspect-[21/9] bg-gradient-to-br from-card to-card-hover flex items-center justify-center overflow-hidden">
+                  {slide.id === "2" && (
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    >
+                      <source src={spinningRecord} type="video/mp4" />
+                    </video>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-r from-background-dark/90 via-background-dark/50 to-transparent" />
                   
                   <div className="relative z-10 max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 w-full">
