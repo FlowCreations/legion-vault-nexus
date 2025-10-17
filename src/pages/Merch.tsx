@@ -84,7 +84,8 @@ export default function Merch() {
     const isNewYorkProduct = titleUpper.includes('NYC') || 
                              titleUpper.includes('NEW YORK') || 
                              titleUpper.includes('NY ');
-    return p.category === activeCategory && !isNewYorkProduct;
+    const isTourMerch = titleUpper.includes('TOUR');
+    return p.category === activeCategory && !isNewYorkProduct && !isTourMerch;
   });
 
   const searchedProducts = searchQuery
