@@ -85,38 +85,6 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Download Print Quality Photos */}
-        <div className="mb-16">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Download Print Quality Photos</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {concertPhotos.map((item) => (
-              <div
-                key={item.id}
-                className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
-              >
-                <div className="aspect-square relative overflow-hidden bg-background-dark">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      Quick view
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-sm font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-lg font-bold text-primary">{item.price}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* New York Merch */}
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold mb-6">New York Merch</h2>
@@ -165,33 +133,6 @@ const socialReadyPhotos = [
     id: "3",
     title: "High resolution print quality photos",
     image: show3,
-    price: "$14.99",
-  },
-];
-
-const concertPhotos = [
-  {
-    id: "1",
-    title: "High-Resolution Print Photo Set 1",
-    image: show1,
-    price: "$14.99",
-  },
-  {
-    id: "2",
-    title: "High-Resolution Print Photo Set 2",
-    image: show2,
-    price: "$14.99",
-  },
-  {
-    id: "3",
-    title: "High-Resolution Print Photo Set 3",
-    image: show3,
-    price: "$14.99",
-  },
-  {
-    id: "4",
-    title: "High-Resolution Print Photo Set 4",
-    image: show1,
     price: "$14.99",
   },
 ];
