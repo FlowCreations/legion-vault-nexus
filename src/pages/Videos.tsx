@@ -166,6 +166,11 @@ export default function Videos() {
               <Button 
                 size="lg" 
                 className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 text-sm rounded-lg shadow-lg transition-all"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowAuthDialog(true);
+                  }
+                }}
               >
                 Accept Free Trial
               </Button>
