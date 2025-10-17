@@ -130,11 +130,11 @@ export default function Merch() {
       </div>
 
       {/* Header */}
-      <header className="bg-background border-b border-border sticky top-20 z-40">
+      <header className="bg-background border-b border-border sticky top-20 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Search */}
-            <div className="relative flex-1 max-w-xs">
+            <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
@@ -145,10 +145,12 @@ export default function Merch() {
               />
             </div>
 
-            {/* Logo/Title */}
-            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider text-center flex-1">
-              SONS OF LEGION
-            </h1>
+            {/* Logo/Title - Absolutely centered */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider whitespace-nowrap">
+                SONS OF LEGION
+              </h1>
+            </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
