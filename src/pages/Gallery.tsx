@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
-import nyCap from "@/assets/merch/ny-cap.png";
+import nyCap from "@/assets/merch/ny-cap-updated.png";
 import nyTshirt from "@/assets/merch/ny-tshirt.png";
 import nyTshirt2 from "@/assets/merch/ny-tshirt-2.png";
 import nySweater from "@/assets/merch/ny-sweater.png";
