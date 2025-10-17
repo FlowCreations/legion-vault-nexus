@@ -374,7 +374,7 @@ export default function Merch() {
                         onClick={() => handleAddToCart(product)}
                         className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
                       >
-                        {product.variants && product.variants.length > 0 ? 'Select Size' : 'Add to Cart'}
+                        Add to Cart
                       </Button>
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export default function Merch() {
                       handleAddToCart(quickViewProduct);
                     }}
                   >
-                    {quickViewProduct.variants && quickViewProduct.variants.length > 0 ? 'Select Size & Purchase' : 'Add to Cart'}
+                    Add to Cart
                   </Button>
                 </div>
               </div>
