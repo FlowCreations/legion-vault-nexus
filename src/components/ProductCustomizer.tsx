@@ -81,6 +81,10 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
       return renderBandanaMockup();
     } else if (productTitle.includes('pin') || productTitle.includes('button')) {
       return renderPinMockup();
+    } else if (productTitle.includes('phone case')) {
+      return renderPhoneCaseMockup();
+    } else if (productTitle.includes('laptop sleeve')) {
+      return renderLaptopSleeveMockup();
     } else if (category === 'prints') {
       return renderFramedPrintMockup();
     } else {
@@ -237,6 +241,34 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
       <circle cx="100" cy="100" r="60" strokeWidth="4" />
       <circle cx="100" cy="100" r="55" strokeWidth="1" opacity="0.2" />
       <rect x="95" y="155" width="10" height="25" rx="2" strokeWidth="1.5" />
+    </svg>
+  );
+
+  const renderPhoneCaseMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-1/2 h-1/2 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.15))' }}
+    >
+      <rect x="60" y="40" width="80" height="160" rx="8" strokeWidth="3" />
+      <rect x="65" y="45" width="70" height="150" rx="6" fill="none" strokeWidth="1.5" opacity="0.3" />
+      <circle cx="100" cy="55" r="3" fill="currentColor" opacity="0.4" />
+      <rect x="85" y="175" width="30" height="4" rx="2" fill="currentColor" opacity="0.4" />
+      <circle cx="130" cy="60" r="8" fill="none" strokeWidth="2" />
+    </svg>
+  );
+
+  const renderLaptopSleeveMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="30" y="50" width="140" height="100" rx="5" strokeWidth="2" />
+      <rect x="35" y="55" width="130" height="90" rx="3" fill="none" strokeWidth="1" opacity="0.3" />
+      <path d="M 100 50 L 100 55" strokeWidth="2" />
+      <rect x="90" y="45" width="20" height="5" rx="2" fill="none" strokeWidth="1.5" />
+      <line x1="40" y1="100" x2="160" y2="100" strokeWidth="1" opacity="0.1" />
     </svg>
   );
 
