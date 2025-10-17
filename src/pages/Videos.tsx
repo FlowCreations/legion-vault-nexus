@@ -160,9 +160,9 @@ export default function Videos() {
               Enter the SØL Portal
             </h1>
             <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
-              Stream exclusive content and experience the music{" "}
+              Stream exclusive content and experience the{" "}
               <br className="hidden sm:inline" />
-              like never before.
+              music like never before.
             </p>
             <div className="flex flex-col items-start gap-3">
               <Button 
