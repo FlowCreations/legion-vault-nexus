@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCustomizer } from "@/components/ProductCustomizer";
+import { useCartStore } from "@/stores/cartStore";
+import { ShopifyProduct } from "@/lib/shopify";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
@@ -43,6 +45,7 @@ export default function Gallery() {
   const [isLoading, setIsLoading] = useState(false);
   const [nyProducts, setNyProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const addItem = useCartStore(state => state.addItem);
 
   useEffect(() => {
     fetchNYProducts();
@@ -135,6 +138,68 @@ export default function Gallery() {
     }
   };
 
+  const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // For products with variants, open customizer
+    if (product.variants && product.variants.length > 0) {
+      setSelectedProduct(product);
+      return;
+    }
+    
+    // Create a Shopify-compatible product structure
+    const mockShopifyProduct: ShopifyProduct = {
+      node: {
+        id: product.id,
+        title: product.title,
+        description: product.description || '',
+        handle: product.title.toLowerCase().replace(/\s+/g, '-'),
+        priceRange: {
+          minVariantPrice: {
+            amount: product.base_price.toString(),
+            currencyCode: 'USD'
+          }
+        },
+        images: {
+          edges: product.image_url ? [{
+            node: {
+              url: product.image_url,
+              altText: product.title
+            }
+          }] : []
+        },
+        variants: {
+          edges: [{
+            node: {
+              id: `gid://shopify/ProductVariant/${product.id}`,
+              title: 'Default',
+              price: {
+                amount: product.base_price.toString(),
+                currencyCode: 'USD'
+              },
+              availableForSale: true,
+              selectedOptions: []
+            }
+          }]
+        },
+        options: []
+      }
+    };
+    
+    const variant = mockShopifyProduct.node.variants.edges[0].node;
+    
+    addItem({
+      product: mockShopifyProduct,
+      variantId: variant.id,
+      variantTitle: variant.title,
+      price: variant.price,
+      quantity: 1,
+      selectedOptions: variant.selectedOptions
+    });
+    
+    toast.success(`${product.title} added to cart!`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Back Navigation */}
@@ -215,8 +280,7 @@ export default function Gallery() {
             {nyProducts.map((product) => (
               <Card 
                 key={product.id}
-                className="overflow-hidden group relative cursor-pointer"
-                onClick={() => setSelectedProduct(product)}
+                className="overflow-hidden group relative"
               >
                 <div className="relative aspect-square overflow-hidden bg-muted">
                   {product.image_url ? (
@@ -230,17 +294,20 @@ export default function Gallery() {
                       <ShoppingCart className="h-12 w-12 text-muted-foreground" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      Add to Cart
-                    </span>
-                  </div>
                 </div>
                 <div className="p-4 space-y-3">
                   <h3 className="font-semibold text-sm sm:text-base">{product.title}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{product.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => handleAddToCart(product, e)}
+                      className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
+                    >
+                      Add to Cart
+                    </Button>
                   </div>
                 </div>
               </Card>
