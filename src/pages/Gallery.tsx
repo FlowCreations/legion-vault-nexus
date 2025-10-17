@@ -57,8 +57,8 @@ export default function Gallery() {
           variants:product_variants(*)
         `)
         .eq('available', true)
-        .eq('category', 'accessories')
-        .ilike('title', '%NY%');
+        .or('category.eq.accessories,category.eq.apparel')
+        .ilike('title', '%NYC%');
 
       if (error) throw error;
       setNyProducts(data || []);
