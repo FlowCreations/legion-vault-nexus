@@ -108,8 +108,17 @@ export default function Merch() {
 
   
 
-  const handleCustomizeProduct = (product: Product) => {
-    setSelectedProduct(product);
+  const handleAddToCart = (product: Product) => {
+    // For products without variants, add directly to cart
+    if (!product.variants || product.variants.length === 0) {
+      toast.success(`${product.title} added to cart!`, {
+        description: 'View your cart to checkout'
+      });
+      // You could add cart state management here if needed
+    } else {
+      // For products with variants, open customizer
+      setSelectedProduct(product);
+    }
   };
 
   const handleCustomizerClose = () => {
@@ -358,9 +367,9 @@ export default function Merch() {
                       <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
                       <Button 
                         size="sm"
-                        onClick={() => handleCustomizeProduct(product)}
+                        onClick={() => handleAddToCart(product)}
                       >
-                        Add to Cart
+                        {product.variants && product.variants.length > 0 ? 'Select Size' : 'Add to Cart'}
                       </Button>
                     </div>
                   </div>
@@ -412,10 +421,10 @@ export default function Merch() {
                     size="lg"
                     onClick={() => {
                       setQuickViewProduct(null);
-                      handleCustomizeProduct(quickViewProduct);
+                      handleAddToCart(quickViewProduct);
                     }}
                   >
-                    Add to Cart
+                    {quickViewProduct.variants && quickViewProduct.variants.length > 0 ? 'Select Size & Purchase' : 'Add to Cart'}
                   </Button>
                 </div>
               </div>
