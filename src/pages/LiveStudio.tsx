@@ -11,14 +11,20 @@ import liveAcousticSession from "@/assets/live-acoustic-session.png";
 
 export default function LiveStudio() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [email, setEmail] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    country: "",
+    zipCode: "",
+    phone: ""
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [countdown, setCountdown] = useState({
-    days: "03",
-    hours: "14",
-    minutes: "27",
-    seconds: "60"
+    days: "00",
+    hours: "00",
+    minutes: "00",
+    seconds: "00"
   });
 
   useEffect(() => {
@@ -43,10 +49,20 @@ export default function LiveStudio() {
           minutes: String(minutes).padStart(2, '0'),
           seconds: String(seconds).padStart(2, '0')
         });
+      } else {
+        setCountdown({
+          days: "00",
+          hours: "00",
+          minutes: "00",
+          seconds: "00"
+        });
       }
     };
     
+    // Initial update
     updateCountdown();
+    
+    // Update every second
     const interval = setInterval(updateCountdown, 1000);
     
     return () => clearInterval(interval);
@@ -63,7 +79,10 @@ export default function LiveStudio() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!formData.email || !formData.name || !formData.country || !formData.zipCode) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -73,7 +92,11 @@ export default function LiveStudio() {
           session_id: crypto.randomUUID(),
           event_type: 'live_studio_signup',
           event_data: {
-            email: email,
+            name: formData.name,
+            email: formData.email,
+            country: formData.country,
+            zipCode: formData.zipCode,
+            phone: formData.phone,
             event_name: 'Acoustic Sessions Live'
           }
         });
@@ -85,7 +108,13 @@ export default function LiveStudio() {
       });
       
       setShowEmailDialog(false);
-      setEmail("");
+      setFormData({
+        name: "",
+        email: "",
+        country: "",
+        zipCode: "",
+        phone: ""
+      });
     } catch (error) {
       console.error('Error:', error);
       toast.error("Something went wrong. Please try again.");
@@ -320,26 +349,74 @@ END:VCALENDAR`;
 
       {/* Email Signup Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Get Free Access</DialogTitle>
             <DialogDescription>
-              Enter your email to receive the live stream link
+              Enter your details to receive the live stream link
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleEmailSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">Country *</Label>
+              <Input
+                id="country"
+                type="text"
+                placeholder="United States"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="zipCode">Zip Code *</Label>
+              <Input
+                id="zipCode"
+                type="text"
+                placeholder="12345"
+                value={formData.zipCode}
+                onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone (Optional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
             <Button 
               type="submit" 
               className="w-full" 
