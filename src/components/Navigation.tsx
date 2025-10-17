@@ -57,9 +57,8 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Cart and Sign In */}
+          {/* Sign In and Cart */}
           <div className="hidden md:flex items-center gap-3">
-            <CartDrawer />
             <Button 
               className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
               asChild
@@ -69,6 +68,7 @@ export const Navigation = () => {
                 Sign In
               </Link>
             </Button>
+            <CartDrawer />
           </div>
         </div>
 
@@ -101,7 +101,6 @@ export const Navigation = () => {
             </div>
             
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              <CartDrawer />
               <Button 
                 size="sm"
                 className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
@@ -112,6 +111,7 @@ export const Navigation = () => {
                   <span className="hidden sm:inline">Sign In</span>
                 </Link>
               </Button>
+              <CartDrawer />
             </div>
           </div>
         </div>
