@@ -12,7 +12,9 @@ import liveAcousticSession from "@/assets/live-acoustic-session.png";
 export default function LiveStudio() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [showAlbumDialog, setShowAlbumDialog] = useState(false);
   const [reminderEmail, setReminderEmail] = useState("");
+  const [albumEmail, setAlbumEmail] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -22,6 +24,7 @@ export default function LiveStudio() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isReminderLoading, setIsReminderLoading] = useState(false);
+  const [isAlbumLoading, setIsAlbumLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [countdown, setCountdown] = useState({
     days: "03",
@@ -148,6 +151,43 @@ export default function LiveStudio() {
       toast.error("Failed to send calendar invite. Please try again.");
     } finally {
       setIsReminderLoading(false);
+    }
+  };
+
+  const handleAlbumRegistration = () => {
+    setShowAlbumDialog(true);
+  };
+
+  const handleAlbumSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!albumEmail) return;
+
+    setIsAlbumLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_events')
+        .insert({
+          session_id: crypto.randomUUID(),
+          event_type: 'album_listening_party_signup',
+          event_data: {
+            email: albumEmail,
+            event_name: 'Album Listening Party'
+          }
+        });
+
+      if (error) throw error;
+
+      toast.success("Registered successfully!", {
+        description: "We'll send you the event details before it starts."
+      });
+      
+      setShowAlbumDialog(false);
+      setAlbumEmail("");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsAlbumLoading(false);
     }
   };
 
@@ -312,12 +352,27 @@ export default function LiveStudio() {
                   </div>
 
                   <div className="flex flex-col space-y-2 md:min-w-[200px]">
-                    <Button className="bg-gradient-gold hover:shadow-glow transition-all">
-                      {event.price ? "Purchase Ticket" : "Register Free"}
-                    </Button>
-                    <Button variant="outline" className="border-primary/30 hover:border-primary">
-                      Learn More
-                    </Button>
+                    {event.id === "1" && (
+                      <Button 
+                        className="bg-gradient-gold hover:shadow-glow transition-all"
+                        onClick={() => toast.info("Add to cart functionality coming soon")}
+                      >
+                        Add to Cart
+                      </Button>
+                    )}
+                    {event.id === "2" && (
+                      <Button className="bg-gradient-gold hover:shadow-glow transition-all">
+                        Join VIP Today
+                      </Button>
+                    )}
+                    {event.id === "3" && (
+                      <Button 
+                        className="bg-gradient-gold hover:shadow-glow transition-all"
+                        onClick={handleAlbumRegistration}
+                      >
+                        Register Free
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -465,6 +520,47 @@ export default function LiveStudio() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Album Listening Party Registration Dialog */}
+      <Dialog open={showAlbumDialog} onOpenChange={setShowAlbumDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Album Listening Party</DialogTitle>
+            <DialogDescription>
+              Register for free to listen to the new album with the band
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAlbumSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="albumEmail">Email Address</Label>
+              <Input
+                id="albumEmail"
+                type="email"
+                placeholder="your@email.com"
+                value={albumEmail}
+                onChange={(e) => setAlbumEmail(e.target.value)}
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg"
+              disabled={isAlbumLoading}
+            >
+              {isAlbumLoading ? (
+                "Registering..."
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Register Free
+                </>
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -474,7 +570,7 @@ const upcomingEvents = [
     id: "1",
     title: "Virtual World Tour Finale",
     description: "The grand finale of our virtual tour featuring special guests and never before performed tracks",
-    date: "Feb 15, 2025",
+    date: "March 15, 2026",
     time: "9:00 PM EST",
     price: "$19.99",
     isVIP: false,
@@ -484,7 +580,7 @@ const upcomingEvents = [
     id: "2",
     title: "Q&A with the Band",
     description: "Ask us anything! Live video chat session with all band members",
-    date: "Feb 8, 2025",
+    date: "February 20, 2026",
     time: "7:00 PM EST",
     price: null,
     isVIP: true,
@@ -493,8 +589,8 @@ const upcomingEvents = [
   {
     id: "3",
     title: "Album Listening Party",
-    description: "Experience 'Cosmic Echoes' from start to finish with live commentary",
-    date: "Feb 1, 2025",
+    description: "Listen to Sons of Legion's newest album live with the band before its released.",
+    date: "January 30, 2026",
     time: "8:00 PM EST",
     price: null,
     isVIP: false,
