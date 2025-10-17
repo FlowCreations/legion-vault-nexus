@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import liveAcousticSession from "@/assets/live-acoustic-session.png";
 
 export default function LiveStudio() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -129,13 +130,12 @@ END:VCALENDAR`;
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Stream Preview */}
-              <div className="aspect-video rounded-2xl bg-gradient-to-br from-primary/20 to-primary-glow/10 shadow-gold flex items-center justify-center group hover:shadow-glow transition-all duration-500">
-                <div className="text-center">
-                  <div className="w-24 h-24 bg-gradient-gold rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                    <Radio className="w-12 h-12 text-primary-foreground" />
-                  </div>
-                  <p className="text-muted-foreground font-medium">Live Stream Preview</p>
-                </div>
+              <div className="aspect-video rounded-2xl overflow-hidden shadow-gold group hover:shadow-glow transition-all duration-500">
+                <img 
+                  src={liveAcousticSession} 
+                  alt="Acoustic Sessions Live"
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               {/* Event Info */}
