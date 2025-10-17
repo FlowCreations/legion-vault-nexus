@@ -367,7 +367,9 @@ export default function Merch() {
                       <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
                       <Button 
                         size="sm"
+                        variant="outline"
                         onClick={() => handleAddToCart(product)}
+                        className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
                       >
                         {product.variants && product.variants.length > 0 ? 'Select Size' : 'Add to Cart'}
                       </Button>
@@ -417,8 +419,9 @@ export default function Merch() {
                     </div>
                   )}
                   <Button 
-                    className="w-full" 
+                    className="w-full border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase" 
                     size="lg"
+                    variant="outline"
                     onClick={() => {
                       setQuickViewProduct(null);
                       handleAddToCart(quickViewProduct);
