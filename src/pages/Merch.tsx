@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, User, Loader2, Image as ImageIcon, X, Eye, SlidersHorizontal } from "lucide-react";
+import { Search, Loader2, Image as ImageIcon, X, Eye, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -192,9 +192,6 @@ export default function Merch() {
                   </div>
                 </SheetContent>
               </Sheet>
-              <button className="p-2 hover:bg-card rounded-lg transition-colors">
-                <User className="w-5 h-5" />
-              </button>
             </div>
           </div>
 
@@ -448,7 +445,6 @@ const categories = [
   { id: "apparel", label: "APPAREL" },
   { id: "prints", label: "PRINTS" },
   { id: "accessories", label: "ACCESSORIES" },
-  { id: "home", label: "HOME" },
 ];
 
 const heroSlides = [
