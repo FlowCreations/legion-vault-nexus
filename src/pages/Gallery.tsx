@@ -8,6 +8,7 @@ import show3 from "@/assets/shows/show-3.jpg";
 import nyCap from "@/assets/merch/ny-cap.png";
 import nyTshirt from "@/assets/merch/ny-tshirt.png";
 import nyTshirt2 from "@/assets/merch/ny-tshirt-2.png";
+import nySweater from "@/assets/merch/ny-sweater.png";
 
 export default function Gallery() {
   const navigate = useNavigate();
@@ -213,5 +214,11 @@ const nyMerch = [
     title: "Sons of Legion Tour T-Shirt",
     image: nyTshirt2,
     price: "$39.99",
+  },
+  {
+    id: "4",
+    title: "Sons of Legion NYC Hoodie",
+    image: nySweater,
+    price: "$54.99",
   },
 ];
