@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, ArrowLeft, Mail, Loader2, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,13 +9,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ProductCustomizer } from "@/components/ProductCustomizer";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
-import nyCap from "@/assets/merch/ny-cap-updated.png";
-import nyTshirt from "@/assets/merch/ny-tshirt-yellow.png";
-import nyTshirt2 from "@/assets/merch/ny-tshirt-final.png";
-import nySweater from "@/assets/merch/ny-hoodie-final.png";
 
 interface GalleryItem {
   id: string;
@@ -25,11 +22,50 @@ interface GalleryItem {
   isFree?: boolean;
 }
 
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  base_price: number;
+  category: string;
+  image_url?: string;
+  variants?: Array<{
+    id: string;
+    name: string;
+    price_modifier: number;
+  }>;
+}
+
 export default function Gallery() {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [nyProducts, setNyProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    fetchNYProducts();
+  }, []);
+
+  const fetchNYProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variants:product_variants(*)
+        `)
+        .eq('available', true)
+        .eq('category', 'accessories')
+        .ilike('title', '%NY%');
+
+      if (error) throw error;
+      setNyProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching NY products:', error);
+    }
+  };
 
   const handleItemClick = (item: GalleryItem) => {
     setSelectedItem(item);
@@ -176,32 +212,38 @@ export default function Gallery() {
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold mb-6">New York Merch</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {nyMerch.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleItemClick(item)}
-                className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
+            {nyProducts.map((product) => (
+              <Card 
+                key={product.id}
+                className="overflow-hidden group relative cursor-pointer"
+                onClick={() => setSelectedProduct(product)}
               >
-                <div className="aspect-square relative overflow-hidden bg-background-dark">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    style={{ objectPosition: '40% center' }}
-                  />
+                <div className="relative aspect-square overflow-hidden bg-muted">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      Purchase
+                      Add to Cart
                     </span>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="text-sm font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-lg font-bold text-primary">{item.price}</p>
+                <div className="p-4 space-y-3">
+                  <h3 className="font-semibold text-sm sm:text-base">{product.title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
+                  </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -287,6 +329,18 @@ export default function Gallery() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Product Customizer for NY Merch */}
+      {selectedProduct && (
+        <ProductCustomizer
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onSuccess={() => {
+            toast.success('Order placed successfully!');
+            setSelectedProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -304,37 +358,6 @@ const socialReadyPhotos: GalleryItem[] = [
     title: "High resolution print quality photos",
     image: show3,
     price: "$14.99",
-    isFree: false,
-  },
-];
-
-const nyMerch: GalleryItem[] = [
-  {
-    id: "1",
-    title: "SOL NYC Cap",
-    image: nyCap,
-    price: "$29.99",
-    isFree: false,
-  },
-  {
-    id: "2",
-    title: "LEGION NYC T-Shirt",
-    image: nyTshirt,
-    price: "$34.99",
-    isFree: false,
-  },
-  {
-    id: "3",
-    title: "Sons of Legion Tour T-Shirt",
-    image: nyTshirt2,
-    price: "$39.99",
-    isFree: false,
-  },
-  {
-    id: "4",
-    title: "Sons of Legion NYC Hoodie",
-    image: nySweater,
-    price: "$54.99",
     isFree: false,
   },
 ];
