@@ -101,7 +101,7 @@ export default function Merch() {
     }
   });
 
-  const featuredProducts = products.slice(0, 3);
+  
 
   const handleCustomizeProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -253,47 +253,6 @@ export default function Merch() {
         </Carousel>
       </section>
 
-      {/* Featured Products */}
-      {!loading && featuredProducts.length > 0 && activeCategory === "albums" && (
-        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/30">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-center text-2xl sm:text-3xl font-bold mb-8 tracking-wide">
-              FEATURED GEAR
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {featuredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden group cursor-pointer" onClick={() => handleCustomizeProduct(product)}>
-                  <div className="relative aspect-square overflow-hidden bg-muted">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                      <Button variant="secondary" size="sm" className="w-full">
-                        Customize Now
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="p-6 space-y-3">
-                    <h3 className="font-bold text-xl">{product.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-2xl">${product.base_price.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Products Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
