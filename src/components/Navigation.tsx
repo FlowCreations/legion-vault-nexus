@@ -8,7 +8,6 @@ const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
   { name: "Music", path: "/music", icon: Music },
   { name: "Merch", path: "/merch", icon: ShoppingBag },
-  { name: "Shows", path: "/shows", icon: Calendar },
   { name: "Live Studio", path: "/live", icon: Radio },
   { name: "Community", path: "/community", icon: Users },
 ];
@@ -20,14 +19,7 @@ export const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background-dark/95 backdrop-blur-lg border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <img 
-              src={solLogo} 
-              alt="Sons of Legion" 
-              className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
-            />
-          </Link>
+          <div className="w-0" />
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-1">
