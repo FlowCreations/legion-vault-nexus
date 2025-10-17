@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
+import nyCap from "@/assets/merch/ny-cap.png";
 
 export default function Gallery() {
   const navigate = useNavigate();
@@ -113,11 +114,11 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Photo Bundles */}
+        {/* New York Merch */}
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Photo Bundles</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">New York Merch</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {photoBundles.map((item) => (
+            {nyMerch.map((item) => (
               <div
                 key={item.id}
                 className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
@@ -191,23 +192,11 @@ const concertPhotos = [
   },
 ];
 
-const photoBundles = [
+const nyMerch = [
   {
     id: "1",
-    title: "Complete New York Photo Set",
-    image: show2,
-    price: "$24.99",
-  },
-  {
-    id: "2",
-    title: "Backstage Access Bundle",
-    image: show3,
-    price: "$34.99",
-  },
-  {
-    id: "3",
-    title: "Tour 2025 Collection",
-    image: show1,
-    price: "$49.99",
+    title: "SOL NYC Cap",
+    image: nyCap,
+    price: "$29.99",
   },
 ];
