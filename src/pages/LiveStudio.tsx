@@ -21,46 +21,32 @@ export default function LiveStudio() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [countdown, setCountdown] = useState({
-    days: "00",
-    hours: "00",
-    minutes: "00",
-    seconds: "00"
+    days: "03",
+    hours: "14",
+    minutes: "27",
+    seconds: "60"
   });
 
   useEffect(() => {
     checkAuth();
     
-    // Set up countdown timer
-    const targetDate = new Date('2025-01-25T20:00:00-05:00'); // 8:00 PM EST
+    // Set up countdown timer for seconds only
+    let currentSeconds = 60;
     
     const updateCountdown = () => {
-      const now = new Date();
-      const difference = targetDate.getTime() - now.getTime();
+      currentSeconds = currentSeconds - 1;
       
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        
-        setCountdown({
-          days: String(days).padStart(2, '0'),
-          hours: String(hours).padStart(2, '0'),
-          minutes: String(minutes).padStart(2, '0'),
-          seconds: String(seconds).padStart(2, '0')
-        });
-      } else {
-        setCountdown({
-          days: "00",
-          hours: "00",
-          minutes: "00",
-          seconds: "00"
-        });
+      if (currentSeconds < 0) {
+        currentSeconds = 59;
       }
+      
+      setCountdown({
+        days: "03",
+        hours: "14",
+        minutes: "27",
+        seconds: String(currentSeconds).padStart(2, '0')
+      });
     };
-    
-    // Initial update
-    updateCountdown();
     
     // Update every second
     const interval = setInterval(updateCountdown, 1000);
