@@ -347,6 +347,7 @@ const categories = [
   { id: "apparel", label: "APPAREL" },
   { id: "prints", label: "PRINTS" },
   { id: "accessories", label: "ACCESSORIES" },
+  { id: "home", label: "HOME" },
 ];
 
 const heroSlides = [
