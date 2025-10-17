@@ -137,27 +137,57 @@ export default function Merch() {
       return;
     }
     
-    // Find matching Shopify product by title
-    const shopifyProduct = shopifyProducts.find(
-      (p) => p.node.title.toLowerCase() === product.title.toLowerCase()
-    );
+    // Create a Shopify-compatible product structure from Supabase product
+    const mockShopifyProduct: ShopifyProduct = {
+      node: {
+        id: product.id,
+        title: product.title,
+        description: product.description || '',
+        handle: product.title.toLowerCase().replace(/\s+/g, '-'),
+        priceRange: {
+          minVariantPrice: {
+            amount: product.base_price.toString(),
+            currencyCode: 'USD'
+          }
+        },
+        images: {
+          edges: product.image_url ? [{
+            node: {
+              url: product.image_url,
+              altText: product.title
+            }
+          }] : []
+        },
+        variants: {
+          edges: [{
+            node: {
+              id: `gid://shopify/ProductVariant/${product.id}`,
+              title: 'Default',
+              price: {
+                amount: product.base_price.toString(),
+                currencyCode: 'USD'
+              },
+              availableForSale: true,
+              selectedOptions: []
+            }
+          }]
+        },
+        options: []
+      }
+    };
     
-    if (shopifyProduct && shopifyProduct.node.variants.edges.length > 0) {
-      const variant = shopifyProduct.node.variants.edges[0].node;
-      
-      addItem({
-        product: shopifyProduct,
-        variantId: variant.id,
-        variantTitle: variant.title,
-        price: variant.price,
-        quantity: 1,
-        selectedOptions: variant.selectedOptions
-      });
-      
-      toast.success(`${product.title} added to cart!`);
-    } else {
-      toast.error('Product not available in store');
-    }
+    const variant = mockShopifyProduct.node.variants.edges[0].node;
+    
+    addItem({
+      product: mockShopifyProduct,
+      variantId: variant.id,
+      variantTitle: variant.title,
+      price: variant.price,
+      quantity: 1,
+      selectedOptions: variant.selectedOptions
+    });
+    
+    toast.success(`${product.title} added to cart!`);
   };
 
   const handleCustomizerClose = () => {
