@@ -431,18 +431,13 @@ const categories = [
 
 const heroSlides = [
   {
-    id: "1",
-    title: "OFFICIAL MERCH",
-    subtitle: "Premium merchandise and physical albums",
-  },
-  {
     id: "2",
     title: "PHYSICAL ALBUMS",
     subtitle: "Get the latest albums on CD and Vinyl",
   },
   {
     id: "3",
-    title: "UNIQUE DESIGNS",
+    title: "OFFICIAL MERCH",
     subtitle: "Exclusive Sons of Legion merchandise",
   },
 ];
