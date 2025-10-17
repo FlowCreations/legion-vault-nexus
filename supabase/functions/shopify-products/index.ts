@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SHOPIFY_DOMAIN = 'sonsoflegion.com';
+const SHOPIFY_DOMAIN = 'sons-of-legion.myshopify.com';
 const STOREFRONT_ACCESS_TOKEN = 'ca6f21479ccf44c8b5817bd8e966c594';
 
 const PRODUCTS_QUERY = `
