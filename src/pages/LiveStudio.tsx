@@ -11,6 +11,8 @@ import liveAcousticSession from "@/assets/live-acoustic-session.png";
 
 export default function LiveStudio() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [reminderEmail, setReminderEmail] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -19,6 +21,7 @@ export default function LiveStudio() {
     phone: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isReminderLoading, setIsReminderLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [countdown, setCountdown] = useState({
     days: "03",
@@ -109,16 +112,19 @@ export default function LiveStudio() {
     }
   };
 
-  const handleSetReminder = async () => {
-    // Show dialog to get user's email for calendar invite
-    const email = prompt("Enter your email to receive the calendar invite:");
-    
-    if (!email) return;
+  const handleSetReminder = () => {
+    setShowReminderDialog(true);
+  };
 
+  const handleReminderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reminderEmail) return;
+
+    setIsReminderLoading(true);
     try {
       const { error } = await supabase.functions.invoke('send-calendar-invite', {
         body: {
-          email: email,
+          email: reminderEmail,
           eventDetails: {
             title: 'Acoustic Sessions Live',
             description: 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.',
@@ -134,9 +140,14 @@ export default function LiveStudio() {
       toast.success("Calendar invite sent!", {
         description: "Check your email for the calendar invite."
       });
+
+      setShowReminderDialog(false);
+      setReminderEmail("");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Failed to send calendar invite. Please try again.");
+    } finally {
+      setIsReminderLoading(false);
     }
   };
 
@@ -407,6 +418,47 @@ export default function LiveStudio() {
                 <>
                   <Mail className="w-4 h-4 mr-2" />
                   Get Access Link
+                </>
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reminder Email Dialog */}
+      <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Set Reminder</DialogTitle>
+            <DialogDescription>
+              Enter your email to receive a calendar invite
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleReminderSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reminderEmail">Email Address</Label>
+              <Input
+                id="reminderEmail"
+                type="email"
+                placeholder="your@email.com"
+                value={reminderEmail}
+                onChange={(e) => setReminderEmail(e.target.value)}
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg"
+              disabled={isReminderLoading}
+            >
+              {isReminderLoading ? (
+                "Sending..."
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Calendar Invite
                 </>
               )}
             </Button>
