@@ -46,7 +46,7 @@ interface Product {
 }
 
 export default function Merch() {
-  const [activeCategory, setActiveCategory] = useState("albums");
+  const [activeCategory, setActiveCategory] = useState("apparel");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -457,10 +457,10 @@ export default function Merch() {
 }
 
 const categories = [
-  { id: "albums", label: "ALBUMS" },
   { id: "apparel", label: "APPAREL" },
-  { id: "prints", label: "PRINTS" },
   { id: "accessories", label: "ACCESSORIES" },
+  { id: "prints", label: "PRINTS" },
+  { id: "albums", label: "ALBUMS" },
 ];
 
 const heroSlides = [
