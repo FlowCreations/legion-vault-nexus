@@ -31,14 +31,23 @@ export default function Shows() {
           <div className="flex flex-col md:flex-row gap-6 items-center">
             {/* Gallery Images */}
             <div className="flex-1 grid grid-cols-3 gap-2">
-              <div className="aspect-square rounded-lg bg-card overflow-hidden">
+              <div className="aspect-square rounded-lg bg-card overflow-hidden relative">
                 <img src={show1} alt="Sons of Legion live performance" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="text-white font-bold text-sm">Columbus, Ohio</span>
+                </div>
               </div>
-              <div className="aspect-square rounded-lg bg-card overflow-hidden">
+              <div className="aspect-square rounded-lg bg-card overflow-hidden relative">
                 <img src={show2} alt="Sons of Legion on stage" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="text-white font-bold text-sm">Miami, Florida</span>
+                </div>
               </div>
-              <div className="aspect-square rounded-lg bg-card overflow-hidden">
+              <div className="aspect-square rounded-lg bg-card overflow-hidden relative">
                 <img src={show3} alt="Sons of Legion performing" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="text-white font-bold text-sm">Austin, Texas</span>
+                </div>
               </div>
             </div>
 
@@ -50,12 +59,8 @@ export default function Shows() {
               <h2 className="text-2xl sm:text-3xl font-bold mb-3">
                 Tour Gallery
               </h2>
-              <p className="text-muted-foreground mb-4">
-                Columbus, OH
-              </p>
               <p className="text-sm text-muted-foreground mb-6">
-                Get exclusive access to the official photos from Sons of Legion at 
-                Schottenstein Center on Sunday, October 12, 2025.
+                Get exclusive access to the official photos from Sons of Legion tour stops across the country.
               </p>
               <Button className="bg-primary hover:bg-primary/90">
                 View Gallery
