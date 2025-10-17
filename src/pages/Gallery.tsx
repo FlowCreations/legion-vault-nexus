@@ -1,50 +1,146 @@
-import { Download } from "lucide-react";
+import { Download, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
 
 export default function Gallery() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Gallery Grid */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryItems.map((item) => (
+      {/* Back Navigation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/shows')}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Shows
+        </Button>
+      </div>
+
+      {/* Hero Banner */}
+      <section className="relative aspect-[21/9] bg-background-dark overflow-hidden mb-12">
+        <img
+          src={show1}
+          alt="Concert venue"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-3 text-center">
+                <div className="text-xs text-white/70 uppercase">Mar</div>
+                <div className="text-2xl font-bold text-white">15</div>
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-5xl font-bold text-white mb-2">
+                  New York, NY
+                </h1>
+                <p className="text-xl text-white/80">Madison Square Garden</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Categories */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* Download Social Ready Photos */}
+        <div className="mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Download Social Ready Photos</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {socialReadyPhotos.map((item) => (
               <div
                 key={item.id}
                 className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
               >
-                {/* Image */}
                 <div className="aspect-square relative overflow-hidden bg-background-dark">
                   <img
                     src={item.image}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
+                      Quick view
+                    </span>
+                  </div>
                 </div>
-
-                {/* Info */}
-                <div className="p-6">
-                  <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">
+                <div className="p-4">
+                  <h3 className="text-sm font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {item.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-primary">
-                      {item.price}
+                  <p className="text-lg font-bold text-primary">{item.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Concert Photos */}
+        <div className="mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">New York Concert Photos</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {concertPhotos.map((item) => (
+              <div
+                key={item.id}
+                className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="aspect-square relative overflow-hidden bg-background-dark">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
+                      Quick view
                     </span>
-                    <Button 
-                      size="sm" 
-                      className="bg-primary hover:bg-primary/90"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      {item.buttonText}
-                    </Button>
                   </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="text-sm font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-lg font-bold text-primary">{item.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Photo Bundles */}
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Photo Bundles</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {photoBundles.map((item) => (
+              <div
+                key={item.id}
+                className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="aspect-square relative overflow-hidden bg-background-dark">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
+                      Quick view
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="text-sm font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-lg font-bold text-primary">{item.price}</p>
                 </div>
               </div>
             ))}
@@ -55,53 +151,59 @@ export default function Gallery() {
   );
 }
 
-const galleryItems = [
+const socialReadyPhotos = [
   {
     id: "1",
     title: "Download social ready photos",
-    description: "High-quality concert photos optimized for social media",
     image: show1,
     price: "Free",
-    buttonText: "Download",
+  },
+];
+
+const concertPhotos = [
+  {
+    id: "1",
+    title: "MSG Live Performance Photo",
+    image: show1,
+    price: "$9.99",
   },
   {
     id: "2",
-    title: "Columbus, Ohio - Live Photos",
-    description: "Sons of Legion live in Columbus",
-    image: show1,
+    title: "New York Stage Moments",
+    image: show2,
     price: "$9.99",
-    buttonText: "Purchase",
   },
   {
     id: "3",
-    title: "Miami, Florida - Concert Set",
-    description: "Exclusive photos from Miami show",
-    image: show2,
+    title: "Concert Highlights",
+    image: show3,
     price: "$9.99",
-    buttonText: "Purchase",
   },
   {
     id: "4",
-    title: "Austin, Texas - Performance",
-    description: "Behind the scenes and on stage",
-    image: show3,
-    price: "$9.99",
-    buttonText: "Purchase",
-  },
-  {
-    id: "5",
-    title: "Tour Collection 2025",
-    description: "Complete photo collection from 2025 tour",
+    title: "Crowd Energy Shots",
     image: show1,
+    price: "$9.99",
+  },
+];
+
+const photoBundles = [
+  {
+    id: "1",
+    title: "Complete New York Photo Set",
+    image: show2,
     price: "$24.99",
-    buttonText: "Purchase",
   },
   {
-    id: "6",
-    title: "Backstage Access",
-    description: "Exclusive backstage moments",
-    image: show2,
-    price: "$14.99",
-    buttonText: "Purchase",
+    id: "2",
+    title: "Backstage Access Bundle",
+    image: show3,
+    price: "$34.99",
+  },
+  {
+    id: "3",
+    title: "Tour 2025 Collection",
+    image: show1,
+    price: "$49.99",
   },
 ];
