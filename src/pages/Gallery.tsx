@@ -51,9 +51,7 @@ export default function Gallery() {
 
       {/* Product Categories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {/* Download Social Ready Photos */}
         <div className="mb-16">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Download Social Ready Photos</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {socialReadyPhotos.map((item) => (
               <div
@@ -163,6 +161,12 @@ const socialReadyPhotos = [
     title: "Social media optimized bundle",
     image: show2,
     price: "FREE",
+  },
+  {
+    id: "3",
+    title: "High Resolution Print Photo Set 1",
+    image: show3,
+    price: "$14.99",
   },
 ];
 
