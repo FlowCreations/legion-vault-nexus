@@ -16,13 +16,13 @@ export default function Shows() {
       </header>
 
       {/* Hero Image */}
-      <section className="relative aspect-[16/9] sm:aspect-[21/9] bg-background-dark overflow-hidden">
+      <section className="relative aspect-[16/9] sm:aspect-[2/1] bg-background-dark overflow-hidden">
         <img 
           src={heroImage} 
           alt="Sons of Legion performing live" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent pointer-events-none" />
       </section>
 
       {/* Photo Gallery Promo */}
