@@ -14,9 +14,42 @@ export default function LiveStudio() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [countdown, setCountdown] = useState({
+    days: "03",
+    hours: "14",
+    minutes: "27",
+    seconds: "60"
+  });
 
   useEffect(() => {
     checkAuth();
+    
+    // Set up countdown timer
+    const targetDate = new Date('2025-01-25T20:00:00-05:00'); // 8:00 PM EST
+    
+    const updateCountdown = () => {
+      const now = new Date();
+      const difference = targetDate.getTime() - now.getTime();
+      
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setCountdown({
+          days: String(days).padStart(2, '0'),
+          hours: String(hours).padStart(2, '0'),
+          minutes: String(minutes).padStart(2, '0'),
+          seconds: String(seconds).padStart(2, '0')
+        });
+      }
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const checkAuth = async () => {
@@ -169,10 +202,10 @@ END:VCALENDAR`;
                   <p className="text-sm text-muted-foreground mb-2">Starting in:</p>
                   <div className="grid grid-cols-4 gap-2 text-center">
                     {[
-                      { value: "03", label: "Days" },
-                      { value: "14", label: "Hours" },
-                      { value: "27", label: "Mins" },
-                      { value: "45", label: "Secs" },
+                      { value: countdown.days, label: "Days" },
+                      { value: countdown.hours, label: "Hours" },
+                      { value: countdown.minutes, label: "Mins" },
+                      { value: countdown.seconds, label: "Secs" },
                     ].map((item) => (
                       <div key={item.label}>
                         <div className="font-serif text-3xl font-bold text-primary">{item.value}</div>
