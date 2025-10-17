@@ -65,7 +65,7 @@ export default function LiveStudio() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.name || !formData.country || !formData.zipCode) {
+    if (!formData.email || !formData.name || !formData.country) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -381,14 +381,13 @@ END:VCALENDAR`;
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="zipCode">Zip Code *</Label>
+              <Label htmlFor="zipCode">Zip Code (Optional)</Label>
               <Input
                 id="zipCode"
                 type="text"
                 placeholder="12345"
                 value={formData.zipCode}
                 onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                required
               />
             </div>
 
