@@ -57,16 +57,32 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
     // Determine product type from title or category
     if (productTitle.includes('mug')) {
       return renderMugMockup();
-    } else if (productTitle.includes('poster') || productTitle.includes('print') || category === 'prints') {
-      return renderPosterMockup();
+    } else if (productTitle.includes('canvas')) {
+      return renderCanvasMockup();
+    } else if (productTitle.includes('metal print')) {
+      return renderMetalPrintMockup();
+    } else if (productTitle.includes('framed') || productTitle.includes('poster')) {
+      return renderFramedPrintMockup();
     } else if (productTitle.includes('hoodie') || productTitle.includes('zip hoodie')) {
       return renderHoodieMockup();
-    } else if (productTitle.includes('pillow') || productTitle.includes('blanket') || productTitle.includes('tapestry')) {
-      return renderHomeMockup();
-    } else if (productTitle.includes('hat') || productTitle.includes('cap')) {
+    } else if (productTitle.includes('sweatshirt')) {
+      return renderSweatshirtMockup();
+    } else if (productTitle.includes('tank top')) {
+      return renderTankTopMockup();
+    } else if (productTitle.includes('pillow')) {
+      return renderPillowMockup();
+    } else if (productTitle.includes('blanket') || productTitle.includes('tapestry')) {
+      return renderBlanketMockup();
+    } else if (productTitle.includes('hat') || productTitle.includes('cap') || productTitle.includes('beanie')) {
       return renderHatMockup();
     } else if (productTitle.includes('bag') || productTitle.includes('tote')) {
       return renderBagMockup();
+    } else if (productTitle.includes('bandana')) {
+      return renderBandanaMockup();
+    } else if (productTitle.includes('pin') || productTitle.includes('button')) {
+      return renderPinMockup();
+    } else if (category === 'prints') {
+      return renderFramedPrintMockup();
     } else {
       // Default to t-shirt/apparel mockup
       return renderTShirtMockup();
@@ -100,6 +116,130 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
     </svg>
   );
 
+  const renderSweatshirtMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="40" y="65" width="120" height="145" rx="5" />
+      <rect x="10" y="65" width="35" height="65" rx="5" />
+      <rect x="155" y="65" width="35" height="65" rx="5" />
+      <ellipse cx="100" cy="75" rx="15" ry="8" fill="none" strokeWidth="2" />
+      <rect x="40" y="200" width="120" height="10" rx="3" fill="none" strokeWidth="1.5" />
+    </svg>
+  );
+
+  const renderTankTopMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="50" y="60" width="100" height="140" rx="5" />
+      <path d="M 50 60 L 40 80 L 40 110 L 50 100" fill="none" strokeWidth="2" />
+      <path d="M 150 60 L 160 80 L 160 110 L 150 100" fill="none" strokeWidth="2" />
+      <ellipse cx="100" cy="70" rx="20" ry="12" fill="none" strokeWidth="2" />
+    </svg>
+  );
+
+  const renderCanvasMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="35" y="30" width="130" height="180" rx="3" strokeWidth="3" />
+      <rect x="40" y="35" width="120" height="170" rx="2" fill="none" strokeWidth="1" opacity="0.3" />
+      <line x1="35" y1="30" x2="40" y2="35" strokeWidth="2" />
+      <line x1="165" y1="30" x2="160" y2="35" strokeWidth="2" />
+      <line x1="35" y1="210" x2="40" y2="205" strokeWidth="2" />
+      <line x1="165" y1="210" x2="160" y2="205" strokeWidth="2" />
+    </svg>
+  );
+
+  const renderMetalPrintMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.15))' }}
+    >
+      <defs>
+        <linearGradient id="metal-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopOpacity="0.1" />
+          <stop offset="50%" stopOpacity="0.05" />
+          <stop offset="100%" stopOpacity="0.1" />
+        </linearGradient>
+      </defs>
+      <rect x="40" y="30" width="120" height="180" rx="1" strokeWidth="4" />
+      <rect x="40" y="30" width="120" height="180" fill="url(#metal-gradient)" />
+      <circle cx="150" cy="40" r="3" fill="currentColor" opacity="0.3" />
+    </svg>
+  );
+
+  const renderFramedPrintMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="30" y="25" width="140" height="190" rx="2" strokeWidth="8" />
+      <rect x="45" y="40" width="110" height="160" rx="1" strokeWidth="2" />
+    </svg>
+  );
+
+  const renderPillowMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="30" y="50" width="140" height="100" rx="12" strokeWidth="2" />
+      <path d="M 35 70 Q 30 75 35 80" fill="none" strokeWidth="1" opacity="0.2" />
+      <path d="M 165 70 Q 170 75 165 80" fill="none" strokeWidth="1" opacity="0.2" />
+      <line x1="30" y1="100" x2="170" y2="100" strokeWidth="1" opacity="0.1" strokeDasharray="5,5" />
+    </svg>
+  );
+
+  const renderBlanketMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <path d="M 40 50 Q 35 70 40 90 L 40 180 Q 35 200 40 220 L 160 220 Q 165 200 160 180 L 160 90 Q 165 70 160 50 Z" strokeWidth="2" />
+      <line x1="50" y1="50" x2="50" y2="220" strokeWidth="1" opacity="0.15" />
+      <line x1="150" y1="50" x2="150" y2="220" strokeWidth="1" opacity="0.15" />
+    </svg>
+  );
+
+  const renderBandanaMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <path d="M 100 30 L 170 100 L 100 170 L 30 100 Z" strokeWidth="2" />
+      <circle cx="70" cy="70" r="3" fill="currentColor" opacity="0.3" />
+      <circle cx="130" cy="70" r="3" fill="currentColor" opacity="0.3" />
+      <circle cx="70" cy="130" r="3" fill="currentColor" opacity="0.3" />
+      <circle cx="130" cy="130" r="3" fill="currentColor" opacity="0.3" />
+      <circle cx="100" cy="100" r="3" fill="currentColor" opacity="0.3" />
+    </svg>
+  );
+
+  const renderPinMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-1/2 h-1/2 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.15))' }}
+    >
+      <circle cx="100" cy="100" r="60" strokeWidth="4" />
+      <circle cx="100" cy="100" r="55" strokeWidth="1" opacity="0.2" />
+      <rect x="95" y="155" width="10" height="25" rx="2" strokeWidth="1.5" />
+    </svg>
+  );
+
   const renderMugMockup = () => (
     <svg 
       viewBox="0 0 200 240" 
@@ -113,28 +253,9 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
     </svg>
   );
 
-  const renderPosterMockup = () => (
-    <svg 
-      viewBox="0 0 200 240" 
-      className="w-3/4 h-3/4 fill-background stroke-border"
-      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
-    >
-      <rect x="40" y="30" width="120" height="180" rx="2" strokeWidth="3" />
-      <rect x="35" y="25" width="130" height="190" rx="2" fill="none" strokeWidth="8" />
-    </svg>
-  );
-
-  const renderHomeMockup = () => (
-    <svg 
-      viewBox="0 0 200 200" 
-      className="w-3/4 h-3/4 fill-background stroke-border"
-      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
-    >
-      <rect x="30" y="30" width="140" height="140" rx="8" strokeWidth="2" />
-      <path d="M 40 40 Q 50 35 60 40" fill="none" strokeWidth="1" opacity="0.3" />
-      <path d="M 140 40 Q 150 35 160 40" fill="none" strokeWidth="1" opacity="0.3" />
-    </svg>
-  );
+  const renderPosterMockup = () => renderFramedPrintMockup();
+  
+  const renderHomeMockup = () => renderPillowMockup();
 
   const renderHatMockup = () => (
     <svg 
