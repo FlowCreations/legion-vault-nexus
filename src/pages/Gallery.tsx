@@ -157,12 +157,6 @@ const socialReadyPhotos = [
     price: "FREE",
   },
   {
-    id: "2",
-    title: "Social media optimized bundle",
-    image: show2,
-    price: "FREE",
-  },
-  {
     id: "3",
     title: "High Resolution Print Photo Set 1",
     image: show3,
