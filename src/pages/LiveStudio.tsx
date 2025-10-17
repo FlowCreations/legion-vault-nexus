@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Radio, Calendar, Clock, Users, Ticket, Mail, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,19 +13,12 @@ import { useCartStore } from "@/stores/cartStore";
 import { ShopifyProduct } from "@/lib/shopify";
 
 export default function LiveStudio() {
+  const navigate = useNavigate();
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [showAlbumDialog, setShowAlbumDialog] = useState(false);
-  const [showVIPDialog, setShowVIPDialog] = useState(false);
   const [reminderEmail, setReminderEmail] = useState("");
   const [albumEmail, setAlbumEmail] = useState("");
-  const [vipFormData, setVipFormData] = useState({
-    name: "",
-    email: "",
-    country: "",
-    zipCode: "",
-    phone: ""
-  });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -35,7 +29,6 @@ export default function LiveStudio() {
   const [isLoading, setIsLoading] = useState(false);
   const [isReminderLoading, setIsReminderLoading] = useState(false);
   const [isAlbumLoading, setIsAlbumLoading] = useState(false);
-  const [isVIPLoading, setIsVIPLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const addItem = useCartStore(state => state.addItem);
   const [countdown, setCountdown] = useState({
@@ -257,52 +250,6 @@ export default function LiveStudio() {
     toast.success("Ticket added to cart!");
   };
 
-  const handleVIPSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!vipFormData.email || !vipFormData.name || !vipFormData.country) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsVIPLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_events')
-        .insert({
-          session_id: crypto.randomUUID(),
-          event_type: 'vip_signup',
-          event_data: {
-            name: vipFormData.name,
-            email: vipFormData.email,
-            country: vipFormData.country,
-            zipCode: vipFormData.zipCode,
-            phone: vipFormData.phone,
-            event_name: 'Q&A with the Band - VIP'
-          }
-        });
-
-      if (error) throw error;
-
-      toast.success("VIP Access Granted!", {
-        description: "We'll send you the exclusive VIP event details."
-      });
-      
-      setShowVIPDialog(false);
-      setVipFormData({
-        name: "",
-        email: "",
-        country: "",
-        zipCode: "",
-        phone: ""
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsVIPLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -475,7 +422,7 @@ export default function LiveStudio() {
                     {event.id === "2" && (
                       <Button 
                         className="bg-gradient-gold hover:shadow-glow transition-all"
-                        onClick={() => setShowVIPDialog(true)}
+                        onClick={() => navigate('/community')}
                       >
                         Join VIP Today
                       </Button>
@@ -670,94 +617,6 @@ export default function LiveStudio() {
                 <>
                   <Mail className="w-4 h-4 mr-2" />
                   Register Free
-                </>
-              )}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* VIP Signup Dialog */}
-      <Dialog open={showVIPDialog} onOpenChange={setShowVIPDialog}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Join VIP Today</DialogTitle>
-            <DialogDescription>
-              Enter your details to get exclusive VIP access
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleVIPSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="vipName">Name *</Label>
-              <Input
-                id="vipName"
-                type="text"
-                placeholder="Your name"
-                value={vipFormData.name}
-                onChange={(e) => setVipFormData({ ...vipFormData, name: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vipEmail">Email Address *</Label>
-              <Input
-                id="vipEmail"
-                type="email"
-                placeholder="your@email.com"
-                value={vipFormData.email}
-                onChange={(e) => setVipFormData({ ...vipFormData, email: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vipCountry">Country *</Label>
-              <Input
-                id="vipCountry"
-                type="text"
-                placeholder="United States"
-                value={vipFormData.country}
-                onChange={(e) => setVipFormData({ ...vipFormData, country: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vipZipCode">Zip Code (Optional)</Label>
-              <Input
-                id="vipZipCode"
-                type="text"
-                placeholder="12345"
-                value={vipFormData.zipCode}
-                onChange={(e) => setVipFormData({ ...vipFormData, zipCode: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vipPhone">Phone (Optional)</Label>
-              <Input
-                id="vipPhone"
-                type="tel"
-                placeholder="+1 (555) 000-0000"
-                value={vipFormData.phone}
-                onChange={(e) => setVipFormData({ ...vipFormData, phone: e.target.value })}
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="lg"
-              disabled={isVIPLoading}
-            >
-              {isVIPLoading ? (
-                "Processing..."
-              ) : (
-                <>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Join VIP
                 </>
               )}
             </Button>
