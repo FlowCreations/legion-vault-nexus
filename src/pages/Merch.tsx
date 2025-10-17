@@ -3,6 +3,7 @@ import { Search, Loader2, Image as ImageIcon, X, Eye, SlidersHorizontal } from "
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import spinningRecord from "@/assets/spinning-record.mp4";
+import apparelVideo from "@/assets/apparel-video.mp4";
 import {
   Carousel,
   CarouselContent,
@@ -235,6 +236,17 @@ export default function Merch() {
                       className="absolute inset-0 w-full h-full object-cover"
                     >
                       <source src={spinningRecord} type="video/mp4" />
+                    </video>
+                  )}
+                  {slide.id === "3" && (
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    >
+                      <source src={apparelVideo} type="video/mp4" />
                     </video>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-r from-background-dark/90 via-background-dark/50 to-transparent" />
