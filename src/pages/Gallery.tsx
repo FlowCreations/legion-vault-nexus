@@ -1,7 +1,14 @@
-import { Download, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Download, ArrowLeft, Mail, Loader2, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
@@ -10,8 +17,87 @@ import nyTshirt from "@/assets/merch/ny-tshirt-yellow.png";
 import nyTshirt2 from "@/assets/merch/ny-tshirt-final.png";
 import nySweater from "@/assets/merch/ny-hoodie-final.png";
 
+interface GalleryItem {
+  id: string;
+  title: string;
+  image: string;
+  price: string;
+  isFree?: boolean;
+}
+
 export default function Gallery() {
   const navigate = useNavigate();
+  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleItemClick = (item: GalleryItem) => {
+    setSelectedItem(item);
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !selectedItem) return;
+
+    setIsLoading(true);
+    try {
+      // Store email signup for free content
+      const { error } = await supabase
+        .from('user_events')
+        .insert({
+          session_id: crypto.randomUUID(),
+          event_type: 'free_content_signup',
+          event_data: {
+            item_title: selectedItem.title,
+            email: email
+          }
+        });
+
+      if (error) throw error;
+
+      toast.success("Check your email!", {
+        description: "We've sent you the download link."
+      });
+      
+      setSelectedItem(null);
+      setEmail("");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!selectedItem) return;
+    
+    setIsLoading(true);
+    try {
+      // Create checkout session
+      const { data, error } = await supabase.functions.invoke('create-gallery-checkout', {
+        body: {
+          item: {
+            title: selectedItem.title,
+            price: parseFloat(selectedItem.price.replace('$', '')),
+            image: selectedItem.image
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        setSelectedItem(null);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,6 +146,7 @@ export default function Gallery() {
             {socialReadyPhotos.map((item) => (
               <div
                 key={item.id}
+                onClick={() => handleItemClick(item)}
                 className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
               >
                 <div className="aspect-square relative overflow-hidden bg-background-dark">
@@ -70,7 +157,7 @@ export default function Gallery() {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      Quick view
+                      {item.isFree ? 'Get Free Download' : 'Purchase'}
                     </span>
                   </div>
                 </div>
@@ -92,6 +179,7 @@ export default function Gallery() {
             {nyMerch.map((item) => (
               <div
                 key={item.id}
+                onClick={() => handleItemClick(item)}
                 className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300 group cursor-pointer"
               >
                 <div className="aspect-square relative overflow-hidden bg-background-dark">
@@ -103,7 +191,7 @@ export default function Gallery() {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <span className="text-white text-sm font-medium bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      Quick view
+                      Purchase
                     </span>
                   </div>
                 </div>
@@ -118,48 +206,135 @@ export default function Gallery() {
           </div>
         </div>
       </section>
+
+      {/* Modal for Free Items or Checkout */}
+      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedItem?.title}</DialogTitle>
+            <DialogDescription>
+              {selectedItem?.isFree 
+                ? "Enter your email to receive the download link" 
+                : "Complete your purchase"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="aspect-square rounded-lg overflow-hidden bg-background-dark">
+              <img 
+                src={selectedItem?.image} 
+                alt={selectedItem?.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold">{selectedItem?.price}</span>
+            </div>
+
+            {selectedItem?.isFree ? (
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Get Free Download
+                    </>
+                  )}
+                </Button>
+              </form>
+            ) : (
+              <Button 
+                onClick={handleCheckout} 
+                className="w-full" 
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Checkout
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-const socialReadyPhotos = [
+const socialReadyPhotos: GalleryItem[] = [
   {
     id: "1",
     title: "Download social ready photos",
     image: show1,
     price: "FREE",
+    isFree: true,
   },
   {
     id: "3",
     title: "High resolution print quality photos",
     image: show3,
     price: "$14.99",
+    isFree: false,
   },
 ];
 
-const nyMerch = [
+const nyMerch: GalleryItem[] = [
   {
     id: "1",
     title: "SOL NYC Cap",
     image: nyCap,
     price: "$29.99",
+    isFree: false,
   },
   {
     id: "2",
     title: "LEGION NYC T-Shirt",
     image: nyTshirt,
     price: "$34.99",
+    isFree: false,
   },
   {
     id: "3",
     title: "Sons of Legion Tour T-Shirt",
     image: nyTshirt2,
     price: "$39.99",
+    isFree: false,
   },
   {
     id: "4",
     title: "Sons of Legion NYC Hoodie",
     image: nySweater,
     price: "$54.99",
+    isFree: false,
   },
 ];
