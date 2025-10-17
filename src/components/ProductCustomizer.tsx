@@ -57,6 +57,8 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
     // Determine product type from title or category
     if (productTitle.includes('mug')) {
       return renderMugMockup();
+    } else if (productTitle.includes('water bottle') || productTitle.includes('bottle')) {
+      return renderWaterBottleMockup();
     } else if (productTitle.includes('canvas')) {
       return renderCanvasMockup();
     } else if (productTitle.includes('metal print')) {
@@ -75,10 +77,16 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
       return renderBlanketMockup();
     } else if (productTitle.includes('hat') || productTitle.includes('cap') || productTitle.includes('beanie')) {
       return renderHatMockup();
-    } else if (productTitle.includes('bag') || productTitle.includes('tote')) {
+    } else if (productTitle.includes('backpack')) {
+      return renderBackpackMockup();
+    } else if (productTitle.includes('tote') || productTitle.includes('bag')) {
       return renderBagMockup();
     } else if (productTitle.includes('bandana')) {
       return renderBandanaMockup();
+    } else if (productTitle.includes('sticker')) {
+      return renderStickerMockup();
+    } else if (productTitle.includes('keychain') || productTitle.includes('key chain')) {
+      return renderKeychainMockup();
     } else if (productTitle.includes('pin') || productTitle.includes('button')) {
       return renderPinMockup();
     } else if (productTitle.includes('phone case')) {
@@ -269,6 +277,62 @@ export function ProductCustomizer({ product, onClose, onSuccess }: ProductCustom
       <path d="M 100 50 L 100 55" strokeWidth="2" />
       <rect x="90" y="45" width="20" height="5" rx="2" fill="none" strokeWidth="1.5" />
       <line x1="40" y1="100" x2="160" y2="100" strokeWidth="1" opacity="0.1" />
+    </svg>
+  );
+
+  const renderBackpackMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-3/4 h-3/4 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="50" y="80" width="100" height="130" rx="8" strokeWidth="2" />
+      <rect x="55" y="85" width="90" height="120" rx="5" fill="none" strokeWidth="1.5" opacity="0.3" />
+      <path d="M 70 80 Q 70 60 85 55" fill="none" strokeWidth="3" />
+      <path d="M 130 80 Q 130 60 115 55" fill="none" strokeWidth="3" />
+      <rect x="70" y="50" width="60" height="30" rx="5" strokeWidth="2" />
+      <circle cx="100" cy="140" r="4" fill="currentColor" opacity="0.4" />
+      <rect x="60" y="100" width="80" height="3" rx="1.5" fill="currentColor" opacity="0.3" />
+    </svg>
+  );
+
+  const renderStickerMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-1/2 h-1/2 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.15))' }}
+    >
+      <path d="M 50 60 L 150 60 L 150 140 L 130 160 L 50 160 Z" strokeWidth="3" />
+      <path d="M 130 160 L 130 140 L 150 140" fill="none" strokeWidth="2" opacity="0.3" />
+      <circle cx="60" cy="70" r="2" fill="currentColor" opacity="0.2" />
+      <circle cx="140" cy="70" r="2" fill="currentColor" opacity="0.2" />
+    </svg>
+  );
+
+  const renderKeychainMockup = () => (
+    <svg 
+      viewBox="0 0 200 200" 
+      className="w-1/2 h-1/2 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.15))' }}
+    >
+      <circle cx="100" cy="80" r="35" strokeWidth="3" />
+      <circle cx="100" cy="80" r="30" fill="none" strokeWidth="1" opacity="0.2" />
+      <circle cx="100" cy="135" r="12" fill="none" strokeWidth="2.5" />
+      <rect x="98" y="105" width="4" height="20" rx="2" strokeWidth="1.5" />
+    </svg>
+  );
+
+  const renderWaterBottleMockup = () => (
+    <svg 
+      viewBox="0 0 200 240" 
+      className="w-1/2 h-1/2 fill-background stroke-border"
+      style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }}
+    >
+      <rect x="70" y="50" width="60" height="15" rx="8" strokeWidth="2" />
+      <rect x="75" y="65" width="50" height="130" rx="8" strokeWidth="2.5" />
+      <ellipse cx="100" cy="65" rx="25" ry="5" fill="none" strokeWidth="1" opacity="0.3" />
+      <ellipse cx="100" cy="195" rx="25" ry="5" fill="none" strokeWidth="1" opacity="0.3" />
+      <rect x="80" y="100" width="40" height="60" rx="5" fill="none" strokeWidth="1" opacity="0.2" />
     </svg>
   );
 
