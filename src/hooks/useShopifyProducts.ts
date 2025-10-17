@@ -1,45 +1,17 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface ShopifyProduct {
-  id: string;
-  title: string;
-  description: string;
-  handle: string;
-  priceRange: {
-    minVariantPrice: {
-      amount: string;
-      currencyCode: string;
-    };
-  };
-  compareAtPriceRange?: {
-    minVariantPrice: {
-      amount: string;
-    };
-  };
-  images: {
-    edges: Array<{
-      node: {
-        url: string;
-        altText: string | null;
-      };
-    }>;
-  };
-  tags: string[];
-  productType: string;
-}
+import { fetchProducts, ShopifyProduct as ShopifyProductType } from '@/lib/shopify';
 
 interface Product {
   id: string;
-  name: string;
-  category: string;
+  title: string;
+  description: string;
   price: number;
-  originalPrice?: number;
-  inStock: boolean;
-  badge?: string;
-  onSale?: boolean;
-  image?: string;
+  compareAtPrice: number | null;
+  onSale: boolean;
+  image: string;
+  category: string;
   handle: string;
+  available: boolean;
 }
 
 export function useShopifyProducts() {
@@ -48,53 +20,41 @@ export function useShopifyProducts() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchProducts() {
+    const loadProducts = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('shopify-products');
-
-        if (error) throw error;
-
-        const formattedProducts: Product[] = data.data.products.edges.map((edge: any) => {
-          const product: ShopifyProduct = edge.node;
-          const price = parseFloat(product.priceRange.minVariantPrice.amount);
-          const compareAtPrice = product.compareAtPriceRange?.minVariantPrice?.amount
-            ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount)
-            : undefined;
-
-          // Determine category based on product type or tags
-          let category = 'merch';
-          if (product.productType.toLowerCase().includes('digital') || 
-              product.tags.some(tag => tag.toLowerCase().includes('digital'))) {
-            category = 'albums-digital';
-          } else if (product.productType.toLowerCase().includes('cd') || 
-                     product.tags.some(tag => tag.toLowerCase().includes('cd'))) {
-            category = 'albums-cds';
-          }
-
+        setLoading(true);
+        const rawProducts = await fetchProducts();
+        
+        const formattedProducts: Product[] = rawProducts.map((item: ShopifyProductType) => {
+          const { node } = item;
+          const price = parseFloat(node.priceRange.minVariantPrice.amount);
+          
+          let category = 'Merch';
+          
           return {
-            id: product.id,
-            name: product.title,
-            category,
+            id: node.id,
+            title: node.title,
+            description: node.description,
             price,
-            originalPrice: compareAtPrice,
-            inStock: true,
-            badge: compareAtPrice && compareAtPrice > price ? 'SALE' : undefined,
-            onSale: compareAtPrice ? compareAtPrice > price : false,
-            image: product.images.edges[0]?.node.url,
-            handle: product.handle,
+            compareAtPrice: null,
+            onSale: false,
+            image: node.images.edges[0]?.node.url || '',
+            category,
+            handle: node.handle,
+            available: true
           };
         });
-
+        
         setProducts(formattedProducts);
-        setLoading(false);
       } catch (err) {
-        console.error('Error fetching Shopify products:', err);
+        console.error('Error loading products:', err);
         setError(err instanceof Error ? err.message : 'Failed to load products');
+      } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchProducts();
+    loadProducts();
   }, []);
 
   return { products, loading, error };

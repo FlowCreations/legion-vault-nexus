@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useShopifyProducts } from "@/hooks/useShopifyProducts";
+import { CartDrawer } from "@/components/CartDrawer";
 
 export default function Merch() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -28,10 +29,13 @@ export default function Merch() {
       {/* Top Bar */}
       <div className="bg-background-dark border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex items-center justify-end gap-4 text-xs sm:text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">UK STORE</a>
-            <span>|</span>
-            <a href="#" className="hover:text-foreground transition-colors">AUS STORE</a>
+          <div className="flex items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <a href="#" className="hover:text-foreground transition-colors">UK STORE</a>
+              <span>|</span>
+              <a href="#" className="hover:text-foreground transition-colors">AUS STORE</a>
+            </div>
+            <CartDrawer />
           </div>
         </div>
       </div>
@@ -54,9 +58,6 @@ export default function Merch() {
             <div className="flex items-center gap-2">
               <button className="p-2 hover:bg-card rounded-lg transition-colors">
                 <User className="w-5 h-5" />
-              </button>
-              <button className="p-2 hover:bg-card rounded-lg transition-colors">
-                <ShoppingCart className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -138,7 +139,20 @@ export default function Merch() {
             </div>
           )}
 
-          {!loading && !error && (
+          {!loading && !error && filteredProducts.length === 0 && (
+            <div className="text-center py-20">
+              <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-2xl font-bold mb-2">No products found</h3>
+              <p className="text-muted-foreground mb-4">
+                Get started by creating your first product!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Tell me what product you'd like to create (e.g., "Create a t-shirt for $29.99")
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && filteredProducts.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {filteredProducts.map((product) => (
                 <div
@@ -149,10 +163,10 @@ export default function Merch() {
                 {/* Product Image */}
                 <div className="relative aspect-square rounded-lg overflow-hidden mb-4 bg-card">
                   {/* Badges */}
-                  {product.badge && (
+                  {product.onSale && (
                     <div className="absolute top-3 left-3 z-10">
                       <Badge className="bg-primary text-primary-foreground border-0">
-                        {product.badge}
+                        SALE
                       </Badge>
                     </div>
                   )}
@@ -166,7 +180,7 @@ export default function Merch() {
                   {product.image ? (
                     <img 
                       src={product.image} 
-                      alt={product.name}
+                      alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
@@ -191,17 +205,17 @@ export default function Merch() {
                 {/* Product Info */}
                 <div className="space-y-2">
                   <h3 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
-                    {product.name}
+                    {product.title}
                   </h3>
                   
                   <div className="flex items-baseline gap-2">
-                    {product.onSale && product.originalPrice ? (
+                    {product.onSale && product.compareAtPrice ? (
                       <>
                         <span className="font-bold text-base text-primary">
                           ${product.price.toFixed(2)}
                         </span>
                         <span className="text-sm text-muted-foreground line-through">
-                          ${product.originalPrice.toFixed(2)}
+                          ${product.compareAtPrice.toFixed(2)}
                         </span>
                       </>
                     ) : (
