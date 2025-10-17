@@ -33,7 +33,7 @@ export function ShopAssistant() {
     <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-2xl flex flex-col z-50">
       <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground">
         <div>
-          <h3 className="font-semibold">Merch Creator</h3>
+          <h3 className="font-semibold">Legion Gear</h3>
           <p className="text-xs opacity-90">Design your custom gear</p>
         </div>
         <Button
