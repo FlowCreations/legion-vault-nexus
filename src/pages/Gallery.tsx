@@ -158,6 +158,12 @@ const socialReadyPhotos = [
     image: show1,
     price: "FREE",
   },
+  {
+    id: "2",
+    title: "Social media optimized bundle",
+    image: show2,
+    price: "FREE",
+  },
 ];
 
 const concertPhotos = [
