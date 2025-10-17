@@ -79,7 +79,10 @@ export default function Merch() {
     }
   };
 
-  const filteredProducts = products.filter(p => p.category === activeCategory);
+  const filteredProducts = products.filter(p => 
+    p.category === activeCategory && 
+    !p.title.toUpperCase().includes('NYC')
+  );
 
   const searchedProducts = searchQuery
     ? filteredProducts.filter(p => 
