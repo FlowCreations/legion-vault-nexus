@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Music from "./pages/Music";
 import AlbumDetail from "./pages/AlbumDetail";
 import Shows from "./pages/Shows";
+import Gallery from "./pages/Gallery";
 import Community from "./pages/Community";
 import Merch from "./pages/Merch";
 import Merchant from "./pages/Merchant";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
           <Route path="/shows" element={<Shows />} />
+          <Route path="/shows/gallery" element={<Gallery />} />
           <Route path="/community" element={<Community />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merchant" element={<Merchant />} />

@@ -1,4 +1,5 @@
 import { MapPin, Calendar, ShoppingBag, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import show1 from "@/assets/shows/show-1.jpg";
@@ -7,6 +8,8 @@ import show3 from "@/assets/shows/show-3.jpg";
 import heroImage from "@/assets/shows-hero.png";
 
 export default function Shows() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -62,7 +65,10 @@ export default function Shows() {
               <p className="text-sm text-muted-foreground mb-6">
                 Get exclusive access to the official photos from Sons of Legion tour stops across the country.
               </p>
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => navigate('/shows/gallery')}
+              >
                 View Gallery
               </Button>
             </div>
