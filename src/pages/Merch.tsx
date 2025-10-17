@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { ShoppingCart, Heart, Search, User, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, User, Loader2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -9,19 +9,95 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useShopifyProducts } from "@/hooks/useShopifyProducts";
-import { CartDrawer } from "@/components/CartDrawer";
+import { supabase } from "@/integrations/supabase/client";
+import { ShopAssistant } from "@/components/ShopAssistant";
+import { GalleryImagePicker } from "@/components/GalleryImagePicker";
+import { toast } from "sonner";
+import { StripeCheckout } from "@/components/StripeCheckout";
+
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  base_price: number;
+  category: string;
+  image_url?: string;
+  variants?: Array<{
+    id: string;
+    name: string;
+    price_modifier: number;
+  }>;
+}
 
 export default function Merch() {
   const [activeCategory, setActiveCategory] = useState("all");
-  const { products, loading, error } = useShopifyProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<string>('');
+  const [customImage, setCustomImage] = useState<string>('');
+  const [customImageName, setCustomImageName] = useState<string>('');
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variants:product_variants(*)
+        `)
+        .eq('available', true);
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProducts = activeCategory === "all" 
     ? products 
-    : products.filter(p => p.category.toLowerCase() === activeCategory);
+    : products.filter(p => p.category === activeCategory);
 
-  const handleProductClick = (handle: string) => {
-    window.open(`https://sonsoflegion.com/products/${handle}`, '_blank');
+  const handleCustomizeProduct = (product: Product) => {
+    setSelectedProduct(product);
+    if (product.variants && product.variants.length > 0) {
+      setSelectedVariant(product.variants[0].id);
+    }
+    setImagePickerOpen(true);
+  };
+
+  const handleImageSelect = (imageUrl: string, imageName: string) => {
+    setCustomImage(imageUrl);
+    setCustomImageName(imageName);
+  };
+
+  const calculatePrice = () => {
+    if (!selectedProduct) return 0;
+    let price = selectedProduct.base_price;
+    if (selectedVariant && selectedProduct.variants) {
+      const variant = selectedProduct.variants.find(v => v.id === selectedVariant);
+      if (variant) {
+        price += variant.price_modifier;
+      }
+    }
+    return price;
+  };
+
+  const handlePurchaseSuccess = () => {
+    toast.success('Order placed successfully!');
+    setSelectedProduct(null);
+    setCustomImage('');
+    setCustomImageName('');
+    setSelectedVariant('');
   };
 
   return (
@@ -30,12 +106,7 @@ export default function Merch() {
       <div className="bg-background-dark border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-foreground transition-colors">UK STORE</a>
-              <span>|</span>
-              <a href="#" className="hover:text-foreground transition-colors">AUS STORE</a>
-            </div>
-            <CartDrawer />
+            <span className="font-medium">Custom Merchandise with Gallery Art</span>
           </div>
         </div>
       </div>
@@ -105,6 +176,7 @@ export default function Merch() {
                       <Button 
                         size="lg" 
                         className="bg-white text-black hover:bg-white/90 font-medium px-12 py-6 text-base"
+                        onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}
                       >
                         SHOP NOW
                       </Button>
@@ -123,7 +195,7 @@ export default function Merch() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-center text-2xl sm:text-3xl font-bold mb-12 tracking-wide text-muted-foreground">
-            MERCHANDISE
+            CUSTOM MERCHANDISE
           </h2>
 
           {loading && (
@@ -132,130 +204,165 @@ export default function Merch() {
             </div>
           )}
 
-          {error && (
+          {!loading && filteredProducts.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-destructive mb-4">{error}</p>
-              <p className="text-muted-foreground">Please try again later.</p>
-            </div>
-          )}
-
-          {!loading && !error && filteredProducts.length === 0 && (
-            <div className="text-center py-20">
-              <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-2xl font-bold mb-2">No products found</h3>
-              <p className="text-muted-foreground mb-4">
-                Get started by creating your first product!
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Tell me what product you'd like to create (e.g., "Create a t-shirt for $29.99")
+              <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-2xl font-bold mb-2">No products available</h3>
+              <p className="text-muted-foreground">
+                Custom merchandise coming soon
               </p>
             </div>
           )}
 
-          {!loading && !error && filteredProducts.length > 0 && (
+          {!loading && filteredProducts.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="group cursor-pointer"
-                  onClick={() => handleProductClick(product.handle)}
-                >
-                {/* Product Image */}
-                <div className="relative aspect-square rounded-lg overflow-hidden mb-4 bg-card">
-                  {/* Badges */}
-                  {product.onSale && (
-                    <div className="absolute top-3 left-3 z-10">
-                      <Badge className="bg-primary text-primary-foreground border-0">
-                        SALE
-                      </Badge>
-                    </div>
-                  )}
-
-                  {/* Wishlist */}
-                  <button className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Heart className="w-4 h-4 text-black" />
-                  </button>
-
-                  {/* Product Image */}
-                  {product.image ? (
-                    <img 
-                      src={product.image} 
-                      alt={product.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="h-full bg-gradient-to-br from-card to-card-hover flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500">
-                      <div className="text-center w-full">
-                        <div className="w-full aspect-square max-w-[100px] mx-auto bg-background/50 rounded-xl flex items-center justify-center mb-2 border border-border">
-                          <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
-                        </div>
-                        <p className="text-xs text-muted-foreground/50">Product Image</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Quick Add Overlay */}
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button className="bg-white text-black hover:bg-white/90 font-medium">
-                      QUICK ADD
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div className="space-y-2">
-                  <h3 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
-                    {product.title}
-                  </h3>
-                  
-                  <div className="flex items-baseline gap-2">
-                    {product.onSale && product.compareAtPrice ? (
-                      <>
-                        <span className="font-bold text-base text-primary">
-                          ${product.price.toFixed(2)}
-                        </span>
-                        <span className="text-sm text-muted-foreground line-through">
-                          ${product.compareAtPrice.toFixed(2)}
-                        </span>
-                      </>
+                <Card key={product.id} className="overflow-hidden group">
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     ) : (
-                      <span className="font-bold text-base">
-                        ${product.price.toFixed(2)}
-                      </span>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                      </div>
                     )}
                   </div>
-                </div>
-              </div>
+                  <div className="p-4 space-y-3">
+                    <h3 className="font-semibold text-sm sm:text-base">{product.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleCustomizeProduct(product)}
+                      >
+                        Customize
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
       </section>
+
+      {/* Customization Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Customize {selectedProduct.title}</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => {
+                    setSelectedProduct(null);
+                    setCustomImage('');
+                    setCustomImageName('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+
+              {/* Image Preview */}
+              <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                {customImage ? (
+                  <img src={customImage} alt={customImageName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setImagePickerOpen(true)}
+              >
+                <ImageIcon className="mr-2 h-4 w-4" />
+                {customImage ? 'Change Gallery Image' : 'Choose Gallery Image'}
+              </Button>
+
+              {/* Variant Selection */}
+              {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Size</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {selectedProduct.variants.map((variant) => (
+                      <Button
+                        key={variant.id}
+                        variant={selectedVariant === variant.id ? 'default' : 'outline'}
+                        onClick={() => setSelectedVariant(variant.id)}
+                        className="w-full"
+                      >
+                        {variant.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Price and Checkout */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center justify-between text-lg">
+                  <span className="font-medium">Total:</span>
+                  <span className="font-bold">${calculatePrice().toFixed(2)}</span>
+                </div>
+                <StripeCheckout
+                  albumId={selectedProduct.id}
+                  albumTitle={`${selectedProduct.title}${customImageName ? ` - ${customImageName}` : ''}`}
+                  price={calculatePrice()}
+                  onSuccess={handlePurchaseSuccess}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Gallery Image Picker */}
+      <GalleryImagePicker
+        open={imagePickerOpen}
+        onOpenChange={setImagePickerOpen}
+        onSelect={handleImageSelect}
+      />
+
+      {/* AI Shop Assistant */}
+      <ShopAssistant />
     </div>
   );
 }
 
 const categories = [
   { id: "all", label: "ALL" },
-  { id: "albums-digital", label: "ALBUMS - DIGITAL" },
-  { id: "albums-cds", label: "ALBUMS - CDS" },
-  { id: "merch", label: "MERCH" },
+  { id: "apparel", label: "APPAREL" },
+  { id: "prints", label: "PRINTS" },
+  { id: "accessories", label: "ACCESSORIES" },
 ];
 
 const heroSlides = [
   {
     id: "1",
-    title: "OFFICIAL STORE",
-    subtitle: "Shop exclusive Sons of Legion merchandise",
+    title: "CUSTOM MERCH",
+    subtitle: "Your gallery art on premium merchandise",
   },
   {
     id: "2",
-    title: "NEW ARRIVALS",
-    subtitle: "Fresh merchandise from the latest collection",
+    title: "GALLERY PRINTS",
+    subtitle: "Transform your favorite images into wearable art",
   },
   {
     id: "3",
-    title: "LIMITED EDITION",
-    subtitle: "Exclusive items available for a limited time",
+    title: "UNIQUE DESIGNS",
+    subtitle: "Create one-of-a-kind merchandise with AI assistance",
   },
 ];
