@@ -124,7 +124,7 @@ export default function Merch() {
       <div className="bg-background-dark border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
-            <span className="font-medium">Custom Merchandise with Gallery Art</span>
+            <span className="font-medium">Official Sons of Legion Merchandise</span>
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function Merch() {
             </div>
 
             {/* Logo/Title */}
-            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider text-center">
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider text-center flex-1">
               SONS OF LEGION
             </h1>
 
@@ -444,6 +444,7 @@ export default function Merch() {
 
 const categories = [
   { id: "all", label: "ALL" },
+  { id: "albums", label: "ALBUMS" },
   { id: "apparel", label: "APPAREL" },
   { id: "prints", label: "PRINTS" },
   { id: "accessories", label: "ACCESSORIES" },
@@ -453,17 +454,17 @@ const categories = [
 const heroSlides = [
   {
     id: "1",
-    title: "CUSTOM MERCH",
-    subtitle: "Your gallery art on premium merchandise",
+    title: "OFFICIAL MERCH",
+    subtitle: "Premium merchandise and physical albums",
   },
   {
     id: "2",
-    title: "GALLERY PRINTS",
-    subtitle: "Transform your favorite images into wearable art",
+    title: "PHYSICAL ALBUMS",
+    subtitle: "Get the latest albums on CD and Vinyl",
   },
   {
     id: "3",
     title: "UNIQUE DESIGNS",
-    subtitle: "Create one-of-a-kind merchandise with AI assistance",
+    subtitle: "Exclusive Sons of Legion merchandise",
   },
 ];
