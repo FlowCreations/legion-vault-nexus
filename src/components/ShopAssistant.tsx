@@ -32,7 +32,10 @@ export function ShopAssistant() {
   return (
     <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-2xl flex flex-col z-50">
       <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground">
-        <h3 className="font-semibold">Shop Assistant</h3>
+        <div>
+          <h3 className="font-semibold">Merch Creator</h3>
+          <p className="text-xs opacity-90">Design your custom gear</p>
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -48,7 +51,10 @@ export function ShopAssistant() {
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
               <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Ask me anything about our products!</p>
+              <p className="text-sm font-medium mb-2">Create Your Custom Merch!</p>
+              <p className="text-xs px-4">
+                Tell me what you're looking for and I'll help you design the perfect piece
+              </p>
             </div>
           )}
           {messages.map((message, index) => (
@@ -92,7 +98,7 @@ export function ShopAssistant() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about products..."
+            placeholder="What do you want to create?"
             disabled={isLoading}
           />
           <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
