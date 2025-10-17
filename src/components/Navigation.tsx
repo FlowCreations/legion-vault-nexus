@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
+import { CartDrawer } from "@/components/CartDrawer";
 
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
@@ -56,16 +57,19 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Sign In Button */}
-          <Button 
-            className="hidden md:flex bg-gradient-gold hover:shadow-glow transition-all duration-300"
-            asChild
-          >
-            <Link to="/auth">
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In
-            </Link>
-          </Button>
+          {/* Cart and Sign In */}
+          <div className="hidden md:flex items-center gap-3">
+            <CartDrawer />
+            <Button 
+              className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
+              asChild
+            >
+              <Link to="/auth">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -96,16 +100,19 @@ export const Navigation = () => {
               </div>
             </div>
             
-            <Button 
-              size="sm"
-              className="ml-2 bg-gradient-gold hover:shadow-glow transition-all duration-300 flex-shrink-0"
-              asChild
-            >
-              <Link to="/auth">
-                <LogIn className="w-4 h-4 md:mr-2" />
-                <span className="hidden sm:inline">Sign In</span>
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              <CartDrawer />
+              <Button 
+                size="sm"
+                className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
+                asChild
+              >
+                <Link to="/auth">
+                  <LogIn className="w-4 h-4 md:mr-2" />
+                  <span className="hidden sm:inline">Sign In</span>
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
