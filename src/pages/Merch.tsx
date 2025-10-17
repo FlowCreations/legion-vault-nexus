@@ -44,7 +44,7 @@ interface Product {
 }
 
 export default function Merch() {
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState("albums");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -77,9 +77,7 @@ export default function Merch() {
     }
   };
 
-  const filteredProducts = activeCategory === "all" 
-    ? products 
-    : products.filter(p => p.category === activeCategory);
+  const filteredProducts = products.filter(p => p.category === activeCategory);
 
   const searchedProducts = searchQuery
     ? filteredProducts.filter(p => 
@@ -256,7 +254,7 @@ export default function Merch() {
       </section>
 
       {/* Featured Products */}
-      {!loading && featuredProducts.length > 0 && activeCategory === "all" && (
+      {!loading && featuredProducts.length > 0 && activeCategory === "albums" && (
         <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/30">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-center text-2xl sm:text-3xl font-bold mb-8 tracking-wide">
@@ -442,7 +440,6 @@ export default function Merch() {
 }
 
 const categories = [
-  { id: "all", label: "ALL" },
   { id: "albums", label: "ALBUMS" },
   { id: "apparel", label: "APPAREL" },
   { id: "prints", label: "PRINTS" },
