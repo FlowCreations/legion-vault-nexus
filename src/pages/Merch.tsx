@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ShopAssistant } from "@/components/ShopAssistant";
 import { ProductCustomizer } from "@/components/ProductCustomizer";
 import { toast } from "sonner";
+import { useCartStore } from "@/stores/cartStore";
 import {
   Select,
   SelectContent,
@@ -54,6 +55,7 @@ export default function Merch() {
   const [sortBy, setSortBy] = useState<"newest" | "price-low" | "price-high">("newest");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const addItem = useCartStore(state => state.addItem);
 
   useEffect(() => {
     fetchProducts();
@@ -113,16 +115,44 @@ export default function Merch() {
 
   
 
-  const handleAddToCart = (product: Product) => {
-    // For products without variants, add directly to cart
-    if (!product.variants || product.variants.length === 0) {
-      toast.success(`${product.title} added to cart!`, {
-        description: 'View your cart to checkout'
-      });
-      // You could add cart state management here if needed
-    } else {
-      // For products with variants, open customizer
+  const handleAddToCart = async (product: Product) => {
+    // For products with variants, open customizer
+    if (product.variants && product.variants.length > 0) {
       setSelectedProduct(product);
+      return;
+    }
+    
+    // For products without variants, we need to fetch the Shopify product to add to cart
+    try {
+      // Fetch Shopify products to get the actual variant IDs
+      const { data: shopifyData } = await supabase.functions.invoke('shopify-products');
+      
+      if (shopifyData?.products) {
+        // Find matching Shopify product by title
+        const shopifyProduct = shopifyData.products.find(
+          (p: any) => p.node.title.toLowerCase() === product.title.toLowerCase()
+        );
+        
+        if (shopifyProduct && shopifyProduct.node.variants.edges.length > 0) {
+          const variant = shopifyProduct.node.variants.edges[0].node;
+          
+          addItem({
+            product: shopifyProduct,
+            variantId: variant.id,
+            variantTitle: variant.title,
+            price: variant.price,
+            quantity: 1,
+            selectedOptions: variant.selectedOptions
+          });
+          
+          toast.success(`${product.title} added to cart!`);
+        } else {
+          toast.error('Product not available in store');
+        }
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart');
     }
   };
 
