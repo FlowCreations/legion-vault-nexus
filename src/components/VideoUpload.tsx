@@ -16,7 +16,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [isPremium, setIsPremium] = useState(false);
   const { toast } = useToast();
@@ -179,7 +179,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
         .from('videos')
         .insert({
           title,
-          subtitle,
+          description,
           category,
           storage_path: fileName,
           thumbnail_url: thumbnailUrl || null,
@@ -199,7 +199,7 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
       // Reset form
       setSelectedFile(null);
       setTitle("");
-      setSubtitle("");
+      setDescription("");
       setCategory("");
       setIsPremium(false);
 
@@ -269,13 +269,13 @@ export function VideoUpload({ onUploadComplete }: VideoUploadProps) {
           />
         </div>
 
-        {/* Subtitle */}
+        {/* Description */}
         <div>
-          <Label htmlFor="subtitle">Subtitle</Label>
+          <Label htmlFor="description">Description</Label>
           <Input
-            id="subtitle"
-            value={subtitle}
-            onChange={(e) => setSubtitle(e.target.value)}
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g., Official Music Video, Live Performance"
             className="mt-2"
           />
