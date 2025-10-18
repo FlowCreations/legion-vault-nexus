@@ -1,8 +1,6 @@
 import { useState } from "react";
 import aboutPhoto from "@/assets/about-photo.jpg";
-import netflixLogo from "@/assets/brands/netflix.png";
-import espnLogo from "@/assets/brands/espn.png";
-import paramountLogo from "@/assets/brands/paramount.png";
+import featuredBanner from "@/assets/featured-banner.png";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,28 +58,12 @@ const About = () => {
               <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
                 AS FEATURED ON
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center max-w-4xl mx-auto">
-                <div className="flex items-center justify-center h-20">
-                  <img 
-                    src={netflixLogo} 
-                    alt="Netflix"
-                    className="max-h-28 w-auto opacity-80 hover:opacity-100 transition-opacity"
-                  />
-                </div>
-                <div className="flex items-center justify-center h-20">
-                  <img 
-                    src={espnLogo} 
-                    alt="ESPN"
-                    className="max-h-20 w-auto opacity-80 hover:opacity-100 transition-opacity"
-                  />
-                </div>
-                <div className="flex items-center justify-center h-20">
-                  <img 
-                    src={paramountLogo} 
-                    alt="Paramount"
-                    className="max-h-20 w-auto opacity-80 hover:opacity-100 transition-opacity"
-                  />
-                </div>
+              <div className="max-w-5xl mx-auto">
+                <img 
+                  src={featuredBanner} 
+                  alt="As Featured On - UFC, ESPN, Paramount, Netflix, RAM"
+                  className="w-full h-auto"
+                />
               </div>
             </div>
           </div>
