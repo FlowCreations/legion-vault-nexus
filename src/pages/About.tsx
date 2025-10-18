@@ -1,24 +1,10 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import aboutPhoto from "@/assets/about-photo.jpg";
 import featuredBanner from "@/assets/featured-banner.png";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 const About = () => {
-  const [showDialog, setShowDialog] = useState(false);
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Will handle email sending later
-    console.log("Form submitted:", { name, email });
-    setShowDialog(false);
-    setEmail("");
-    setName("");
-  };
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background pt-24">
       {/* Hero Section */}
@@ -79,7 +65,7 @@ const About = () => {
               Download our exclusive free EP and experience the Sons of Legion sound
             </p>
             <Button
-              onClick={() => setShowDialog(true)}
+              onClick={() => navigate("/free-ep")}
               className="px-8 py-4 text-lg font-semibold"
               size="lg"
             >
@@ -87,45 +73,6 @@ const About = () => {
             </Button>
           </div>
         </section>
-
-        {/* Email Dialog */}
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Get Your Free Album</DialogTitle>
-              <DialogDescription>
-                Enter your email to receive the download link for our Power album
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div>
-                <Label htmlFor="dialog-name">Name</Label>
-                <Input
-                  id="dialog-name"
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="dialog-email">Email</Label>
-                <Input
-                  id="dialog-email"
-                  type="email"
-                  placeholder="your.email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Get Download Link
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
   );
 };
