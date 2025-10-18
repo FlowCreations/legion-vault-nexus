@@ -14,7 +14,6 @@ const navItems = [
   { name: "Shows", path: "/shows", icon: Calendar },
   { name: "Live Studio", path: "/live", icon: Radio },
   { name: "Community", path: "/community", icon: Users },
-  { name: "About", path: "/about", icon: Users },
 ];
 
 export const Navigation = () => {
