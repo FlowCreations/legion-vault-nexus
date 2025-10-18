@@ -71,6 +71,8 @@ export default function CommunityHub() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const [showInbox, setShowInbox] = useState(false);
+  const [showDirectMessage, setShowDirectMessage] = useState(false);
+  const [directMessageRecipient, setDirectMessageRecipient] = useState<{ id: string; name: string; avatar: string } | null>(null);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(3);
@@ -804,8 +806,12 @@ export default function CommunityHub() {
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
-                            setSelectedConversation(profile.id);
-                            setShowInbox(true);
+                            setDirectMessageRecipient({
+                              id: profile.id,
+                              name: profile.name,
+                              avatar: profile.avatar
+                            });
+                            setShowDirectMessage(true);
                           }}
                         >
                           Message
@@ -1202,6 +1208,114 @@ export default function CommunityHub() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Direct Message Dialog */}
+      <Dialog open={showDirectMessage} onOpenChange={setShowDirectMessage}>
+        <DialogContent className="max-w-2xl max-h-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={directMessageRecipient?.avatar} />
+                <AvatarFallback>{directMessageRecipient?.name[0]}</AvatarFallback>
+              </Avatar>
+              <span>Chat with {directMessageRecipient?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col h-[450px]">
+            {/* Message Thread */}
+            <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-4 bg-muted/20 rounded-lg">
+              {directMessageRecipient && messages
+                .filter(m => 
+                  m.sender_id === directMessageRecipient.id || 
+                  m.recipient_id === directMessageRecipient.id
+                )
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((msg) => {
+                  const isCurrentUser = msg.sender_id === 'current-user' || msg.sender_profile?.display_name === 'You';
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex ${isCurrentUser ? "justify-end" : ""}`}
+                    >
+                      <div
+                        className={`max-w-[70%] rounded-lg p-3 ${
+                          isCurrentUser
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        }`}
+                      >
+                        <p className="text-sm">{msg.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Input Area */}
+            <div className="flex gap-2">
+              <Input
+                placeholder={`Message ${directMessageRecipient?.name}...`}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={async (e) => {
+                  if (e.key === "Enter" && directMessageRecipient && newMessage.trim()) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const currentUserId = user?.id || 'current-user';
+                    
+                    const newMsg = {
+                      id: Date.now().toString(),
+                      sender_id: currentUserId,
+                      recipient_id: directMessageRecipient.id,
+                      content: newMessage,
+                      read: false,
+                      created_at: new Date().toISOString(),
+                      sender_profile: {
+                        display_name: 'You',
+                        avatar_url: ''
+                      }
+                    };
+                    
+                    setMessages([newMsg, ...messages]);
+                    setNewMessage("");
+                    toast({ title: "Message sent!" });
+                  }
+                }}
+              />
+              <Button
+                onClick={async () => {
+                  if (!newMessage || !directMessageRecipient) return;
+
+                  const { data: { user } } = await supabase.auth.getUser();
+                  const currentUserId = user?.id || 'current-user';
+                  
+                  const newMsg = {
+                    id: Date.now().toString(),
+                    sender_id: currentUserId,
+                    recipient_id: directMessageRecipient.id,
+                    content: newMessage,
+                    read: false,
+                    created_at: new Date().toISOString(),
+                    sender_profile: {
+                      display_name: 'You',
+                      avatar_url: ''
+                    }
+                  };
+                  
+                  setMessages([newMsg, ...messages]);
+                  setNewMessage("");
+                  toast({ title: "Message sent!" });
+                }}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
