@@ -22,6 +22,8 @@ import NotFound from "./pages/NotFound";
 import CommunityHub from "./pages/CommunityHub";
 import AdminDashboard from "./pages/AdminDashboard";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
+import FreeEP from "./pages/FreeEP";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,8 @@ const App = () => (
           <Route path="/live" element={<LiveStudio />} />
           <Route path="/community-hub" element={<CommunityHub />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/free-ep" element={<FreeEP />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
