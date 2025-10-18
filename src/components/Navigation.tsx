@@ -87,29 +87,8 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Sign In, Admin and Cart */}
+          {/* Cart */}
           <div className="hidden md:flex items-center gap-3">
-            {isAdmin && (
-              <Button 
-                variant="outline"
-                className="border-primary/50 hover:bg-primary/10"
-                asChild
-              >
-                <Link to="/admin">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Admin
-                </Link>
-              </Button>
-            )}
-            <Button 
-              className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
-              asChild
-            >
-              <Link to="/auth">
-                <LogIn className="w-4 h-4 mr-2" />
-                Sign In
-              </Link>
-            </Button>
             <CartDrawer />
           </div>
         </div>
@@ -143,28 +122,6 @@ export const Navigation = () => {
             </div>
             
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {isAdmin && (
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  className="border-primary/50 hover:bg-primary/10"
-                  asChild
-                >
-                  <Link to="/admin">
-                    <Shield className="w-4 h-4" />
-                  </Link>
-                </Button>
-              )}
-              <Button 
-                size="sm"
-                className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
-                asChild
-              >
-                <Link to="/auth">
-                  <LogIn className="w-4 h-4 md:mr-2" />
-                  <span className="hidden sm:inline">Sign In</span>
-                </Link>
-              </Button>
               <CartDrawer />
             </div>
           </div>

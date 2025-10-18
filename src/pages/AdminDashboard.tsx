@@ -38,40 +38,15 @@ export default function AdminDashboard() {
   const [tierCounts, setTierCounts] = useState<Record<string, number>>({});
   const [pixels, setPixels] = useState([]);
   const [legalDocs, setLegalDocs] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .single();
-
-    if (!roles) {
-      navigate("/");
-      toast({ title: "Access denied", description: "Admin access required", variant: "destructive" });
-      return;
-    }
-
-    setIsAdmin(true);
     loadMembers();
     loadTierCounts();
     loadPixels();
     loadLegalDocs();
-  };
+  }, []);
 
   const loadMembers = async () => {
     const { data, error } = await supabase
@@ -146,141 +121,121 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAdmin) {
-    return null;
-  }
-
   const totalMRR = members.reduce((sum, m) => sum + (m.mrr || 0), 0);
   const totalSpend = members.reduce((sum, m) => sum + (m.total_spend || 0), 0);
   const totalWatchTime = members.reduce((sum, m) => sum + (m.watch_time || 0), 0);
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="font-serif text-4xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage your community and content</p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold mb-2">Community Management</h2>
+        <p className="text-muted-foreground">Manage your community members and settings</p>
+      </div>
 
-        {/* Stats Overview */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+      {/* Stats Overview */}
+      <div className="grid md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{members.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total MRR</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalMRR.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Spend</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalSpend.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Watch Time</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{Math.floor(totalWatchTime / 60)}h</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="members" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="tiers">Tiers</TabsTrigger>
+          <TabsTrigger value="pixels">Tracking</TabsTrigger>
+          <TabsTrigger value="legal">Legal</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="members" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Member Management</CardTitle>
+              <CardDescription>View and manage all community members</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{members.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total MRR</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalMRR.toFixed(2)}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Spend</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalSpend.toFixed(2)}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Watch Time</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.floor(totalWatchTime / 60)}h</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="members" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="members">Manage Members</TabsTrigger>
-            <TabsTrigger value="videos">Video Library</TabsTrigger>
-            <TabsTrigger value="tiers">Membership Tiers</TabsTrigger>
-            <TabsTrigger value="pixels">Tracking Pixels</TabsTrigger>
-            <TabsTrigger value="legal">Legal Documents</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Member Management</CardTitle>
-                <CardDescription>View and manage all community members</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Member</TableHead>
-                        <TableHead>Tier</TableHead>
-                        <TableHead>Total Spend</TableHead>
-                        <TableHead>MRR</TableHead>
-                        <TableHead>Watch Time</TableHead>
-                        <TableHead>Listen Time</TableHead>
-                        <TableHead>Last Login</TableHead>
-                        <TableHead>Signed Up</TableHead>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Member</TableHead>
+                      <TableHead>Tier</TableHead>
+                      <TableHead>Total Spend</TableHead>
+                      <TableHead>MRR</TableHead>
+                      <TableHead>Watch Time</TableHead>
+                      <TableHead>Listen Time</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead>Signed Up</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {members.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell className="font-medium">
+                          {member.display_name || "Unknown"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
+                            {member.tier || "N/A"}
+                          </span>
+                        </TableCell>
+                        <TableCell>${member.total_spend?.toFixed(2) || "0.00"}</TableCell>
+                        <TableCell>${member.mrr?.toFixed(2) || "0.00"}</TableCell>
+                        <TableCell>{Math.floor((member.watch_time || 0) / 60)}h</TableCell>
+                        <TableCell>{Math.floor((member.listen_time || 0) / 60)}h</TableCell>
+                        <TableCell>
+                          {member.last_login
+                            ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
+                            : "Never"}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(member.created_at).toLocaleDateString()}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {members.map((member) => (
-                        <TableRow key={member.id}>
-                          <TableCell className="font-medium">
-                            {member.display_name || "Unknown"}
-                          </TableCell>
-                          <TableCell>
-                            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
-                              {member.tier || "N/A"}
-                            </span>
-                          </TableCell>
-                          <TableCell>${member.total_spend?.toFixed(2) || "0.00"}</TableCell>
-                          <TableCell>${member.mrr?.toFixed(2) || "0.00"}</TableCell>
-                          <TableCell>{Math.floor((member.watch_time || 0) / 60)}h</TableCell>
-                          <TableCell>{Math.floor((member.listen_time || 0) / 60)}h</TableCell>
-                          <TableCell>
-                            {member.last_login
-                              ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
-                              : "Never"}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(member.created_at).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="videos">
-            <Card>
-              <CardHeader>
-                <CardTitle>Video Management</CardTitle>
-                <CardDescription>Upload and manage video content</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => navigate("/video-manager")} className="bg-gradient-gold">
-                  <Video className="mr-2 h-4 w-4" />
-                  Go to Video Manager
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="tiers" className="space-y-4">
             <Card>
@@ -360,8 +315,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
-      </div>
+      </Tabs>
     </div>
   );
 }
