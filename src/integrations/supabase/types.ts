@@ -14,6 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      community_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          read: boolean | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      community_posts: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          link_url: string | null
+          media_url: string | null
+          post_type: string | null
+          tagged_all: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          view_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          post_type?: string | null
+          tagged_all?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          post_type?: string | null
+          tagged_all?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      legal_documents: {
+        Row: {
+          content: string
+          created_at: string | null
+          document_type: string | null
+          effective_date: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          document_type?: string | null
+          effective_date?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          document_type?: string | null
+          effective_date?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -99,6 +201,97 @@ export type Database = {
         }
         Relationships: []
       }
+      page_tracking: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_url: string
+          session_id: string
+          time_spent: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_url: string
+          session_id: string
+          time_spent?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_url?: string
+          session_id?: string
+          time_spent?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reaction_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           created_at: string | null
@@ -167,6 +360,33 @@ export type Database = {
           image_url?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tracking_pixels: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          name: string
+          pixel_id: string
+          platform: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          name: string
+          pixel_id: string
+          platform: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          name?: string
+          pixel_id?: string
+          platform?: string
         }
         Relationships: []
       }
@@ -257,6 +477,63 @@ export type Database = {
           session_id?: string
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          intro_answers: Json | null
+          last_login: string | null
+          listen_time: number | null
+          location: string | null
+          mrr: number | null
+          products_purchased: string[] | null
+          tier: string | null
+          total_spend: number | null
+          updated_at: string | null
+          user_id: string
+          watch_time: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          intro_answers?: Json | null
+          last_login?: string | null
+          listen_time?: number | null
+          location?: string | null
+          mrr?: number | null
+          products_purchased?: string[] | null
+          tier?: string | null
+          total_spend?: number | null
+          updated_at?: string | null
+          user_id: string
+          watch_time?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          intro_answers?: Json | null
+          last_login?: string | null
+          listen_time?: number | null
+          location?: string | null
+          mrr?: number | null
+          products_purchased?: string[] | null
+          tier?: string | null
+          total_spend?: number | null
+          updated_at?: string | null
+          user_id?: string
+          watch_time?: number | null
         }
         Relationships: []
       }

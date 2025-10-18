@@ -1,8 +1,11 @@
 import { Users, Award, Calendar, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 export default function Community() {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -36,7 +39,11 @@ export default function Community() {
                 {feature.description}
               </p>
 
-              <Button variant="outline" className="border-primary/30 hover:border-primary hover:bg-card/50">
+              <Button 
+                variant="outline" 
+                className="border-primary/30 hover:border-primary hover:bg-card/50"
+                onClick={() => navigate("/community-hub")}
+              >
                 {feature.cta}
               </Button>
             </div>
