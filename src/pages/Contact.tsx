@@ -42,7 +42,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen py-20 px-4">
+    <div className="min-h-screen pt-32 pb-20 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Title */}
         <h1 className="font-serif text-6xl md:text-7xl font-bold text-center mb-16 text-primary">
