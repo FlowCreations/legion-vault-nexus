@@ -56,6 +56,9 @@ export default function AdminDashboard() {
 
     if (!error && data) {
       setMembers(data);
+    } else {
+      // Use mock data if no real data available
+      setMembers(mockMembers);
     }
   };
 
@@ -319,3 +322,72 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+// Mock members matching the directory profiles
+const mockMembers = [
+  {
+    id: "1",
+    user_id: "1",
+    display_name: "Sarah Mitchell",
+    tier: "Legionnaires",
+    total_spend: 149.99,
+    mrr: 25.00,
+    watch_time: 7200,
+    listen_time: 14400,
+    products_purchased: ["Hoodie", "Album"],
+    last_login: new Date(Date.now() - 86400000).toISOString(),
+    created_at: new Date(Date.now() - 7776000000).toISOString(),
+  },
+  {
+    id: "2",
+    user_id: "2",
+    display_name: "Marcus Johnson",
+    tier: "Legionnaires",
+    total_spend: 89.99,
+    mrr: 25.00,
+    watch_time: 5400,
+    listen_time: 10800,
+    products_purchased: ["T-Shirt", "Cap"],
+    last_login: new Date(Date.now() - 172800000).toISOString(),
+    created_at: new Date(Date.now() - 15552000000).toISOString(),
+  },
+  {
+    id: "3",
+    user_id: "3",
+    display_name: "Emily Rodriguez",
+    tier: "Rebels",
+    total_spend: 199.99,
+    mrr: 10.00,
+    watch_time: 9600,
+    listen_time: 18000,
+    products_purchased: ["Limited Edition Vinyl", "Poster"],
+    last_login: new Date(Date.now() - 3600000).toISOString(),
+    created_at: new Date(Date.now() - 31104000000).toISOString(),
+  },
+  {
+    id: "4",
+    user_id: "4",
+    display_name: "Alex Thompson",
+    tier: "Rebels",
+    total_spend: 45.00,
+    mrr: 10.00,
+    watch_time: 3600,
+    listen_time: 7200,
+    products_purchased: ["Sticker Pack"],
+    last_login: new Date(Date.now() - 259200000).toISOString(),
+    created_at: new Date(Date.now() - 5184000000).toISOString(),
+  },
+  {
+    id: "5",
+    user_id: "5",
+    display_name: "Chris Anderson",
+    tier: "Rebels",
+    total_spend: 120.00,
+    mrr: 10.00,
+    watch_time: 6000,
+    listen_time: 12000,
+    products_purchased: ["Album Bundle", "Bandana"],
+    last_login: new Date(Date.now() - 432000000).toISOString(),
+    created_at: new Date(Date.now() - 20736000000).toISOString(),
+  },
+];

@@ -525,7 +525,11 @@ export default function CommunityHub() {
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>
                         <p className="text-sm mb-4">{profile.bio}</p>
-                        <Button size="sm" variant="outline" onClick={() => viewProfile(profile.id)}>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => setShowInbox(true)}
+                        >
                           <Send className="mr-2 h-3 w-3" />
                           Message
                         </Button>
