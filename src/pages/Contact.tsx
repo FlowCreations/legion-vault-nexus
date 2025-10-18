@@ -216,20 +216,17 @@ export default function Contact() {
 
         {/* Scammer Warning with Video */}
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid md:grid-cols-2 gap-8 items-start">
             <div className="order-2 md:order-1">
               <p className="text-foreground/80 leading-relaxed">
                 There are loads of fake accounts and scammers pretending to be us, so please be careful. We do not have any backup pages or secret accounts, only our official profiles are linked on this website. We do not use Telegram, Discord, WhatsApp, or Signal, and we'll never ask you to buy gift cards, join a "VIP membership," or share financial details in chat. We are not offering private merch, investigations, or personal conversations through reps. If someone claims to be us and starts talking romance or asking for money, it's a scam, please block and report.
               </p>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 flex justify-center md:justify-end">
               <video 
                 src={contactVideo}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full rounded-lg"
+                controls
+                className="w-full max-w-sm rounded-lg"
               />
             </div>
           </div>
