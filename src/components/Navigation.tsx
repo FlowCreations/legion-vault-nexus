@@ -65,7 +65,10 @@ export const Navigation = () => {
           )}
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className={cn(
+            "hidden md:flex items-center space-x-1",
+            isHomePage && "mx-auto"
+          )}>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
