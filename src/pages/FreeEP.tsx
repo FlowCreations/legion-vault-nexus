@@ -56,88 +56,81 @@ export default function FreeEP() {
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
-        <div className="max-w-6xl w-full flex items-center justify-center gap-8">
+        <div className="max-w-5xl w-full flex items-center justify-center gap-8">
           {/* Album Cover */}
-          <div className="relative z-20 opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
-            <div className="w-[450px] h-[450px] bg-card rounded-lg shadow-2xl overflow-hidden">
-              <img 
-                src="/albums/power-album.jpg" 
-                alt="Sons of Legion Power Album" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+          <div className="opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
+            <img 
+              src="/albums/power-album.jpg" 
+              alt="Sons of Legion Power Album" 
+              className="w-[450px] h-[450px] rounded-lg shadow-2xl object-cover"
+            />
           </div>
 
-          {/* Vinyl Record Sliding Out */}
-          <div className="relative -ml-32 opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
-            {/* Black Vinyl Disc */}
-            <div className="relative w-[450px] h-[450px]">
-              {/* Outer black vinyl */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gray-900 via-black to-gray-950 shadow-2xl">
-                {/* Grooves effect */}
-                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-gray-800 via-black to-gray-900"></div>
-                <div className="absolute inset-16 rounded-full bg-gradient-to-br from-gray-900 via-black to-gray-950"></div>
-                
-                {/* Center label with form */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-64 h-64 rounded-full bg-card/98 backdrop-blur-sm shadow-inner flex items-center justify-center p-8">
-                    <div className="w-full">
-                      <h2 className="text-sm font-bold mb-3 text-center leading-tight">
-                        GET YOUR FREE POWER ALBUM
-                      </h2>
+          {/* Form Box - Same Size as Album */}
+          <div className="w-[450px] h-[450px] bg-card/95 backdrop-blur-sm rounded-lg shadow-2xl p-8 flex flex-col justify-center opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
+            <h1 className="text-xl font-bold mb-6 text-balance leading-tight">
+              TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
+            </h1>
 
-                      <form onSubmit={handleSubmit} className="space-y-2">
-                        <Input
-                          id="name"
-                          type="text"
-                          placeholder="Name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          required
-                          className="bg-background/50 h-8 text-xs"
-                        />
-
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="Email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          className="bg-background/50 h-8 text-xs"
-                        />
-
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="Phone"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="bg-background/50 h-8 text-xs"
-                        />
-
-                        <Input
-                          id="zipCode"
-                          type="text"
-                          placeholder="Zip Code"
-                          value={zipCode}
-                          onChange={(e) => setZipCode(e.target.value)}
-                          className="bg-background/50 h-8 text-xs"
-                        />
-
-                        <Button
-                          type="submit"
-                          className="w-full bg-gradient-gold hover:shadow-glow text-xs py-4 font-bold"
-                          disabled={loading}
-                        >
-                          {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
-                        </Button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="sr-only">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="bg-background/50"
+                />
               </div>
-            </div>
+
+              <div>
+                <Label htmlFor="email" className="sr-only">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-background/50"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone" className="sr-only">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-background/50"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="zipCode" className="sr-only">Zip / Postal Code</Label>
+                <Input
+                  id="zipCode"
+                  type="text"
+                  placeholder="Zip / Postal Code"
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                  className="bg-background/50"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
+                disabled={loading}
+              >
+                {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
+              </Button>
+            </form>
           </div>
         </div>
       </div>
