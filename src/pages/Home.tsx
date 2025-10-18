@@ -199,7 +199,7 @@ const memberTiers = [
       "Entry to The Legion community — connect with the band and other fans",
       "Unlimited replays of all private online concerts",
     ],
-    featured: true,
+    featured: false,
   },
   {
     name: "Outlaws",
@@ -211,7 +211,7 @@ const memberTiers = [
       "Full streaming access to all songs in the vault",
       "Join the Fan Voting Squad — help choose what we release next",
     ],
-    featured: false,
+    featured: true,
   },
   {
     name: "Legionnaires",
