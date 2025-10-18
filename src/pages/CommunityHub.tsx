@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
-  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail
+  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,7 +55,9 @@ export default function CommunityHub() {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadPosts();
+    if (activeTab === "feed" || activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") {
+      loadPosts();
+    }
     loadUnreadCount();
     setupRealtimeSubscription();
   }, [activeTab]);
@@ -277,47 +279,157 @@ export default function CommunityHub() {
 
         {/* Main Content */}
         <main className="flex-1">
-          {/* Create Post */}
-          <div className="bg-card rounded-2xl p-6 mb-6 border">
-            <div className="flex gap-4">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1">
-                <Textarea
-                  placeholder="Start typing..."
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  className="mb-4 min-h-[80px]"
-                />
+          {/* Create Post - only show on feed, announcements, legion_speaks, intros */}
+          {(activeTab === "feed" || activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
+            <div className="bg-card rounded-2xl p-6 mb-6 border">
+              <div className="flex gap-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
                 
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Image className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <LinkIcon className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <AtSign className="h-4 w-4" />
+                <div className="flex-1">
+                  <Textarea
+                    placeholder="Start typing..."
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    className="mb-4 min-h-[80px]"
+                  />
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon">
+                        <Image className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <LinkIcon className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <Video className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <AtSign className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <Button onClick={createPost} className="bg-gradient-gold">
+                      Post
                     </Button>
                   </div>
-                  
-                  <Button onClick={createPost} className="bg-gradient-gold">
-                    Post
-                  </Button>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Posts Feed */}
-          <div className="space-y-6">
+          {/* Directory View */}
+          {activeTab === "directory" && (
+            <div className="space-y-6">
+              <h2 className="font-serif text-2xl font-bold">Community Directory</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                {mockProfiles.map((profile) => (
+                  <div key={profile.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarImage src={profile.avatar} />
+                        <AvatarFallback>{profile.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold">{profile.name}</h3>
+                          <Badge variant="secondary">{profile.tier}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>
+                        <p className="text-sm mb-4">{profile.bio}</p>
+                        <Button size="sm" variant="outline" onClick={() => viewProfile(profile.id)}>
+                          <Send className="mr-2 h-3 w-3" />
+                          Message
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Events View */}
+          {activeTab === "events" && (
+            <div className="space-y-6">
+              <h2 className="font-serif text-2xl font-bold mb-6">Upcoming Events</h2>
+              
+              {/* Live Events */}
+              <div>
+                <h3 className="font-semibold text-lg mb-4">Live Virtual Events</h3>
+                <div className="space-y-4">
+                  {liveEvents.map((event) => (
+                    <div key={event.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-xl">{event.title}</h4>
+                        {event.isVIP && (
+                          <Badge className="bg-primary/20 text-primary border-primary/30">VIP Only</Badge>
+                        )}
+                        {event.isPremium && (
+                          <Badge variant="secondary">Premium</Badge>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground mb-4">{event.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {event.date}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MessageCircle className="h-4 w-4" />
+                          {event.time}
+                        </div>
+                        {event.price && <Badge variant="outline">{event.price}</Badge>}
+                      </div>
+                      <Button className="bg-gradient-gold">Register Now</Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tour Shows */}
+              <div>
+                <h3 className="font-semibold text-lg mb-4">Tour Dates</h3>
+                <div className="space-y-3">
+                  {tourShows.map((show) => (
+                    <div key={show.id} className="bg-card rounded-lg p-5 border hover:border-primary/30 transition-all flex items-center justify-between">
+                      <div className="flex items-center gap-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold">{show.day}</div>
+                          <div className="text-sm text-muted-foreground uppercase">{show.month}</div>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-lg">{show.venue}</h4>
+                          <p className="text-muted-foreground">{show.city}, {show.state}</p>
+                          <p className="text-sm text-muted-foreground">{show.time}</p>
+                          {show.specialGuests && (
+                            <p className="text-xs text-primary mt-1">Special Guest: {show.specialGuests}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge 
+                        className={
+                          show.status === "Sold Out" 
+                            ? "bg-destructive/20 text-destructive border-destructive/30"
+                            : show.status === "Low Tickets"
+                            ? "bg-yellow-500/20 text-yellow-600 border-yellow-500/30"
+                            : "bg-green-500/20 text-green-600 border-green-500/30"
+                        }
+                      >
+                        {show.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Posts Feed for feed, announcements, legion_speaks, intros */}
+          {(activeTab === "feed" || activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
+            <div className="space-y-6">
             {posts.map((post) => (
               <div key={post.id} className="bg-card rounded-2xl p-6 border">
                 <div className="flex items-start gap-4">
@@ -398,8 +510,9 @@ export default function CommunityHub() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </main>
 
         {/* Trending Sidebar */}
@@ -490,3 +603,146 @@ export default function CommunityHub() {
     </div>
   );
 }
+
+// Mock profiles for directory
+const mockProfiles = [
+  {
+    id: "1",
+    name: "Sarah Mitchell",
+    avatar: "",
+    tier: "Legionnaires",
+    location: "Nashville, TN",
+    bio: "Music lover and longtime fan. Been following the band since 2020!",
+  },
+  {
+    id: "2",
+    name: "Mike Torres",
+    avatar: "",
+    tier: "Outlaws",
+    location: "Austin, TX",
+    bio: "Guitar player inspired by SOL. Love the energy and raw emotion in every track.",
+  },
+  {
+    id: "3",
+    name: "Emma Chen",
+    avatar: "",
+    tier: "Rebels",
+    location: "Los Angeles, CA",
+    bio: "Concert photographer and super fan. Caught 15 shows last tour!",
+  },
+  {
+    id: "4",
+    name: "James Parker",
+    avatar: "",
+    tier: "Outlaws",
+    location: "Evansville, IN",
+    bio: "Just 2.5 hour drive to Nashville. Getting out for movement creates space for my brain and body to connect.",
+  },
+  {
+    id: "5",
+    name: "Lisa Rodriguez",
+    avatar: "",
+    tier: "Legionnaires",
+    location: "Miami, FL",
+    bio: "Day one supporter. The music speaks to my soul and helps me through tough times.",
+  },
+  {
+    id: "6",
+    name: "Chris Anderson",
+    avatar: "",
+    tier: "Rebels",
+    location: "Chicago, IL",
+    bio: "Midwest represent! Been blasting SOL since the first EP dropped.",
+  },
+];
+
+// Live events from LiveStudio
+const liveEvents = [
+  {
+    id: "1",
+    title: "Virtual World Tour Finale",
+    description: "The grand finale of our virtual tour featuring special guests and never before performed tracks",
+    date: "March 15, 2026",
+    time: "9:00 PM EST",
+    price: "$19.99",
+    isVIP: false,
+    isPremium: false,
+  },
+  {
+    id: "2",
+    title: "Q&A with the Band",
+    description: "Ask us anything! Live video chat session with all band members",
+    date: "February 20, 2026",
+    time: "7:00 PM EST",
+    price: null,
+    isVIP: true,
+    isPremium: false,
+  },
+  {
+    id: "3",
+    title: "Album Listening Party",
+    description: "Listen to Sons of Legion's newest album live with the band before its released.",
+    date: "January 30, 2026",
+    time: "8:00 PM EST",
+    price: null,
+    isVIP: false,
+    isPremium: true,
+  },
+];
+
+// Tour shows from Shows page
+const tourShows = [
+  {
+    id: "1",
+    month: "Mar",
+    day: "15",
+    venue: "Madison Square Garden",
+    city: "New York",
+    state: "NY",
+    time: "8:00 PM",
+    status: "On Sale",
+    specialGuests: "The Midnight Collective",
+  },
+  {
+    id: "2",
+    month: "Mar",
+    day: "22",
+    venue: "The Forum",
+    city: "Los Angeles",
+    state: "CA",
+    time: "7:30 PM",
+    status: "Low Tickets",
+    specialGuests: "Echo Valley",
+  },
+  {
+    id: "3",
+    month: "Apr",
+    day: "05",
+    venue: "Red Rocks Amphitheatre",
+    city: "Morrison",
+    state: "CO",
+    time: "8:00 PM",
+    status: "Sold Out",
+  },
+  {
+    id: "4",
+    month: "Apr",
+    day: "12",
+    venue: "Bridgestone Arena",
+    city: "Nashville",
+    state: "TN",
+    time: "7:00 PM",
+    status: "On Sale",
+  },
+  {
+    id: "5",
+    month: "Apr",
+    day: "20",
+    venue: "United Center",
+    city: "Chicago",
+    state: "IL",
+    time: "8:00 PM",
+    status: "On Sale",
+    specialGuests: "The Resonance",
+  },
+];
