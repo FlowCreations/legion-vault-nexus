@@ -236,19 +236,28 @@ export default function CommunityHub() {
     // Fetch user profiles separately for database posts
     let dbPosts: any[] = [];
     if (data && data.length > 0) {
-      const userIds = data.map(post => post.user_id);
-      const { data: profiles } = await supabase
-        .from("user_profiles")
-        .select("user_id, display_name, avatar_url, tier")
-        .in("user_id", userIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+      const userIds = data.filter(post => post.user_id).map(post => post.user_id);
+      
+      let profileMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("user_profiles")
+          .select("user_id, display_name, avatar_url, tier")
+          .in("user_id", userIds);
+        
+        profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+      }
+      
       dbPosts = data.map(post => ({
         ...post,
-        user_profiles: profileMap.get(post.user_id) || {
-          display_name: "User",
+        user_profiles: post.user_id ? (profileMap.get(post.user_id) || {
+          display_name: "Guest",
           avatar_url: "",
-          tier: ""
+          tier: "Guest"
+        }) : {
+          display_name: "Guest",
+          avatar_url: "",
+          tier: "Guest"
         }
       }));
     }
@@ -333,15 +342,10 @@ export default function CommunityHub() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({ title: "Please sign in to post", variant: "destructive" });
-      return;
-    }
-
     let mediaUrl = postMediaUrl;
 
-    // Upload image if present
-    if (uploadedImageFile) {
+    // Upload image if present (requires authentication)
+    if (uploadedImageFile && user) {
       const fileExt = uploadedImageFile.name.split('.').pop();
       const filePath = `${user.id}/${Date.now()}.${fileExt}`;
       
@@ -359,27 +363,14 @@ export default function CommunityHub() {
         .getPublicUrl(filePath);
 
       mediaUrl = publicUrl;
+    } else if (uploadedImageFile && !user) {
+      toast({ title: "Image upload requires sign in", description: "Post will be created without image", variant: "destructive" });
     }
 
     const postType = mediaUrl ? (mediaUrl.includes('video') ? 'video' : 'image') : 'text';
 
-    // Ensure user has a profile
-    const { data: existingProfile } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!existingProfile) {
-      await supabase.from("user_profiles").insert({
-        user_id: user.id,
-        display_name: user.email?.split('@')[0] || "User",
-        tier: "Rebels"
-      });
-    }
-
     const { error } = await supabase.from("community_posts").insert({
-      user_id: user.id,
+      user_id: user?.id || null,
       content: newPostContent,
       category: activeTab,
       post_type: postType,
