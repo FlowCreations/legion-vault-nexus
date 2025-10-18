@@ -199,22 +199,25 @@ export function MusicPlayer({
             </div>
           </div>
 
-          {/* Volume - moved to left side */}
-          <div className="flex-1 flex items-center gap-2">
-            <Flame 
-              className="h-4 w-4 transition-all duration-300" 
-              style={{ 
-                color: volume > 0 ? `hsl(${20 + (volume * 0.8)}, 90%, ${50 + (volume * 0.2)}%)` : 'hsl(var(--muted-foreground))',
-                filter: volume > 70 ? 'drop-shadow(0 0 4px hsla(25, 95%, 60%, 0.6))' : 'none'
-              }}
-            />
-            <Slider
-              value={[volume]}
-              onValueChange={(v) => setVolume(v[0])}
-              max={100}
-              step={1}
-              className="w-24 hidden sm:flex"
-            />
+          {/* Volume - vertical slider */}
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-2 h-24">
+              <Slider
+                value={[volume]}
+                onValueChange={(v) => setVolume(v[0])}
+                max={100}
+                step={1}
+                orientation="vertical"
+                className="h-full hidden sm:flex"
+              />
+              <Flame 
+                className="h-4 w-4 transition-all duration-300" 
+                style={{ 
+                  color: volume > 0 ? `hsl(${20 + (volume * 0.8)}, 90%, ${50 + (volume * 0.2)}%)` : 'hsl(var(--muted-foreground))',
+                  filter: volume > 70 ? 'drop-shadow(0 0 4px hsla(25, 95%, 60%, 0.6))' : 'none'
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
