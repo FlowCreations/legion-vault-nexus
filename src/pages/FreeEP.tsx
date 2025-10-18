@@ -73,7 +73,7 @@ export default function FreeEP() {
               {/* Vinyl Circle Background */}
               <div className="w-[500px] h-[400px] bg-gradient-to-r from-card via-card to-card/95 backdrop-blur-sm rounded-r-full shadow-2xl flex items-center pr-12 pl-40">
                 <div className="w-full">
-                  <h1 className="text-2xl font-bold mb-6 text-balance leading-tight">
+                  <h1 className="text-lg font-bold mb-4 text-balance leading-tight">
                     TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
                   </h1>
 
