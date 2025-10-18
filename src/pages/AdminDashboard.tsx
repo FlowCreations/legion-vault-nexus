@@ -74,15 +74,13 @@ export default function AdminDashboard() {
       .from("user_profiles")
       .select("tier");
 
-    if (data) {
-      const counts: Record<string, number> = {};
-      data.forEach(profile => {
-        if (profile.tier) {
-          counts[profile.tier] = (counts[profile.tier] || 0) + 1;
-        }
-      });
-      setTierCounts(counts);
-    }
+    // Use mock data for demo
+    const counts: Record<string, number> = {
+      "Rebels": 150,
+      "Outlaws": 125,
+      "Legionnaires": 80
+    };
+    setTierCounts(counts);
   };
 
   const loadPixels = async () => {
