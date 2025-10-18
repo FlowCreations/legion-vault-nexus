@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
-  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart
+  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +66,9 @@ export default function CommunityHub() {
   const [newPostContent, setNewPostContent] = useState("");
   const [postMediaUrl, setPostMediaUrl] = useState("");
   const [postLinkUrl, setPostLinkUrl] = useState("");
+  const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
+  const [uploadedImagePreview, setUploadedImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showInbox, setShowInbox] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
@@ -314,18 +317,68 @@ export default function CommunityHub() {
     };
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "File too large", description: "Please upload an image smaller than 5MB", variant: "destructive" });
+        return;
+      }
+      setUploadedImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeUploadedImage = () => {
+    setUploadedImageFile(null);
+    setUploadedImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const createPost = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !newPostContent) return;
+    if (!user || !newPostContent) {
+      toast({ title: "Please write something first!", variant: "destructive" });
+      return;
+    }
 
-    const postType = postMediaUrl ? (postMediaUrl.includes('video') ? 'video' : 'image') : 'text';
+    let mediaUrl = postMediaUrl;
+
+    // Upload image if present
+    if (uploadedImageFile) {
+      const fileExt = uploadedImageFile.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('thumbnails')
+        .upload(filePath, uploadedImageFile);
+
+      if (uploadError) {
+        toast({ title: "Error uploading image", variant: "destructive" });
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('thumbnails')
+        .getPublicUrl(filePath);
+
+      mediaUrl = publicUrl;
+    }
+
+    const postType = mediaUrl ? (mediaUrl.includes('video') ? 'video' : 'image') : 'text';
 
     const { error } = await supabase.from("community_posts").insert({
       user_id: user.id,
       content: newPostContent,
       category: activeTab,
       post_type: postType,
-      media_url: postMediaUrl || null,
+      media_url: mediaUrl || null,
       link_url: postLinkUrl || null,
     });
 
@@ -337,6 +390,7 @@ export default function CommunityHub() {
     setNewPostContent("");
     setPostMediaUrl("");
     setPostLinkUrl("");
+    removeUploadedImage();
     toast({ title: "Post created successfully!" });
     loadPosts();
   };
@@ -553,29 +607,42 @@ export default function CommunityHub() {
                     className="mb-4 min-h-[80px]"
                   />
                   
+                  {uploadedImagePreview && (
+                    <div className="relative mb-4">
+                      <img 
+                        src={uploadedImagePreview} 
+                        alt="Upload preview" 
+                        className="max-h-60 rounded-lg object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8"
+                        onClick={removeUploadedImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2">
-                      <label htmlFor="image-upload">
-                        <Button variant="ghost" size="icon" type="button" asChild>
-                          <span>
-                            <Image className="h-4 w-4" />
-                          </span>
-                        </Button>
-                        <input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const url = URL.createObjectURL(file);
-                              setPostMediaUrl(url);
-                              toast({ title: "Image attached" });
-                            }
-                          }}
-                        />
-                      </label>
+                      <input
+                        ref={fileInputRef}
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                        type="button"
+                      >
+                        <Image className="h-4 w-4" />
+                      </Button>
                       <Button 
                         variant="ghost" 
                         size="icon"
@@ -589,27 +656,6 @@ export default function CommunityHub() {
                       >
                         <LinkIcon className="h-4 w-4" />
                       </Button>
-                      <label htmlFor="video-upload">
-                        <Button variant="ghost" size="icon" type="button" asChild>
-                          <span>
-                            <Video className="h-4 w-4" />
-                          </span>
-                        </Button>
-                        <input
-                          id="video-upload"
-                          type="file"
-                          accept="video/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const url = URL.createObjectURL(file);
-                              setPostMediaUrl(url);
-                              toast({ title: "Video attached" });
-                            }
-                          }}
-                        />
-                      </label>
                       <Button 
                         variant="ghost" 
                         size="icon"
