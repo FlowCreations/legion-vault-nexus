@@ -71,7 +71,7 @@ export default function FreeEP() {
             {/* Vinyl Record with Form */}
             <div className="relative -ml-32 opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
               {/* Vinyl Circle Background */}
-              <div className="w-[500px] h-[400px] bg-gradient-to-r from-card/95 to-card/98 backdrop-blur-sm rounded-r-full shadow-2xl flex items-center pr-12 pl-40">
+              <div className="w-[500px] h-[400px] bg-gradient-to-r from-card via-card to-card/95 backdrop-blur-sm rounded-r-full shadow-2xl flex items-center pr-12 pl-40">
                 <div className="w-full">
                   <h1 className="text-2xl font-bold mb-6 text-balance leading-tight">
                     TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
