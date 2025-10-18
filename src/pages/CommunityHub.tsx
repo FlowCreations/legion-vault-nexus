@@ -65,7 +65,80 @@ export default function CommunityHub() {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [notifications, setNotifications] = useState(0);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      sender_id: '2',
+      recipient_id: 'current-user',
+      content: "Hey! Just saw your post about the upcoming show. Can't wait!",
+      read: false,
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      sender_profile: {
+        display_name: 'Sarah Johnson',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah'
+      }
+    },
+    {
+      id: '2',
+      sender_id: 'current-user',
+      recipient_id: '2',
+      content: "Same here! It's going to be amazing. Are you going to the meet & greet?",
+      read: true,
+      created_at: new Date(Date.now() - 3000000).toISOString(),
+      sender_profile: {
+        display_name: 'You',
+        avatar_url: ''
+      }
+    },
+    {
+      id: '3',
+      sender_id: '3',
+      recipient_id: 'current-user',
+      content: "Thanks for the Legion merch recommendation! Just ordered mine.",
+      read: false,
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      sender_profile: {
+        display_name: 'Mike Chen',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike'
+      }
+    },
+    {
+      id: '4',
+      sender_id: '4',
+      recipient_id: 'current-user',
+      content: "Love your intro! We have so much in common with the music taste.",
+      read: true,
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      sender_profile: {
+        display_name: 'Emily Rodriguez',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emily'
+      }
+    },
+    {
+      id: '5',
+      sender_id: '5',
+      recipient_id: 'current-user',
+      content: "Did you catch the acoustic session last night? Fire! 🔥",
+      read: true,
+      created_at: new Date(Date.now() - 172800000).toISOString(),
+      sender_profile: {
+        display_name: 'David Kim',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=david'
+      }
+    },
+    {
+      id: '6',
+      sender_id: '6',
+      recipient_id: 'current-user',
+      content: "The new album is incredible! Been on repeat all week.",
+      read: false,
+      created_at: new Date(Date.now() - 259200000).toISOString(),
+      sender_profile: {
+        display_name: 'Alex Thompson',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex'
+      }
+    }
+  ]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const { toast } = useToast();
