@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward, Flame } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Flame, Download, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
@@ -113,11 +113,35 @@ export function MusicPlayer({
                 </div>
               )}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="font-medium text-sm truncate">{currentTrack.title}</p>
               <p className="text-xs text-muted-foreground truncate">
                 {currentTrack.artist}
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {currentTrack.url && (
+                <a 
+                  href={currentTrack.url} 
+                  download={`${currentTrack.title} - ${currentTrack.artist}.mp3`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </a>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -175,8 +199,8 @@ export function MusicPlayer({
             </div>
           </div>
 
-          {/* Volume */}
-          <div className="flex-1 flex items-center justify-end gap-2">
+          {/* Volume - moved to left side */}
+          <div className="flex-1 flex items-center gap-2">
             <Flame 
               className="h-4 w-4 transition-all duration-300" 
               style={{ 
