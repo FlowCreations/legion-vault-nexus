@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward, Flame, Download, Heart } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
@@ -196,29 +196,34 @@ export function MusicPlayer({
               <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
                 {formatTime(duration)}
               </span>
+              
+              {/* Volume Control with bars */}
+              <div className="flex items-center gap-2 ml-4">
+                <Volume2 className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-0.5 h-4">
+                  {[...Array(10)].map((_, i) => {
+                    const barHeight = 8 + (i * 1.6); // Heights from 8px to 22.4px
+                    const isActive = (i + 1) * 10 <= volume;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setVolume((i + 1) * 10)}
+                        className="w-0.5 transition-all duration-150 hover:opacity-80"
+                        style={{
+                          height: `${barHeight}px`,
+                          backgroundColor: isActive ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                          opacity: isActive ? 1 : 0.3
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Volume - vertical slider */}
-          <div className="flex-1 flex items-center justify-end gap-3">
-            <div className="flex flex-col items-center gap-2 h-20">
-              <Slider
-                value={[volume]}
-                onValueChange={(v) => setVolume(v[0])}
-                max={100}
-                step={1}
-                orientation="vertical"
-                className="h-full hidden sm:flex"
-              />
-              <Flame 
-                className="h-4 w-4 transition-all duration-300 flex-shrink-0" 
-                style={{ 
-                  color: volume > 0 ? `hsl(${20 + (volume * 0.8)}, 90%, ${50 + (volume * 0.2)}%)` : 'hsl(var(--muted-foreground))',
-                  filter: volume > 70 ? 'drop-shadow(0 0 4px hsla(25, 95%, 60%, 0.6))' : 'none'
-                }}
-              />
-            </div>
-          </div>
+          {/* Empty spacer for layout balance */}
+          <div className="flex-1"></div>
         </div>
       </div>
     </div>
