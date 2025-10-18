@@ -65,7 +65,7 @@ const About = () => {
                   <img 
                     src={netflixLogo} 
                     alt="Netflix"
-                    className="max-h-20 w-auto opacity-80 hover:opacity-100 transition-opacity"
+                    className="max-h-28 w-auto opacity-80 hover:opacity-100 transition-opacity"
                   />
                 </div>
                 <div className="flex items-center justify-center h-20">
