@@ -885,10 +885,6 @@ export default function CommunityHub() {
             <div className="w-1/3 border-r pr-4 overflow-y-auto">
               <h3 className="font-semibold mb-3">Conversations</h3>
               <div className="space-y-2">
-            {/* Conversations List */}
-            <div className="w-1/3 border-r pr-4 overflow-y-auto">
-              <h3 className="font-semibold mb-3">Conversations</h3>
-              <div className="space-y-2">
                 {getConversations().map((conv) => {
                   // Get the display info for the other person in the conversation
                   const otherPersonMsg = messages.find(m => 
