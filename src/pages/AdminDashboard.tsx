@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clock, ShoppingBag, BarChart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,12 +26,16 @@ interface Member {
   id: string;
   user_id: string;
   display_name: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
   tier: string;
   total_spend: number;
   mrr: number;
   watch_time: number;
   listen_time: number;
   products_purchased: string[];
+  intro_answers?: Record<string, any>;
   last_login: string;
   created_at: string;
 }
@@ -57,7 +62,7 @@ export default function AdminDashboard() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setMembers(data);
+      setMembers(data as Member[]);
     } else {
       // Use mock data if no real data available
       setMembers(mockMembers);
@@ -198,51 +203,91 @@ export default function AdminDashboard() {
         <TabsContent value="members" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Member Management</CardTitle>
-              <CardDescription>View and manage all community members</CardDescription>
+              <CardTitle>Member Directory</CardTitle>
+              <CardDescription>View all community members with their profiles</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Member</TableHead>
-                      <TableHead>Tier</TableHead>
-                      <TableHead>Total Spend</TableHead>
-                      <TableHead>MRR</TableHead>
-                      <TableHead>Watch Time</TableHead>
-                      <TableHead>Listen Time</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead>Signed Up</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {members.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">
-                          {member.display_name || "Unknown"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getTierColor(member.tier)}>
-                            {member.tier || "N/A"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>${member.total_spend?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell>${member.mrr?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell>{Math.floor((member.watch_time || 0) / 60)}h</TableCell>
-                        <TableCell>{Math.floor((member.listen_time || 0) / 60)}h</TableCell>
-                        <TableCell>
-                          {member.last_login
+              <div className="grid gap-4">
+                {members.map((member) => (
+                  <div key={member.id} className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.display_name}`} />
+                        <AvatarFallback>{member.display_name?.[0] || "U"}</AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-lg">{member.display_name || "Unknown"}</h3>
+                            <Badge className={getTierColor(member.tier)}>
+                              {member.tier || "N/A"}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-6 text-sm">
+                            <div className="text-center">
+                              <p className="text-muted-foreground">Total Spend</p>
+                              <p className="font-semibold">${member.total_spend?.toFixed(2) || "0.00"}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-muted-foreground">MRR</p>
+                              <p className="font-semibold">${member.mrr?.toFixed(2) || "0.00"}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {member.bio && (
+                          <p className="text-sm text-muted-foreground">{member.bio}</p>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {member.location && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {member.location}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Watch: {Math.floor((member.watch_time || 0) / 60)}h
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Listen: {Math.floor((member.listen_time || 0) / 60)}h
+                          </div>
+                        </div>
+
+                        {member.intro_answers && (
+                          <div className="mt-2 p-3 bg-muted/50 rounded-md">
+                            <h4 className="text-xs font-semibold text-muted-foreground mb-2">INTRO</h4>
+                            <div className="grid gap-1 text-sm">
+                              {Object.entries(member.intro_answers).map(([key, value]) => (
+                                <div key={key} className="flex gap-2">
+                                  <span className="text-muted-foreground min-w-[100px]">{key}:</span>
+                                  <span className="font-medium">{value as string}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                          <span>Last login: {member.last_login
                             ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
-                            : "Never"}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(member.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                            : "Never"}</span>
+                          <span>•</span>
+                          <span>Joined: {new Date(member.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {members.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No members found
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
