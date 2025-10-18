@@ -17,7 +17,7 @@ export default function Home() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-32 sm:pt-40">
           {/* Logo as Header */}
-          <div className="mb-0 mt-8 animate-fade-in">
+          <div className="mb-0 mt-16 animate-fade-in">
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
