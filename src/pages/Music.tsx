@@ -1,7 +1,7 @@
 import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MusicPlayer } from "@/components/MusicPlayer";
+import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { PurchaseModal } from "@/components/PurchaseModal";
 import { usePurchases } from "@/hooks/usePurchases";
 import { StripeCheckout } from "@/components/StripeCheckout";
@@ -27,23 +27,17 @@ import {
 
 export default function Music() {
   const navigate = useNavigate();
-  const [currentTrack, setCurrentTrack] = useState<any | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playlist, setPlaylist] = useState<any[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
 
   const handleShuffle = () => {
-    // Create a shuffled playlist from all available tracks
     const allTracks = [...topTracks, ...albums.filter(a => a.url)];
     const shuffled = [...allTracks].sort(() => Math.random() - 0.5);
-    setPlaylist(shuffled);
-    setCurrentIndex(0);
+    setPlaylist(shuffled, 0);
     if (shuffled.length > 0) {
-      handlePlayTrack(shuffled[0], shuffled);
+      setIsPlaying(true);
     }
   };
 
@@ -75,120 +69,17 @@ export default function Music() {
     }
     
     if (trackList) {
-      setPlaylist(trackList);
       const index = trackList.findIndex(t => t.id === track.id);
-      setCurrentIndex(index);
+      setPlaylist(trackList, index);
     }
     
-    if (currentTrack?.id === track.id && isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      setCurrentTrack(track);
-      setIsPlaying(false);
-      
-      if (audioRef.current) {
-        const audio = audioRef.current;
-        
-        // Clear any existing source
-        audio.pause();
-        audio.src = '';
-        audio.load();
-        
-        // Small delay to ensure cleanup
-        setTimeout(() => {
-          // Set new source directly
-          audio.src = track.url;
-          
-          // Error event
-          const handleError = (e: any) => {
-            console.error("Audio error:", {
-              error: e,
-              code: audio.error?.code,
-              message: audio.error?.message,
-              url: track.url,
-              networkState: audio.networkState,
-              readyState: audio.readyState
-            });
-            setIsPlaying(false);
-          };
-          
-          audio.onerror = handleError;
-          
-          // Load and play
-          audio.load();
-          
-          const handleCanPlay = () => {
-            console.log('Audio can play, attempting playback');
-            audio.play()
-              .then(() => {
-                console.log('Playback started successfully');
-                setIsPlaying(true);
-              })
-              .catch(err => {
-                console.error('Play error:', err);
-                setIsPlaying(false);
-              });
-          };
-          
-          audio.addEventListener('canplay', handleCanPlay, { once: true });
-        }, 100);
-      }
-    }
+    setCurrentTrack(track);
+    setIsPlaying(true);
   };
 
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current?.pause();
-    } else {
-      const playPromise = audioRef.current?.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error("Error playing audio:", error);
-        });
-      }
-    }
-  };
-
-  const handleNext = () => {
-    if (playlist.length === 0) return;
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    setCurrentIndex(nextIndex);
-    handlePlayTrack(playlist[nextIndex], playlist);
-  };
-
-  const handlePrevious = () => {
-    if (playlist.length === 0) return;
-    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-    setCurrentIndex(prevIndex);
-    handlePlayTrack(playlist[prevIndex], playlist);
-  };
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      handleNext();
-    };
-    const handlePause = () => setIsPlaying(false);
-    const handlePlay = () => setIsPlaying(true);
-
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('play', handlePlay);
-
-    return () => {
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('play', handlePlay);
-    };
-  }, [currentIndex, playlist]);
 
   return (
     <div className="min-h-screen pb-24">
-      <audio ref={audioRef} preload="auto" />
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
         <div className="absolute inset-0">
@@ -505,15 +396,6 @@ export default function Music() {
         </div>
       </div>
 
-      <MusicPlayer
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        audioRef={audioRef}
-        onPlayPause={handlePlayPause}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        allTracks={playlist}
-      />
 
       {selectedAlbum && (
         <PurchaseModal

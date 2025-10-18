@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
+import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import Home from "./pages/Home";
 import Videos from "./pages/Videos";
 import VideoManager from "./pages/VideoManager";
@@ -64,6 +65,7 @@ const App = () => (
         </Routes>
         <Footer />
         <FloatingChatbot />
+        <GlobalMusicPlayer />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

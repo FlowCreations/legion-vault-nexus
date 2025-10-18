@@ -1,7 +1,7 @@
 import { Play, Heart, Share2, MoreHorizontal, Pause, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MusicPlayer } from "@/components/MusicPlayer";
+import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { PurchaseModal } from "@/components/PurchaseModal";
 import { usePurchases } from "@/hooks/usePurchases";
 import { StripeCheckout } from "@/components/StripeCheckout";
@@ -15,11 +15,7 @@ import strippedAlbum from "@/assets/stripped-album.jpg";
 export default function AlbumDetail() {
   const { albumId } = useParams();
   const navigate = useNavigate();
-  const [currentTrack, setCurrentTrack] = useState<any | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playlist, setPlaylist] = useState<any[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
@@ -111,92 +107,13 @@ export default function AlbumDetail() {
     if (!track.url) return;
     
     if (trackList) {
-      setPlaylist(trackList);
       const index = trackList.findIndex(t => t.title === track.title);
-      setCurrentIndex(index);
+      setPlaylist(trackList, index);
     }
     
-    if (currentTrack?.title === track.title && isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      setCurrentTrack(track);
-      if (audioRef.current) {
-        const audio = audioRef.current;
-        audio.src = track.url;
-        audio.load();
-        
-        const attemptPlay = () => {
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                setIsPlaying(true);
-              })
-              .catch(error => {
-                console.error("Error playing audio:", error);
-                setIsPlaying(false);
-              });
-          }
-        };
-        
-        if (audio.readyState >= 2) {
-          attemptPlay();
-        } else {
-          audio.addEventListener('canplay', attemptPlay, { once: true });
-        }
-      }
-    }
+    setCurrentTrack(track);
+    setIsPlaying(true);
   };
-
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current?.pause();
-    } else {
-      const playPromise = audioRef.current?.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error("Error playing audio:", error);
-        });
-      }
-    }
-  };
-
-  const handleNext = () => {
-    if (playlist.length === 0) return;
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    setCurrentIndex(nextIndex);
-    handlePlayTrack(playlist[nextIndex], playlist);
-  };
-
-  const handlePrevious = () => {
-    if (playlist.length === 0) return;
-    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-    setCurrentIndex(prevIndex);
-    handlePlayTrack(playlist[prevIndex], playlist);
-  };
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      handleNext();
-    };
-    const handlePause = () => setIsPlaying(false);
-    const handlePlay = () => setIsPlaying(true);
-
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('play', handlePlay);
-
-    return () => {
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('play', handlePlay);
-    };
-  }, [currentIndex, playlist]);
 
   const handlePlayAll = () => {
     if (isLocked) {
@@ -258,7 +175,6 @@ export default function AlbumDetail() {
 
   return (
     <div className="min-h-screen pb-24">
-      <audio ref={audioRef} />
       
       {/* Album Header */}
       <div className="relative bg-gradient-to-b from-primary/20 to-background pt-20 pb-8">
@@ -425,15 +341,6 @@ export default function AlbumDetail() {
         )}
       </div>
 
-      <MusicPlayer
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        audioRef={audioRef}
-        onPlayPause={handlePlayPause}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        allTracks={tracksWithMetadata}
-      />
 
       {album && (
         <PurchaseModal

@@ -1,8 +1,9 @@
-import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,39 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  time: string;
-  url?: string;
-  image?: string;
-}
-
 interface MusicPlayerProps {
-  currentTrack: Track | null;
-  isPlaying: boolean;
   audioRef: React.RefObject<HTMLAudioElement>;
-  onPlayPause: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  allTracks: Track[];
 }
 
-export function MusicPlayer({
-  currentTrack,
-  isPlaying,
-  audioRef,
-  onPlayPause,
-  onNext,
-  onPrevious,
-}: MusicPlayerProps) {
+export function MusicPlayer({ audioRef }: MusicPlayerProps) {
+  const navigate = useNavigate();
+  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized } = useMusicPlayer();
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isSeeking, setIsSeeking] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -104,6 +83,16 @@ export function MusicPlayer({
     <div className="fixed bottom-0 left-0 right-0 bg-graphite border-t border-border backdrop-blur-lg bg-opacity-95 z-50 animate-slide-in-bottom">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center gap-4">
+          {/* Minimize Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 flex-shrink-0"
+            onClick={() => setMinimized(true)}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+
           {/* Track Info */}
           <div className="flex-1 min-w-0 flex items-center gap-3">
             <div className="w-14 h-14 bg-card rounded overflow-hidden flex-shrink-0">
@@ -182,7 +171,7 @@ export function MusicPlayer({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={onPrevious}
+                onClick={playPrevious}
               >
                 <SkipBack className="h-4 w-4" />
               </Button>
@@ -190,7 +179,7 @@ export function MusicPlayer({
                 variant="default"
                 size="icon"
                 className="h-10 w-10 rounded-full bg-white hover:bg-white/90 text-black"
-                onClick={onPlayPause}
+                onClick={togglePlayPause}
               >
                 {isPlaying ? (
                   <Pause className="h-5 w-5 fill-black" />
@@ -202,7 +191,7 @@ export function MusicPlayer({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={onNext}
+                onClick={playNext}
               >
                 <SkipForward className="h-4 w-4" />
               </Button>
