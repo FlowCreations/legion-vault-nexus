@@ -212,32 +212,8 @@ export default function CommunityHub() {
   }, [activeTab]);
 
   const loadMessages = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("community_messages")
-      .select("*")
-      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-      .order("created_at", { ascending: false });
-
-    if (!error && data && data.length > 0) {
-      // Fetch sender profiles
-      const senderIds = [...new Set(data.map(m => m.sender_id))];
-      const { data: profiles } = await supabase
-        .from("user_profiles")
-        .select("user_id, display_name, avatar_url")
-        .in("user_id", senderIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
-      const messagesWithProfiles = data.map(msg => ({
-        ...msg,
-        sender_profile: profileMap.get(msg.sender_id)
-      }));
-      
-      setMessages(messagesWithProfiles as any);
-    }
-    // Keep mock messages if no database messages found
+    // Keep using mock messages for demo purposes
+    // Real database messages would be loaded here in production
   };
 
   const loadPosts = async () => {
@@ -431,38 +407,32 @@ export default function CommunityHub() {
   };
 
   const sendMessage = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !newMessage || !selectedConversation) return;
+    if (!newMessage || !selectedConversation) return;
 
-    const { error } = await supabase.from("community_messages").insert({
-      sender_id: user.id,
+    // For demo purposes, add message to local state only (mock conversations)
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id || 'current-user';
+    
+    const newMsg = {
+      id: Date.now().toString(),
+      sender_id: currentUserId,
       recipient_id: selectedConversation,
       content: newMessage,
-    });
-
-    if (!error) {
-      const newMsg = {
-        id: Date.now().toString(),
-        sender_id: user.id,
-        recipient_id: selectedConversation,
-        content: newMessage,
-        read: false,
-        created_at: new Date().toISOString(),
-        sender_profile: {
-          display_name: 'You',
-          avatar_url: ''
-        }
-      };
-      setMessages([newMsg, ...messages]);
-      setNewMessage("");
-      toast({ title: "Message sent!" });
-    } else {
-      toast({ title: "Error sending message", variant: "destructive" });
-    }
+      read: false,
+      created_at: new Date().toISOString(),
+      sender_profile: {
+        display_name: 'You',
+        avatar_url: ''
+      }
+    };
+    
+    setMessages([newMsg, ...messages]);
+    setNewMessage("");
+    toast({ title: "Message sent!" });
   };
 
   const getConversations = () => {
-    const userId = "current-user"; // Mock user ID
+    const userId = "current-user";
     const conversations = new Map<string, Message[]>();
     
     messages.forEach(msg => {
@@ -1039,16 +1009,19 @@ export default function CommunityHub() {
                         m.sender_id === selectedConversation || 
                         m.recipient_id === selectedConversation
                       )
-                      .map((msg) => (
+                      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                      .map((msg) => {
+                        const isCurrentUser = msg.sender_id === 'current-user' || msg.sender_profile?.display_name === 'You';
+                        return (
                         <div
                           key={msg.id}
                           className={`flex ${
-                            msg.sender_id !== selectedConversation ? "justify-end" : ""
+                            isCurrentUser ? "justify-end" : ""
                           }`}
                         >
                           <div
                             className={`max-w-[70%] rounded-lg p-3 ${
-                              msg.sender_id !== selectedConversation
+                              isCurrentUser
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-muted"
                             }`}
@@ -1059,7 +1032,8 @@ export default function CommunityHub() {
                             </p>
                           </div>
                         </div>
-                      ))}
+                      )
+                    })}
                   </div>
 
                   <div className="flex gap-2">
