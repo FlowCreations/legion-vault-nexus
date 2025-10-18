@@ -1,4 +1,6 @@
-import { Film, Music, Users, ShoppingBag, Radio, LogIn, Calendar } from "lucide-react";
+import { Film, Music, Users, ShoppingBag, Radio, LogIn, Calendar, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,34 @@ const navItems = [
 
 export const Navigation = () => {
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminStatus();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAdminStatus();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    setIsAdmin(!!roles);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background-dark/95 backdrop-blur-lg border-b border-border">
@@ -57,8 +87,20 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Sign In and Cart */}
+          {/* Sign In, Admin and Cart */}
           <div className="hidden md:flex items-center gap-3">
+            {isAdmin && (
+              <Button 
+                variant="outline"
+                className="border-primary/50 hover:bg-primary/10"
+                asChild
+              >
+                <Link to="/admin">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin
+                </Link>
+              </Button>
+            )}
             <Button 
               className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
               asChild
@@ -101,6 +143,18 @@ export const Navigation = () => {
             </div>
             
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              {isAdmin && (
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  className="border-primary/50 hover:bg-primary/10"
+                  asChild
+                >
+                  <Link to="/admin">
+                    <Shield className="w-4 h-4" />
+                  </Link>
+                </Button>
+              )}
               <Button 
                 size="sm"
                 className="bg-gradient-gold hover:shadow-glow transition-all duration-300"
