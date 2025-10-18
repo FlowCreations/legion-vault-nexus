@@ -64,6 +64,8 @@ export default function CommunityHub() {
   const [activeTab, setActiveTab] = useState("announcements");
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
+  const [postMediaUrl, setPostMediaUrl] = useState("");
+  const [postLinkUrl, setPostLinkUrl] = useState("");
   const [showInbox, setShowInbox] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
@@ -267,11 +269,15 @@ export default function CommunityHub() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !newPostContent) return;
 
+    const postType = postMediaUrl ? (postMediaUrl.includes('video') ? 'video' : 'image') : 'text';
+
     const { error } = await supabase.from("community_posts").insert({
       user_id: user.id,
       content: newPostContent,
       category: activeTab,
-      post_type: "text",
+      post_type: postType,
+      media_url: postMediaUrl || null,
+      link_url: postLinkUrl || null,
     });
 
     if (error) {
@@ -280,6 +286,8 @@ export default function CommunityHub() {
     }
 
     setNewPostContent("");
+    setPostMediaUrl("");
+    setPostLinkUrl("");
     toast({ title: "Post created successfully!" });
     loadPosts();
   };
@@ -321,9 +329,23 @@ export default function CommunityHub() {
     });
 
     if (!error) {
+      const newMsg = {
+        id: Date.now().toString(),
+        sender_id: user.id,
+        recipient_id: selectedConversation,
+        content: newMessage,
+        read: false,
+        created_at: new Date().toISOString(),
+        sender_profile: {
+          display_name: 'You',
+          avatar_url: ''
+        }
+      };
+      setMessages([newMsg, ...messages]);
       setNewMessage("");
-      loadMessages();
       toast({ title: "Message sent!" });
+    } else {
+      toast({ title: "Error sending message", variant: "destructive" });
     }
   };
 
@@ -475,16 +497,68 @@ export default function CommunityHub() {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Image className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
+                      <label htmlFor="image-upload">
+                        <Button variant="ghost" size="icon" type="button" asChild>
+                          <span>
+                            <Image className="h-4 w-4" />
+                          </span>
+                        </Button>
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = URL.createObjectURL(file);
+                              setPostMediaUrl(url);
+                              toast({ title: "Image attached" });
+                            }
+                          }}
+                        />
+                      </label>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => {
+                          const url = prompt("Enter link URL:");
+                          if (url) {
+                            setPostLinkUrl(url);
+                            toast({ title: "Link attached" });
+                          }
+                        }}
+                      >
                         <LinkIcon className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon">
-                        <Video className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
+                      <label htmlFor="video-upload">
+                        <Button variant="ghost" size="icon" type="button" asChild>
+                          <span>
+                            <Video className="h-4 w-4" />
+                          </span>
+                        </Button>
+                        <input
+                          id="video-upload"
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = URL.createObjectURL(file);
+                              setPostMediaUrl(url);
+                              toast({ title: "Video attached" });
+                            }
+                          }}
+                        />
+                      </label>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => {
+                          toast({ title: "Mention feature coming soon!" });
+                        }}
+                      >
                         <AtSign className="h-4 w-4" />
                       </Button>
                     </div>
