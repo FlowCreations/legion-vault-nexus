@@ -61,21 +61,27 @@ const About = () => {
                 AS FEATURED ON
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center max-w-4xl mx-auto">
-                <img 
-                  src={netflixLogo} 
-                  alt="Netflix"
-                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
-                />
-                <img 
-                  src={espnLogo} 
-                  alt="ESPN"
-                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
-                />
-                <img 
-                  src={paramountLogo} 
-                  alt="Paramount"
-                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
-                />
+                <div className="flex items-center justify-center h-20">
+                  <img 
+                    src={netflixLogo} 
+                    alt="Netflix"
+                    className="max-h-20 w-auto opacity-80 hover:opacity-100 transition-opacity"
+                  />
+                </div>
+                <div className="flex items-center justify-center h-20">
+                  <img 
+                    src={espnLogo} 
+                    alt="ESPN"
+                    className="max-h-20 w-auto opacity-80 hover:opacity-100 transition-opacity"
+                  />
+                </div>
+                <div className="flex items-center justify-center h-20">
+                  <img 
+                    src={paramountLogo} 
+                    alt="Paramount"
+                    className="max-h-20 w-auto opacity-80 hover:opacity-100 transition-opacity"
+                  />
+                </div>
               </div>
             </div>
           </div>
