@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles } from "lucide-react";
-import solLogo from "@/assets/sol-logo.png";
+import solLogo from "@/assets/sol-logo-new.jpg";
 
 export default function Home() {
   return (
