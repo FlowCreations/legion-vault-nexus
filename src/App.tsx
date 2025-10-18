@@ -24,6 +24,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
 import FreeEP from "./pages/FreeEP";
 import Contact from "./pages/Contact";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/free-ep" element={<FreeEP />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
