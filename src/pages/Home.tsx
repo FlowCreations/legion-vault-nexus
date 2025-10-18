@@ -15,27 +15,27 @@ export default function Home() {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-32 sm:pt-40">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8 sm:pt-12">
           {/* Logo as Header */}
-          <div className="mb-0 mt-16 animate-fade-in">
+          <div className="mb-3 mt-4 animate-fade-in">
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
-              className="h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[28rem] w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
+              className="h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
             />
           </div>
 
-          <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-card/50 backdrop-blur-sm border border-primary/20 mb-8 animate-fade-in">
+          <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-card/50 backdrop-blur-sm border border-primary/20 mb-6 animate-fade-in">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm text-muted-foreground">Powered by JRNY</span>
           </div>
 
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in text-balance">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in text-balance">
             A powerhouse blend of rock, soul, and blues delivering raw energy and unforgettable music. 
             Experience it all in one artist owned platform.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in mb-32">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in mb-12">
             <Button 
               size="lg" 
               className="group bg-gradient-gold hover:shadow-glow transition-all duration-300 text-primary-foreground"
