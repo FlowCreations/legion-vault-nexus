@@ -1,4 +1,4 @@
-import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart } from "lucide-react";
+import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MusicPlayer } from "@/components/MusicPlayer";
@@ -251,13 +251,14 @@ export default function Music() {
 
           <div className="space-y-2">
             {/* Table Header */}
-            <div className="grid grid-cols-[auto_auto_1fr_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
+            <div className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
               <div className="w-10"></div>
               <div className="w-10"></div>
               <div>TITLE</div>
               <div className="hidden md:block">ARTIST</div>
               <div className="hidden md:block">ALBUM</div>
               <div>TIME</div>
+              <div className="w-10"></div>
               <div className="w-10"></div>
             </div>
 
@@ -268,7 +269,7 @@ export default function Music() {
               <div
                 key={track.id}
                 onClick={() => handlePlayTrack(track, topTracks)}
-                className="grid grid-cols-[auto_auto_1fr_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer"
+                className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer items-center"
               >
                 <div className="w-10 h-10 flex-shrink-0">
                   <div className="w-full h-full bg-gradient-to-br from-card to-card-hover rounded flex items-center justify-center relative overflow-hidden">
@@ -303,7 +304,17 @@ export default function Music() {
                 </div>
                 <div className="hidden md:block text-muted-foreground truncate">{track.artist}</div>
                 <div className="hidden md:block text-muted-foreground truncate">{track.album}</div>
-                <div className="text-muted-foreground text-sm">{track.time}</div>
+                <div className="text-muted-foreground text-sm flex items-center">{track.time}</div>
+                <div className="w-10 flex items-center justify-center">
+                  <a 
+                    href={track.url} 
+                    download={`${track.title} - ${track.artist}.mp3`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Download className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                  </a>
+                </div>
                 <div className="w-10 flex items-center justify-center">
                   <Heart className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
                 </div>
