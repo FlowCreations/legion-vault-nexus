@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MessageCircle, X, Send, Loader2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +15,13 @@ interface Message {
 }
 
 export const FloatingChatbot = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hey! I'm here to help you learn about Sons of Legion. Ask me about their music, upcoming shows, or anything else!",
+      content: "Hey! I'm here to help you learn about Sons of Legion. Ask me about their music, upcoming shows, merch, or anything else!",
       timestamp: new Date()
     }
   ]);
@@ -54,13 +56,38 @@ export const FloatingChatbot = () => {
 
       if (error) throw error;
 
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.reply,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
+      // Check for navigation command in response
+      const navigationMatch = data.reply.match(/\[NAVIGATE:(\/[^\]]+)\]/);
+      let cleanedReply = data.reply;
+      
+      if (navigationMatch) {
+        const path = navigationMatch[1];
+        cleanedReply = data.reply.replace(/\[NAVIGATE:\/[^\]]+\]/, '').trim();
+        
+        // Show navigation button in response
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: cleanedReply,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Auto-navigate after a short delay
+        setTimeout(() => {
+          toast({
+            title: "Navigating...",
+            description: `Taking you to ${path}`,
+          });
+          navigate(path);
+        }, 1500);
+      } else {
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: data.reply,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (error) {
       console.error('Chat error:', error);
       toast({
