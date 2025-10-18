@@ -257,7 +257,8 @@ export default function CommunityHub() {
       return;
     }
 
-    // Fetch user profiles separately
+    // Fetch user profiles separately for database posts
+    let dbPosts: any[] = [];
     if (data && data.length > 0) {
       const userIds = data.map(post => post.user_id);
       const { data: profiles } = await supabase
@@ -266,7 +267,7 @@ export default function CommunityHub() {
         .in("user_id", userIds);
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
-      const postsWithProfiles = data.map(post => ({
+      dbPosts = data.map(post => ({
         ...post,
         user_profiles: profileMap.get(post.user_id) || {
           display_name: "User",
@@ -274,9 +275,13 @@ export default function CommunityHub() {
           tier: ""
         }
       }));
-      setPosts(postsWithProfiles as any);
+    }
+
+    // Combine with sample posts for announcements
+    if (activeTab === "announcements") {
+      setPosts([...dbPosts, ...sampleAnnouncements] as any);
     } else {
-      setPosts([]);
+      setPosts(dbPosts as any);
     }
   };
 
