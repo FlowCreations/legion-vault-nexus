@@ -111,19 +111,6 @@ export const EarningsOverview = () => {
             </Select>
           </div>
         </div>
-
-        {/* Alert Box */}
-        <Card className="bg-foreground text-background border-0">
-          <CardContent className="p-6 flex gap-4">
-            <Info className="h-6 w-6 flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-bold text-lg mb-1">Cash Out Request In Review</h3>
-              <p className="text-sm opacity-90">
-                Most cash out requests are approved within a day. Once approved, you should receive payment in 1-5 business days depending on your payment method.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Sales Categories */}
