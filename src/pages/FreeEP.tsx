@@ -68,7 +68,7 @@ export default function FreeEP() {
 
           {/* Form Box - Same Size as Album */}
           <div className="w-[450px] h-[450px] bg-card/95 backdrop-blur-sm rounded-lg shadow-2xl p-8 flex flex-col justify-center opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
-            <h1 className="text-xl font-bold mb-6 text-balance leading-tight">
+            <h1 className="text-xl font-bold mb-6 text-balance leading-tight text-center">
               TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
             </h1>
 
@@ -131,6 +131,21 @@ export default function FreeEP() {
                 {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
               </Button>
             </form>
+          </div>
+        </div>
+
+        {/* Bio Section */}
+        <div className="max-w-4xl mx-auto mt-16 px-4 opacity-0 animate-[fade-in_1s_ease-out_1s_forwards]">
+          <div className="text-center space-y-6 text-foreground/90">
+            <p className="text-lg leading-relaxed">
+              Sons of Legion is the raw, soul stirring sound of urban Americana rock. A duo with coast-to-coast roots and a fire forged bond, their music blends rock, blues, and soul with grit and grace. With over 3.5 million followers on social media, they speak to anyone chasing something deeper.
+            </p>
+            <p className="text-lg leading-relaxed">
+              Now you can experience their sound firsthand with the Power album, completely free. This isn&apos;t just four songs. It&apos;s an invitation to join a movement built on boldness, authenticity, and purpose. Music that doesn&apos;t just play in the background, it hits you where it matters, lifts you up, and pushes you forward.
+            </p>
+            <p className="text-lg leading-relaxed font-semibold">
+              Sign up and get the Power album today. Let it be the fuel for your next bold move.
+            </p>
           </div>
         </div>
       </div>
