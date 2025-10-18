@@ -294,7 +294,7 @@ export default function CommunityHub() {
   };
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase
+    const postsChannel = supabase
       .channel("community-posts")
       .on(
         "postgres_changes",
@@ -303,8 +303,21 @@ export default function CommunityHub() {
       )
       .subscribe();
 
+    const messagesChannel = supabase
+      .channel("community-messages")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "community_messages" },
+        () => {
+          loadMessages();
+          loadUnreadCount();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(postsChannel);
+      supabase.removeChannel(messagesChannel);
     };
   };
 
