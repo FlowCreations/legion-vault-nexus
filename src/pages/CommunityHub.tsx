@@ -835,39 +835,41 @@ export default function CommunityHub() {
           )}
         </main>
 
-        {/* Trending Sidebar */}
-        <aside className="w-80 flex-shrink-0">
-          <div className="sticky top-24">
-            <div className="bg-card rounded-2xl p-6 border mb-4">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <span className="text-xl">🔥</span> Trending Post
-              </h3>
-              <p className="text-sm mb-2 font-semibold">Announcements</p>
-              <p className="text-sm mb-2">
-                It's been a rough day for Daddy Jack; he just wanted to let you all know how much your prayers and support have meant to him.
-              </p>
-              <div className="text-sm text-muted-foreground">
-                115 comments
+        {/* Trending Sidebar - only show for announcements and legion_speaks */}
+        {(activeTab === "announcements" || activeTab === "legion_speaks") && (
+          <aside className="w-80 flex-shrink-0">
+            <div className="sticky top-24">
+              <div className="bg-card rounded-2xl p-6 border mb-4">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <span className="text-xl">🔥</span> Trending Post
+                </h3>
+                <p className="text-sm mb-2 font-semibold">Announcements</p>
+                <p className="text-sm mb-2">
+                  It's been a rough day for Daddy Jack; he just wanted to let you all know how much your prayers and support have meant to him.
+                </p>
+                <div className="text-sm text-muted-foreground">
+                  115 comments
+                </div>
               </div>
-            </div>
 
-            <div className="bg-card rounded-2xl p-6 border">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <span className="text-xl">📅</span> Upcoming Event • Oct 22
-              </h3>
-              <h4 className="font-semibold mb-2">The Legion Meetup @ Midtown Cafe in Nashville, TN</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                The Legion community has organized a meetup in Nashville for those who'd like to connect in person.
-              </p>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">8 attending</p>
-                <Badge variant="secondary" className="bg-green-500/20 text-green-600">
-                  ✓ Hosting
-                </Badge>
+              <div className="bg-card rounded-2xl p-6 border">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <span className="text-xl">📅</span> Upcoming Event • Oct 22
+                </h3>
+                <h4 className="font-semibold mb-2">The Legion Meetup @ Midtown Cafe in Nashville, TN</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  The Legion community has organized a meetup in Nashville for those who'd like to connect in person.
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">8 attending</p>
+                  <Badge variant="secondary" className="bg-green-500/20 text-green-600">
+                    ✓ Hosting
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        )}
       </div>
 
       {/* Inbox Dialog */}
