@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
 import { CartDrawer } from "@/components/CartDrawer";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
@@ -94,14 +95,18 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Cart */}
+          {/* Search and Cart */}
           <div className="hidden md:flex items-center gap-3">
+            <GlobalSearch />
             <CartDrawer />
           </div>
         </div>
 
         {/* Mobile Navigation */}
         <div className="md:hidden pb-4">
+          <div className="mb-3">
+            <GlobalSearch />
+          </div>
           <div className="flex items-center justify-between mb-2">
             <div className="flex-1 overflow-x-auto scrollbar-hide">
               <div className="flex space-x-2 pb-2">
