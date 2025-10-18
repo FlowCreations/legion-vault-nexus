@@ -118,16 +118,20 @@ export default function VideoManager() {
 
       if (error) throw error;
 
+      // Update local state immediately
+      setVideos(videos.map(v => 
+        v.id === editingVideo.id 
+          ? { ...v, title: editTitle, description: editDescription || null, metatags: editMetatags }
+          : v
+      ));
+
       toast({
         title: "Video updated",
         description: "Video details have been saved successfully",
       });
 
-      // Close dialog first
+      // Close dialog
       setEditingVideo(null);
-      
-      // Then refresh the videos list
-      await loadVideos();
     } catch (error) {
       console.error('Update error:', error);
       toast({
