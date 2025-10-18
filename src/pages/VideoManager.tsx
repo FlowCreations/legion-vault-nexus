@@ -123,8 +123,11 @@ export default function VideoManager() {
         description: "Video details have been saved successfully",
       });
 
+      // Close dialog first
       setEditingVideo(null);
-      loadVideos();
+      
+      // Then refresh the videos list
+      await loadVideos();
     } catch (error) {
       console.error('Update error:', error);
       toast({
