@@ -35,7 +35,7 @@ export default function Home() {
             Experience it all in one artist owned platform.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in mb-32">
             <Button 
               size="lg" 
               className="group bg-gradient-gold hover:shadow-glow transition-all duration-300 text-primary-foreground"
