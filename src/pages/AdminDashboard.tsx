@@ -61,10 +61,10 @@ export default function AdminDashboard() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (!error && data && data.length > 0) {
       setMembers(data as Member[]);
     } else {
-      // Use mock data if no real data available
+      // Use mock data when no database members exist
       setMembers(mockMembers);
     }
   };
