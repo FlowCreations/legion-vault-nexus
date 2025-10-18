@@ -438,19 +438,11 @@ export default function CommunityHub() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-card px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-background pt-24">
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Community Header */}
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate("/")}
-              className="hover:bg-primary/10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <h1 className="font-serif text-2xl font-bold">THE LEGION</h1>
             <Badge variant="secondary" className="bg-primary/20 text-primary">
               385 <span className="ml-1">members</span>
@@ -487,9 +479,8 @@ export default function CommunityHub() {
             </Button>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto flex gap-6 p-6">
+        <div className="flex gap-6">
         {/* Sidebar */}
         <aside className="w-64 flex-shrink-0">
           <nav className="space-y-1">
@@ -890,6 +881,10 @@ export default function CommunityHub() {
           </DialogHeader>
           
           <div className="flex gap-4 h-[500px]">
+            {/* Conversations List */}
+            <div className="w-1/3 border-r pr-4 overflow-y-auto">
+              <h3 className="font-semibold mb-3">Conversations</h3>
+              <div className="space-y-2">
             {/* Conversations List */}
             <div className="w-1/3 border-r pr-4 overflow-y-auto">
               <h3 className="font-semibold mb-3">Conversations</h3>
