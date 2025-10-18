@@ -58,7 +58,7 @@ export default function Contact() {
               <MapPin className="w-6 h-6 mt-1 flex-shrink-0" />
               <div>
                 <h3 className="font-bold text-xl mb-1">Tennessee</h3>
-                <p className="text-foreground/80">Nashville, Tn</p>
+                <p className="text-foreground/90 font-medium">Nashville, Tn</p>
               </div>
             </div>
 
@@ -69,24 +69,24 @@ export default function Contact() {
                 <h3 className="font-bold text-xl mb-3">Official E-mails</h3>
                 
                 <div>
-                  <p className="text-foreground/80">General: <a href="mailto:hello@sonsoflegion.com" className="text-foreground hover:text-primary transition-colors">hello@sonsoflegion.com</a></p>
+                  <p className="text-foreground/90 font-medium">General: <a href="mailto:hello@sonsoflegion.com" className="text-foreground hover:text-primary transition-colors">hello@sonsoflegion.com</a></p>
                 </div>
 
                 <div>
                   <p className="font-semibold mb-1">Management:</p>
-                  <p className="text-foreground/80">Tayler Bock</p>
-                  <a href="mailto:tayler.bock@redlightmanagement.com" className="text-foreground hover:text-primary transition-colors">tayler.bock@redlightmanagement.com</a>
+                  <p className="text-foreground/90 font-medium">Tayler Bock</p>
+                  <a href="mailto:tayler.bock@redlightmanagement.com" className="text-foreground hover:text-primary transition-colors font-medium">tayler.bock@redlightmanagement.com</a>
                   
-                  <p className="text-foreground/80 mt-2">Bruce Flohr</p>
-                  <a href="mailto:bruce.flohr@redlightmanagement.com" className="text-foreground hover:text-primary transition-colors">bruce.flohr@redlightmanagement.com</a>
+                  <p className="text-foreground/90 font-medium mt-2">Bruce Flohr</p>
+                  <a href="mailto:bruce.flohr@redlightmanagement.com" className="text-foreground hover:text-primary transition-colors font-medium">bruce.flohr@redlightmanagement.com</a>
                 </div>
 
                 <div>
-                  <p className="text-foreground/80">Booking only: <a href="mailto:matthew.morgan@unitedtalent.com" className="text-foreground hover:text-primary transition-colors">matthew.morgan@unitedtalent.com</a></p>
+                  <p className="text-foreground/90 font-medium">Booking only: <a href="mailto:matthew.morgan@unitedtalent.com" className="text-foreground hover:text-primary transition-colors">matthew.morgan@unitedtalent.com</a></p>
                 </div>
 
                 <div>
-                  <p className="text-foreground/80">For song clearance & licensing requests contact: <a href="mailto:Michael.Pizzuto@concord.com" className="text-foreground hover:text-primary transition-colors">Michael.Pizzuto@concord.com</a></p>
+                  <p className="text-foreground/90 font-medium">For song clearance & licensing requests contact: <a href="mailto:Michael.Pizzuto@concord.com" className="text-foreground hover:text-primary transition-colors">Michael.Pizzuto@concord.com</a></p>
                 </div>
               </div>
             </div>
