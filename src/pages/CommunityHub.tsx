@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
-  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar
+  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 interface Post {
@@ -57,6 +59,7 @@ interface Message {
 }
 
 export default function CommunityHub() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("feed");
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
@@ -346,12 +349,27 @@ export default function CommunityHub() {
     return post.post_reactions.filter(r => r.reaction_type === reactionType).length;
   };
 
+  const handleBuyTicket = (event: any) => {
+    toast({
+      title: "Ticket Added",
+      description: `${event.title || event.venue} ticket added to cart - ${event.price}`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate("/")}
+              className="hover:bg-primary/10"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <h1 className="font-serif text-2xl font-bold">THE LEGION</h1>
             <Badge variant="secondary" className="bg-primary/20 text-primary">
               385 <span className="ml-1">members</span>
@@ -551,7 +569,13 @@ export default function CommunityHub() {
                         </div>
                         {event.price && <Badge variant="outline">{event.price}</Badge>}
                       </div>
-                      <Button className="bg-gradient-gold">Register Now</Button>
+                      <Button 
+                        className="bg-gradient-gold"
+                        onClick={() => handleBuyTicket(event)}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Register Now
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -577,17 +601,27 @@ export default function CommunityHub() {
                           )}
                         </div>
                       </div>
-                      <Badge 
-                        className={
-                          show.status === "Sold Out" 
-                            ? "bg-destructive/20 text-destructive border-destructive/30"
-                            : show.status === "Low Tickets"
-                            ? "bg-yellow-500/20 text-yellow-600 border-yellow-500/30"
-                            : "bg-green-500/20 text-green-600 border-green-500/30"
-                        }
-                      >
-                        {show.status}
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          className={
+                            show.status === "Sold Out" 
+                              ? "bg-destructive/20 text-destructive border-destructive/30"
+                              : show.status === "Low Tickets"
+                              ? "bg-yellow-500/20 text-yellow-600 border-yellow-500/30"
+                              : "bg-green-500/20 text-green-600 border-green-500/30"
+                          }
+                        >
+                          {show.status}
+                        </Badge>
+                        <Button 
+                          className="bg-white text-black hover:bg-white/90"
+                          disabled={show.status === "Sold Out"}
+                          onClick={() => handleBuyTicket(show)}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          {show.status === "Sold Out" ? "Sold Out" : "Get Tickets"}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
