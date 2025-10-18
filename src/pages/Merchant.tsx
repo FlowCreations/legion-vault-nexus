@@ -10,6 +10,8 @@ import { TopTracks } from "@/components/merchant/TopTracks";
 import { StreamsOverview } from "@/components/merchant/StreamsOverview";
 import { Geography } from "@/components/merchant/Geography";
 import { EarningsOverview } from "@/components/merchant/EarningsOverview";
+import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
+import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -99,7 +101,7 @@ const Merchant = () => {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-card border-2 border-yellow-500/30">
+          <TabsList className="grid w-full grid-cols-5 bg-card border-2 border-yellow-500/30">
             <TabsTrigger 
               value="analytics"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
@@ -117,6 +119,18 @@ const Merchant = () => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
             >
               Community
+            </TabsTrigger>
+            <TabsTrigger 
+              value="campaigns"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Create Campaigns
+            </TabsTrigger>
+            <TabsTrigger 
+              value="funnel"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Build Funnel
             </TabsTrigger>
           </TabsList>
 
@@ -174,6 +188,14 @@ const Merchant = () => {
 
           <TabsContent value="community">
             <AdminDashboard />
+          </TabsContent>
+
+          <TabsContent value="campaigns">
+            <CreateCampaigns />
+          </TabsContent>
+
+          <TabsContent value="funnel">
+            <BuildFunnel />
           </TabsContent>
         </Tabs>
       </div>
