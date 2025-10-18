@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles } from "lucide-react";
-import solLogo from "@/assets/sol-logo-new.jpg";
+import solLogo from "@/assets/sol-logo-new.png";
 
 export default function Home() {
   return (
@@ -21,7 +21,7 @@ export default function Home() {
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
-              className="h-56 sm:h-64 md:h-72 lg:h-80 xl:h-96 w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)] mix-blend-screen"
+              className="h-56 sm:h-64 md:h-72 lg:h-80 xl:h-96 w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
             />
           </div>
 
