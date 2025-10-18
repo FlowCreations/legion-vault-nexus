@@ -17,7 +17,7 @@ export default function Home() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Logo as Header */}
-          <div className="mb-8 animate-fade-in">
+          <div className="mb-4 animate-fade-in">
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
@@ -27,7 +27,7 @@ export default function Home() {
 
           <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-card/50 backdrop-blur-sm border border-primary/20 mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-muted-foreground">Artist Owned Streaming Ecosystem</span>
+            <span className="text-sm text-muted-foreground">Powered by JRNY</span>
           </div>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in text-balance">
