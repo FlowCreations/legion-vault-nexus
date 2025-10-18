@@ -1208,55 +1208,63 @@ export default function CommunityHub() {
   );
 }
 
-// Mock profiles for directory
+// Mock profiles for directory - aligned with inbox conversations
 const mockProfiles = [
   {
-    id: "1",
-    name: "Sarah Mitchell",
-    avatar: "",
+    id: "2",
+    name: "Sarah Johnson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
     tier: "Legionnaires",
     location: "Nashville, TN",
     bio: "Music lover and longtime fan. Been following the band since 2020!",
   },
   {
-    id: "2",
-    name: "Mike Torres",
-    avatar: "",
+    id: "3",
+    name: "Mike Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
     tier: "Outlaws",
     location: "Austin, TX",
     bio: "Guitar player inspired by SOL. Love the energy and raw emotion in every track.",
   },
   {
-    id: "3",
-    name: "Emma Chen",
-    avatar: "",
+    id: "4",
+    name: "Emily Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily",
     tier: "Rebels",
     location: "Los Angeles, CA",
     bio: "Concert photographer and super fan. Caught 15 shows last tour!",
   },
   {
-    id: "4",
-    name: "James Parker",
-    avatar: "",
+    id: "5",
+    name: "David Kim",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=david",
     tier: "Outlaws",
     location: "Evansville, IN",
     bio: "Just 2.5 hour drive to Nashville. Getting out for movement creates space for my brain and body to connect.",
   },
   {
-    id: "5",
-    name: "Lisa Rodriguez",
-    avatar: "",
+    id: "6",
+    name: "Alex Thompson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex",
     tier: "Legionnaires",
     location: "Miami, FL",
     bio: "Day one supporter. The music speaks to my soul and helps me through tough times.",
   },
   {
-    id: "6",
-    name: "Chris Anderson",
-    avatar: "",
+    id: "7",
+    name: "Jessica Martinez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=jessica",
     tier: "Rebels",
     location: "Chicago, IL",
     bio: "Midwest represent! Been blasting SOL since the first EP dropped.",
+  },
+  {
+    id: "8",
+    name: "Robert Taylor",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=robert",
+    tier: "Outlaws",
+    location: "Denver, CO",
+    bio: "VIP ticket holder and proud Legion member. Can't wait for the next show!",
   },
 ];
 
