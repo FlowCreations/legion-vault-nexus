@@ -803,9 +803,11 @@ export default function CommunityHub() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => setShowInbox(true)}
+                          onClick={() => {
+                            setSelectedConversation(profile.id);
+                            setShowInbox(true);
+                          }}
                         >
-                          <Send className="mr-2 h-3 w-3" />
                           Message
                         </Button>
                       </div>
