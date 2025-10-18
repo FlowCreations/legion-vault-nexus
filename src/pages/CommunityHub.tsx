@@ -69,6 +69,7 @@ export default function CommunityHub() {
   const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [showInbox, setShowInbox] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
@@ -76,6 +77,8 @@ export default function CommunityHub() {
   const [notifications, setNotifications] = useState(0);
   const [rsvpEvents, setRsvpEvents] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -210,6 +213,18 @@ export default function CommunityHub() {
     loadMessages();
     setupRealtimeSubscription();
   }, [activeTab]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadMessages = async () => {
     // Keep using mock messages for demo purposes
@@ -502,6 +517,20 @@ export default function CommunityHub() {
     profile.tier.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Global search filtering
+  const searchResults = {
+    posts: posts.filter(post => 
+      post.content.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+      post.user_profiles?.display_name?.toLowerCase().includes(globalSearchQuery.toLowerCase())
+    ).slice(0, 5),
+    members: mockProfiles.filter(profile =>
+      profile.name.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+      profile.location.toLowerCase().includes(globalSearchQuery.toLowerCase())
+    ).slice(0, 5)
+  };
+
+  const hasSearchResults = globalSearchQuery.length > 0 && (searchResults.posts.length > 0 || searchResults.members.length > 0);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -523,9 +552,74 @@ export default function CommunityHub() {
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="relative w-96">
+            <div className="relative w-96" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search" className="pl-10" />
+              <Input 
+                placeholder="Search posts, members..." 
+                className="pl-10" 
+                value={globalSearchQuery}
+                onChange={(e) => {
+                  setGlobalSearchQuery(e.target.value);
+                  setShowSearchResults(e.target.value.length > 0);
+                }}
+                onFocus={() => globalSearchQuery.length > 0 && setShowSearchResults(true)}
+              />
+              
+              {/* Search Results Dropdown */}
+              {showSearchResults && hasSearchResults && (
+                <div className="absolute top-full mt-2 w-full bg-card border rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                  {searchResults.posts.length > 0 && (
+                    <div className="p-2">
+                      <p className="text-xs font-semibold text-muted-foreground px-2 mb-2">POSTS</p>
+                      {searchResults.posts.map((post) => (
+                        <button
+                          key={post.id}
+                          onClick={() => {
+                            setShowSearchResults(false);
+                            setGlobalSearchQuery("");
+                          }}
+                          className="w-full text-left p-2 hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <p className="font-semibold text-sm">{post.user_profiles?.display_name || "Guest"}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{post.content}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {searchResults.members.length > 0 && (
+                    <div className="p-2 border-t">
+                      <p className="text-xs font-semibold text-muted-foreground px-2 mb-2">MEMBERS</p>
+                      {searchResults.members.map((member) => (
+                        <button
+                          key={member.id}
+                          onClick={() => {
+                            setShowSearchResults(false);
+                            setGlobalSearchQuery("");
+                            setActiveTab("directory");
+                          }}
+                          className="w-full text-left p-2 hover:bg-muted rounded-lg transition-colors flex items-center gap-3"
+                        >
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback>{member.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-sm">{member.name}</p>
+                            <p className="text-xs text-muted-foreground">{member.location}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {showSearchResults && !hasSearchResults && globalSearchQuery.length > 0 && (
+                <div className="absolute top-full mt-2 w-full bg-card border rounded-lg shadow-lg p-4 z-50">
+                  <p className="text-sm text-muted-foreground text-center">No results found</p>
+                </div>
+              )}
             </div>
             
             <Button
