@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles } from "lucide-react";
+import solLogo from "@/assets/sol-logo.png";
 
 export default function Home() {
   return (
@@ -15,18 +16,19 @@ export default function Home() {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Logo as Header */}
+          <div className="mb-8 animate-fade-in">
+            <img 
+              src={solLogo} 
+              alt="Sons of Legion" 
+              className="h-32 sm:h-40 md:h-48 w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
+            />
+          </div>
+
           <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-card/50 backdrop-blur-sm border border-primary/20 mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm text-muted-foreground">Artist Owned Streaming Ecosystem</span>
           </div>
-
-          <h1 className="font-serif font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-6 animate-fade-in text-balance">
-            Where Music
-            <br />
-            <span className="bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              Meets Legacy
-            </span>
-          </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in text-balance">
             A powerhouse blend of rock, soul, and blues delivering raw energy and unforgettable music. 
