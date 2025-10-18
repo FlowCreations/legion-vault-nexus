@@ -565,6 +565,7 @@ export type Database = {
           duration: number | null
           id: string
           is_premium: boolean | null
+          metatags: string[] | null
           storage_path: string
           subtitle: string | null
           thumbnail_url: string | null
@@ -579,6 +580,7 @@ export type Database = {
           duration?: number | null
           id?: string
           is_premium?: boolean | null
+          metatags?: string[] | null
           storage_path: string
           subtitle?: string | null
           thumbnail_url?: string | null
@@ -593,6 +595,7 @@ export type Database = {
           duration?: number | null
           id?: string
           is_premium?: boolean | null
+          metatags?: string[] | null
           storage_path?: string
           subtitle?: string | null
           thumbnail_url?: string | null

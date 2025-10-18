@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { VideoUpload } from "@/components/VideoUpload";
 import { Button } from "@/components/ui/button";
-import { Trash2, Play } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash2, Play, Edit2, Save, X, Search, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { SimpleThumbnailUploader } from "@/components/SimpleThumbnailUploader";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import "@/utils/uploadThumbnails";
 
 interface Video {
@@ -17,12 +20,19 @@ interface Video {
   thumbnail_url: string | null;
   is_premium: boolean;
   view_count: number;
+  metatags?: string[];
   created_at: string;
 }
 
 export default function VideoManager() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editSubtitle, setEditSubtitle] = useState("");
+  const [editMetatags, setEditMetatags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
   const { toast } = useToast();
 
   const loadVideos = async () => {
@@ -85,6 +95,63 @@ export default function VideoManager() {
     }
   };
 
+  const handleEdit = (video: Video) => {
+    setEditingVideo(video);
+    setEditTitle(video.title);
+    setEditSubtitle(video.subtitle || "");
+    setEditMetatags(video.metatags || []);
+    setNewTag("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingVideo) return;
+
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({
+          title: editTitle,
+          subtitle: editSubtitle || null,
+          metatags: editMetatags
+        })
+        .eq('id', editingVideo.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Video updated",
+        description: "Video details have been saved successfully",
+      });
+
+      setEditingVideo(null);
+      loadVideos();
+    } catch (error) {
+      console.error('Update error:', error);
+      toast({
+        title: "Failed to update video",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addMetatag = () => {
+    if (newTag.trim() && editMetatags.length < 10 && !editMetatags.includes(newTag.trim())) {
+      setEditMetatags([...editMetatags, newTag.trim()]);
+      setNewTag("");
+    }
+  };
+
+  const removeMetatag = (tag: string) => {
+    setEditMetatags(editMetatags.filter(t => t !== tag));
+  };
+
+  const filteredVideos = videos.filter(video => 
+    video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    video.subtitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    video.metatags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
       music_videos: "Music Videos",
@@ -114,9 +181,24 @@ export default function VideoManager() {
 
         <VideoUpload onUploadComplete={loadVideos} />
 
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search videos by title, subtitle, or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {filteredVideos.length} of {videos.length} videos
+          </div>
+        </div>
+
         <div>
           <h2 className="text-2xl font-semibold mb-4">
-            Your Videos ({videos.length})
+            Your Videos ({filteredVideos.length})
           </h2>
 
           {loading ? (
@@ -129,7 +211,7 @@ export default function VideoManager() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {videos.map((video) => (
+              {filteredVideos.map((video) => (
                 <div
                   key={video.id}
                   className="flex gap-4 p-4 border border-border rounded-lg bg-card hover:bg-card-hover transition-colors"
@@ -166,6 +248,16 @@ export default function VideoManager() {
                         {video.view_count} views
                       </Badge>
                     </div>
+                    {video.metatags && video.metatags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {video.metatags.map((tag, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            <Tag className="w-3 h-3 mr-1" />
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Uploaded {new Date(video.created_at).toLocaleDateString()}
                     </p>
@@ -173,6 +265,14 @@ export default function VideoManager() {
 
                   {/* Actions */}
                   <div className="flex flex-col items-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(video)}
+                    >
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
                     <SimpleThumbnailUploader
                       videoId={video.id}
                       videoTitle={video.title}
@@ -190,6 +290,87 @@ export default function VideoManager() {
             </div>
           )}
         </div>
+
+        {/* Edit Dialog */}
+        <Dialog open={!!editingVideo} onOpenChange={() => setEditingVideo(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Video Details</DialogTitle>
+              <DialogDescription>
+                Update the title, subtitle, and metatags for this video
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Video title"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-subtitle">Subtitle (Optional)</Label>
+                <Input
+                  id="edit-subtitle"
+                  value={editSubtitle}
+                  onChange={(e) => setEditSubtitle(e.target.value)}
+                  placeholder="Video subtitle"
+                />
+              </div>
+
+              <div>
+                <Label>Metatags ({editMetatags.length}/10)</Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addMetatag();
+                      }
+                    }}
+                    placeholder="Add a tag..."
+                    disabled={editMetatags.length >= 10}
+                  />
+                  <Button 
+                    onClick={addMetatag}
+                    disabled={!newTag.trim() || editMetatags.length >= 10}
+                    variant="outline"
+                  >
+                    <Tag className="w-4 h-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {editMetatags.map((tag, i) => (
+                    <Badge key={i} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <X 
+                        className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                        onClick={() => removeMetatag(tag)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-4">
+                <Button variant="outline" onClick={() => setEditingVideo(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit} className="bg-yellow-500 hover:bg-yellow-600 text-black">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

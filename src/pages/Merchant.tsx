@@ -98,10 +98,25 @@ const Merchant = () => {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="community">Community</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-card border-2 border-yellow-500/30">
+            <TabsTrigger 
+              value="analytics"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger 
+              value="videos"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Videos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="community"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Community
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-6">
