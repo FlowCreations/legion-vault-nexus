@@ -471,7 +471,7 @@ export default function CommunityHub() {
             >
               <Mail className="h-5 w-5" />
               {unreadMessages > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-xs">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-yellow-500 text-black border-yellow-600 text-xs">
                   {unreadMessages}
                 </Badge>
               )}
