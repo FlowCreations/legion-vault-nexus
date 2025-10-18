@@ -21,7 +21,7 @@ export default function Home() {
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
-              className="h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
+              className="h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[28rem] w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
             />
           </div>
 
