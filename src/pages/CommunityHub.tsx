@@ -241,20 +241,6 @@ export default function CommunityHub() {
   };
 
   const loadPosts = async () => {
-    // Show sample posts for announcements, legion_speaks, and intros
-    if (activeTab === "announcements") {
-      setPosts(sampleAnnouncements as any);
-      return;
-    }
-    if (activeTab === "legion_speaks") {
-      setPosts(sampleLegionSpeaks as any);
-      return;
-    }
-    if (activeTab === "intros") {
-      setPosts(sampleIntros as any);
-      return;
-    }
-
     const { data, error } = await supabase
       .from("community_posts")
       .select(`
@@ -266,12 +252,13 @@ export default function CommunityHub() {
       .order("created_at", { ascending: false });
 
     if (error) {
+      console.error("Error loading posts:", error);
       toast({ title: "Error loading posts", variant: "destructive" });
       return;
     }
 
     // Fetch user profiles separately
-    if (data) {
+    if (data && data.length > 0) {
       const userIds = data.map(post => post.user_id);
       const { data: profiles } = await supabase
         .from("user_profiles")
@@ -288,6 +275,8 @@ export default function CommunityHub() {
         }
       }));
       setPosts(postsWithProfiles as any);
+    } else {
+      setPosts([]);
     }
   };
 
