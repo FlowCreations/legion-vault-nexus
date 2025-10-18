@@ -12,6 +12,7 @@ import VideoManager from "./pages/VideoManager";
 import Auth from "./pages/Auth";
 import Music from "./pages/Music";
 import AlbumDetail from "./pages/AlbumDetail";
+import SongCredits from "./pages/SongCredits";
 import Shows from "./pages/Shows";
 import Gallery from "./pages/Gallery";
 import Community from "./pages/Community";
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/videos/manage" element={<VideoManager />} />
           <Route path="/music" element={<Music />} />
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
+          <Route path="/song-credits" element={<SongCredits />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
           <Route path="/shows" element={<Shows />} />
           <Route path="/shows/gallery" element={<Gallery />} />

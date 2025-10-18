@@ -1,7 +1,14 @@
-import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Track {
   id: string;
@@ -35,6 +42,7 @@ export function MusicPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isSeeking, setIsSeeking] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -114,10 +122,32 @@ export function MusicPlayer({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-sm truncate">{currentTrack.title}</p>
-              <p className="text-xs text-muted-foreground truncate">
-                {currentTrack.artist}
-              </p>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{currentTrack.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {currentTrack.artist}
+                  </p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 flex-shrink-0"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem 
+                      onClick={() => navigate('/song-credits', { state: { track: currentTrack } })}
+                    >
+                      Credits
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {currentTrack.url && (
