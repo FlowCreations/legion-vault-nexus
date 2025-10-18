@@ -1,6 +1,10 @@
 import { useState } from "react";
-import featuredOn from "@/assets/featured-on.jpg";
 import aboutPhoto from "@/assets/about-photo.jpg";
+import dodgeLogo from "@/assets/brands/dodge.png";
+import netflixLogo from "@/assets/brands/netflix.jpg";
+import espnLogo from "@/assets/brands/espn.png";
+import ufcLogo from "@/assets/brands/ufc.png";
+import paramountLogo from "@/assets/brands/paramount.png";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,11 +59,36 @@ const About = () => {
 
             {/* Featured On Section */}
             <div className="mt-20">
-              <img 
-                src={featuredOn} 
-                alt="As Featured On - Netflix, RAM, UFC, NBC"
-                className="w-full h-auto max-w-4xl mx-auto"
-              />
+              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+                AS FEATURED ON
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
+                <img 
+                  src={netflixLogo} 
+                  alt="Netflix"
+                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
+                />
+                <img 
+                  src={dodgeLogo} 
+                  alt="Dodge RAM"
+                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
+                />
+                <img 
+                  src={ufcLogo} 
+                  alt="UFC"
+                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
+                />
+                <img 
+                  src={espnLogo} 
+                  alt="ESPN"
+                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
+                />
+                <img 
+                  src={paramountLogo} 
+                  alt="Paramount"
+                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity col-span-2 md:col-span-1"
+                />
+              </div>
             </div>
           </div>
         </section>
