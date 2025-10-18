@@ -3,9 +3,9 @@ import aboutPhoto from "@/assets/about-photo.jpg";
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <section className="py-20 px-4">
+    <div className="min-h-screen bg-background pt-24">
+      {/* Hero Section */}
+      <section className="py-12 px-4">
           <div className="container mx-auto max-w-6xl">
             <h1 className="text-5xl md:text-7xl font-bold text-center mb-16 text-foreground">
               SONS OF LEGION
@@ -44,6 +44,24 @@ const About = () => {
                 className="w-full h-auto max-w-4xl mx-auto"
               />
             </div>
+          </div>
+        </section>
+
+        {/* Free EP CTA Section */}
+        <section className="py-16 px-4 bg-card/30">
+          <div className="container mx-auto max-w-4xl text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+              Get Our Free Album
+            </h2>
+            <p className="text-xl text-foreground/80 mb-8">
+              Download our exclusive free EP and experience the Sons of Legion sound
+            </p>
+            <a 
+              href="/free-ep"
+              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-button bg-primary text-primary-foreground hover:shadow-gold transition-all duration-200"
+            >
+              Download Free EP
+            </a>
           </div>
         </section>
       </div>
