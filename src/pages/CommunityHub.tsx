@@ -43,6 +43,19 @@ interface UserProfile {
   intro_answers: any;
 }
 
+interface Message {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  sender_profile?: {
+    display_name: string;
+    avatar_url: string;
+  };
+}
+
 export default function CommunityHub() {
   const [activeTab, setActiveTab] = useState("feed");
   const [posts, setPosts] = useState<Post[]>([]);
@@ -52,6 +65,9 @@ export default function CommunityHub() {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [notifications, setNotifications] = useState(0);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,10 +75,53 @@ export default function CommunityHub() {
       loadPosts();
     }
     loadUnreadCount();
+    loadMessages();
     setupRealtimeSubscription();
   }, [activeTab]);
 
+  const loadMessages = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("community_messages")
+      .select("*")
+      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      // Fetch sender profiles
+      const senderIds = [...new Set(data.map(m => m.sender_id))];
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", senderIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+      const messagesWithProfiles = data.map(msg => ({
+        ...msg,
+        sender_profile: profileMap.get(msg.sender_id)
+      }));
+      
+      setMessages(messagesWithProfiles as any);
+    }
+  };
+
   const loadPosts = async () => {
+    // Show sample posts for announcements, legion_speaks, and intros
+    if (activeTab === "announcements") {
+      setPosts(sampleAnnouncements as any);
+      return;
+    }
+    if (activeTab === "legion_speaks") {
+      setPosts(sampleLegionSpeaks as any);
+      return;
+    }
+    if (activeTab === "intros") {
+      setPosts(sampleIntros as any);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("community_posts")
       .select(`
@@ -172,6 +231,42 @@ export default function CommunityHub() {
       setSelectedProfile(data);
       setShowProfileDialog(true);
     }
+  };
+
+  const sendMessage = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !newMessage || !selectedConversation) return;
+
+    const { error } = await supabase.from("community_messages").insert({
+      sender_id: user.id,
+      recipient_id: selectedConversation,
+      content: newMessage,
+    });
+
+    if (!error) {
+      setNewMessage("");
+      loadMessages();
+      toast({ title: "Message sent!" });
+    }
+  };
+
+  const getConversations = () => {
+    const { data: { user } } = { data: { user: { id: "current-user" } } };
+    const conversations = new Map<string, Message[]>();
+    
+    messages.forEach(msg => {
+      const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
+      if (!conversations.has(otherUserId)) {
+        conversations.set(otherUserId, []);
+      }
+      conversations.get(otherUserId)?.push(msg);
+    });
+
+    return Array.from(conversations.entries()).map(([userId, msgs]) => ({
+      userId,
+      lastMessage: msgs[0],
+      unreadCount: msgs.filter(m => !m.read && m.recipient_id === user.id).length
+    }));
   };
 
   const getReactionCount = (post: Post, reactionType: string) => {
@@ -522,18 +617,12 @@ export default function CommunityHub() {
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <span className="text-xl">🔥</span> Trending Post
               </h3>
+              <p className="text-sm mb-2 font-semibold">Announcements</p>
               <p className="text-sm mb-2">
                 It's been a rough day for Daddy Jack; he just wanted to let you all know how much your prayers and support have meant to him.
               </p>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <Avatar key={i} className="h-6 w-6 border-2 border-background">
-                      <AvatarFallback className="text-xs">U</AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-                <span>115 comments</span>
+              <div className="text-sm text-muted-foreground">
+                115 comments
               </div>
             </div>
 
@@ -543,16 +632,10 @@ export default function CommunityHub() {
               </h3>
               <h4 className="font-semibold mb-2">The Legion Meetup @ Midtown Cafe in Nashville, TN</h4>
               <p className="text-sm text-muted-foreground mb-4">
-                The Legion community has organized a meetup in Nashville for those who'd like...
+                The Legion community has organized a meetup in Nashville for those who'd like to connect in person.
               </p>
               <div className="flex items-center justify-between">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <Avatar key={i} className="h-6 w-6 border-2 border-background">
-                      <AvatarFallback className="text-xs">U</AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
+                <p className="text-sm text-muted-foreground">8 attending</p>
                 <Badge variant="secondary" className="bg-green-500/20 text-green-600">
                   ✓ Hosting
                 </Badge>
@@ -561,6 +644,111 @@ export default function CommunityHub() {
           </div>
         </aside>
       </div>
+
+      {/* Inbox Dialog */}
+      <Dialog open={showInbox} onOpenChange={setShowInbox}>
+        <DialogContent className="max-w-4xl max-h-[600px]">
+          <DialogHeader>
+            <DialogTitle>Messages</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex gap-4 h-[500px]">
+            {/* Conversations List */}
+            <div className="w-1/3 border-r pr-4 overflow-y-auto">
+              <h3 className="font-semibold mb-3">Conversations</h3>
+              <div className="space-y-2">
+                {getConversations().map((conv) => (
+                  <div
+                    key={conv.userId}
+                    onClick={() => setSelectedConversation(conv.userId)}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedConversation === conv.userId
+                        ? "bg-primary/10"
+                        : "hover:bg-muted"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={conv.lastMessage.sender_profile?.avatar_url} />
+                        <AvatarFallback>
+                          {conv.lastMessage.sender_profile?.display_name?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-sm truncate">
+                            {conv.lastMessage.sender_profile?.display_name || "User"}
+                          </p>
+                          {conv.unreadCount > 0 && (
+                            <Badge className="h-5 w-5 p-0 flex items-center justify-center">
+                              {conv.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {conv.lastMessage.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Message Thread */}
+            <div className="flex-1 flex flex-col">
+              {selectedConversation ? (
+                <>
+                  <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+                    {messages
+                      .filter(m => 
+                        m.sender_id === selectedConversation || 
+                        m.recipient_id === selectedConversation
+                      )
+                      .map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${
+                            msg.sender_id !== selectedConversation ? "justify-end" : ""
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[70%] rounded-lg p-3 ${
+                              msg.sender_id !== selectedConversation
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
+                          >
+                            <p className="text-sm">{msg.content}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Type a message..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                    />
+                    <Button onClick={sendMessage}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                  Select a conversation to start messaging
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Profile Dialog */}
       <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
@@ -690,7 +878,172 @@ const liveEvents = [
   },
 ];
 
-// Tour shows from Shows page
+// Sample posts for different categories
+const sampleAnnouncements = [
+  {
+    id: "ann1",
+    user_id: "admin",
+    content: "Big news LEGION — we're playing our first-ever festival.\n\nWhile we're waiting for Daddy Jack to recoup we got an offer for next year that we couldn't turn down.\n\nIf anyone's in Florida this April, we'd love to see you at Tortuga Music Festival. It's right on the beach, and the lineup is wild — Post Malone, Kenny Chesney, Ice Cube, and a ton more.\n\nMeans a lot to be part of this. Hope to see some familiar faces in the crowd.\n\nPasses go on sale this Saturday at 10am ET:\nhttps://tortugamusicfestival.com/passes/\n\n@Everyone",
+    post_type: "text",
+    media_url: null,
+    link_url: "https://tortugamusicfestival.com/passes/",
+    tagged_all: true,
+    view_count: 219,
+    category: "announcements",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    user_profiles: {
+      display_name: "Sons of Legion",
+      avatar_url: "",
+      tier: "Admin"
+    },
+    post_reactions: [
+      { reaction_type: "like" },
+      { reaction_type: "like" },
+      { reaction_type: "like" },
+      { reaction_type: "heart" },
+      { reaction_type: "heart" }
+    ],
+    post_comments: [{ id: "1" }, { id: "2" }]
+  },
+  {
+    id: "ann2",
+    user_id: "admin",
+    content: "It's been a rough day for Daddy Jack; he just wanted to let you all know how much your prayers and support have meant to him. Healing is one day at a time.\n\nWe'll keep you updated on his recovery. Thank you all for being such an incredible family. 🙏",
+    post_type: "text",
+    media_url: null,
+    link_url: null,
+    tagged_all: false,
+    view_count: 385,
+    category: "announcements",
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    user_profiles: {
+      display_name: "Sons of Legion",
+      avatar_url: "",
+      tier: "Admin"
+    },
+    post_reactions: [
+      { reaction_type: "heart" },
+      { reaction_type: "heart" },
+      { reaction_type: "heart" }
+    ],
+    post_comments: [{ id: "1" }, { id: "2" }, { id: "3" }]
+  }
+];
+
+const sampleLegionSpeaks = [
+  {
+    id: "ls1",
+    user_id: "admin",
+    content: "Hey @Everyone! Now that we've had this community for a few weeks and received user feedback, I've gone ahead and made some upgrades. You may have already seen them but if not, keep reading.\n\nHere's what to checkout in the Resources tab where you'll find:\n$...",
+    post_type: "text",
+    media_url: null,
+    link_url: null,
+    tagged_all: true,
+    view_count: 156,
+    category: "legion_speaks",
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    user_profiles: {
+      display_name: "Denice Dal Braccio",
+      avatar_url: "",
+      tier: "Admin"
+    },
+    post_reactions: [
+      { reaction_type: "like" },
+      { reaction_type: "like" }
+    ],
+    post_comments: [{ id: "1" }]
+  },
+  {
+    id: "ls2",
+    user_id: "admin",
+    content: "A lot is happening coming up so I wanted to keep @Everyone informed 💕\n\n*ALL events should automatically show you the event times in your current time zone, so I've listed them in CT (Nashville) time zone to anchor things.\n\nWe're working on getting more organized with the calendar and will have a better system soon!",
+    post_type: "text",
+    media_url: null,
+    link_url: null,
+    tagged_all: true,
+    view_count: 131,
+    category: "legion_speaks",
+    created_at: new Date(Date.now() - 432000000).toISOString(),
+    user_profiles: {
+      display_name: "Denice Dal Braccio",
+      avatar_url: "",
+      tier: "Admin"
+    },
+    post_reactions: [
+      { reaction_type: "like" }
+    ],
+    post_comments: []
+  }
+];
+
+const sampleIntros = [
+  {
+    id: "intro1",
+    user_id: "user1",
+    content: "Hey everyone! I'm Sarah from Nashville. Been following SOL since 2020 and finally joined the community. Can't wait to connect with fellow fans and catch some shows this year! 🎸",
+    post_type: "text",
+    media_url: null,
+    link_url: null,
+    tagged_all: false,
+    view_count: 47,
+    category: "intros",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    user_profiles: {
+      display_name: "Sarah Mitchell",
+      avatar_url: "",
+      tier: "Legionnaires"
+    },
+    post_reactions: [
+      { reaction_type: "like" },
+      { reaction_type: "heart" }
+    ],
+    post_comments: [{ id: "1" }, { id: "2" }]
+  },
+  {
+    id: "intro2",
+    user_id: "user2",
+    content: "What's up Legion! Mike here from Austin, TX. Guitar player who's been heavily inspired by the band's sound. Looking forward to learning from and jamming with y'all! 🤘",
+    post_type: "text",
+    media_url: null,
+    link_url: null,
+    tagged_all: false,
+    view_count: 34,
+    category: "intros",
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    user_profiles: {
+      display_name: "Mike Torres",
+      avatar_url: "",
+      tier: "Outlaws"
+    },
+    post_reactions: [
+      { reaction_type: "like" }
+    ],
+    post_comments: [{ id: "1" }]
+  },
+  {
+    id: "intro3",
+    user_id: "user3",
+    content: "Hi friends! I'm Emma, a concert photographer from LA. Caught 15 SOL shows last tour and got some amazing shots. Excited to share my work and connect with other passionate fans here! 📸",
+    post_type: "text",
+    media_url: null,
+    link_url: null,
+    tagged_all: false,
+    view_count: 52,
+    category: "intros",
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    user_profiles: {
+      display_name: "Emma Chen",
+      avatar_url: "",
+      tier: "Rebels"
+    },
+    post_reactions: [
+      { reaction_type: "like" },
+      { reaction_type: "like" },
+      { reaction_type: "heart" }
+    ],
+    post_comments: [{ id: "1" }, { id: "2" }, { id: "3" }]
+  }
+];
 const tourShows = [
   {
     id: "1",
