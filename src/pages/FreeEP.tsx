@@ -55,8 +55,9 @@ export default function FreeEP() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
-        <div className="max-w-5xl w-full flex items-center justify-center gap-8">
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
+        {/* Two Square Boxes */}
+        <div className="flex items-start justify-center gap-8 mb-16">
           {/* Album Cover */}
           <div className="opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
             <img 
@@ -134,8 +135,8 @@ export default function FreeEP() {
           </div>
         </div>
 
-        {/* Bio Section */}
-        <div className="max-w-4xl mx-auto mt-16 px-4 opacity-0 animate-[fade-in_1s_ease-out_1s_forwards]">
+        {/* Bio Section - Below the boxes */}
+        <div className="max-w-4xl mx-auto px-4 opacity-0 animate-[fade-in_1s_ease-out_1s_forwards]">
           <div className="text-center space-y-6 text-foreground/90">
             <p className="text-lg leading-relaxed">
               Sons of Legion is the raw, soul stirring sound of urban Americana rock. A duo with coast-to-coast roots and a fire forged bond, their music blends rock, blues, and soul with grit and grace. With over 3.5 million followers on social media, they speak to anyone chasing something deeper.
