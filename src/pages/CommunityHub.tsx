@@ -206,7 +206,7 @@ export default function CommunityHub() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (activeTab === "announcements" || activeTab === "legion_speaks") {
+    if (activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") {
       loadPosts();
     }
     loadUnreadCount();
@@ -696,8 +696,8 @@ export default function CommunityHub() {
 
         {/* Main Content */}
         <main className="flex-1">
-          {/* Create Post - only show on announcements and legion_speaks */}
-          {(activeTab === "announcements" || activeTab === "legion_speaks") && (
+          {/* Create Post - only show on announcements, legion_speaks, intros */}
+          {(activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
             <div className="bg-card rounded-2xl p-6 mb-6 border">
               <div className="flex gap-4">
                 <Avatar className="h-10 w-10">
@@ -920,44 +920,8 @@ export default function CommunityHub() {
             </div>
           )}
 
-          {/* Intros Tab - Member Directory */}
-          {activeTab === "intros" && (
-            <div className="space-y-6">
-              <h2 className="font-serif text-2xl font-bold">Meet The Legion</h2>
-              <p className="text-muted-foreground mb-6">Connect with fellow fans and see who's part of the community</p>
-              <div className="grid md:grid-cols-2 gap-4">
-                {mockProfiles.map((profile) => (
-                  <div key={profile.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={profile.avatar} />
-                        <AvatarFallback>{profile.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">{profile.name}</h3>
-                          <Badge className={getTierColor(profile.tier)}>{profile.tier}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>
-                        <p className="text-sm mb-4">{profile.bio}</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => setShowInbox(true)}
-                        >
-                          <Send className="mr-2 h-3 w-3" />
-                          Message
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Posts Feed for announcements and legion_speaks */}
-          {(activeTab === "announcements" || activeTab === "legion_speaks") && (
+          {/* Posts Feed for announcements, legion_speaks, and intros */}
+          {(activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
             <div className="space-y-6">
             {posts.map((post) => (
               <div key={post.id} className="bg-card rounded-2xl p-6 border">
