@@ -26,7 +26,7 @@ const About = () => {
       {/* Hero Section */}
       <section className="py-12 px-4">
           <div className="container mx-auto max-w-6xl">
-            <h1 className="text-5xl md:text-7xl font-bold text-center mb-16 text-foreground">
+            <h1 className="font-serif text-5xl md:text-7xl font-bold text-center mb-16 text-foreground">
               SONS OF LEGION
             </h1>
 
@@ -57,7 +57,7 @@ const About = () => {
 
             {/* Featured On Section */}
             <div className="mt-20">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+              <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
                 AS FEATURED ON
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center max-w-4xl mx-auto">
@@ -90,7 +90,7 @@ const About = () => {
         {/* Free EP CTA Section */}
         <section className="py-16 px-4 bg-card/30">
           <div className="container mx-auto max-w-4xl text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-6 text-foreground">
               Get Our Free Album
             </h2>
             <p className="text-xl text-foreground/80 mb-8">
