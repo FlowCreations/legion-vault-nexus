@@ -68,7 +68,7 @@ export default function FreeEP() {
 
           {/* Form Box - Same Size as Album */}
           <div className="w-[450px] h-[450px] bg-card/95 backdrop-blur-sm rounded-lg shadow-2xl p-8 flex flex-col justify-center opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
-            <h1 className="text-xl font-bold mb-6 text-balance leading-tight text-center">
+            <h1 className="text-lg font-bold mb-6 text-balance leading-tight text-center">
               TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
             </h1>
 
