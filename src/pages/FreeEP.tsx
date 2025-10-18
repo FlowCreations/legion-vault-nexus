@@ -56,81 +56,89 @@ export default function FreeEP() {
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
-        <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-center">
-          {/* Left side - Image */}
-          <div className="hidden md:block opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
-            <img 
-              src="/albums/power-album.jpg" 
-              alt="Sons of Legion" 
-              className="rounded-lg shadow-2xl"
-            />
-          </div>
+        <div className="max-w-5xl w-full flex items-center justify-center">
+          {/* Album Cover with Vinyl Sliding Out */}
+          <div className="relative flex items-center">
+            {/* Album Cover */}
+            <div className="relative z-20 opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
+              <img 
+                src="/albums/power-album.jpg" 
+                alt="Sons of Legion Power Album" 
+                className="w-[400px] h-[400px] rounded-lg shadow-2xl object-cover"
+              />
+            </div>
 
-          {/* Right side - Form */}
-          <div className="bg-card/95 backdrop-blur-sm p-8 rounded-lg shadow-2xl opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
-            <h1 className="text-4xl md:text-5xl font-bold text-center mb-6 text-balance">
-              TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
-            </h1>
+            {/* Vinyl Record with Form */}
+            <div className="relative -ml-32 opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
+              {/* Vinyl Circle Background */}
+              <div className="w-[500px] h-[400px] bg-gradient-to-r from-card/95 to-card/98 backdrop-blur-sm rounded-r-full shadow-2xl flex items-center pr-12 pl-40">
+                <div className="w-full">
+                  <h1 className="text-2xl font-bold mb-6 text-balance leading-tight">
+                    TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
+                  </h1>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="name" className="sr-only">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="bg-background/50"
-                />
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name" className="sr-only">Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="email" className="sr-only">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="phone" className="sr-only">Phone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="Phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="zipCode" className="sr-only">Zip / Postal Code</Label>
+                      <Input
+                        id="zipCode"
+                        type="text"
+                        placeholder="Zip / Postal Code"
+                        value={zipCode}
+                        onChange={(e) => setZipCode(e.target.value)}
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
+                      disabled={loading}
+                    >
+                      {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
+                    </Button>
+                  </form>
+                </div>
               </div>
-
-              <div>
-                <Label htmlFor="email" className="sr-only">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-background/50"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone" className="sr-only">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="bg-background/50"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="zipCode" className="sr-only">Zip / Postal Code</Label>
-                <Input
-                  id="zipCode"
-                  type="text"
-                  placeholder="Zip / Postal Code"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
-                  className="bg-background/50"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
-                disabled={loading}
-              >
-                {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
-              </Button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
