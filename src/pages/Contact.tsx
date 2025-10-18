@@ -52,7 +52,7 @@ export default function Contact() {
         {/* Two Column Layout */}
         <div className="grid md:grid-cols-2 gap-12 mb-16">
           {/* Left Column - Contact Info */}
-          <div className="space-y-8">
+          <div className="space-y-8 md:pl-12">
             {/* Location */}
             <div className="flex items-start gap-3">
               <MapPin className="w-6 h-6 mt-1 flex-shrink-0" />
