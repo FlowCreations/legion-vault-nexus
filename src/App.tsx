@@ -42,7 +42,7 @@ const App = () => (
           <Route path="/music/success" element={<PurchaseSuccess />} />
           <Route path="/shows" element={<Shows />} />
           <Route path="/shows/gallery" element={<Gallery />} />
-          <Route path="/community" element={<Community />} />
+          <Route path="/community" element={<CommunityHub />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merchant" element={<Merchant />} />
           <Route path="/live" element={<LiveStudio />} />

@@ -116,6 +116,58 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Member Tiers Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card/30">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-8 text-center">
+            Sons of Legion Private Community Tiers
+          </h2>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {memberTiers.map((tier) => (
+              <div
+                key={tier.name}
+                className={`rounded-2xl p-8 border transition-all duration-300 ${
+                  tier.featured
+                    ? 'bg-gradient-to-br from-card to-card-hover border-primary shadow-glow scale-105'
+                    : 'bg-card border-border hover:border-primary/30 shadow-cosmic'
+                }`}
+              >
+                {tier.featured && (
+                  <div className="mb-4 inline-block px-3 py-1 bg-primary/20 text-primary border border-primary/30 rounded-full text-xs font-semibold">
+                    Popular
+                  </div>
+                )}
+                
+                <h3 className="font-serif text-2xl font-bold mb-2">{tier.name}</h3>
+                <div className="text-3xl font-bold mb-1">
+                  {tier.price}
+                </div>
+                <div className="text-sm text-muted-foreground mb-4">per month</div>
+                
+                <p className="text-sm font-semibold mb-4">{tier.subtitle}</p>
+                
+                <ul className="space-y-3 mb-8">
+                  {tier.features.map((feature, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground">
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <Button 
+                  className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
+                  variant={tier.featured ? 'default' : 'outline'}
+                  asChild
+                >
+                  <Link to="/community">Subscribe</Link>
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -138,5 +190,46 @@ const features = [
     description: "Connect with fellow fans, earn badges, and get exclusive access to artist conversations and events.",
     icon: Sparkles,
     link: "/community",
+  },
+];
+
+const memberTiers = [
+  {
+    name: "Rebels",
+    price: "$10",
+    subtitle: "For those who've been with us from the beginning.",
+    features: [
+      "Access behind-the-scenes content & exclusive updates",
+      "Join the Heartbeat Community App – connect directly with the band and other fans",
+      "Unlimited replays of all private online concerts",
+    ],
+    featured: true,
+  },
+  {
+    name: "Outlaws",
+    price: "$25",
+    subtitle: "For the dedicated fans who want more.",
+    features: [
+      "Includes everything in Rebels",
+      "Monthly live video hangout with the band and fellow fans",
+      "Two guest passes for friends/family to future online concerts",
+      "20% off all limited edition merch drops",
+      "Join the Fan Voting Squad – help choose which songs we release next",
+    ],
+    featured: false,
+  },
+  {
+    name: "Legionnaires",
+    price: "$50",
+    subtitle: "For the die-hards who want all-access.",
+    features: [
+      "Includes everything in Outlaws",
+      "Early access to unreleased demos – give your feedback before we hit the studio",
+      "Exclusive digital song downloads before official release",
+      "Four guest passes for future online concerts",
+      "Your name featured in the credits of our Day in the Life Vlogs",
+      "Monthly access to a virtual studio session with the band",
+    ],
+    featured: false,
   },
 ];
