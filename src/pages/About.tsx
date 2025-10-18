@@ -1,7 +1,7 @@
 import { useState } from "react";
 import aboutPhoto from "@/assets/about-photo.jpg";
 import dodgeLogo from "@/assets/brands/dodge.png";
-import netflixLogo from "@/assets/brands/netflix.jpg";
+import netflixLogo from "@/assets/brands/netflix.png";
 import espnLogo from "@/assets/brands/espn.png";
 import ufcLogo from "@/assets/brands/ufc.png";
 import paramountLogo from "@/assets/brands/paramount.png";
