@@ -14,7 +14,7 @@ import "@/utils/uploadThumbnails";
 interface Video {
   id: string;
   title: string;
-  subtitle: string | null;
+  description: string | null;
   category: string;
   storage_path: string;
   thumbnail_url: string | null;
@@ -30,7 +30,7 @@ export default function VideoManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [editSubtitle, setEditSubtitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editMetatags, setEditMetatags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const { toast } = useToast();
@@ -98,7 +98,7 @@ export default function VideoManager() {
   const handleEdit = (video: Video) => {
     setEditingVideo(video);
     setEditTitle(video.title);
-    setEditSubtitle(video.subtitle || "");
+    setEditDescription(video.description || "");
     setEditMetatags(video.metatags || []);
     setNewTag("");
   };
@@ -111,7 +111,7 @@ export default function VideoManager() {
         .from('videos')
         .update({
           title: editTitle,
-          subtitle: editSubtitle || null,
+          description: editDescription || null,
           metatags: editMetatags
         })
         .eq('id', editingVideo.id);
@@ -148,7 +148,7 @@ export default function VideoManager() {
 
   const filteredVideos = videos.filter(video => 
     video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    video.subtitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    video.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     video.metatags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -185,7 +185,7 @@ export default function VideoManager() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search videos by title, subtitle, or tags..."
+              placeholder="Search videos by title, description, or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -232,9 +232,9 @@ export default function VideoManager() {
                     <h3 className="font-semibold text-lg mb-1 truncate">
                       {video.title}
                     </h3>
-                    {video.subtitle && (
+                    {video.description && (
                       <p className="text-sm text-muted-foreground mb-2">
-                        {video.subtitle}
+                        {video.description}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2 mb-2">
@@ -297,7 +297,7 @@ export default function VideoManager() {
             <DialogHeader>
               <DialogTitle>Edit Video Details</DialogTitle>
               <DialogDescription>
-                Update the title, subtitle, and metatags for this video
+                Update the title, description, and metatags for this video
               </DialogDescription>
             </DialogHeader>
 
@@ -313,12 +313,12 @@ export default function VideoManager() {
               </div>
 
               <div>
-                <Label htmlFor="edit-subtitle">Subtitle (Optional)</Label>
+                <Label htmlFor="edit-description">Description (Optional)</Label>
                 <Input
-                  id="edit-subtitle"
-                  value={editSubtitle}
-                  onChange={(e) => setEditSubtitle(e.target.value)}
-                  placeholder="Video subtitle"
+                  id="edit-description"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Video description"
                 />
               </div>
 

@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 interface VideoItem {
   id: string;
   title: string;
-  subtitle: string;
+  description: string;
   thumbnail_url: string;
   is_premium: boolean;
 }
@@ -67,7 +67,7 @@ export default function Videos() {
     // Load all other videos (excluding hero)
     const { data } = await supabase
       .from('videos')
-      .select('id, title, subtitle, category, thumbnail_url, is_premium')
+      .select('id, title, description, category, thumbnail_url, is_premium')
       .neq('category', 'hero')
       .order('created_at', { ascending: false });
 
@@ -75,7 +75,7 @@ export default function Videos() {
       setMusicVideos(data.filter(v => v.category === 'music_videos').map(v => ({
         id: v.id,
         title: v.title,
-        subtitle: v.subtitle || '',
+        description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false
       })));
@@ -83,7 +83,7 @@ export default function Videos() {
       setBehindTheScenes(data.filter(v => v.category === 'behind_the_scenes').map(v => ({
         id: v.id,
         title: v.title,
-        subtitle: v.subtitle || '',
+        description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false
       })));
@@ -91,7 +91,7 @@ export default function Videos() {
       setPerformances(data.filter(v => v.category === 'performances').map(v => ({
         id: v.id,
         title: v.title,
-        subtitle: v.subtitle || '',
+        description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false
       })));
@@ -99,7 +99,7 @@ export default function Videos() {
       setDocumentary(data.filter(v => v.category === 'documentary').map(v => ({
         id: v.id,
         title: v.title,
-        subtitle: v.subtitle || '',
+        description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false
       })));
@@ -334,7 +334,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                     {item.title}
                   </h3>
                   <p className="text-muted-foreground text-xs sm:text-sm line-clamp-1">
-                    {item.subtitle}
+                    {item.description}
                   </p>
                 </div>
               </div>
