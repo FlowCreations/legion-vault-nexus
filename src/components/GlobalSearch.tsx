@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Music as MusicIcon, ShoppingBag, Calendar } from "lucide-react";
+import { Search, Music as MusicIcon, ShoppingBag, Calendar, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SearchResult {
-  type: 'post' | 'member' | 'video' | 'album' | 'merch' | 'show';
+  type: 'post' | 'member' | 'video' | 'album' | 'merch' | 'show' | 'page';
   id: string;
   title: string;
   subtitle?: string;
@@ -163,6 +163,33 @@ export const GlobalSearch = () => {
           title: show.title,
           subtitle: `${show.date} - ${show.location}`,
           path: '/shows'
+        });
+      });
+
+      // Search static pages
+      const staticPages = [
+        { id: "about", title: "About", description: "Learn about Sons of Legion", path: "/about" },
+        { id: "contact", title: "Contact", description: "Get in touch with us", path: "/contact" },
+        { id: "terms", title: "Terms of Service", description: "Terms and conditions", path: "/terms" },
+        { id: "privacy", title: "Privacy Policy", description: "Privacy policy and data protection", path: "/privacy" },
+        { id: "gallery", title: "Gallery", description: "Photos and media gallery", path: "/gallery" },
+        { id: "free-ep", title: "Free EP", description: "Download free music", path: "/free-ep" },
+        { id: "live-studio", title: "Live Studio", description: "Live recording sessions", path: "/live-studio" },
+        { id: "song-credits", title: "Song Credits", description: "Credits and collaborators", path: "/song-credits" }
+      ];
+
+      const filteredPages = staticPages.filter(page =>
+        page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        page.description.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 3);
+
+      filteredPages.forEach(page => {
+        searchResults.push({
+          type: 'page',
+          id: page.id,
+          title: page.title,
+          subtitle: page.description,
+          path: page.path
         });
       });
 
@@ -355,6 +382,26 @@ export const GlobalSearch = () => {
                       <p className="text-xs text-muted-foreground">{result.subtitle}</p>
                     )}
                   </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {results.filter(r => r.type === 'page').length > 0 && (
+            <div className="p-2 border-t">
+              <p className="text-xs font-semibold text-muted-foreground px-2 mb-2 flex items-center gap-1">
+                <FileText className="h-3 w-3" /> PAGES
+              </p>
+              {results.filter(r => r.type === 'page').map((result) => (
+                <button
+                  key={result.id}
+                  onClick={() => handleResultClick(result)}
+                  className="w-full text-left p-2 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <p className="font-semibold text-sm">{result.title}</p>
+                  {result.subtitle && (
+                    <p className="text-xs text-muted-foreground">{result.subtitle}</p>
+                  )}
                 </button>
               ))}
             </div>
