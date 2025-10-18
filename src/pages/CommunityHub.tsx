@@ -216,7 +216,7 @@ export default function CommunityHub() {
       .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (!error && data && data.length > 0) {
       // Fetch sender profiles
       const senderIds = [...new Set(data.map(m => m.sender_id))];
       const { data: profiles } = await supabase
@@ -232,6 +232,7 @@ export default function CommunityHub() {
       
       setMessages(messagesWithProfiles as any);
     }
+    // Keep mock messages if no database messages found
   };
 
   const loadPosts = async () => {
