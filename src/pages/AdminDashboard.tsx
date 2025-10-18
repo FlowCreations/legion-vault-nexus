@@ -217,21 +217,21 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex gap-6 text-sm">
                             <div className="text-center">
-                              <p className="text-muted-foreground">Total Spend</p>
-                              <p className="font-semibold">${member.total_spend?.toFixed(2) || "0.00"}</p>
+                              <p className="text-foreground/70 font-medium">Total Spend</p>
+                              <p className="font-bold text-foreground">${member.total_spend?.toFixed(2) || "0.00"}</p>
                             </div>
                             <div className="text-center">
-                              <p className="text-muted-foreground">MRR</p>
-                              <p className="font-semibold">${member.mrr?.toFixed(2) || "0.00"}</p>
+                              <p className="text-foreground/70 font-medium">MRR</p>
+                              <p className="font-bold text-foreground">${member.mrr?.toFixed(2) || "0.00"}</p>
                             </div>
                           </div>
                         </div>
 
                         {member.bio && (
-                          <p className="text-sm text-muted-foreground">{member.bio}</p>
+                          <p className="text-sm text-foreground/80 font-medium">{member.bio}</p>
                         )}
                         
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-sm text-foreground/70 font-medium">
                           {member.location && (
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
@@ -250,19 +250,19 @@ export default function AdminDashboard() {
 
                         {member.intro_answers && (
                           <div className="mt-2 p-3 bg-muted/50 rounded-md">
-                            <h4 className="text-xs font-semibold text-muted-foreground mb-2">INTRO</h4>
+                            <h4 className="text-xs font-bold text-foreground/70 mb-2">INTRO</h4>
                             <div className="grid gap-1 text-sm">
                               {Object.entries(member.intro_answers).map(([key, value]) => (
                                 <div key={key} className="flex gap-2">
-                                  <span className="text-muted-foreground min-w-[100px]">{key}:</span>
-                                  <span className="font-medium">{value as string}</span>
+                                  <span className="text-foreground/70 font-medium min-w-[100px]">{key}:</span>
+                                  <span className="font-semibold text-foreground">{value as string}</span>
                                 </div>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                        <div className="flex items-center gap-2 text-xs text-foreground/70 font-medium pt-2">
                           <span>Last login: {member.last_login
                             ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
                             : "Never"}</span>
@@ -315,15 +315,15 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center gap-6 text-sm">
                           <div className="text-center">
-                            <p className="text-muted-foreground">Watch Time</p>
-                            <p className="font-semibold">{Math.floor((member.watch_time || 0) / 60)}h</p>
+                            <p className="text-foreground/70 font-medium">Watch Time</p>
+                            <p className="font-bold text-foreground">{Math.floor((member.watch_time || 0) / 60)}h</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-muted-foreground">Total Spend</p>
-                            <p className="font-semibold">${(member.total_spend || 0).toFixed(2)}</p>
+                            <p className="text-foreground/70 font-medium">Total Spend</p>
+                            <p className="font-bold text-foreground">${(member.total_spend || 0).toFixed(2)}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-muted-foreground">Score</p>
+                            <p className="text-foreground/70 font-medium">Score</p>
                             <p className="font-bold text-primary">{score}</p>
                           </div>
                         </div>
