@@ -64,7 +64,7 @@ export const FloatingChatbot = () => {
         const path = navigationMatch[1];
         cleanedReply = data.reply.replace(/\[NAVIGATE:\/[^\]]+\]/, '').trim();
         
-        // Show navigation button in response
+        // Show message first
         const assistantMessage: Message = {
           role: 'assistant',
           content: cleanedReply,
@@ -72,14 +72,10 @@ export const FloatingChatbot = () => {
         };
         setMessages(prev => [...prev, assistantMessage]);
         
-        // Auto-navigate after a short delay
+        // Navigate silently after a short delay
         setTimeout(() => {
-          toast({
-            title: "Navigating...",
-            description: `Taking you to ${path}`,
-          });
           navigate(path);
-        }, 1500);
+        }, 1000);
       } else {
         const assistantMessage: Message = {
           role: 'assistant',
