@@ -55,7 +55,7 @@ export default function FreeEP() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-32 pb-20">
         {/* Two Square Boxes */}
         <div className="flex items-start justify-center gap-8 mb-16">
           {/* Album Cover */}
