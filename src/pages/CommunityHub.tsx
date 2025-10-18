@@ -69,7 +69,7 @@ export default function CommunityHub() {
   const [showInbox, setShowInbox] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(3);
   const [notifications, setNotifications] = useState(0);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -142,6 +142,54 @@ export default function CommunityHub() {
       sender_profile: {
         display_name: 'Alex Thompson',
         avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex'
+      }
+    },
+    {
+      id: '7',
+      sender_id: '7',
+      recipient_id: 'current-user',
+      content: "Hey, are you coming to the Nashville meetup? Would love to meet you!",
+      read: true,
+      created_at: new Date(Date.now() - 345600000).toISOString(),
+      sender_profile: {
+        display_name: 'Jessica Martinez',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jessica'
+      }
+    },
+    {
+      id: '8',
+      sender_id: 'current-user',
+      recipient_id: '7',
+      content: "Definitely! Looking forward to it.",
+      read: true,
+      created_at: new Date(Date.now() - 340000000).toISOString(),
+      sender_profile: {
+        display_name: 'You',
+        avatar_url: ''
+      }
+    },
+    {
+      id: '9',
+      sender_id: '8',
+      recipient_id: 'current-user',
+      content: "Just got my VIP tickets! See you at the show!",
+      read: true,
+      created_at: new Date(Date.now() - 432000000).toISOString(),
+      sender_profile: {
+        display_name: 'Robert Taylor',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=robert'
+      }
+    },
+    {
+      id: '10',
+      sender_id: 'current-user',
+      recipient_id: '8',
+      content: "Awesome! It's going to be legendary!",
+      read: true,
+      created_at: new Date(Date.now() - 430000000).toISOString(),
+      sender_profile: {
+        display_name: 'You',
+        avatar_url: ''
       }
     }
   ]);
