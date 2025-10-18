@@ -398,22 +398,31 @@ export default function CommunityHub() {
   };
 
   const getConversations = () => {
-    const { data: { user } } = { data: { user: { id: "current-user" } } };
+    const userId = "current-user"; // Mock user ID
     const conversations = new Map<string, Message[]>();
     
     messages.forEach(msg => {
-      const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
+      const otherUserId = msg.sender_id === userId ? msg.recipient_id : msg.sender_id;
       if (!conversations.has(otherUserId)) {
         conversations.set(otherUserId, []);
       }
       conversations.get(otherUserId)?.push(msg);
     });
 
-    return Array.from(conversations.entries()).map(([userId, msgs]) => ({
-      userId,
-      lastMessage: msgs[0],
-      unreadCount: msgs.filter(m => !m.read && m.recipient_id === user.id).length
-    }));
+    return Array.from(conversations.entries())
+      .map(([otherUserId, msgs]) => {
+        const sortedMsgs = msgs.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        return {
+          userId: otherUserId,
+          lastMessage: sortedMsgs[0],
+          unreadCount: msgs.filter(m => !m.read && m.recipient_id === userId).length
+        };
+      })
+      .sort((a, b) => 
+        new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime()
+      );
   };
 
   const getReactionCount = (post: Post, reactionType: string) => {
@@ -884,41 +893,51 @@ export default function CommunityHub() {
             <div className="w-1/3 border-r pr-4 overflow-y-auto">
               <h3 className="font-semibold mb-3">Conversations</h3>
               <div className="space-y-2">
-                {getConversations().map((conv) => (
-                  <div
-                    key={conv.userId}
-                    onClick={() => setSelectedConversation(conv.userId)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedConversation === conv.userId
-                        ? "bg-primary/10"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={conv.lastMessage.sender_profile?.avatar_url} />
-                        <AvatarFallback>
-                          {conv.lastMessage.sender_profile?.display_name?.[0] || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-sm truncate">
-                            {conv.lastMessage.sender_profile?.display_name || "User"}
+                {getConversations().map((conv) => {
+                  // Get the display info for the other person in the conversation
+                  const otherPersonMsg = messages.find(m => 
+                    (m.sender_id === conv.userId || m.recipient_id === conv.userId) &&
+                    m.sender_id !== "current-user"
+                  );
+                  const displayName = otherPersonMsg?.sender_profile?.display_name || "User";
+                  const avatarUrl = otherPersonMsg?.sender_profile?.avatar_url || "";
+                  
+                  return (
+                    <div
+                      key={conv.userId}
+                      onClick={() => setSelectedConversation(conv.userId)}
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedConversation === conv.userId
+                          ? "bg-primary/10"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={avatarUrl} />
+                          <AvatarFallback>
+                            {displayName[0] || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-semibold text-sm truncate">
+                              {displayName}
+                            </p>
+                            {conv.unreadCount > 0 && (
+                              <Badge className="h-5 w-5 p-0 flex items-center justify-center">
+                                {conv.unreadCount}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conv.lastMessage.content}
                           </p>
-                          {conv.unreadCount > 0 && (
-                            <Badge className="h-5 w-5 p-0 flex items-center justify-center">
-                              {conv.unreadCount}
-                            </Badge>
-                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {conv.lastMessage.content}
-                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
