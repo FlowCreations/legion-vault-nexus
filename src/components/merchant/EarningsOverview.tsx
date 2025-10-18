@@ -54,8 +54,19 @@ const monthsData: MonthData[] = [
   },
 ];
 
+const dailySalesData = {
+  today: 850,
+  yesterday: 920,
+  "7days": 5800,
+  "14days": 11200,
+  "thismonth": 21300,
+  "30days": 19800,
+  alltime: 127500,
+};
+
 export const EarningsOverview = () => {
   const [selectedMonth, setSelectedMonth] = useState("October 2025");
+  const [selectedPeriod, setSelectedPeriod] = useState<keyof typeof dailySalesData>("today");
   
   const currentData = monthsData.find(m => m.month === selectedMonth) || monthsData[0];
 
@@ -110,6 +121,35 @@ export const EarningsOverview = () => {
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </div>
+
+      {/* Daily Sales Section */}
+      <div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-foreground/70 font-medium uppercase tracking-wide mb-2">
+              DAILY SALES
+            </p>
+            <h2 className="text-4xl font-bold text-foreground">
+              ${dailySalesData[selectedPeriod].toLocaleString()}.00
+            </h2>
+          </div>
+          
+          <Select value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as keyof typeof dailySalesData)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="yesterday">Yesterday</SelectItem>
+              <SelectItem value="7days">7 Days</SelectItem>
+              <SelectItem value="14days">14 Days</SelectItem>
+              <SelectItem value="thismonth">This Month</SelectItem>
+              <SelectItem value="30days">30 Days</SelectItem>
+              <SelectItem value="alltime">All Time</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
