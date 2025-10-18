@@ -117,7 +117,7 @@ export default function Home() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card/30">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-8 text-center">
-            Sons of Legion Private Community Tiers
+            Join the Legion
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -140,13 +140,13 @@ export default function Home() {
                 <div className="text-3xl font-bold mb-1">
                   {tier.price}
                 </div>
-                <div className="text-sm text-muted-foreground mb-4">per month</div>
+                <div className="text-sm text-foreground/70 font-medium mb-4">per month</div>
                 
                 <p className="text-sm font-semibold mb-4">{tier.subtitle}</p>
                 
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((feature, idx) => (
-                    <li key={idx} className="text-sm text-muted-foreground">
+                    <li key={idx} className="text-sm text-foreground/80 font-medium">
                       {feature}
                     </li>
                   ))}
@@ -195,8 +195,8 @@ const memberTiers = [
     price: "$10",
     subtitle: "For those who've been with us from the beginning.",
     features: [
-      "Access behind-the-scenes content & exclusive updates",
-      "Join the Heartbeat Community App – connect directly with the band and other fans",
+      "Behind-the-scenes content and exclusive updates",
+      "Entry to The Legion community — connect with the band and other fans",
       "Unlimited replays of all private online concerts",
     ],
     featured: true,
@@ -206,11 +206,10 @@ const memberTiers = [
     price: "$25",
     subtitle: "For the dedicated fans who want more.",
     features: [
-      "Includes everything in Rebels",
-      "Monthly live video hangout with the band and fellow fans",
-      "Two guest passes for friends/family to future online concerts",
-      "20% off all limited edition merch drops",
-      "Join the Fan Voting Squad – help choose which songs we release next",
+      "Everything in Rebels",
+      "Monthly live video hangout with the band",
+      "Full streaming access to all songs in the vault",
+      "Join the Fan Voting Squad — help choose what we release next",
     ],
     featured: false,
   },
@@ -219,12 +218,11 @@ const memberTiers = [
     price: "$50",
     subtitle: "For the die-hards who want all-access.",
     features: [
-      "Includes everything in Outlaws",
-      "Early access to unreleased demos – give your feedback before we hit the studio",
-      "Exclusive digital song downloads before official release",
-      "Four guest passes for future online concerts",
-      "Your name featured in the credits of our Day in the Life Vlogs",
-      "Monthly access to a virtual studio session with the band",
+      "Everything in Outlaws",
+      "Monthly virtual studio session with the band",
+      "Full streaming access to all songs",
+      "Free LEGION. shirt (ships after 3 months)",
+      "15% off all merch",
     ],
     featured: false,
   },
