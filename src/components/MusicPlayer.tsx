@@ -17,7 +17,7 @@ interface MusicPlayerProps {
 
 export function MusicPlayer({ audioRef }: MusicPlayerProps) {
   const navigate = useNavigate();
-  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized } = useMusicPlayer();
+  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized, isMinimized } = useMusicPlayer();
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
@@ -79,8 +79,54 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
 
   if (!currentTrack) return null;
 
+  if (isMinimized) {
+    return (
+      <div 
+        className="fixed bottom-4 left-4 bg-graphite border border-border rounded-lg shadow-lg z-40 cursor-pointer hover:shadow-glow transition-all"
+        onClick={() => setMinimized(false)}
+      >
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="w-10 h-10 rounded overflow-hidden bg-card flex-shrink-0">
+            {currentTrack.image ? (
+              <img 
+                src={currentTrack.image} 
+                alt={currentTrack.album}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-muted-foreground">
+                {currentTrack.title[0]}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="font-medium text-sm truncate max-w-[200px]">{currentTrack.title}</p>
+            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+              {currentTrack.artist}
+            </p>
+          </div>
+          <Button
+            variant="default"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-white hover:bg-white/90 text-black flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlayPause();
+            }}
+          >
+            {isPlaying ? (
+              <Pause className="h-4 w-4 fill-black" />
+            ) : (
+              <Play className="h-4 w-4 fill-black ml-0.5" />
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-graphite border-t border-border backdrop-blur-lg bg-opacity-95 z-50 animate-slide-in-bottom">
+    <div className="fixed bottom-0 left-0 right-0 bg-graphite border-t border-border backdrop-blur-lg bg-opacity-95 z-40 animate-slide-in-bottom">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center gap-4">
           {/* Minimize Button */}
