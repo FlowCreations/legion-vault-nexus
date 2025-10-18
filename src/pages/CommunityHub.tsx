@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { getTierColor } from "@/lib/tierColors";
 
 interface Post {
   id: string;
@@ -521,7 +522,7 @@ export default function CommunityHub() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold">{profile.name}</h3>
-                          <Badge variant="secondary">{profile.tier}</Badge>
+                          <Badge className={getTierColor(profile.tier)}>{profile.tier}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>
                         <p className="text-sm mb-4">{profile.bio}</p>
@@ -670,7 +671,7 @@ export default function CommunityHub() {
                         </div>
                       </div>
                       {post.user_profiles?.tier && (
-                        <Badge variant="secondary">{post.user_profiles.tier}</Badge>
+                        <Badge className={getTierColor(post.user_profiles.tier)}>{post.user_profiles.tier}</Badge>
                       )}
                     </div>
                     
@@ -878,7 +879,7 @@ export default function CommunityHub() {
                   <AvatarFallback>{selectedProfile.display_name[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <Badge variant="secondary">{selectedProfile.tier}</Badge>
+                  <Badge className={getTierColor(selectedProfile.tier)}>{selectedProfile.tier}</Badge>
                   {selectedProfile.location && (
                     <p className="text-sm text-muted-foreground mt-2">
                       {selectedProfile.location}

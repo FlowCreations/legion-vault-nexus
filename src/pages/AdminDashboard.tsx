@@ -14,10 +14,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Users, DollarSign, Video, FileText, TrendingUp, Eye } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clock, ShoppingBag, BarChart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { getTierColor } from "@/lib/tierColors";
 
 interface Member {
   id: string;
@@ -130,9 +132,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold mb-2">Community Management</h2>
-        <p className="text-muted-foreground">Manage your community members and settings</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-2">Community Management</h2>
+          <p className="text-muted-foreground">Manage your community members and settings</p>
+        </div>
+        <Badge variant="outline" className="text-sm px-4 py-2">
+          Powered by <span className="font-bold ml-1">JRNY</span>
+        </Badge>
       </div>
 
       {/* Stats Overview */}
@@ -181,6 +188,8 @@ export default function AdminDashboard() {
       <Tabs defaultValue="members" className="space-y-6">
         <TabsList>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="superfans">Superfan Index</TabsTrigger>
+          <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
           <TabsTrigger value="pixels">Tracking</TabsTrigger>
           <TabsTrigger value="legal">Legal</TabsTrigger>
@@ -214,9 +223,9 @@ export default function AdminDashboard() {
                           {member.display_name || "Unknown"}
                         </TableCell>
                         <TableCell>
-                          <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
+                          <Badge className={getTierColor(member.tier)}>
                             {member.tier || "N/A"}
-                          </span>
+                          </Badge>
                         </TableCell>
                         <TableCell>${member.total_spend?.toFixed(2) || "0.00"}</TableCell>
                         <TableCell>${member.mrr?.toFixed(2) || "0.00"}</TableCell>
@@ -234,6 +243,204 @@ export default function AdminDashboard() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="superfans" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Superfan Index</CardTitle>
+              <CardDescription>Ranked by engagement, watch time, purchases, and shares</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {members
+                  .sort((a, b) => {
+                    const scoreA = (a.watch_time || 0) + (a.listen_time || 0) + (a.total_spend || 0) * 100;
+                    const scoreB = (b.watch_time || 0) + (b.listen_time || 0) + (b.total_spend || 0) * 100;
+                    return scoreB - scoreA;
+                  })
+                  .map((member, index) => {
+                    const score = Math.floor(((member.watch_time || 0) + (member.listen_time || 0) + (member.total_spend || 0) * 100) / 100);
+                    return (
+                      <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{member.display_name}</h3>
+                            <Badge className={getTierColor(member.tier)}>
+                              {member.tier}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="text-center">
+                            <p className="text-muted-foreground">Watch Time</p>
+                            <p className="font-semibold">{Math.floor((member.watch_time || 0) / 60)}h</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground">Total Spend</p>
+                            <p className="font-semibold">${(member.total_spend || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground">Score</p>
+                            <p className="font-bold text-primary">{score}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Geo-Heatmap
+                </CardTitle>
+                <CardDescription>High-engagement regions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Nashville, TN</span>
+                    <Badge>High Activity</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Austin, TX</span>
+                    <Badge variant="secondary">Medium</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Los Angeles, CA</span>
+                    <Badge>High Activity</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Session Timing
+                </CardTitle>
+                <CardDescription>Peak login & purchase hours</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Peak Hours</span>
+                    <span className="text-sm text-muted-foreground">7PM - 10PM EST</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Purchase Peak</span>
+                    <span className="text-sm text-muted-foreground">8PM - 9PM EST</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Content Peak</span>
+                    <span className="text-sm text-muted-foreground">9PM - 11PM EST</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
+                  Top Content Analytics
+                </CardTitle>
+                <CardDescription>Most-watched & shared media</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Virtual Tour Finale</span>
+                    <span className="text-sm font-semibold">2.4k views</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Acoustic Session</span>
+                    <span className="text-sm font-semibold">1.8k views</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Behind the Scenes</span>
+                    <span className="text-sm font-semibold">1.2k views</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5" />
+                  Merch Performance
+                </CardTitle>
+                <CardDescription>Best sellers + margin data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Tour Hoodie</span>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">143 sold</p>
+                      <p className="text-xs text-muted-foreground">45% margin</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Limited Vinyl</span>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">89 sold</p>
+                      <p className="text-xs text-muted-foreground">60% margin</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+                    <span className="font-medium">Signature Cap</span>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">67 sold</p>
+                      <p className="text-xs text-muted-foreground">55% margin</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Behavior Flow Mapping</CardTitle>
+              <CardDescription>Navigation from content → commerce</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">Video Views</p>
+                  <p className="text-sm text-muted-foreground mt-1">Entry Point</p>
+                </div>
+                <div className="text-2xl text-muted-foreground">→</div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">Profile Visit</p>
+                  <p className="text-sm text-muted-foreground mt-1">45% convert</p>
+                </div>
+                <div className="text-2xl text-muted-foreground">→</div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">Merch Browse</p>
+                  <p className="text-sm text-muted-foreground mt-1">62% engage</p>
+                </div>
+                <div className="text-2xl text-muted-foreground">→</div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">Purchase</p>
+                  <p className="text-sm text-muted-foreground mt-1">28% convert</p>
+                </div>
               </div>
             </CardContent>
           </Card>
