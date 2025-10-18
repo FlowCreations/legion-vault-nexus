@@ -58,7 +58,7 @@ export default function FreeEP() {
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
         <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-center">
           {/* Left side - Image */}
-          <div className="hidden md:block animate-fade-in">
+          <div className="hidden md:block opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
             <img 
               src="/albums/power-album.jpg" 
               alt="Sons of Legion" 
@@ -67,7 +67,7 @@ export default function FreeEP() {
           </div>
 
           {/* Right side - Form */}
-          <div className="bg-card/95 backdrop-blur-sm p-8 rounded-lg shadow-2xl animate-fade-in [animation-delay:200ms]">
+          <div className="bg-card/95 backdrop-blur-sm p-8 rounded-lg shadow-2xl opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-6 text-balance">
               TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
             </h1>
