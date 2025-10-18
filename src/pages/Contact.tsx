@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Music2, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
+import contactVideo from "@/assets/contact-video.mp4";
 
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
@@ -213,11 +214,25 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* Scammer Warning */}
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-foreground/80 leading-relaxed">
-            There are loads of fake accounts and scammers pretending to be us, so please be careful. We do not have any backup pages or secret accounts, only our official profiles are linked on this website. We do not use Telegram, Discord, WhatsApp, or Signal, and we'll never ask you to buy gift cards, join a "VIP membership," or share financial details in chat. We are not offering private merch, investigations, or personal conversations through reps. If someone claims to be us and starts talking romance or asking for money, it's a scam, please block and report.
-          </p>
+        {/* Scammer Warning with Video */}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="order-2 md:order-1">
+              <p className="text-foreground/80 leading-relaxed">
+                There are loads of fake accounts and scammers pretending to be us, so please be careful. We do not have any backup pages or secret accounts, only our official profiles are linked on this website. We do not use Telegram, Discord, WhatsApp, or Signal, and we'll never ask you to buy gift cards, join a "VIP membership," or share financial details in chat. We are not offering private merch, investigations, or personal conversations through reps. If someone claims to be us and starts talking romance or asking for money, it's a scam, please block and report.
+              </p>
+            </div>
+            <div className="order-1 md:order-2">
+              <video 
+                src={contactVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full rounded-lg"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
