@@ -131,9 +131,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const totalMRR = members.reduce((sum, m) => sum + (m.mrr || 0), 0);
-  const totalSpend = members.reduce((sum, m) => sum + (m.total_spend || 0), 0);
-  const totalWatchTime = members.reduce((sum, m) => sum + (m.watch_time || 0), 0);
+  // Mock stats for demo
+  const totalMembers = 355;
+  const totalMRR = 7100;
+  const totalRevenue = 21300;
 
   return (
     <div className="space-y-6">
@@ -148,44 +149,34 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid md:grid-cols-4 gap-6">
+      <div className="grid md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Total Members</CardTitle>
+            <Users className="h-4 w-4 text-foreground/70" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{members.length}</div>
+            <div className="text-2xl font-bold text-foreground">{totalMembers}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total MRR</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Total MRR</CardTitle>
+            <DollarSign className="h-4 w-4 text-foreground/70" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalMRR.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-foreground">${totalMRR.toLocaleString()}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Spend</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Total Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-foreground/70" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalSpend.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Watch Time</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.floor(totalWatchTime / 60)}h</div>
+            <div className="text-2xl font-bold text-foreground">${totalRevenue.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
