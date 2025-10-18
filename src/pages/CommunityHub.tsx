@@ -61,7 +61,7 @@ interface Message {
 
 export default function CommunityHub() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("feed");
+  const [activeTab, setActiveTab] = useState("announcements");
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
   const [showInbox, setShowInbox] = useState(false);
@@ -148,7 +148,7 @@ export default function CommunityHub() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (activeTab === "feed" || activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") {
+    if (activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") {
       loadPosts();
     }
     loadUnreadCount();
@@ -414,20 +414,19 @@ export default function CommunityHub() {
         <aside className="w-64 flex-shrink-0">
           <nav className="space-y-1">
             <Button
-              variant={activeTab === "feed" ? "default" : "ghost"}
+              variant={activeTab === "announcements" ? "default" : "ghost"}
               className="w-full justify-start"
-              onClick={() => setActiveTab("feed")}
+              onClick={() => setActiveTab("announcements")}
             >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Feed
+              Announcements
             </Button>
-            
+
             <Button
-              variant={activeTab === "directory" ? "default" : "ghost"}
+              variant={activeTab === "legion_speaks" ? "default" : "ghost"}
               className="w-full justify-start"
-              onClick={() => setActiveTab("directory")}
+              onClick={() => setActiveTab("legion_speaks")}
             >
-              Directory
+              Legion Speaks
             </Button>
 
             <Button
@@ -445,29 +444,21 @@ export default function CommunityHub() {
             >
               Intros
             </Button>
-
+            
             <Button
-              variant={activeTab === "announcements" ? "default" : "ghost"}
+              variant={activeTab === "directory" ? "default" : "ghost"}
               className="w-full justify-start"
-              onClick={() => setActiveTab("announcements")}
+              onClick={() => setActiveTab("directory")}
             >
-              Announcements
-            </Button>
-
-            <Button
-              variant={activeTab === "legion_speaks" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveTab("legion_speaks")}
-            >
-              Legion Speaks
+              Directory
             </Button>
           </nav>
         </aside>
 
         {/* Main Content */}
         <main className="flex-1">
-          {/* Create Post - only show on feed, announcements, legion_speaks, intros */}
-          {(activeTab === "feed" || activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
+          {/* Create Post - only show on announcements, legion_speaks, intros */}
+          {(activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
             <div className="bg-card rounded-2xl p-6 mb-6 border">
               <div className="flex gap-4">
                 <Avatar className="h-10 w-10">
@@ -634,8 +625,8 @@ export default function CommunityHub() {
             </div>
           )}
 
-          {/* Posts Feed for feed, announcements, legion_speaks, intros */}
-          {(activeTab === "feed" || activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
+          {/* Posts Feed for announcements, legion_speaks, intros */}
+          {(activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
             <div className="space-y-6">
             {posts.map((post) => (
               <div key={post.id} className="bg-card rounded-2xl p-6 border">
