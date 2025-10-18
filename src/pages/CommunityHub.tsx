@@ -74,6 +74,8 @@ export default function CommunityHub() {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(3);
   const [notifications, setNotifications] = useState(0);
+  const [rsvpEvents, setRsvpEvents] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -491,6 +493,26 @@ export default function CommunityHub() {
     });
   };
 
+  const handleRSVP = (eventId: string) => {
+    setRsvpEvents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+        toast({ title: "RSVP Cancelled" });
+      } else {
+        newSet.add(eventId);
+        toast({ title: "RSVP Confirmed!", description: "You're signed up for this event" });
+      }
+      return newSet;
+    });
+  };
+
+  const filteredProfiles = mockProfiles.filter(profile =>
+    profile.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    profile.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    profile.tier.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -743,13 +765,25 @@ export default function CommunityHub() {
                         </div>
                         {event.price && <Badge variant="outline">{event.price}</Badge>}
                       </div>
-                      <Button 
-                        className="bg-gradient-gold"
-                        onClick={() => handleBuyTicket(event)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Register Now
-                      </Button>
+                      <div className="flex gap-2">
+                        {event.price ? (
+                          <Button 
+                            className="bg-gradient-gold"
+                            onClick={() => handleBuyTicket(event)}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Register - {event.price}
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant={rsvpEvents.has(event.id) ? "outline" : "default"}
+                            className={!rsvpEvents.has(event.id) ? "bg-gradient-gold" : ""}
+                            onClick={() => handleRSVP(event.id)}
+                          >
+                            {rsvpEvents.has(event.id) ? "Cancel RSVP" : "RSVP Free"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
