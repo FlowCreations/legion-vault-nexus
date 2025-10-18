@@ -1,9 +1,7 @@
 import { useState } from "react";
 import aboutPhoto from "@/assets/about-photo.jpg";
-import dodgeLogo from "@/assets/brands/dodge.png";
 import netflixLogo from "@/assets/brands/netflix.png";
 import espnLogo from "@/assets/brands/espn.png";
-import ufcLogo from "@/assets/brands/ufc.png";
 import paramountLogo from "@/assets/brands/paramount.png";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -62,20 +60,10 @@ const About = () => {
               <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
                 AS FEATURED ON
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center max-w-4xl mx-auto">
                 <img 
                   src={netflixLogo} 
                   alt="Netflix"
-                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
-                />
-                <img 
-                  src={dodgeLogo} 
-                  alt="Dodge RAM"
-                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
-                />
-                <img 
-                  src={ufcLogo} 
-                  alt="UFC"
                   className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
                 />
                 <img 
@@ -86,7 +74,7 @@ const About = () => {
                 <img 
                   src={paramountLogo} 
                   alt="Paramount"
-                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity col-span-2 md:col-span-1"
+                  className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity"
                 />
               </div>
             </div>
