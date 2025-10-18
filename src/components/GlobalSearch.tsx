@@ -239,7 +239,7 @@ export const GlobalSearch = () => {
     <div className="relative w-full max-w-md" ref={searchRef}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input 
-        placeholder="Search videos, posts, members..." 
+        placeholder="Search" 
         className="pl-10" 
         value={searchQuery}
         onChange={(e) => {
