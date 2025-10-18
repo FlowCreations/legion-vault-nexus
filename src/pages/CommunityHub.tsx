@@ -327,9 +327,14 @@ export default function CommunityHub() {
   };
 
   const createPost = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !newPostContent) {
+    if (!newPostContent.trim()) {
       toast({ title: "Please write something first!", variant: "destructive" });
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Please sign in to post", variant: "destructive" });
       return;
     }
 
@@ -358,6 +363,21 @@ export default function CommunityHub() {
 
     const postType = mediaUrl ? (mediaUrl.includes('video') ? 'video' : 'image') : 'text';
 
+    // Ensure user has a profile
+    const { data: existingProfile } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!existingProfile) {
+      await supabase.from("user_profiles").insert({
+        user_id: user.id,
+        display_name: user.email?.split('@')[0] || "User",
+        tier: "Rebels"
+      });
+    }
+
     const { error } = await supabase.from("community_posts").insert({
       user_id: user.id,
       content: newPostContent,
@@ -368,7 +388,8 @@ export default function CommunityHub() {
     });
 
     if (error) {
-      toast({ title: "Error creating post", variant: "destructive" });
+      console.error("Error creating post:", error);
+      toast({ title: "Error creating post", description: error.message, variant: "destructive" });
       return;
     }
 
