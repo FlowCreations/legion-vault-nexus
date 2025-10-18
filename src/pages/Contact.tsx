@@ -214,7 +214,7 @@ export default function Contact() {
         {/* Scammer Warning */}
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-foreground/80 leading-relaxed">
-            There are loads of fake accounts and scammers pretending to be us, so please be careful. We do not have any backup pages or secret accounts—only our official profiles are linked on this website. We do not use Telegram, Discord, WhatsApp, or Signal, and we'll never ask you to buy gift cards, join a "VIP membership," or share financial details in chat. We are not offering private merch, investigations, or personal conversations through reps. If someone claims to be us and starts talking romance or asking for money, it's a scam—please block and report.
+            There are loads of fake accounts and scammers pretending to be us, so please be careful. We do not have any backup pages or secret accounts, only our official profiles are linked on this website. We do not use Telegram, Discord, WhatsApp, or Signal, and we'll never ask you to buy gift cards, join a "VIP membership," or share financial details in chat. We are not offering private merch, investigations, or personal conversations through reps. If someone claims to be us and starts talking romance or asking for money, it's a scam, please block and report.
           </p>
         </div>
       </div>
