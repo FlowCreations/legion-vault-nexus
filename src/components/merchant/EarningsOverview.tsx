@@ -1,0 +1,172 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Info, Download, Calendar, Music, ShoppingBag, Ticket, Users } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface MonthData {
+  month: string;
+  totalEarnings: number;
+  sales: {
+    albums: number;
+    merch: number;
+    tickets: number;
+    community: number;
+  };
+}
+
+const monthsData: MonthData[] = [
+  {
+    month: "October 2025",
+    totalEarnings: 21300,
+    sales: {
+      albums: 8500,
+      merch: 7200,
+      tickets: 4100,
+      community: 1500,
+    },
+  },
+  {
+    month: "September 2025",
+    totalEarnings: 19800,
+    sales: {
+      albums: 7800,
+      merch: 6900,
+      tickets: 3900,
+      community: 1200,
+    },
+  },
+  {
+    month: "August 2025",
+    totalEarnings: 18500,
+    sales: {
+      albums: 7200,
+      merch: 6500,
+      tickets: 3600,
+      community: 1200,
+    },
+  },
+];
+
+export const EarningsOverview = () => {
+  const [selectedMonth, setSelectedMonth] = useState("October 2025");
+  
+  const currentData = monthsData.find(m => m.month === selectedMonth) || monthsData[0];
+
+  const handleDownload = () => {
+    const csvContent = `Earnings Report - ${selectedMonth}\n\nTotal Earnings,$${currentData.totalEarnings.toLocaleString()}\n\nSales Breakdown:\nAlbums,$${currentData.sales.albums.toLocaleString()}\nMerch,$${currentData.sales.merch.toLocaleString()}\nTickets,$${currentData.sales.tickets.toLocaleString()}\nCommunity,$${currentData.sales.community.toLocaleString()}`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `earnings-${selectedMonth.toLowerCase().replace(' ', '-')}.csv`;
+    a.click();
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Earnings */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-sm text-foreground/70 font-medium uppercase tracking-wide mb-2">
+              EARNINGS / {selectedMonth.toUpperCase()}
+            </p>
+            <h1 className="text-6xl font-bold text-foreground">
+              ${currentData.totalEarnings.toLocaleString()}.00
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Info className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full"
+              onClick={handleDownload}
+            >
+              <Download className="h-5 w-5" />
+            </Button>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[180px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthsData.map((data) => (
+                  <SelectItem key={data.month} value={data.month}>
+                    {data.month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Alert Box */}
+        <Card className="bg-foreground text-background border-0">
+          <CardContent className="p-6 flex gap-4">
+            <Info className="h-6 w-6 flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="font-bold text-lg mb-1">Cash Out Request In Review</h3>
+              <p className="text-sm opacity-90">
+                Most cash out requests are approved within a day. Once approved, you should receive payment in 1-5 business days depending on your payment method.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sales Categories */}
+      <div>
+        <p className="text-sm text-foreground/70 font-medium uppercase tracking-wide mb-4">
+          {selectedMonth.toUpperCase()}
+        </p>
+        <h2 className="text-3xl font-bold mb-6 text-foreground">Sales</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Music className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="font-bold text-xl mb-2">Albums</h3>
+              <p className="text-4xl font-bold">${currentData.sales.albums.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-8 text-center">
+              <ShoppingBag className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="font-bold text-xl mb-2">Merch</h3>
+              <p className="text-4xl font-bold">${currentData.sales.merch.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Ticket className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="font-bold text-xl mb-2">Tickets</h3>
+              <p className="text-4xl font-bold">${currentData.sales.tickets.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Users className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="font-bold text-xl mb-2">Community</h3>
+              <p className="text-4xl font-bold">${currentData.sales.community.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};

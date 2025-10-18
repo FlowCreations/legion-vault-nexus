@@ -9,6 +9,7 @@ import { TopPlatforms } from "@/components/merchant/TopPlatforms";
 import { TopTracks } from "@/components/merchant/TopTracks";
 import { StreamsOverview } from "@/components/merchant/StreamsOverview";
 import { Geography } from "@/components/merchant/Geography";
+import { EarningsOverview } from "@/components/merchant/EarningsOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -149,14 +150,13 @@ const Merchant = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
-                <div className="space-y-12">
-                  <TopPlatforms />
-                  <StreamsOverview />
-                  <TopTracks period="7days" />
-                  <Geography />
-                </div>
+            <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
+              <div className="space-y-12">
+                <EarningsOverview />
+                <TopTracks period="7days" />
+                <Geography />
               </div>
+            </div>
 
               {showChat && (
                 <div className="lg:col-span-1">
