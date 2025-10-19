@@ -209,7 +209,7 @@ export default function CommunityHub() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") {
+    if (activeTab === "announcements" || activeTab === "legion_speaks") {
       loadPosts();
     }
     if (activeTab === "directory") {
@@ -701,14 +701,6 @@ export default function CommunityHub() {
             >
               Events
             </Button>
-
-            <Button
-              variant={activeTab === "intros" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveTab("intros")}
-            >
-              Intros
-            </Button>
             
             <Button
               variant={activeTab === "directory" ? "default" : "ghost"}
@@ -722,8 +714,8 @@ export default function CommunityHub() {
 
         {/* Main Content */}
         <main className="flex-1">
-          {/* Create Post - only show on announcements, legion_speaks, intros */}
-          {(activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
+          {/* Create Post - only show on announcements and legion_speaks */}
+          {(activeTab === "announcements" || activeTab === "legion_speaks") && (
             <div className="bg-card rounded-2xl p-6 mb-6 border">
               <div className="flex gap-4">
                 <Avatar className="h-10 w-10">
@@ -952,8 +944,8 @@ export default function CommunityHub() {
             </div>
           )}
 
-          {/* Posts Feed for announcements, legion_speaks, and intros */}
-          {(activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") && (
+          {/* Posts Feed for announcements and legion_speaks */}
+          {(activeTab === "announcements" || activeTab === "legion_speaks") && (
             <div className="space-y-6">
             {posts.map((post) => (
               <div key={post.id} className="bg-card rounded-2xl p-6 border">
