@@ -262,21 +262,33 @@ export default function Auth() {
 
               <div>
                 <Label htmlFor="profilePicture">Profile Picture</Label>
-                <div className="mt-2 flex items-center gap-4">
-                  {profilePicturePreview && (
-                    <img 
-                      src={profilePicturePreview} 
-                      alt="Preview" 
-                      className="w-20 h-20 rounded-full object-cover border-2 border-primary"
+                <div className="mt-2 flex items-start gap-4">
+                  <div className="flex flex-col items-center justify-center">
+                    {profilePicturePreview ? (
+                      <img 
+                        src={profilePicturePreview} 
+                        alt="Preview" 
+                        className="w-24 h-24 rounded-full object-cover border-2 border-primary"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-muted border-2 border-dashed border-primary/50 flex flex-col items-center justify-center">
+                        <span className="text-4xl mb-1">📸</span>
+                        <span className="text-xs text-muted-foreground">Your photo</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      id="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="cursor-pointer"
                     />
-                  )}
-                  <Input
-                    id="profilePicture"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="flex-1"
-                  />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      👆 Click here to upload your profile picture
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

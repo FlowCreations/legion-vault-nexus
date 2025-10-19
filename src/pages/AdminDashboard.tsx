@@ -152,39 +152,14 @@ export default function AdminDashboard() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      // Add demo ERA/PTP scores to members who don't have them
-      const membersWithScores = data.map(member => {
-        if (!member.era_current || !member.ptp_current) {
-          const era = Math.floor(Math.random() * 10) + 1; // 1-10
-          const ptp = Math.floor(Math.random() * 100); // 0-100
-          
-          let eraLabel = 'Dormant';
-          if (era > 3 && era <= 6) eraLabel = 'Engaged';
-          else if (era > 6 && era <= 8) eraLabel = 'Tribe';
-          else if (era > 8) eraLabel = 'Integrated';
-          
-          let ptpStatus = 'Cold';
-          if (ptp >= 40 && ptp < 70) ptpStatus = 'Warm';
-          else if (ptp >= 70) ptpStatus = 'Hot';
-          
-          return {
-            ...member,
-            era_current: era,
-            ptp_current: ptp,
-            era_label: eraLabel,
-            ptp_status: ptpStatus
-          };
-        }
-        return member;
-      });
-      
-      setMembers(membersWithScores as Member[]);
-    } else {
-      // Use mock data when no database members exist with demo scores
-      const mockWithScores = mockMembers.map(member => {
-        const era = Math.floor(Math.random() * 10) + 1;
-        const ptp = Math.floor(Math.random() * 100);
+    // Always combine real members with demo profiles
+    const realMembers = data || [];
+    
+    // Add demo ERA/PTP scores to real members who don't have them
+    const realMembersWithScores = realMembers.map(member => {
+      if (!member.era_current || !member.ptp_current) {
+        const era = Math.floor(Math.random() * 10) + 1; // 1-10
+        const ptp = Math.floor(Math.random() * 100); // 0-100
         
         let eraLabel = 'Dormant';
         if (era > 3 && era <= 6) eraLabel = 'Engaged';
@@ -202,10 +177,35 @@ export default function AdminDashboard() {
           era_label: eraLabel,
           ptp_status: ptpStatus
         };
-      });
+      }
+      return member;
+    });
+    
+    // Add demo scores to mock members
+    const mockWithScores = mockMembers.map(member => {
+      const era = Math.floor(Math.random() * 10) + 1;
+      const ptp = Math.floor(Math.random() * 100);
       
-      setMembers(mockWithScores);
-    }
+      let eraLabel = 'Dormant';
+      if (era > 3 && era <= 6) eraLabel = 'Engaged';
+      else if (era > 6 && era <= 8) eraLabel = 'Tribe';
+      else if (era > 8) eraLabel = 'Integrated';
+      
+      let ptpStatus = 'Cold';
+      if (ptp >= 40 && ptp < 70) ptpStatus = 'Warm';
+      else if (ptp >= 70) ptpStatus = 'Hot';
+      
+      return {
+        ...member,
+        era_current: era,
+        ptp_current: ptp,
+        era_label: eraLabel,
+        ptp_status: ptpStatus
+      };
+    });
+    
+    // Always combine real members with demo members
+    setMembers([...realMembersWithScores, ...mockWithScores] as Member[]);
   };
 
   const loadTierCounts = async () => {
