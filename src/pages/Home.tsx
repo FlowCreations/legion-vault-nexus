@@ -21,7 +21,11 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen animate-fade-in"
+      style={{ 
+        animation: "fade-in 1.5s ease-out forwards"
+      }}
+    >
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Animated background glow */}

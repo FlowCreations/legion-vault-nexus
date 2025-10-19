@@ -218,7 +218,7 @@ export default {
           "100%": {
             transform: "scale(1) translateZ(0)",
             opacity: "1",
-            filter: "blur(0) drop-shadow(0 0 120px rgba(247, 201, 70, 1)) drop-shadow(0 0 60px rgba(247, 201, 70, 1))"
+            filter: "drop-shadow(0 0 50px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.8))"
           }
         },
         "logo-glow": {

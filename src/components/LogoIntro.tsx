@@ -111,10 +111,10 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       {/* Logo with continuous glowing animation */}
       {(phase === "reveal" || phase === "glow" || phase === "fadeout") && (
         <div 
-          className={
+          className={`transition-all duration-1000 ease-out ${
             phase === "reveal" ? "animate-logo-push-reveal" : 
             phase === "glow" ? "animate-logo-continuous-glow" : ""
-          }
+          }`}
           style={{
             filter: "drop-shadow(0 0 50px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.8))"
           }}
