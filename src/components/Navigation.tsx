@@ -20,6 +20,7 @@ const navItems = [
 export const Navigation = () => {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     checkAdminStatus();
@@ -35,8 +36,11 @@ export const Navigation = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setIsAdmin(false);
+      setIsLoggedIn(false);
       return;
     }
+
+    setIsLoggedIn(true);
 
     const { data: roles } = await supabase
       .from("user_roles")
@@ -95,10 +99,18 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Search and Cart */}
+          {/* Search, Cart, and Auth */}
           <div className="hidden md:flex items-center gap-3">
             <GlobalSearch />
             <CartDrawer />
+            {!isLoggedIn && (
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -135,6 +147,13 @@ export const Navigation = () => {
             
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
               <CartDrawer />
+              {!isLoggedIn && (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    <LogIn className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
