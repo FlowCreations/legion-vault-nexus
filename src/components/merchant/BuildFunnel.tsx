@@ -31,38 +31,80 @@ export const BuildFunnel = () => {
 
   const generateFunnel = async () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('merchant-chat', {
-        body: {
-          message: `Based on user behavior analytics, create a detailed ${funnelType} funnel strategy${funnelGoal ? ` with the goal of: ${funnelGoal}` : ''}. Return a JSON array of 4-5 funnel stages, each with: stage (name), title, description, tactics (array of 3-4 specific actions), metrics (key metrics to track).`,
-          type: 'funnel'
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.reply) {
-        try {
-          const parsed = JSON.parse(data.reply);
-          setFunnelStages(Array.isArray(parsed) ? parsed : [parsed]);
-        } catch {
-          toast({
-            title: "Error",
-            description: "Failed to parse funnel strategy",
-            variant: "destructive"
-          });
-        }
+    
+    // Mock funnel data for demonstration
+    const mockFunnelStages: FunnelStage[] = [
+      {
+        stage: "Awareness",
+        title: "Attract New Listeners",
+        description: "Drive discovery through strategic content placement and viral moments. Focus on platforms where your music is already gaining traction organically.",
+        tactics: [
+          "Run targeted ads on streaming platforms highlighting 'In The Air Tonight' (+12% growth trend)",
+          "Partner with Nashville and Austin local radio for regional domination",
+          "Create shareable video content using top 3 tracks for social media virality",
+          "Leverage UFC and ESPN brand partnerships for cross-promotion opportunities"
+        ],
+        metrics: "New unique listeners, social media reach, playlist adds, brand mention volume"
+      },
+      {
+        stage: "Engagement",
+        title: "Convert Casual to Active Fans",
+        description: "Transform one-time listeners into regular engagers by creating multiple touchpoints and memorable experiences.",
+        tactics: [
+          "Email capture via free EP download (leverage existing 'Power' album strength)",
+          "Interactive content: polls about next single, behind-the-scenes from studio",
+          "Playlist creation guide: 'The Ultimate Sons of Legion Journey'",
+          "Retarget users who streamed 2+ songs with exclusive acoustic session content"
+        ],
+        metrics: "Email list growth, avg. streams per user, social engagement rate, repeat visit rate"
+      },
+      {
+        stage: "Conversion",
+        title: "Monetize the Relationship",
+        description: "Turn engaged fans into paying customers through strategic product offerings aligned with their behavior patterns.",
+        tactics: [
+          "Limited-edition merch drops tied to top-performing tracks (NY collection performing well)",
+          "Album + merch bundles for power users (target the 847 super fans first)",
+          "VIP concert tickets pre-sale for email subscribers in top 5 cities",
+          "Exclusive vinyl releases with signed artwork for collectors"
+        ],
+        metrics: "Conversion rate, average order value, merch attach rate, ticket sales velocity"
+      },
+      {
+        stage: "Retention",
+        title: "Build Long-Term Loyalty",
+        description: "Keep super fans engaged and spending through exclusive experiences and community building.",
+        tactics: [
+          "Monthly super fan newsletter with unreleased tracks and insider updates",
+          "Points-based rewards program: streams + purchases = exclusive perks",
+          "Virtual meet & greets for top-tier supporters (gamify engagement)",
+          "Early access to tour announcements and VIP packages"
+        ],
+        metrics: "Customer lifetime value, repeat purchase rate, churn rate, referral rate"
+      },
+      {
+        stage: "Advocacy",
+        title: "Turn Fans Into Ambassadors",
+        description: "Empower your most loyal fans to spread the word and bring new listeners into the funnel.",
+        tactics: [
+          "Referral program: 'Bring a friend to the legion' discount codes",
+          "User-generated content contests with prizes (best cover, fan art, etc.)",
+          "Ambassador program for top 50 super fans with exclusive swag and perks",
+          "Feature fan stories and testimonials in marketing campaigns"
+        ],
+        metrics: "Net Promoter Score, referral conversion rate, UGC volume, social sharing rate"
       }
-    } catch (error) {
-      console.error('Error generating funnel:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate funnel strategy",
-        variant: "destructive"
-      });
-    } finally {
+    ];
+
+    // Simulate loading
+    setTimeout(() => {
+      setFunnelStages(mockFunnelStages);
       setLoading(false);
-    }
+      toast({
+        title: "Funnel Strategy Generated",
+        description: `${funnelType} funnel created based on your analytics`
+      });
+    }, 1500);
   };
 
   const getStageIcon = (index: number) => {

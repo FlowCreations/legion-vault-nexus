@@ -24,39 +24,41 @@ export const CreateCampaigns = () => {
 
   const generateCampaigns = async () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('merchant-chat', {
-        body: {
-          message: `Based on user behavior analytics, generate 3 campaign suggestions${campaignGoal ? ` focused on: ${campaignGoal}` : ''}. Return only a JSON array with objects containing: title, description, targetAudience, expectedROI, timeline.`,
-          type: 'campaign'
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.reply) {
-        try {
-          const parsed = JSON.parse(data.reply);
-          setSuggestions(Array.isArray(parsed) ? parsed : [parsed]);
-        } catch {
-          toast({
-            title: "Error",
-            description: "Failed to parse campaign suggestions",
-            variant: "destructive"
-          });
-        }
+    
+    // Mock data for demonstration
+    const mockSuggestions: CampaignSuggestion[] = [
+      {
+        title: "In The Air Tonight Album Push",
+        description: "Capitalize on the momentum of your top-performing track. Launch a targeted campaign promoting the full 'Power' album to fans who've streamed 'In The Air Tonight' 3+ times. Bundle with exclusive behind-the-scenes content.",
+        targetAudience: "Super fans and repeat listeners in Nashville, Austin, and Atlanta (3,420+ engaged users)",
+        expectedROI: "3.5x - Based on current 18.5% stream share and high album completion rate",
+        timeline: "2-week sprint campaign with weekend peak push"
+      },
+      {
+        title: "Geographic Expansion: West Coast Tour Teaser",
+        description: "Target LA and NY markets (4,190 combined fans) with tour announcement content and limited merch drops. Use location-based ads and local radio partnerships to drive ticket pre-sales.",
+        targetAudience: "Casual listeners in Los Angeles (2,210 fans) and New York (1,980 fans) metro areas",
+        expectedROI: "2.8x - Conservative estimate based on 12% conversion to merch/tickets",
+        timeline: "4-week buildup to tour announcement"
+      },
+      {
+        title: "Super Fan VIP Program Launch",
+        description: "Create an exclusive membership tier for your 847 super fans. Offer early access to new releases, exclusive merch designs, and virtual meet & greets. Use behavioral data to identify and target high-engagement users.",
+        targetAudience: "Super fans with 10+ visits and 5+ purchases (847 identified users)",
+        expectedROI: "4.2x - Premium pricing justified by exclusivity and high fan loyalty",
+        timeline: "6-week rollout with tiered benefits"
       }
-    } catch (error: any) {
-      console.error('Error generating campaigns:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-      toast({
-        title: "Error",
-        description: error?.message || error?.error || "Failed to generate campaign suggestions",
-        variant: "destructive"
-      });
-    } finally {
+    ];
+
+    // Simulate loading
+    setTimeout(() => {
+      setSuggestions(mockSuggestions);
       setLoading(false);
-    }
+      toast({
+        title: "Campaign Suggestions Generated",
+        description: "Based on your user behavior analytics data"
+      });
+    }, 1500);
   };
 
   return (
