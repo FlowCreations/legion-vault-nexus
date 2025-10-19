@@ -13,15 +13,28 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     const audio = new Audio('/intro-audio.wav');
     audio.volume = 0.7;
     
+    let audioCompleted = false;
+    
     // When audio ends, complete the intro
     audio.addEventListener('ended', () => {
+      audioCompleted = true;
       onComplete();
     });
+    
+    // Fallback: Complete after max duration even if audio doesn't play/end
+    const maxDurationTimer = setTimeout(() => {
+      if (!audioCompleted) {
+        onComplete();
+      }
+    }, 8000); // 8 seconds fallback
     
     // Cinematic timing sequence
     const blackTimer = setTimeout(() => {
       setPhase("beams");
-      audio.play().catch(err => console.log('Audio play failed:', err));
+      audio.play().catch(err => {
+        console.log('Audio autoplay blocked, continuing silently:', err);
+        // If audio is blocked, still continue the animation
+      });
     }, 500);
     
     const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
@@ -33,6 +46,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       clearTimeout(beamsTimer);
       clearTimeout(revealTimer);
       clearTimeout(pulseTimer);
+      clearTimeout(maxDurationTimer);
       audio.pause();
       audio.removeEventListener('ended', onComplete);
     };
