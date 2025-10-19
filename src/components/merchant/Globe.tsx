@@ -1,3 +1,4 @@
+// Globe component with interactive city markers
 import React, { useEffect, useRef, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
