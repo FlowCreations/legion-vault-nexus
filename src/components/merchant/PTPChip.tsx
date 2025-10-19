@@ -10,16 +10,16 @@ interface PTPChipProps {
 
 export const PTPChip = ({ ptp, status, delta }: PTPChipProps) => {
   const getColor = () => {
-    if (status === 'Cold') return "bg-red-500/20 text-red-400 border-red-500/50";
-    if (status === 'Warm') return "bg-yellow-500/20 text-yellow-400 border-yellow-500/50";
-    return "bg-green-500/20 text-green-400 border-green-500/50 animate-pulse";
+    if (status === 'Cold') return "bg-red-600 border-red-400";
+    if (status === 'Warm') return "bg-yellow-400 border-yellow-300";
+    return "bg-green-400 border-green-300 animate-pulse";
   };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Badge className={`${getColor()} font-semibold px-3 py-1 border w-3 h-3 rounded-full p-0`} />
+          <Badge className={`${getColor()} font-semibold border-2 w-5 h-5 rounded-full p-0`} />
         </TooltipTrigger>
         <TooltipContent>
           <p className="max-w-xs text-sm">
