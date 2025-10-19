@@ -618,10 +618,12 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          birthdate: string | null
           created_at: string | null
           display_name: string | null
           era_current: number | null
           era_label: string | null
+          gender: string | null
           id: string
           intro_answers: Json | null
           last_login: string | null
@@ -631,6 +633,7 @@ export type Database = {
           products_purchased: string[] | null
           ptp_current: number | null
           ptp_status: string | null
+          real_name: string | null
           tier: string | null
           total_spend: number | null
           updated_at: string | null
@@ -640,10 +643,12 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          birthdate?: string | null
           created_at?: string | null
           display_name?: string | null
           era_current?: number | null
           era_label?: string | null
+          gender?: string | null
           id?: string
           intro_answers?: Json | null
           last_login?: string | null
@@ -653,6 +658,7 @@ export type Database = {
           products_purchased?: string[] | null
           ptp_current?: number | null
           ptp_status?: string | null
+          real_name?: string | null
           tier?: string | null
           total_spend?: number | null
           updated_at?: string | null
@@ -662,10 +668,12 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          birthdate?: string | null
           created_at?: string | null
           display_name?: string | null
           era_current?: number | null
           era_label?: string | null
+          gender?: string | null
           id?: string
           intro_answers?: Json | null
           last_login?: string | null
@@ -675,6 +683,7 @@ export type Database = {
           products_purchased?: string[] | null
           ptp_current?: number | null
           ptp_status?: string | null
+          real_name?: string | null
           tier?: string | null
           total_spend?: number | null
           updated_at?: string | null
