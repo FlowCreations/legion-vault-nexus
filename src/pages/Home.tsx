@@ -1,9 +1,32 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles } from "lucide-react";
 import solLogo from "@/assets/sol-logo-new.png";
+import LogoIntro from "@/components/LogoIntro";
 
 export default function Home() {
+  const [showIntro, setShowIntro] = useState(true);
+  const [introSeen, setIntroSeen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
+    if (hasSeenIntro) {
+      setShowIntro(false);
+      setIntroSeen(true);
+    }
+  }, []);
+
+  const handleIntroComplete = () => {
+    sessionStorage.setItem("hasSeenIntro", "true");
+    setShowIntro(false);
+    setIntroSeen(true);
+  };
+
+  if (showIntro && !introSeen) {
+    return <LogoIntro onComplete={handleIntroComplete} />;
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}

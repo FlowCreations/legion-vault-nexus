@@ -122,6 +122,59 @@ export default {
             filter: "blur(0px)",
           },
         },
+        "beam-1": {
+          "0%": { transform: "translateX(-100%)", opacity: "0" },
+          "50%": { opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" }
+        },
+        "beam-2": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "50%": { opacity: "0.8" },
+          "100%": { transform: "translateX(-100%)", opacity: "0" }
+        },
+        "beam-3": {
+          "0%": { transform: "translateX(-100%) scaleX(0.5)", opacity: "0" },
+          "50%": { opacity: "1" },
+          "100%": { transform: "translateX(100%) scaleX(1)", opacity: "0" }
+        },
+        "beam-4": {
+          "0%": { transform: "translateX(-120%) rotate(-15deg)", opacity: "0" },
+          "40%": { opacity: "0.6" },
+          "100%": { transform: "translateX(120%) rotate(-15deg)", opacity: "0" }
+        },
+        "beam-5": {
+          "0%": { transform: "translateX(120%) rotate(15deg)", opacity: "0" },
+          "40%": { opacity: "0.7" },
+          "100%": { transform: "translateX(-120%) rotate(15deg)", opacity: "0" }
+        },
+        "beam-converge": {
+          "0%": { transform: "scaleX(0)", opacity: "0" },
+          "60%": { opacity: "1" },
+          "100%": { transform: "scaleX(1)", opacity: "0" }
+        },
+        "logo-reveal": {
+          "0%": {
+            transform: "scale(0.3) translateZ(200px)",
+            opacity: "0",
+            filter: "blur(10px)"
+          },
+          "100%": {
+            transform: "scale(1) translateZ(0)",
+            opacity: "1",
+            filter: "blur(0) drop-shadow(0 0 120px rgba(247, 201, 70, 0.9))"
+          }
+        },
+        "logo-glow": {
+          "0%": {
+            filter: "drop-shadow(0 0 120px rgba(247, 201, 70, 0.9))"
+          },
+          "50%": {
+            filter: "drop-shadow(0 0 160px rgba(247, 201, 70, 1)) drop-shadow(0 0 80px rgba(247, 201, 70, 1))"
+          },
+          "100%": {
+            filter: "drop-shadow(0 0 80px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 40px rgba(247, 201, 70, 0.8))"
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -132,6 +185,14 @@ export default {
         "shimmer": "shimmer 3s linear infinite",
         "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
         "logo-dramatic": "logo-dramatic 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "beam-1": "beam-1 1.5s ease-out forwards",
+        "beam-2": "beam-2 1.5s ease-out 0.1s forwards",
+        "beam-3": "beam-3 1.5s ease-out 0.2s forwards",
+        "beam-4": "beam-4 1.5s ease-out 0.15s forwards",
+        "beam-5": "beam-5 1.5s ease-out 0.25s forwards",
+        "beam-converge": "beam-converge 1.5s ease-in-out 0.5s forwards",
+        "logo-reveal": "logo-reveal 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "logo-glow": "logo-glow 1.5s ease-in-out forwards",
       },
     },
   },
