@@ -17,11 +17,11 @@ export default function Home() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Logo with dramatic entrance animation */}
-          <div className="mb-3 mt-72 animate-logo-dramatic">
+          <div className="mb-3 mt-64 animate-logo-dramatic">
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
-              className="h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[28rem] w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
+              className="h-[18.5rem] sm:h-[20.5rem] md:h-[23rem] lg:h-[27.5rem] xl:h-[32rem] w-auto mx-auto object-contain drop-shadow-[0_0_30px_rgba(247,201,70,0.5)]"
             />
           </div>
 
