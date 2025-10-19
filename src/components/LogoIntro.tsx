@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import solLogo from "@/assets/sol-logo-new.png";
+import introAudio from "@/assets/intro-audio.wav";
 
 interface LogoIntroProps {
   onComplete: () => void;
@@ -10,59 +11,18 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Create audio context for sound effects
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    // Play audio
+    const audio = new Audio(introAudio);
+    audio.volume = 0.7;
     
-    // Deep cinematic rumble
-    const createRumble = () => {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(40, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 2);
-      
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.5);
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 3);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 3);
-    };
-
-    // Bright impact sound for logo reveal
-    const createImpact = () => {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
-      
-      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-    };
-
     // Cinematic timing sequence
     const blackTimer = setTimeout(() => {
       setPhase("beams");
-      createRumble();
+      audio.play().catch(err => console.log('Audio play failed:', err));
     }, 500);
     
     const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
-    const revealTimer = setTimeout(() => {
-      setPhase("pulse");
-      createImpact();
-    }, 3200);
+    const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
     const pulseTimer = setTimeout(() => setPhase("still"), 4000);
     const completeTimer = setTimeout(() => onComplete(), 5500);
 
@@ -72,7 +32,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       clearTimeout(revealTimer);
       clearTimeout(pulseTimer);
       clearTimeout(completeTimer);
-      audioContext.close();
+      audio.pause();
     };
   }, [onComplete]);
 
