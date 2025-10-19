@@ -14,9 +14,10 @@ interface CityData {
 
 interface InteractiveMapProps {
   cities: CityData[];
+  viewType: "america" | "world";
 }
 
-export const InteractiveMap = ({ cities }: InteractiveMapProps) => {
+export const InteractiveMap = ({ cities, viewType }: InteractiveMapProps) => {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -55,10 +56,17 @@ export const InteractiveMap = ({ cities }: InteractiveMapProps) => {
 
   // Convert lat/lng to SVG coordinates
   const latLngToXY = (lat: number, lng: number) => {
-    // Simple mercator-like projection for US map
-    const x = ((lng + 125) / 60) * 800;
-    const y = ((50 - lat) / 25) * 400;
-    return { x, y };
+    if (viewType === "america") {
+      // US Map projection
+      const x = ((lng + 125) / 60) * 800;
+      const y = ((50 - lat) / 25) * 400;
+      return { x, y };
+    } else {
+      // World map projection (simple mercator)
+      const x = ((lng + 180) / 360) * 800;
+      const y = ((90 - lat) / 180) * 400;
+      return { x, y };
+    }
   };
 
   return (
@@ -109,13 +117,26 @@ export const InteractiveMap = ({ cities }: InteractiveMapProps) => {
             transition: isDragging ? 'none' : 'transform 0.3s ease',
           }}
         >
-          {/* US Map Outline */}
-          <path
-            d="M100,200 L120,190 L140,195 L160,185 L180,190 L200,180 L220,185 L240,175 L260,180 L280,170 L300,175 L320,165 L340,170 L360,160 L380,165 L400,155 L420,160 L440,150 L460,155 L480,145 L500,150 L520,155 L540,150 L560,155 L580,160 L600,165 L620,170 L640,175 L660,180 L680,185 L700,190 L700,210 L680,215 L660,220 L640,225 L620,230 L600,235 L580,240 L560,245 L540,250 L520,255 L500,260 L480,265 L460,270 L440,275 L420,280 L400,285 L380,290 L360,295 L340,300 L320,305 L300,310 L280,315 L260,320 L240,315 L220,310 L200,305 L180,300 L160,295 L140,290 L120,285 L100,280 Z"
-            fill="rgba(59, 130, 246, 0.1)"
-            stroke="rgba(59, 130, 246, 0.5)"
-            strokeWidth="2"
-          />
+          {viewType === "america" ? (
+            // US Map Outline
+            <path
+              d="M100,200 L120,190 L140,195 L160,185 L180,190 L200,180 L220,185 L240,175 L260,180 L280,170 L300,175 L320,165 L340,170 L360,160 L380,165 L400,155 L420,160 L440,150 L460,155 L480,145 L500,150 L520,155 L540,150 L560,155 L580,160 L600,165 L620,170 L640,175 L660,180 L680,185 L700,190 L700,210 L680,215 L660,220 L640,225 L620,230 L600,235 L580,240 L560,245 L540,250 L520,255 L500,260 L480,265 L460,270 L440,275 L420,280 L400,285 L380,290 L360,295 L340,300 L320,305 L300,310 L280,315 L260,320 L240,315 L220,310 L200,305 L180,300 L160,295 L140,290 L120,285 L100,280 Z"
+              fill="rgba(59, 130, 246, 0.1)"
+              stroke="rgba(59, 130, 246, 0.5)"
+              strokeWidth="2"
+            />
+          ) : (
+            // World Map Outline
+            <rect
+              x="0"
+              y="0"
+              width="800"
+              height="400"
+              fill="rgba(59, 130, 246, 0.05)"
+              stroke="rgba(59, 130, 246, 0.3)"
+              strokeWidth="2"
+            />
+          )}
 
           {/* City Markers */}
           {cities.map((city) => {

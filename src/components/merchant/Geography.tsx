@@ -17,7 +17,7 @@ export const Geography = () => {
   const [activeTab, setActiveTab] = useState<"america" | "world">("america");
   const [timeFilter, setTimeFilter] = useState<"7days" | "28days" | "alltime">("7days");
 
-  const cities: CityData[] = [
+  const citiesAmerica: CityData[] = [
     { rank: 1, city: "Nashville", state: "TN", streams: 125000, fans: 3420, lat: 36.1627, lng: -86.7816 },
     { rank: 2, city: "Austin", state: "TX", streams: 98000, fans: 2890, lat: 30.2672, lng: -97.7431 },
     { rank: 3, city: "Atlanta", state: "GA", streams: 87000, fans: 2560, lat: 33.7490, lng: -84.3880 },
@@ -27,6 +27,19 @@ export const Geography = () => {
     { rank: 7, city: "Dallas", state: "TX", streams: 48000, fans: 1620, lat: 32.7767, lng: -96.7970 },
     { rank: 8, city: "Denver", state: "CO", streams: 42000, fans: 1450, lat: 39.7392, lng: -104.9903 },
   ];
+
+  const citiesWorld: CityData[] = [
+    { rank: 1, city: "London", streams: 145000, fans: 4120, lat: 51.5074, lng: -0.1278 },
+    { rank: 2, city: "Tokyo", streams: 132000, fans: 3890, lat: 35.6762, lng: 139.6503 },
+    { rank: 3, city: "Sydney", streams: 98000, fans: 2890, lat: -33.8688, lng: 151.2093 },
+    { rank: 4, city: "Toronto", streams: 87000, fans: 2560, lat: 43.6532, lng: -79.3832 },
+    { rank: 5, city: "Berlin", streams: 76000, fans: 2340, lat: 52.5200, lng: 13.4050 },
+    { rank: 6, city: "Paris", streams: 65000, fans: 2110, lat: 48.8566, lng: 2.3522 },
+    { rank: 7, city: "São Paulo", streams: 54000, fans: 1890, lat: -23.5505, lng: -46.6333 },
+    { rank: 8, city: "Seoul", streams: 48000, fans: 1670, lat: 37.5665, lng: 126.9780 },
+  ];
+
+  const cities = activeTab === "america" ? citiesAmerica : citiesWorld;
 
   return (
     <div className="space-y-6">
@@ -100,7 +113,7 @@ export const Geography = () => {
             </div>
           </div>
         }>
-          <InteractiveMap cities={cities} />
+          <InteractiveMap cities={cities} viewType={activeTab} key={activeTab} />
         </Suspense>
 
         {/* Cities list */}
