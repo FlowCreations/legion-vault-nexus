@@ -40,6 +40,26 @@ export default function Videos() {
   useEffect(() => {
     checkAuth();
     loadVideos();
+
+    // Set up realtime subscription to reload videos when they're updated
+    const channel = supabase
+      .channel('videos-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'videos'
+        },
+        () => {
+          loadVideos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const checkAuth = async () => {
