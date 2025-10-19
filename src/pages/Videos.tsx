@@ -51,7 +51,9 @@ export default function Videos() {
           schema: 'public',
           table: 'videos'
         },
-        () => {
+        (payload) => {
+          console.log('Video change detected:', payload);
+          // Reload videos whenever any change happens
           loadVideos();
         }
       )
@@ -68,8 +70,10 @@ export default function Videos() {
   };
 
   const loadVideos = async () => {
+    console.log('Loading videos...');
+    
     // Load hero video
-    const { data: heroData } = await supabase
+    const { data: heroData, error: heroError } = await supabase
       .from('videos')
       .select('storage_path')
       .eq('category', 'hero')
@@ -77,7 +81,9 @@ export default function Videos() {
       .limit(1)
       .single();
 
-    if (heroData) {
+    if (heroError) {
+      console.error('Error loading hero video:', heroError);
+    } else if (heroData) {
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(heroData.storage_path);
@@ -85,13 +91,20 @@ export default function Videos() {
     }
 
     // Load all other videos (excluding hero)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('videos')
       .select('id, title, description, category, thumbnail_url, is_premium')
       .neq('category', 'hero')
       .order('created_at', { ascending: false });
 
+    if (error) {
+      console.error('Error loading videos:', error);
+      return;
+    }
+
     if (data) {
+      console.log('Loaded videos:', data);
+      
       setMusicVideos(data.filter(v => v.category === 'music_videos').map(v => ({
         id: v.id,
         title: v.title,
