@@ -6,6 +6,7 @@ import { PurchaseModal } from "@/components/PurchaseModal";
 import { usePurchases } from "@/hooks/usePurchases";
 import { StripeCheckout } from "@/components/StripeCheckout";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -31,6 +32,7 @@ export default function Music() {
   const { isPurchased, purchaseAlbum } = usePurchases();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const { toast } = useToast();
 
   const handleShuffle = () => {
     const allTracks = [...topTracks, ...albums.filter(a => a.url)];
@@ -49,15 +51,28 @@ export default function Music() {
     };
 
     try {
-      if (navigator.share) {
+      if (navigator.share && navigator.canShare?.(shareData)) {
         await navigator.share(shareData);
+        toast({ title: "Shared successfully!" });
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
+        toast({ title: "Link copied to clipboard!" });
       }
-    } catch (err) {
-      console.error('Error sharing:', err);
+    } catch (err: any) {
+      // If user cancels or share fails, try clipboard fallback
+      if (err.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          toast({ title: "Link copied to clipboard!" });
+        } catch (clipboardErr) {
+          toast({ 
+            title: "Unable to share", 
+            description: "Please copy the link manually",
+            variant: "destructive" 
+          });
+        }
+      }
     }
   };
 
