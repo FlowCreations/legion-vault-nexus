@@ -10,14 +10,14 @@ export default function Home() {
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Animated background glow */}
         <div className="absolute inset-0 bg-gradient-cosmic">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-glow-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-glow/10 rounded-full blur-3xl animate-glow-pulse delay-1000" />
+          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-glow-pulse -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-primary-glow/10 rounded-full blur-3xl animate-glow-pulse delay-1000 -translate-y-1/2" />
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8 sm:pt-12">
-          {/* Logo as Header */}
-          <div className="mb-3 mt-12 animate-fade-in">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Logo with dramatic entrance animation */}
+          <div className="mb-3 animate-logo-dramatic">
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
