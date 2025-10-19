@@ -31,16 +31,16 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       audio.volume = 0.7;
       
       audio.addEventListener('ended', () => {
-        // Fade out before completing
+        // Start smooth fadeout
         setPhase("fadeout");
+        // Wait for full fade before completing
         setTimeout(() => {
           onComplete();
-        }, 1000);
+        }, 2000); // 2 second smooth fade
       });
       
       audio.play()
         .then(() => {
-          // Audio started successfully, start animation
           startAnimationSequence();
         })
         .catch(err => {
@@ -49,7 +49,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         });
     };
     
-    // Try to play immediately
     playAudio();
     
     return () => {
@@ -64,7 +63,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     if (showClickToStart) {
       setShowClickToStart(false);
       
-      // Create and play audio
       const audio = new Audio('/intro-audio.wav');
       audio.volume = 0.7;
       
@@ -72,10 +70,9 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         setPhase("fadeout");
         setTimeout(() => {
           onComplete();
-        }, 1000);
+        }, 2000);
       });
       
-      // Start animation sequence after click
       const blackTimer = setTimeout(() => setPhase("beams"), 500);
       const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
       const revealTimer = setTimeout(() => setPhase("glow"), 3200);
@@ -86,7 +83,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
 
   return (
     <div 
-      className={`fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden transition-opacity duration-1000 ${
+      className={`fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden transition-opacity duration-[2000ms] ease-out ${
         phase === "fadeout" ? "opacity-0" : "opacity-100"
       }`}
       onClick={handleClick}
