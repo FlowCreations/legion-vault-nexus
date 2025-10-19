@@ -12,23 +12,10 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
   useEffect(() => {
     let audio: HTMLAudioElement | null = null;
     let audioCompleted = false;
-    let timersStarted = false;
+    let cleanupFunctions: (() => void)[] = [];
     
-    const startIntro = () => {
-      if (timersStarted) return;
-      timersStarted = true;
-      
-      // Play audio from public folder
-      audio = new Audio('/intro-audio.wav');
-      audio.volume = 0.7;
-      
-      // When audio ends, complete the intro
-      audio.addEventListener('ended', () => {
-        audioCompleted = true;
-        onComplete();
-      });
-      
-      // Fallback: Complete after max duration even if audio doesn't play/end
+    const startAnimationSequence = () => {
+      // Fallback: Complete after max duration
       const maxDurationTimer = setTimeout(() => {
         if (!audioCompleted) {
           onComplete();
@@ -41,36 +28,73 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
       const pulseTimer = setTimeout(() => setPhase("still"), 4000);
       
-      // Play audio
-      audio.play().catch(err => {
-        console.log('Audio autoplay blocked:', err);
-        setShowClickToStart(true);
-      });
-      
-      return () => {
+      cleanupFunctions.push(() => {
         clearTimeout(blackTimer);
         clearTimeout(beamsTimer);
         clearTimeout(revealTimer);
         clearTimeout(pulseTimer);
         clearTimeout(maxDurationTimer);
-        if (audio) {
-          audio.pause();
-          audio.removeEventListener('ended', onComplete);
-        }
-      };
+      });
     };
     
-    // Try to start immediately
-    const cleanup = startIntro();
+    const playAudio = () => {
+      audio = new Audio('/intro-audio.wav');
+      audio.volume = 0.7;
+      
+      audio.addEventListener('ended', () => {
+        audioCompleted = true;
+        onComplete();
+      });
+      
+      audio.play()
+        .then(() => {
+          // Audio started successfully, start animation
+          startAnimationSequence();
+        })
+        .catch(err => {
+          console.log('Audio autoplay blocked:', err);
+          setShowClickToStart(true);
+        });
+    };
     
-    return cleanup;
+    // Try to play immediately
+    playAudio();
+    
+    return () => {
+      cleanupFunctions.forEach(fn => fn());
+      if (audio) {
+        audio.pause();
+        audio.removeEventListener('ended', onComplete);
+      }
+    };
   }, [onComplete]);
 
   const handleClick = () => {
     if (showClickToStart) {
       setShowClickToStart(false);
+      
+      // Create and play audio
       const audio = new Audio('/intro-audio.wav');
       audio.volume = 0.7;
+      
+      let audioCompleted = false;
+      audio.addEventListener('ended', () => {
+        audioCompleted = true;
+        onComplete();
+      });
+      
+      // Start animation sequence after click
+      const maxDurationTimer = setTimeout(() => {
+        if (!audioCompleted) {
+          onComplete();
+        }
+      }, 8000);
+      
+      const blackTimer = setTimeout(() => setPhase("beams"), 500);
+      const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
+      const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
+      const pulseTimer = setTimeout(() => setPhase("still"), 4000);
+      
       audio.play();
     }
   };
