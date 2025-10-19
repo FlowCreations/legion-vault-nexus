@@ -7,10 +7,18 @@ interface UserDemo {
   birthdate: string | null;
 }
 
+interface DemographicStats {
+  totalMembers: number;
+  maleCount: number;
+  femaleCount: number;
+  otherCount: number;
+}
+
 export const Demographics = () => {
   const [timeFilter, setTimeFilter] = useState<"7days" | "28days" | "alltime">("7days");
-  const [genderData, setGenderData] = useState<{ name: string; value: number; percentage: string }[]>([]);
+  const [genderData, setGenderData] = useState<{ name: string; value: number; percentage: string; count: number }[]>([]);
   const [ageData, setAgeData] = useState<any[]>([]);
+  const [stats, setStats] = useState<DemographicStats>({ totalMembers: 0, maleCount: 0, femaleCount: 0, otherCount: 0 });
 
   useEffect(() => {
     fetchDemographics();
@@ -41,8 +49,9 @@ export const Demographics = () => {
       .from('user_profiles')
       .select('gender, birthdate');
 
-    // Demo data for 355 members
-    const demoData = generateDemoData(355);
+    // Generate time-sensitive demo data
+    const demoCount = timeFilter === '7days' ? 85 : timeFilter === '28days' ? 245 : 355;
+    const demoData = generateDemoData(demoCount, timeFilter);
     
     // Merge real profiles with demo data
     const allProfiles = [...demoData, ...(profiles || [])];
@@ -63,25 +72,36 @@ export const Demographics = () => {
     });
 
     const total = allProfiles.length;
+    const notSpecifiedCount = genderCounts.prefer_not_to_say + genderCounts.other;
+    
     const genderChartData = [
       { 
         name: 'Male', 
         value: genderCounts.male,
+        count: genderCounts.male,
         percentage: `${Math.round((genderCounts.male / total) * 100)}%`
       },
       { 
         name: 'Female', 
         value: genderCounts.female,
+        count: genderCounts.female,
         percentage: `${Math.round((genderCounts.female / total) * 100)}%`
       },
       { 
         name: 'Not Specified', 
-        value: genderCounts.prefer_not_to_say + genderCounts.other,
-        percentage: `${Math.round(((genderCounts.prefer_not_to_say + genderCounts.other) / total) * 100)}%`
+        value: notSpecifiedCount,
+        count: notSpecifiedCount,
+        percentage: `${Math.round((notSpecifiedCount / total) * 100)}%`
       },
     ].filter(item => item.value > 0);
 
     setGenderData(genderChartData);
+    setStats({
+      totalMembers: total,
+      maleCount: genderCounts.male,
+      femaleCount: genderCounts.female,
+      otherCount: notSpecifiedCount
+    });
 
     // Calculate age distribution
     const ageGroups = {
@@ -117,13 +137,26 @@ export const Demographics = () => {
     setAgeData(ageChartData);
   };
 
-  const generateDemoData = (count: number): UserDemo[] => {
+  const generateDemoData = (count: number, timeFilter: string): UserDemo[] => {
     const demo: UserDemo[] = [];
     const currentYear = new Date().getFullYear();
     
-    // Distribution: 57% male, 43% female, <1% not specified
-    const maleCount = Math.round(count * 0.57);
-    const femaleCount = Math.round(count * 0.43);
+    // Different distributions for different time periods
+    let malePercentage = 0.57;
+    let femalePercentage = 0.43;
+    
+    if (timeFilter === '7days') {
+      // More female engagement in recent week
+      malePercentage = 0.48;
+      femalePercentage = 0.52;
+    } else if (timeFilter === '28days') {
+      // Balanced
+      malePercentage = 0.52;
+      femalePercentage = 0.48;
+    }
+    
+    const maleCount = Math.round(count * malePercentage);
+    const femaleCount = Math.round(count * femalePercentage);
     const otherCount = count - maleCount - femaleCount;
 
     // Age distribution similar to screenshot
@@ -227,20 +260,23 @@ export const Demographics = () => {
       <div className="grid md:grid-cols-2 gap-8">
         {/* Gender Distribution - Donut Chart */}
         <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-          <h3 className="text-xl font-bold mb-6">Gender Distribution</h3>
+          <div className="mb-4">
+            <h3 className="text-xl font-bold mb-2">Gender Distribution</h3>
+            <div className="flex items-center gap-4 text-sm text-gray-400">
+              <span>Total Members: <span className="font-bold text-white">{stats.totalMembers}</span></span>
+            </div>
+          </div>
           <div className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={genderData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={80}
-                  outerRadius={120}
+                  innerRadius={70}
+                  outerRadius={110}
                   paddingAngle={2}
                   dataKey="value"
-                  label={(entry) => `${entry.name}: ${entry.percentage}`}
-                  labelLine={false}
                 >
                   {genderData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={Object.values(COLORS)[index]} />
@@ -253,21 +289,28 @@ export const Demographics = () => {
                     borderRadius: '8px',
                     color: 'white'
                   }}
+                  formatter={(value: any, name: any, props: any) => [
+                    `${value} members (${props.payload.percentage})`,
+                    name
+                  ]}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-6 space-y-2">
+          <div className="mt-6 space-y-3">
             {genderData.map((item, index) => (
-              <div key={item.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div key={item.name} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <div className="flex items-center gap-3">
                   <div 
                     className="w-4 h-4 rounded" 
                     style={{ backgroundColor: Object.values(COLORS)[index] }}
                   />
-                  <span className="text-sm text-gray-300">{item.name}</span>
+                  <span className="font-medium">{item.name}</span>
                 </div>
-                <span className="text-sm font-semibold">{item.percentage}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-400">{item.count} members</span>
+                  <span className="font-bold text-lg">{item.percentage}</span>
+                </div>
               </div>
             ))}
           </div>
