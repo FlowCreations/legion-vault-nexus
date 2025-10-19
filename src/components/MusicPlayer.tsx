@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
@@ -17,7 +17,7 @@ interface MusicPlayerProps {
 
 export function MusicPlayer({ audioRef }: MusicPlayerProps) {
   const navigate = useNavigate();
-  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized, isMinimized } = useMusicPlayer();
+  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized, isMinimized, reset } = useMusicPlayer();
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
@@ -99,10 +99,23 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
   if (isMinimized) {
     return (
       <div 
-        className="fixed bottom-4 left-4 bg-graphite border border-border rounded-lg shadow-lg z-40 cursor-pointer hover:shadow-glow transition-all"
-        onClick={() => setMinimized(false)}
+        className="fixed bottom-4 left-4 bg-graphite border border-border rounded-lg shadow-lg z-40 hover:shadow-glow transition-all"
       >
-        <div className="flex items-center gap-3 px-4 py-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            reset();
+          }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+        <div 
+          className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+          onClick={() => setMinimized(false)}
+        >
           <div className="w-10 h-10 rounded overflow-hidden bg-card flex-shrink-0">
             {currentTrack.image ? (
               <img 
