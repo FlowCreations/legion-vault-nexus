@@ -47,42 +47,48 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
         </div>
 
         <div className="space-y-3 overflow-y-auto flex-1">
-          {users.map((user) => (
-            <button
-              key={user.user_id}
-              onClick={() => handleUserClick(user.user_id)}
-              className="w-full flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500 transition-all group"
-            >
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 group-hover:border-blue-500 transition-all flex-shrink-0">
-                {user.avatar_url ? (
-                  <img 
-                    src={user.avatar_url} 
-                    alt={user.display_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
-                    {user.display_name?.charAt(0) || '?'}
+          {users.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              No community members found in this location yet.
+            </div>
+          ) : (
+            users.map((user) => (
+              <button
+                key={user.user_id}
+                onClick={() => handleUserClick(user.user_id)}
+                className="w-full flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500 transition-all group"
+              >
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 group-hover:border-blue-500 transition-all flex-shrink-0">
+                  {user.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt={user.display_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
+                      {user.display_name?.charAt(0) || '?'}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex-1 text-left">
+                  <div className="font-semibold text-lg text-white group-hover:text-blue-400 transition-colors">
+                    {user.display_name || 'Unknown User'}
                   </div>
-                )}
-              </div>
-              
-              <div className="flex-1 text-left">
-                <div className="font-semibold text-lg text-white group-hover:text-blue-400 transition-colors">
-                  {user.display_name || 'Unknown User'}
+                  <div className="text-sm text-gray-400">
+                    {user.location}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-400">
-                  {user.location}
-                </div>
-              </div>
 
-              <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-          ))}
+                <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </div>
     </div>

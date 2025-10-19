@@ -160,30 +160,42 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
           dot.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3)';
         });
         
-        dot.addEventListener('click', async () => {
+        dot.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          
           // Stop globe spinning
           setIsPaused(true);
           spinEnabledRef.current = false;
           
+          console.log('=== CLICK DEBUG ===');
           console.log('City clicked:', city.city);
-          console.log('All user profiles:', userProfiles);
+          console.log('Total user profiles loaded:', userProfiles.length);
+          console.log('User profiles:', userProfiles);
           
           // Get users for this location - check both exact match and partial match
           const cityUsers = userProfiles.filter(u => {
             const userLocation = u.location?.toLowerCase().trim();
             const cityName = city.city.toLowerCase().trim();
-            return userLocation === cityName || userLocation?.includes(cityName) || cityName?.includes(userLocation);
+            const match = userLocation === cityName || userLocation?.includes(cityName) || cityName?.includes(userLocation);
+            console.log(`Checking ${u.display_name} (${userLocation}) against ${cityName}: ${match}`);
+            return match;
           });
           
           console.log('Matched users for', city.city, ':', cityUsers);
           
           if (cityUsers.length > 0) {
+            console.log('Setting selected city with users:', cityUsers);
             setSelectedCity({
               users: cityUsers,
               cityName: `${city.city}${city.state ? ', ' + city.state : ''}`
             });
           } else {
             console.warn('No users found for city:', city.city);
+            // Show popup anyway with empty message
+            setSelectedCity({
+              users: [],
+              cityName: `${city.city}${city.state ? ', ' + city.state : ''}`
+            });
           }
         });
         
