@@ -626,9 +626,12 @@ export type Database = {
           gender: string | null
           id: string
           intro_answers: Json | null
+          is_public: boolean | null
           last_login: string | null
+          latitude: number | null
           listen_time: number | null
           location: string | null
+          longitude: number | null
           mrr: number | null
           products_purchased: string[] | null
           ptp_current: number | null
@@ -651,9 +654,12 @@ export type Database = {
           gender?: string | null
           id?: string
           intro_answers?: Json | null
+          is_public?: boolean | null
           last_login?: string | null
+          latitude?: number | null
           listen_time?: number | null
           location?: string | null
+          longitude?: number | null
           mrr?: number | null
           products_purchased?: string[] | null
           ptp_current?: number | null
@@ -676,9 +682,12 @@ export type Database = {
           gender?: string | null
           id?: string
           intro_answers?: Json | null
+          is_public?: boolean | null
           last_login?: string | null
+          latitude?: number | null
           listen_time?: number | null
           location?: string | null
+          longitude?: number | null
           mrr?: number | null
           products_purchased?: string[] | null
           ptp_current?: number | null
@@ -772,6 +781,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      update_user_coordinates: {
+        Args: { p_latitude: number; p_longitude: number; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
