@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense } from "react";
 import { MapPin } from "lucide-react";
 
-const InteractiveMap = lazy(() => import('./InteractiveMap').then(module => ({ default: module.InteractiveMap })));
+const Globe = lazy(() => import('./Globe'));
 
 interface CityData {
   rank: number;
@@ -104,16 +104,16 @@ export const Geography = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Interactive Map */}
+        {/* 3D Globe */}
         <Suspense fallback={
           <div className="rounded-lg border border-white/10 bg-white/5 min-h-[400px] flex items-center justify-center">
             <div className="text-center">
               <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-600 animate-pulse" />
-              <p className="text-gray-500">Loading map...</p>
+              <p className="text-gray-500">Loading 3D globe...</p>
             </div>
           </div>
         }>
-          <InteractiveMap cities={cities} viewType={activeTab} key={activeTab} />
+          <Globe cities={cities} key={activeTab} />
         </Suspense>
 
         {/* Cities list */}
