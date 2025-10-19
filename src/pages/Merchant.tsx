@@ -9,6 +9,7 @@ import { TopPlatforms } from "@/components/merchant/TopPlatforms";
 import { TopTracks } from "@/components/merchant/TopTracks";
 import { StreamsOverview } from "@/components/merchant/StreamsOverview";
 import { Geography } from "@/components/merchant/Geography";
+import { Demographics } from "@/components/merchant/Demographics";
 import { EarningsOverview } from "@/components/merchant/EarningsOverview";
 import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
@@ -168,6 +169,7 @@ const Merchant = () => {
               <div className="space-y-12">
                 <EarningsOverview />
                 <TopTracks period="7days" />
+                <Demographics />
                 <Geography />
               </div>
             </div>
