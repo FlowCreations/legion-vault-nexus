@@ -1035,6 +1035,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 7200000).toISOString(),
     created_at: new Date(Date.now() - 180 * 86400000).toISOString(),
+    birthdate: "1992-05-15",
+    gender: "female",
     patternIndex: 4,
   } as any,
   {
@@ -1057,6 +1059,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 86400000).toISOString(),
     created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
+    birthdate: "1988-11-22",
+    gender: "male",
     patternIndex: 9,
   } as any,
   {
@@ -1079,7 +1083,9 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 1800000).toISOString(),
     created_at: new Date(Date.now() - 365 * 86400000).toISOString(),
-    patternIndex: 0,
+    birthdate: "1995-03-08",
+    gender: "female",
+    patternIndex: 6,
   } as any,
   {
     id: "4",
