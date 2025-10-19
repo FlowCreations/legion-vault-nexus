@@ -14,6 +14,8 @@ export default function Home() {
 
   const handleIntroComplete = () => {
     setShowIntro(false);
+    // Scroll to top when homepage loads
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   if (showIntro) {
