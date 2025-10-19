@@ -10,13 +10,15 @@ interface CityData {
   fans: number;
   lat: number;
   lng: number;
+  userIds?: string[];
 }
 
 interface GlobeProps {
   cities: CityData[];
+  onCityClick?: (userIds?: string[]) => void;
 }
 
-const Globe: React.FC<GlobeProps> = ({ cities }) => {
+const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -128,10 +130,17 @@ const Globe: React.FC<GlobeProps> = ({ cities }) => {
         
         dot.addEventListener('mouseenter', () => {
           dot.style.boxShadow = '0 0 30px rgba(59, 130, 246, 1), inset 0 0 15px rgba(255, 255, 255, 0.5)';
+          dot.style.cursor = 'pointer';
         });
         
         dot.addEventListener('mouseleave', () => {
           dot.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3)';
+        });
+        
+        dot.addEventListener('click', () => {
+          if (onCityClick && city.userIds) {
+            onCityClick(city.userIds);
+          }
         });
         
         el.appendChild(pulseRing);
