@@ -39,8 +39,8 @@ export default function Home() {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Logo with dramatic entrance animation */}
-          <div className="mb-3 mt-64 animate-logo-dramatic">
+          {/* Logo */}
+          <div className="mb-3 mt-64">
             <img 
               src={solLogo} 
               alt="Sons of Legion" 
