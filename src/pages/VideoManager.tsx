@@ -300,6 +300,7 @@ export default function VideoManager() {
                     <SimpleThumbnailUploader
                       videoId={video.id}
                       videoTitle={video.title}
+                      onUploadComplete={loadVideos}
                     />
                     <Button
                       variant="destructive"

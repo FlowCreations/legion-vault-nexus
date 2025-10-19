@@ -7,11 +7,13 @@ import { setVideoThumbnail } from "@/utils/thumbnailHelper";
 interface SimpleThumbnailUploaderProps {
   videoId: string;
   videoTitle: string;
+  onUploadComplete?: () => void;
 }
 
 export function SimpleThumbnailUploader({ 
   videoId, 
-  videoTitle 
+  videoTitle,
+  onUploadComplete 
 }: SimpleThumbnailUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -39,7 +41,10 @@ export function SimpleThumbnailUploader({
         description: "Thumbnail uploaded successfully",
       });
 
-      setTimeout(() => window.location.reload(), 500);
+      // Call the callback to refresh the video list
+      if (onUploadComplete) {
+        onUploadComplete();
+      }
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -50,6 +55,8 @@ export function SimpleThumbnailUploader({
       });
     } finally {
       setUploading(false);
+      // Reset the file input
+      e.target.value = '';
     }
   };
 
