@@ -160,6 +160,9 @@ export default function Merch() {
     // Green bandana needs to be moved down slightly to center better
     if (upperTitle.includes('BANDANA - GREEN')) return 'translate-y-1';
     
+    // Prints/Posters need to be centered vertically
+    if (upperTitle.includes('POSTER') || upperTitle.includes('PRINT')) return 'translate-y-2';
+    
     return ''; // Default no translation
   };
 
