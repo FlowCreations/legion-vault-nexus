@@ -15,10 +15,10 @@ export const ERABadge = ({ era, label }: ERABadgeProps) => {
   };
 
   const getColor = () => {
-    if (era <= 3) return "bg-gray-500 text-white";
-    if (era <= 6) return "bg-steel-500 text-white";
-    if (era <= 8) return "bg-yellow-600 text-white border border-yellow-400";
-    return "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border border-yellow-400";
+    if (era <= 3) return "bg-yellow-500 text-white border-2 border-yellow-400";
+    if (era <= 6) return "bg-blue-500 text-white border-2 border-blue-400";
+    if (era <= 8) return "bg-yellow-600 text-white border-2 border-yellow-500";
+    return "bg-blue-600 text-white border-2 border-blue-500";
   };
 
   return (
