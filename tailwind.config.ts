@@ -245,22 +245,26 @@ export default {
         },
         "logo-continuous-glow": {
           "0%, 100%": { 
-            filter: "drop-shadow(0 0 50px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.8))",
+            filter: "drop-shadow(0 0 40px rgba(247, 201, 70, 0.5)) drop-shadow(0 0 20px rgba(247, 201, 70, 0.7))",
             transform: "scale(1)"
           },
-          "50%": { 
-            filter: "drop-shadow(0 0 70px rgba(247, 201, 70, 0.9)) drop-shadow(0 0 35px rgba(247, 201, 70, 1))",
-            transform: "scale(1.015)"
+          "33%": { 
+            filter: "drop-shadow(0 0 55px rgba(247, 201, 70, 0.7)) drop-shadow(0 0 28px rgba(247, 201, 70, 0.9))",
+            transform: "scale(1.008)"
+          },
+          "66%": { 
+            filter: "drop-shadow(0 0 48px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 24px rgba(247, 201, 70, 0.8))",
+            transform: "scale(1.004)"
           }
         },
         "pulse-glow": {
           "0%, 100%": { 
-            opacity: "0.08",
+            opacity: "0.06",
             transform: "scale(1)"
           },
           "50%": { 
-            opacity: "0.15",
-            transform: "scale(1.05)"
+            opacity: "0.12",
+            transform: "scale(1.03)"
           }
         },
       },
@@ -292,8 +296,8 @@ export default {
         "logo-push-reveal": "logo-push-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "logo-pulse": "logo-glow 0.7s ease-in-out forwards",
         "logo-pulse-bright": "logo-pulse-bright 0.8s ease-in-out forwards",
-        "logo-continuous-glow": "logo-continuous-glow 3s ease-in-out infinite",
-        "pulse-glow": "pulse-glow 4s ease-in-out infinite",
+        "logo-continuous-glow": "logo-continuous-glow 6s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 8s ease-in-out infinite",
       },
     },
   },

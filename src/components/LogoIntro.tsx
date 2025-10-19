@@ -31,12 +31,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       audio.volume = 0.7;
       
       audio.addEventListener('ended', () => {
-        // Start smooth fadeout
-        setPhase("fadeout");
-        // Wait for full fade before completing
-        setTimeout(() => {
-          onComplete();
-        }, 2000); // 2 second smooth fade
+        onComplete();
       });
       
       audio.play()
@@ -67,10 +62,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       audio.volume = 0.7;
       
       audio.addEventListener('ended', () => {
-        setPhase("fadeout");
-        setTimeout(() => {
-          onComplete();
-        }, 2000);
+        onComplete();
       });
       
       const blackTimer = setTimeout(() => setPhase("beams"), 500);
@@ -83,9 +75,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
 
   return (
     <div 
-      className={`fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden transition-opacity duration-[2000ms] ease-out ${
-        phase === "fadeout" ? "opacity-0" : "opacity-100"
-      }`}
+      className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden"
       onClick={handleClick}
     >
       {/* Multiple rushing light beams with staggered timing */}
@@ -109,7 +99,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       )}
 
       {/* Logo with continuous glowing animation */}
-      {(phase === "reveal" || phase === "glow" || phase === "fadeout") && (
+      {(phase === "reveal" || phase === "glow") && (
         <div 
           className={`transition-all duration-1000 ease-out ${
             phase === "reveal" ? "animate-logo-push-reveal" : 
@@ -128,7 +118,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       )}
 
       {/* Continuous warm halo */}
-      {(phase === "glow" || phase === "fadeout") && (
+      {phase === "glow" && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[900px] h-[900px] rounded-full bg-primary/8 blur-[120px] animate-pulse-glow" />
         </div>
