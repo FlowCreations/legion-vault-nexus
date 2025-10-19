@@ -6,14 +6,14 @@ import solLogo from "@/assets/sol-logo-new.png";
 import LogoIntro from "@/components/LogoIntro";
 
 export default function Home() {
-  const [showIntro, setShowIntro] = useState(true);
-
-  useEffect(() => {
-    // Always show intro - removed sessionStorage check
-  }, []);
+  const [showIntro, setShowIntro] = useState(() => {
+    // Check if intro has been shown in this session
+    return !sessionStorage.getItem('introShown');
+  });
 
   const handleIntroComplete = () => {
     setShowIntro(false);
+    sessionStorage.setItem('introShown', 'true');
     // Scroll to top when homepage loads
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
