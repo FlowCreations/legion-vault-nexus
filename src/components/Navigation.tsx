@@ -61,13 +61,6 @@ export const Navigation = () => {
           {/* Logo - Hidden on homepage */}
           {!isHomePage && (
             <div className="flex items-center gap-4">
-              <Link to="/" className="flex items-center group">
-                <img 
-                  src={solLogo} 
-                  alt="Sons of Legion" 
-                  className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
-                />
-              </Link>
               {!isLoggedIn && (
                 <Link to="/auth" className="hidden md:block">
                   <Button variant="outline" size="sm" className="gap-2">
@@ -76,6 +69,13 @@ export const Navigation = () => {
                   </Button>
                 </Link>
               )}
+              <Link to="/" className="flex items-center group">
+                <img 
+                  src={solLogo} 
+                  alt="Sons of Legion" 
+                  className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
+                />
+              </Link>
             </div>
           )}
 
