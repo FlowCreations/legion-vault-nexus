@@ -28,6 +28,22 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
   const [isPaused, setIsPaused] = useState(false);
   const spinEnabledRef = useRef(true);
   const [selectedCity, setSelectedCity] = useState<{ users: any[], cityName: string } | null>(null);
+  const [userProfiles, setUserProfiles] = useState<any[]>([]);
+
+  // Fetch all user profiles on mount
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, avatar_url, location')
+        .not('location', 'is', null);
+      
+      if (data) {
+        setUserProfiles(data);
+      }
+    };
+    fetchProfiles();
+  }, []);
 
   useEffect(() => {
     // Load Mapbox CSS dynamically
@@ -146,23 +162,14 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
           setIsPaused(true);
           spinEnabledRef.current = false;
           
-          // Fetch users for this city
-          if (city.userIds && city.userIds.length > 0) {
-            const { data: users } = await supabase
-              .from('user_profiles')
-              .select('user_id, display_name, avatar_url, location')
-              .in('user_id', city.userIds);
-            
-            if (users && users.length > 0) {
-              setSelectedCity({
-                users,
-                cityName: `${city.city}${city.state ? ', ' + city.state : ''}`
-              });
-            }
-          }
+          // Get users for this location
+          const cityUsers = userProfiles.filter(u => u.location === city.city);
           
-          if (onCityClick && city.userIds) {
-            onCityClick(city.userIds);
+          if (cityUsers.length > 0) {
+            setSelectedCity({
+              users: cityUsers,
+              cityName: `${city.city}${city.state ? ', ' + city.state : ''}`
+            });
           }
         });
         
@@ -170,6 +177,11 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
         el.appendChild(dot);
         el.appendChild(rank);
 
+        // Get users for this location to show in popup
+        const locationUsers = userProfiles.filter(u => u.location === city.city);
+        const userNames = locationUsers.slice(0, 3).map(u => u.display_name).join(', ');
+        const moreUsers = locationUsers.length > 3 ? ` +${locationUsers.length - 3} more` : '';
+        
         const popup = new mapboxgl.Popup({ 
           offset: 25,
           closeButton: false,
@@ -181,13 +193,18 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
             </div>
             <div style="display: grid; gap: 6px; margin-top: 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(59, 130, 246, 0.3);">
-                <span style="color: rgb(156, 163, 175); font-size: 13px;">Total Fans</span>
+                <span style="color: rgb(156, 163, 175); font-size: 13px;">Total Members</span>
                 <span style="font-weight: bold; font-size: 16px; color: rgb(59, 130, 246);">${city.fans.toLocaleString()}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
-                <span style="color: rgb(156, 163, 175); font-size: 13px;">Total Streams</span>
-                <span style="font-weight: bold; font-size: 14px;">${city.streams.toLocaleString()}</span>
-              </div>
+              ${locationUsers.length > 0 ? `
+                <div style="padding: 6px 0;">
+                  <span style="color: rgb(156, 163, 175); font-size: 11px; text-transform: uppercase;">Community Members</span>
+                  <div style="color: white; font-size: 13px; margin-top: 4px;">${userNames}${moreUsers}</div>
+                  <div style="margin-top: 8px; text-align: center;">
+                    <span style="color: rgb(59, 130, 246); font-size: 12px; cursor: pointer;">Click to view all →</span>
+                  </div>
+                </div>
+              ` : ''}
             </div>
           </div>`
         );
