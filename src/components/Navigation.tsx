@@ -103,15 +103,16 @@ export const Navigation = () => {
           <div className="hidden md:flex items-center gap-3">
             <GlobalSearch />
             <CartDrawer />
-            {!isLoggedIn && (
-              <Link to="/auth" className="ml-12">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <LogIn className="w-4 h-4" />
-                  Sign In
-                </Button>
-              </Link>
-            )}
           </div>
+          
+          {!isLoggedIn && (
+            <Link to="/auth" className="hidden md:block ml-auto">
+              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Navigation */}
