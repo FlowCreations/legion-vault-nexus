@@ -46,11 +46,12 @@ export const CreateCampaigns = () => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating campaigns:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: "Failed to generate campaign suggestions",
+        description: error?.message || error?.error || "Failed to generate campaign suggestions",
         variant: "destructive"
       });
     } finally {

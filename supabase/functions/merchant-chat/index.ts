@@ -187,8 +187,12 @@ Example: "I've noticed that fans who stream 'In The Air Tonight' are 3x more lik
 
   } catch (error) {
     console.error('Merchant chat error:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : JSON.stringify(error)
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
