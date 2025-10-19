@@ -15,6 +15,11 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     const audio = new Audio(introAudio);
     audio.volume = 0.7;
     
+    // When audio ends, complete the intro
+    audio.addEventListener('ended', () => {
+      onComplete();
+    });
+    
     // Cinematic timing sequence
     const blackTimer = setTimeout(() => {
       setPhase("beams");
@@ -24,15 +29,14 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
     const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
     const pulseTimer = setTimeout(() => setPhase("still"), 4000);
-    const completeTimer = setTimeout(() => onComplete(), 5500);
 
     return () => {
       clearTimeout(blackTimer);
       clearTimeout(beamsTimer);
       clearTimeout(revealTimer);
       clearTimeout(pulseTimer);
-      clearTimeout(completeTimer);
       audio.pause();
+      audio.removeEventListener('ended', onComplete);
     };
   }, [onComplete]);
 
