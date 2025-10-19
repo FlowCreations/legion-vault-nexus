@@ -45,6 +45,8 @@ interface Member {
   ptp_current?: number;
   era_label?: string;
   ptp_status?: string;
+  birthdate?: string;
+  gender?: string;
 }
 
 interface AdminDashboardProps {
@@ -934,6 +936,32 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                     <MapPin className="h-4 w-4" />
                     <span>{selectedMember.location}</span>
                   </div>
+                </div>
+              )}
+
+              {(selectedMember.birthdate || selectedMember.gender) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedMember.birthdate && (() => {
+                    const today = new Date();
+                    const birth = new Date(selectedMember.birthdate);
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const monthDiff = today.getMonth() - birth.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                      age--;
+                    }
+                    return (
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h3 className="text-xs font-bold text-foreground/70 mb-2">AGE</h3>
+                        <p className="text-2xl font-bold">{age} years</p>
+                      </div>
+                    );
+                  })()}
+                  {selectedMember.gender && (
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <h3 className="text-xs font-bold text-foreground/70 mb-2">GENDER</h3>
+                      <p className="text-2xl font-bold capitalize">{selectedMember.gender}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
