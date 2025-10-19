@@ -25,7 +25,9 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState("");
+  
   
   // Profile fields - Private
   const [realName, setRealName] = useState("");
@@ -67,6 +69,18 @@ export default function Auth() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -140,6 +154,29 @@ export default function Auth() {
       if (signUpError) throw signUpError;
 
       if (authData.user) {
+        let avatarUrl = null;
+
+        // Upload profile picture if provided
+        if (profilePicture) {
+          const fileExt = profilePicture.name.split('.').pop();
+          const fileName = `${authData.user.id}/avatar.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('profile-pictures')
+            .upload(fileName, profilePicture, {
+              upsert: true
+            });
+
+          if (uploadError) {
+            console.error('Error uploading profile picture:', uploadError);
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from('profile-pictures')
+              .getPublicUrl(fileName);
+            avatarUrl = publicUrl;
+          }
+        }
+
         // Create profile with both public and private data
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -148,7 +185,7 @@ export default function Auth() {
             display_name: displayName,
             location,
             bio,
-            avatar_url: avatarUrl || null,
+            avatar_url: avatarUrl,
             real_name: realName || null,
             birthdate: birthdate || null,
             gender: gender || null,
@@ -173,10 +210,10 @@ export default function Auth() {
 
   if (showQuestionnaire) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-2xl p-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Welcome to the Community!</h1>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4 pt-24">
+        <Card className="w-full max-w-2xl p-8 my-8">
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome to the Community!</h1>
             <p className="text-muted-foreground">
               Tell us about yourself. Some info is private (just for us), some will be public.
             </p>
@@ -224,14 +261,23 @@ export default function Auth() {
               </div>
 
               <div>
-                <Label htmlFor="avatarUrl">Profile Picture URL (optional)</Label>
-                <Input
-                  id="avatarUrl"
-                  type="url"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://..."
-                />
+                <Label htmlFor="profilePicture">Profile Picture</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  {profilePicturePreview && (
+                    <img 
+                      src={profilePicturePreview} 
+                      alt="Preview" 
+                      className="w-20 h-20 rounded-full object-cover border-2 border-primary"
+                    />
+                  )}
+                  <Input
+                    id="profilePicture"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="flex-1"
+                  />
+                </div>
               </div>
             </div>
 
