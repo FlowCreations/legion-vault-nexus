@@ -44,6 +44,12 @@ interface UserProfile {
   location: string;
   tier: string;
   intro_answers: any;
+  birthdate?: string;
+  gender?: string;
+  total_spend?: number;
+  mrr?: number;
+  watch_time?: number;
+  listen_time?: number;
 }
 
 interface Message {
@@ -1198,7 +1204,7 @@ export default function CommunityHub() {
           </DialogHeader>
           
           {selectedProfile && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={selectedProfile.avatar_url} />
@@ -1215,7 +1221,80 @@ export default function CommunityHub() {
               </div>
               
               {selectedProfile.bio && (
-                <p className="text-muted-foreground">{selectedProfile.bio}</p>
+                <div>
+                  <h4 className="text-sm font-semibold uppercase text-muted-foreground mb-2">BIO</h4>
+                  <p className="text-muted-foreground">{selectedProfile.bio}</p>
+                </div>
+              )}
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {selectedProfile.total_spend !== undefined && (
+                  <div className="bg-card-hover p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">Total Spend</p>
+                    <p className="text-2xl font-bold">${selectedProfile.total_spend.toFixed(2)}</p>
+                  </div>
+                )}
+                {selectedProfile.mrr !== undefined && (
+                  <div className="bg-card-hover p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">MRR</p>
+                    <p className="text-2xl font-bold">${selectedProfile.mrr.toFixed(2)}</p>
+                  </div>
+                )}
+                {selectedProfile.watch_time !== undefined && (
+                  <div className="bg-card-hover p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">Watch Time</p>
+                    <p className="text-2xl font-bold">{Math.floor(selectedProfile.watch_time / 60)}h</p>
+                  </div>
+                )}
+                {selectedProfile.listen_time !== undefined && (
+                  <div className="bg-card-hover p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">Listen Time</p>
+                    <p className="text-2xl font-bold">{Math.floor(selectedProfile.listen_time / 60)}h</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Age and Gender */}
+              {(selectedProfile.birthdate || selectedProfile.gender) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedProfile.birthdate && (() => {
+                    const today = new Date();
+                    const birth = new Date(selectedProfile.birthdate);
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const monthDiff = today.getMonth() - birth.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                      age--;
+                    }
+                    return (
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Age</p>
+                        <p className="font-semibold">{age} years</p>
+                      </div>
+                    );
+                  })()}
+                  {selectedProfile.gender && (
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Gender</p>
+                      <p className="font-semibold capitalize">{selectedProfile.gender}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Intro Answers */}
+              {selectedProfile.intro_answers && (
+                <div>
+                  <h4 className="text-sm font-semibold uppercase text-muted-foreground mb-4">Intro Answers</h4>
+                  <div className="space-y-4">
+                    {Object.entries(selectedProfile.intro_answers).map(([question, answer]) => (
+                      <div key={question}>
+                        <p className="text-sm text-muted-foreground capitalize">{question.replace(/_/g, ' ')}</p>
+                        <p className="font-medium">{answer as string}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
               
               <Button className="w-full bg-gradient-gold">
