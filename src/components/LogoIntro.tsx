@@ -6,59 +6,67 @@ interface LogoIntroProps {
 }
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
-  const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "glow">("black");
+  const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "pulse" | "still">("black");
 
   useEffect(() => {
-    // Phase timing
-    const blackTimer = setTimeout(() => setPhase("beams"), 500);
-    const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
-    const revealTimer = setTimeout(() => setPhase("glow"), 3500);
-    const completeTimer = setTimeout(() => onComplete(), 5000);
+    // Cinematic timing sequence
+    const blackTimer = setTimeout(() => setPhase("beams"), 800); // Black screen with rumble
+    const beamsTimer = setTimeout(() => setPhase("reveal"), 2300); // Beams rushing
+    const revealTimer = setTimeout(() => setPhase("pulse"), 3500); // Logo revealed
+    const pulseTimer = setTimeout(() => setPhase("still"), 4200); // Glow pulse
+    const completeTimer = setTimeout(() => onComplete(), 5000); // Hold on still
 
     return () => {
       clearTimeout(blackTimer);
       clearTimeout(beamsTimer);
       clearTimeout(revealTimer);
+      clearTimeout(pulseTimer);
       clearTimeout(completeTimer);
     };
   }, [onComplete]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden">
-      {/* Light Beams */}
+      {/* Light Beams - Fast rushing motion */}
       {(phase === "beams" || phase === "reveal") && (
-        <>
-          <div className="absolute inset-0">
-            <div className="absolute top-1/2 left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-primary to-transparent animate-beam-1" />
-            <div className="absolute top-1/3 left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary-glow to-transparent animate-beam-2" />
-            <div className="absolute top-2/3 left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-primary to-transparent animate-beam-3" />
-            <div className="absolute top-1/4 left-0 h-1 w-full bg-gradient-to-r from-primary/50 via-primary to-primary/50 animate-beam-4 origin-center" style={{ transform: 'rotate(-15deg)' }} />
-            <div className="absolute top-3/4 left-0 h-0.5 w-full bg-gradient-to-r from-primary/50 via-primary-glow to-primary/50 animate-beam-5 origin-center" style={{ transform: 'rotate(15deg)' }} />
-            <div className="absolute top-1/2 left-0 h-2 w-full bg-gradient-to-r from-transparent via-primary-glow/80 to-transparent animate-beam-converge" />
-          </div>
-        </>
+        <div className="absolute inset-0">
+          {/* Horizontal beams */}
+          <div className="absolute top-[45%] left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent animate-beam-1" />
+          <div className="absolute top-[55%] left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-primary-glow to-transparent animate-beam-2" />
+          <div className="absolute top-[50%] left-0 h-2 w-full bg-gradient-to-r from-transparent via-primary/80 to-transparent animate-beam-converge" />
+          
+          {/* Diagonal beams */}
+          <div className="absolute top-[35%] left-0 h-0.5 w-[150%] -translate-x-1/4 rotate-12 bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-beam-4" />
+          <div className="absolute top-[65%] left-0 h-1 w-[150%] -translate-x-1/4 -rotate-12 bg-gradient-to-r from-primary/0 via-primary-glow/90 to-primary/0 animate-beam-5" />
+          <div className="absolute top-[40%] left-0 h-0.5 w-[150%] -translate-x-1/4 rotate-6 bg-gradient-to-r from-transparent via-primary/60 to-transparent animate-beam-3" />
+        </div>
       )}
 
-      {/* Logo Reveal */}
-      {(phase === "reveal" || phase === "glow") && (
-        <div className={phase === "reveal" ? "animate-logo-reveal" : "animate-logo-glow"}>
+      {/* Logo Reveal with push-through effect */}
+      {(phase === "reveal" || phase === "pulse" || phase === "still") && (
+        <div 
+          className={
+            phase === "reveal" ? "animate-logo-reveal" : 
+            phase === "pulse" ? "animate-logo-pulse" : ""
+          }
+          style={{
+            filter: phase === "still" 
+              ? "drop-shadow(0 0 60px rgba(247, 201, 70, 0.5)) drop-shadow(0 0 30px rgba(247, 201, 70, 0.7))"
+              : undefined
+          }}
+        >
           <img 
             src={solLogo}
             alt="Sons of Legion"
-            className="h-64 sm:h-80 md:h-96 w-auto object-contain"
-            style={{
-              filter: phase === "glow" 
-                ? "drop-shadow(0 0 80px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 40px rgba(247, 201, 70, 0.8))"
-                : "drop-shadow(0 0 120px rgba(247, 201, 70, 0.9))"
-            }}
+            className="h-72 sm:h-80 md:h-96 lg:h-[28rem] w-auto object-contain"
           />
         </div>
       )}
 
-      {/* Subtle Halo in final phase */}
-      {phase === "glow" && (
+      {/* Subtle warm halo in final phase */}
+      {phase === "still" && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl animate-fade-in" />
+          <div className="w-[800px] h-[800px] rounded-full bg-primary/5 blur-[100px] animate-fade-in" />
         </div>
       )}
     </div>

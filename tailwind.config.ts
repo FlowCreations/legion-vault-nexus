@@ -154,14 +154,14 @@ export default {
         },
         "logo-reveal": {
           "0%": {
-            transform: "scale(0.3) translateZ(200px)",
+            transform: "scale(0.5) translateZ(300px)",
             opacity: "0",
-            filter: "blur(10px)"
+            filter: "blur(20px)"
           },
           "100%": {
             transform: "scale(1) translateZ(0)",
             opacity: "1",
-            filter: "blur(0) drop-shadow(0 0 120px rgba(247, 201, 70, 0.9))"
+            filter: "blur(0) drop-shadow(0 0 100px rgba(247, 201, 70, 0.9)) drop-shadow(0 0 50px rgba(247, 201, 70, 1))"
           }
         },
         "logo-glow": {
@@ -185,14 +185,14 @@ export default {
         "shimmer": "shimmer 3s linear infinite",
         "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
         "logo-dramatic": "logo-dramatic 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
-        "beam-1": "beam-1 1.5s ease-out forwards",
-        "beam-2": "beam-2 1.5s ease-out 0.1s forwards",
-        "beam-3": "beam-3 1.5s ease-out 0.2s forwards",
-        "beam-4": "beam-4 1.5s ease-out 0.15s forwards",
-        "beam-5": "beam-5 1.5s ease-out 0.25s forwards",
-        "beam-converge": "beam-converge 1.5s ease-in-out 0.5s forwards",
-        "logo-reveal": "logo-reveal 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
-        "logo-glow": "logo-glow 1.5s ease-in-out forwards",
+        "beam-1": "beam-1 1.2s ease-out forwards",
+        "beam-2": "beam-2 1.2s ease-out 0.1s forwards",
+        "beam-3": "beam-3 1.2s ease-out 0.15s forwards",
+        "beam-4": "beam-4 1.3s ease-out 0.05s forwards",
+        "beam-5": "beam-5 1.3s ease-out 0.2s forwards",
+        "beam-converge": "beam-converge 1.5s ease-in-out 0.3s forwards",
+        "logo-reveal": "logo-reveal 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "logo-pulse": "logo-glow 0.7s ease-in-out forwards",
       },
     },
   },
