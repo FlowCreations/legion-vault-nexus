@@ -7,53 +7,76 @@ interface LogoIntroProps {
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "pulse" | "still">("black");
+  const [showClickToStart, setShowClickToStart] = useState(false);
 
   useEffect(() => {
-    // Play audio from public folder
-    const audio = new Audio('/intro-audio.wav');
-    audio.volume = 0.7;
-    
+    let audio: HTMLAudioElement | null = null;
     let audioCompleted = false;
+    let timersStarted = false;
     
-    // When audio ends, complete the intro
-    audio.addEventListener('ended', () => {
-      audioCompleted = true;
-      onComplete();
-    });
-    
-    // Fallback: Complete after max duration even if audio doesn't play/end
-    const maxDurationTimer = setTimeout(() => {
-      if (!audioCompleted) {
+    const startIntro = () => {
+      if (timersStarted) return;
+      timersStarted = true;
+      
+      // Play audio from public folder
+      audio = new Audio('/intro-audio.wav');
+      audio.volume = 0.7;
+      
+      // When audio ends, complete the intro
+      audio.addEventListener('ended', () => {
+        audioCompleted = true;
         onComplete();
-      }
-    }, 8000); // 8 seconds fallback
-    
-    // Cinematic timing sequence
-    const blackTimer = setTimeout(() => {
-      setPhase("beams");
-      audio.play().catch(err => {
-        console.log('Audio autoplay blocked, continuing silently:', err);
-        // If audio is blocked, still continue the animation
       });
-    }, 500);
-    
-    const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
-    const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
-    const pulseTimer = setTimeout(() => setPhase("still"), 4000);
-
-    return () => {
-      clearTimeout(blackTimer);
-      clearTimeout(beamsTimer);
-      clearTimeout(revealTimer);
-      clearTimeout(pulseTimer);
-      clearTimeout(maxDurationTimer);
-      audio.pause();
-      audio.removeEventListener('ended', onComplete);
+      
+      // Fallback: Complete after max duration even if audio doesn't play/end
+      const maxDurationTimer = setTimeout(() => {
+        if (!audioCompleted) {
+          onComplete();
+        }
+      }, 8000);
+      
+      // Start animation sequence
+      const blackTimer = setTimeout(() => setPhase("beams"), 500);
+      const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
+      const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
+      const pulseTimer = setTimeout(() => setPhase("still"), 4000);
+      
+      // Play audio
+      audio.play().catch(err => {
+        console.log('Audio autoplay blocked:', err);
+        setShowClickToStart(true);
+      });
+      
+      return () => {
+        clearTimeout(blackTimer);
+        clearTimeout(beamsTimer);
+        clearTimeout(revealTimer);
+        clearTimeout(pulseTimer);
+        clearTimeout(maxDurationTimer);
+        if (audio) {
+          audio.pause();
+          audio.removeEventListener('ended', onComplete);
+        }
+      };
     };
+    
+    // Try to start immediately
+    const cleanup = startIntro();
+    
+    return cleanup;
   }, [onComplete]);
 
+  const handleClick = () => {
+    if (showClickToStart) {
+      setShowClickToStart(false);
+      const audio = new Audio('/intro-audio.wav');
+      audio.volume = 0.7;
+      audio.play();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden" onClick={handleClick}>
       {/* Multiple rushing light beams with staggered timing */}
       {(phase === "beams" || phase === "reveal") && (
         <div className="absolute inset-0">
@@ -99,6 +122,15 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       {(phase === "still" || phase === "pulse") && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[900px] h-[900px] rounded-full bg-primary/4 blur-[120px] animate-fade-in" />
+        </div>
+      )}
+      {/* Click to start overlay if autoplay blocked */}
+      {showClickToStart && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
+          <div className="text-center">
+            <p className="text-primary text-2xl font-semibold mb-2">Click to Start</p>
+            <p className="text-primary/60 text-sm">Tap anywhere to begin the experience</p>
+          </div>
         </div>
       )}
     </div>
