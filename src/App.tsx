@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Videos from "./pages/Videos";
 import VideoManager from "./pages/VideoManager";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import Music from "./pages/Music";
 import AlbumDetail from "./pages/AlbumDetail";
 import SongCredits from "./pages/SongCredits";
@@ -42,6 +43,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/videos/manage" element={<VideoManager />} />
           <Route path="/music" element={<Music />} />

@@ -1,4 +1,4 @@
-import { Film, Music, Users, ShoppingBag, Radio, LogIn, LogOut, Calendar, Shield } from "lucide-react";
+import { Film, Music, Users, ShoppingBag, Radio, LogIn, LogOut, Calendar, Shield, User, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -7,6 +7,15 @@ import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
 import { CartDrawer } from "@/components/CartDrawer";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
@@ -22,6 +31,7 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     checkAdminStatus();
@@ -38,10 +48,20 @@ export const Navigation = () => {
     if (!user) {
       setIsAdmin(false);
       setIsLoggedIn(false);
+      setUserProfile(null);
       return;
     }
 
     setIsLoggedIn(true);
+
+    // Load user profile
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    setUserProfile(profile);
 
     const { data: roles } = await supabase
       .from("user_roles")
@@ -55,6 +75,7 @@ export const Navigation = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setUserProfile(null);
     navigate("/");
   };
 
@@ -117,15 +138,48 @@ export const Navigation = () => {
                 </Button>
               </Link>
             ) : (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="gap-2"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.display_name} />
+                      <AvatarFallback>
+                        <User className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{userProfile?.display_name || "My Account"}</p>
+                      <p className="text-xs text-muted-foreground">{userProfile?.location}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Security
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
@@ -170,13 +224,30 @@ export const Navigation = () => {
                   </Button>
                 </Link>
               ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      <User className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>{userProfile?.display_name || "My Account"}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      Orders
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
