@@ -226,10 +226,18 @@ export default function VideoManager() {
                 >
                   {/* Thumbnail */}
                   <div className="relative w-48 aspect-video bg-muted rounded-lg overflow-hidden flex-shrink-0 group">
-                    <video
-                      src={getVideoUrl(video.storage_path)}
-                      className="w-full h-full object-cover"
-                    />
+                    {video.thumbnail_url ? (
+                      <img
+                        src={video.thumbnail_url}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <video
+                        src={getVideoUrl(video.storage_path)}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Play className="w-8 h-8 text-white" />
                     </div>

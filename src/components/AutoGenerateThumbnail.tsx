@@ -38,8 +38,8 @@ export const AutoGenerateThumbnail = ({
       // Wait for video to load
       await new Promise((resolve, reject) => {
         video.onloadedmetadata = () => {
-          // Seek to 1 second (or 10% of video duration, whichever is smaller)
-          const seekTime = Math.min(1, video.duration * 0.1);
+          // Seek to 10 seconds (or 25% of video duration, whichever is smaller)
+          const seekTime = Math.min(10, video.duration * 0.25);
           video.currentTime = seekTime;
         };
         video.onseeked = resolve;
