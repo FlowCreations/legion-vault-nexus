@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.shopify-products]
 verify_jwt = false
+
+[functions.set-thumbnail]
+verify_jwt = false
+
+[functions.update-thumbnail]
+verify_jwt = false
