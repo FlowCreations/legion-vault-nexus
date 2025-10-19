@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { SimpleThumbnailUploader } from "@/components/SimpleThumbnailUploader";
+import { AutoGenerateThumbnail } from "@/components/AutoGenerateThumbnail";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import "@/utils/uploadThumbnails";
@@ -280,6 +281,12 @@ export default function VideoManager() {
                       <Edit2 className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
+                    <AutoGenerateThumbnail
+                      videoId={video.id}
+                      videoStoragePath={video.storage_path}
+                      videoTitle={video.title}
+                      onThumbnailGenerated={loadVideos}
+                    />
                     <SimpleThumbnailUploader
                       videoId={video.id}
                       videoTitle={video.title}
