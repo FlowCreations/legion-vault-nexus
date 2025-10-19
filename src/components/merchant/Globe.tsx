@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface CityData {
   rank: number;
@@ -19,9 +18,24 @@ interface GlobeProps {
 const Globe: React.FC<GlobeProps> = ({ cities }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load Mapbox CSS dynamically
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css';
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapContainer.current) return;
+
+    try {
 
     mapboxgl.accessToken = 'pk.eyJ1Ijoic3VraGRldjg4IiwiYSI6ImNtZ3k3YWpneTBxN2syanExbmFidzh5cHkifQ.we5KW2oVJmPn0TxSUCvqng';
     
@@ -146,9 +160,26 @@ const Globe: React.FC<GlobeProps> = ({ cities }) => {
 
     return () => {
       map.current?.remove();
-      document.head.removeChild(style);
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
+    } catch (err) {
+      console.error('Error initializing Mapbox:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load map');
+    }
   }, [cities]);
+
+  if (error) {
+    return (
+      <div className="w-full h-[600px] rounded-lg border border-border bg-destructive/10 flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="text-destructive font-semibold mb-2">Map Error</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-border">
