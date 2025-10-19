@@ -108,23 +108,25 @@ export default function VideoManager() {
     if (!editingVideo) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('videos')
         .update({
           title: editTitle,
           description: editDescription || null,
           metatags: editMetatags
         })
-        .eq('id', editingVideo.id);
+        .eq('id', editingVideo.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error details:', error);
+        throw error;
+      }
 
-      // Update local state immediately
-      setVideos(videos.map(v => 
-        v.id === editingVideo.id 
-          ? { ...v, title: editTitle, description: editDescription || null, metatags: editMetatags }
-          : v
-      ));
+      console.log('Update successful:', data);
+
+      // Reload videos from database to ensure we have the latest data
+      await loadVideos();
 
       toast({
         title: "Video updated",
@@ -137,7 +139,7 @@ export default function VideoManager() {
       console.error('Update error:', error);
       toast({
         title: "Failed to update video",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: error instanceof Error ? error.message : "An error occurred. You may not have permission to edit this video.",
         variant: "destructive",
       });
     }
