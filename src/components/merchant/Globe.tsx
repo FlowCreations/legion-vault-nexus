@@ -55,36 +55,46 @@ const Globe: React.FC<GlobeProps> = ({ cities }) => {
       'top-right'
     );
 
-    map.current.on('style.load', () => {
+    map.current.on('load', () => {
       if (!map.current) return;
 
       map.current.setFog({
-        color: 'hsl(var(--background))',
-        'high-color': 'hsl(var(--primary))',
+        color: 'rgb(18, 18, 18)',
+        'high-color': 'rgb(59, 130, 246)',
         'horizon-blend': 0.1,
-        'space-color': 'hsl(var(--background))',
+        'space-color': 'rgb(11, 11, 11)',
         'star-intensity': 0.6,
       });
 
       // Add city markers
       cities.forEach((city) => {
         const el = document.createElement('div');
-        el.className = 'city-marker';
-        const size = Math.max(10, Math.min(40, city.fans / 100));
+        const size = Math.max(12, Math.min(35, city.fans / 120));
         el.style.width = `${size}px`;
         el.style.height = `${size}px`;
-        el.style.backgroundColor = 'hsl(var(--primary))';
+        el.style.backgroundColor = 'rgb(59, 130, 246)';
         el.style.borderRadius = '50%';
-        el.style.border = '2px solid hsl(var(--primary-foreground))';
+        el.style.border = '2px solid rgba(255, 255, 255, 0.8)';
         el.style.cursor = 'pointer';
-        el.style.boxShadow = '0 0 20px hsl(var(--primary) / 0.6)';
-        el.style.animation = 'pulse 2s ease-in-out infinite';
+        el.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.6)';
+        el.style.transition = 'transform 0.2s';
+        
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.2)';
+        });
+        
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)';
+        });
 
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
-          `<div style="color: hsl(var(--foreground)); padding: 8px;">
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${city.city}${city.state ? ', ' + city.state : ''}</h3>
-            <p style="margin: 0;"><strong>${city.fans.toLocaleString()}</strong> fans</p>
-            <p style="margin: 0; color: hsl(var(--muted-foreground));">${city.streams.toLocaleString()} streams</p>
+        const popup = new mapboxgl.Popup({ 
+          offset: 25,
+          closeButton: false,
+        }).setHTML(
+          `<div style="background: rgb(18, 18, 18); color: white; padding: 12px; border-radius: 8px; border: 1px solid rgb(59, 130, 246);">
+            <h3 style="font-weight: bold; margin-bottom: 4px; font-size: 16px;">${city.city}${city.state ? ', ' + city.state : ''}</h3>
+            <p style="margin: 0; font-size: 14px;"><strong>${city.fans.toLocaleString()}</strong> fans</p>
+            <p style="margin: 0; color: rgb(156, 163, 175); font-size: 12px;">${city.streams.toLocaleString()} streams</p>
           </div>`
         );
 
@@ -142,27 +152,8 @@ const Globe: React.FC<GlobeProps> = ({ cities }) => {
 
     spinGlobe();
 
-    // Add custom CSS for pulse animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes pulse {
-        0%, 100% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: scale(1.1);
-          opacity: 0.8;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-
     return () => {
       map.current?.remove();
-      if (document.head.contains(style)) {
-        document.head.removeChild(style);
-      }
     };
     } catch (err) {
       console.error('Error initializing Mapbox:', err);
@@ -182,8 +173,8 @@ const Globe: React.FC<GlobeProps> = ({ cities }) => {
   }
 
   return (
-    <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-border">
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-black">
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
     </div>
   );
 };
