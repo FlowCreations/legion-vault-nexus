@@ -7,6 +7,13 @@ interface ERABadgeProps {
 }
 
 export const ERABadge = ({ era, label }: ERABadgeProps) => {
+  const getLabel = () => {
+    if (era <= 3) return "Discover";
+    if (era <= 6) return "Engage";
+    if (era <= 8) return "Invest";
+    return "Loyal";
+  };
+
   const getColor = () => {
     if (era <= 3) return "bg-gray-500 text-white";
     if (era <= 6) return "bg-steel-500 text-white";
@@ -19,7 +26,7 @@ export const ERABadge = ({ era, label }: ERABadgeProps) => {
       <Tooltip>
         <TooltipTrigger>
           <Badge className={`${getColor()} font-semibold px-3 py-1`}>
-            ERA {era} • {label}
+            ERA • {getLabel()}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
@@ -27,7 +34,7 @@ export const ERABadge = ({ era, label }: ERABadgeProps) => {
             <strong>ERA:</strong> Composite of sequence consistency, engagement depth, 
             emotional polarity, stickiness, and loyalty.
             <br /><br />
-            1-3 = Dormant, 4-6 = Engaged, 7-8 = Tribe, 9-10 = Integrated
+            Discover → Engage → Invest → Loyal
           </p>
         </TooltipContent>
       </Tooltip>

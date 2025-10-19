@@ -228,10 +228,10 @@ function computePTP(recentEvents: any[], era: number, profile: any): number {
 }
 
 function getERALabel(era: number): string {
-  if (era <= 3) return 'Dormant';
-  if (era <= 6) return 'Engaged';
-  if (era <= 8) return 'Tribe';
-  return 'Integrated';
+  if (era <= 3) return 'Discover';
+  if (era <= 6) return 'Engage';
+  if (era <= 8) return 'Invest';
+  return 'Loyal';
 }
 
 function getPTPStatus(ptp: number): string {
