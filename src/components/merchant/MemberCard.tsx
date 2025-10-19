@@ -13,6 +13,21 @@ interface MemberCardProps {
 }
 
 export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) => {
+  // Calculate age from birthdate
+  const calculateAge = (birthdate: string | null) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const age = calculateAge(member.birthdate);
+  
   // Handle multiple members at same location
   if (member._multiple) {
     return (
@@ -92,6 +107,18 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
             <p className="text-xs text-muted-foreground uppercase">Status</p>
             <p className="font-semibold mt-1">{member.era_label || 'Member'}</p>
           </div>
+          {age && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase">Age</p>
+              <p className="font-semibold mt-1">{age} years</p>
+            </div>
+          )}
+          {member.gender && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase">Gender</p>
+              <p className="font-semibold mt-1 capitalize">{member.gender}</p>
+            </div>
+          )}
         </div>
 
         <Button onClick={onViewProfile} className="w-full">
