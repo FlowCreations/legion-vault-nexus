@@ -1,7 +1,7 @@
-import { Film, Music, Users, ShoppingBag, Radio, LogIn, Calendar, Shield } from "lucide-react";
+import { Film, Music, Users, ShoppingBag, Radio, LogIn, LogOut, Calendar, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
@@ -19,6 +19,7 @@ const navItems = [
 
 export const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -50,6 +51,11 @@ export const Navigation = () => {
       .maybeSingle();
 
     setIsAdmin(!!roles);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
   };
 
   const isHomePage = location.pathname === "/";
@@ -103,13 +109,23 @@ export const Navigation = () => {
           <div className="hidden md:flex items-center gap-3">
             <CartDrawer />
             <GlobalSearch />
-            {!isLoggedIn && (
+            {!isLoggedIn ? (
               <Link to="/auth">
                 <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
                   <LogIn className="w-4 h-4" />
                   Sign In
                 </Button>
               </Link>
+            ) : (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="gap-2"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
             )}
           </div>
         </div>
@@ -147,12 +163,20 @@ export const Navigation = () => {
             
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
               <CartDrawer />
-              {!isLoggedIn && (
+              {!isLoggedIn ? (
                 <Link to="/auth">
                   <Button variant="outline" size="sm">
                     <LogIn className="w-4 h-4" />
                   </Button>
                 </Link>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </div>
