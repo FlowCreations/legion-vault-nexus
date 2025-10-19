@@ -38,9 +38,14 @@ export const AutoGenerateThumbnail = ({
       // Wait for video to load
       await new Promise((resolve, reject) => {
         video.onloadedmetadata = () => {
-          // Seek to 10 seconds (or 25% of video duration, whichever is smaller)
-          const seekTime = Math.min(10, video.duration * 0.25);
-          video.currentTime = seekTime;
+          // Generate a random position between 10% and 90% of the video duration
+          // This ensures we avoid the very beginning and end which might be black frames
+          const minPosition = video.duration * 0.1;
+          const maxPosition = video.duration * 0.9;
+          const randomSeekTime = minPosition + Math.random() * (maxPosition - minPosition);
+          
+          console.log(`Selecting frame at ${randomSeekTime.toFixed(2)}s of ${video.duration.toFixed(2)}s`);
+          video.currentTime = randomSeekTime;
         };
         video.onseeked = resolve;
         video.onerror = reject;
