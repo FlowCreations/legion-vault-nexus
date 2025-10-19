@@ -6,34 +6,23 @@ interface LogoIntroProps {
 }
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
-  const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "pulse" | "still">("black");
+  const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "glow" | "fadeout">("black");
   const [showClickToStart, setShowClickToStart] = useState(false);
 
   useEffect(() => {
     let audio: HTMLAudioElement | null = null;
-    let audioCompleted = false;
     let cleanupFunctions: (() => void)[] = [];
     
     const startAnimationSequence = () => {
-      // Fallback: Complete after max duration
-      const maxDurationTimer = setTimeout(() => {
-        if (!audioCompleted) {
-          onComplete();
-        }
-      }, 8000);
-      
       // Start animation sequence
       const blackTimer = setTimeout(() => setPhase("beams"), 500);
       const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
-      const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
-      const pulseTimer = setTimeout(() => setPhase("still"), 4000);
+      const revealTimer = setTimeout(() => setPhase("glow"), 3200);
       
       cleanupFunctions.push(() => {
         clearTimeout(blackTimer);
         clearTimeout(beamsTimer);
         clearTimeout(revealTimer);
-        clearTimeout(pulseTimer);
-        clearTimeout(maxDurationTimer);
       });
     };
     
@@ -42,8 +31,11 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       audio.volume = 0.7;
       
       audio.addEventListener('ended', () => {
-        audioCompleted = true;
-        onComplete();
+        // Fade out before completing
+        setPhase("fadeout");
+        setTimeout(() => {
+          onComplete();
+        }, 1000);
       });
       
       audio.play()
@@ -64,7 +56,6 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       cleanupFunctions.forEach(fn => fn());
       if (audio) {
         audio.pause();
-        audio.removeEventListener('ended', onComplete);
       }
     };
   }, [onComplete]);
@@ -77,30 +68,29 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       const audio = new Audio('/intro-audio.wav');
       audio.volume = 0.7;
       
-      let audioCompleted = false;
       audio.addEventListener('ended', () => {
-        audioCompleted = true;
-        onComplete();
+        setPhase("fadeout");
+        setTimeout(() => {
+          onComplete();
+        }, 1000);
       });
       
       // Start animation sequence after click
-      const maxDurationTimer = setTimeout(() => {
-        if (!audioCompleted) {
-          onComplete();
-        }
-      }, 8000);
-      
       const blackTimer = setTimeout(() => setPhase("beams"), 500);
       const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
-      const revealTimer = setTimeout(() => setPhase("pulse"), 3200);
-      const pulseTimer = setTimeout(() => setPhase("still"), 4000);
+      const revealTimer = setTimeout(() => setPhase("glow"), 3200);
       
       audio.play();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden" onClick={handleClick}>
+    <div 
+      className={`fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden transition-opacity duration-1000 ${
+        phase === "fadeout" ? "opacity-0" : "opacity-100"
+      }`}
+      onClick={handleClick}
+    >
       {/* Multiple rushing light beams with staggered timing */}
       {(phase === "beams" || phase === "reveal") && (
         <div className="absolute inset-0">
@@ -121,17 +111,15 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         </div>
       )}
 
-      {/* Logo with camera push-through reveal */}
-      {(phase === "reveal" || phase === "pulse" || phase === "still") && (
+      {/* Logo with continuous glowing animation */}
+      {(phase === "reveal" || phase === "glow" || phase === "fadeout") && (
         <div 
           className={
             phase === "reveal" ? "animate-logo-push-reveal" : 
-            phase === "pulse" ? "animate-logo-pulse-bright" : ""
+            phase === "glow" ? "animate-logo-continuous-glow" : ""
           }
           style={{
-            filter: phase === "still" 
-              ? "drop-shadow(0 0 50px rgba(247, 201, 70, 0.4)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.6))"
-              : undefined
+            filter: "drop-shadow(0 0 50px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.8))"
           }}
         >
           <img 
@@ -142,10 +130,10 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         </div>
       )}
 
-      {/* Subtle warm halo finale */}
-      {(phase === "still" || phase === "pulse") && (
+      {/* Continuous warm halo */}
+      {(phase === "glow" || phase === "fadeout") && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[900px] h-[900px] rounded-full bg-primary/4 blur-[120px] animate-fade-in" />
+          <div className="w-[900px] h-[900px] rounded-full bg-primary/8 blur-[120px] animate-pulse-glow" />
         </div>
       )}
       {/* Click to start overlay if autoplay blocked */}
