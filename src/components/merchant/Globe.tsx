@@ -33,10 +33,13 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
   // Fetch all user profiles on mount
   useEffect(() => {
     const fetchProfiles = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .select('user_id, display_name, avatar_url, location')
         .not('location', 'is', null);
+      
+      console.log('Fetched user profiles:', data);
+      console.log('Profile fetch error:', error);
       
       if (data) {
         setUserProfiles(data);
@@ -162,14 +165,25 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
           setIsPaused(true);
           spinEnabledRef.current = false;
           
-          // Get users for this location
-          const cityUsers = userProfiles.filter(u => u.location === city.city);
+          console.log('City clicked:', city.city);
+          console.log('All user profiles:', userProfiles);
+          
+          // Get users for this location - check both exact match and partial match
+          const cityUsers = userProfiles.filter(u => {
+            const userLocation = u.location?.toLowerCase().trim();
+            const cityName = city.city.toLowerCase().trim();
+            return userLocation === cityName || userLocation?.includes(cityName) || cityName?.includes(userLocation);
+          });
+          
+          console.log('Matched users for', city.city, ':', cityUsers);
           
           if (cityUsers.length > 0) {
             setSelectedCity({
               users: cityUsers,
               cityName: `${city.city}${city.state ? ', ' + city.state : ''}`
             });
+          } else {
+            console.warn('No users found for city:', city.city);
           }
         });
         
@@ -177,8 +191,12 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
         el.appendChild(dot);
         el.appendChild(rank);
 
-        // Get users for this location to show in popup
-        const locationUsers = userProfiles.filter(u => u.location === city.city);
+        // Get users for this location to show in popup - match more flexibly
+        const locationUsers = userProfiles.filter(u => {
+          const userLocation = u.location?.toLowerCase().trim();
+          const cityName = city.city.toLowerCase().trim();
+          return userLocation === cityName || userLocation?.includes(cityName) || cityName?.includes(userLocation);
+        });
         const userNames = locationUsers.slice(0, 3).map(u => u.display_name).join(', ');
         const moreUsers = locationUsers.length > 3 ? ` +${locationUsers.length - 3} more` : '';
         
