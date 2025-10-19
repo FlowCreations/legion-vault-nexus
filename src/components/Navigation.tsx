@@ -60,23 +60,13 @@ export const Navigation = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo - Hidden on homepage */}
           {!isHomePage && (
-            <div className="flex items-center gap-4">
-              {!isLoggedIn && (
-                <Link to="/auth" className="hidden md:block">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <LogIn className="w-4 h-4" />
-                    Sign In
-                  </Button>
-                </Link>
-              )}
-              <Link to="/" className="flex items-center group">
-                <img 
-                  src={solLogo} 
-                  alt="Sons of Legion" 
-                  className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
-                />
-              </Link>
-            </div>
+            <Link to="/" className="flex items-center group">
+              <img 
+                src={solLogo} 
+                alt="Sons of Legion" 
+                className="h-14 sm:h-16 md:h-20 w-auto object-contain transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_0_20px_rgba(247,201,70,0.4)]"
+              />
+            </Link>
           )}
 
           {/* Navigation Links */}
@@ -109,10 +99,18 @@ export const Navigation = () => {
             })}
           </div>
 
-          {/* Search and Cart */}
+          {/* Search, Cart, and Auth */}
           <div className="hidden md:flex items-center gap-3">
             <GlobalSearch />
             <CartDrawer />
+            {!isLoggedIn && (
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
