@@ -169,8 +169,8 @@ const Merchant = () => {
               <div className="space-y-12">
                 <EarningsOverview />
                 <TopTracks period="7days" />
-                <Demographics />
                 <Geography />
+                <Demographics />
               </div>
             </div>
 

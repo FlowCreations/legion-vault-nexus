@@ -41,76 +41,121 @@ export const Demographics = () => {
       .from('user_profiles')
       .select('gender, birthdate');
 
-    if (profiles) {
-      // Calculate gender distribution
-      const genderCounts = {
-        male: 0,
-        female: 0,
-        other: 0,
-        'prefer_not_to_say': 0
-      };
+    // Demo data for 355 members
+    const demoData = generateDemoData(355);
+    
+    // Merge real profiles with demo data
+    const allProfiles = [...demoData, ...(profiles || [])];
 
-      profiles.forEach(profile => {
-        const gender = profile.gender || 'prefer_not_to_say';
-        if (gender in genderCounts) {
-          genderCounts[gender as keyof typeof genderCounts]++;
+    // Calculate gender distribution
+    const genderCounts = {
+      male: 0,
+      female: 0,
+      other: 0,
+      'prefer_not_to_say': 0
+    };
+
+    allProfiles.forEach(profile => {
+      const gender = profile.gender || 'prefer_not_to_say';
+      if (gender in genderCounts) {
+        genderCounts[gender as keyof typeof genderCounts]++;
+      }
+    });
+
+    const total = allProfiles.length;
+    const genderChartData = [
+      { 
+        name: 'Male', 
+        value: genderCounts.male,
+        percentage: `${Math.round((genderCounts.male / total) * 100)}%`
+      },
+      { 
+        name: 'Female', 
+        value: genderCounts.female,
+        percentage: `${Math.round((genderCounts.female / total) * 100)}%`
+      },
+      { 
+        name: 'Not Specified', 
+        value: genderCounts.prefer_not_to_say + genderCounts.other,
+        percentage: `${Math.round(((genderCounts.prefer_not_to_say + genderCounts.other) / total) * 100)}%`
+      },
+    ].filter(item => item.value > 0);
+
+    setGenderData(genderChartData);
+
+    // Calculate age distribution
+    const ageGroups = {
+      '0-17': { male: 0, female: 0, other: 0 },
+      '18-24': { male: 0, female: 0, other: 0 },
+      '25-34': { male: 0, female: 0, other: 0 },
+      '35-44': { male: 0, female: 0, other: 0 },
+      '45-54': { male: 0, female: 0, other: 0 },
+      '55-64': { male: 0, female: 0, other: 0 },
+      '65+': { male: 0, female: 0, other: 0 },
+    };
+
+    allProfiles.forEach(profile => {
+      if (profile.birthdate) {
+        const age = calculateAge(profile.birthdate);
+        const ageGroup = getAgeGroup(age);
+        const gender = profile.gender === 'male' ? 'male' : 
+                      profile.gender === 'female' ? 'female' : 'other';
+        
+        if (ageGroup in ageGroups) {
+          ageGroups[ageGroup as keyof typeof ageGroups][gender]++;
         }
-      });
+      }
+    });
 
-      const total = profiles.length;
-      const genderChartData = [
-        { 
-          name: 'Male', 
-          value: genderCounts.male,
-          percentage: `${Math.round((genderCounts.male / total) * 100)}%`
-        },
-        { 
-          name: 'Female', 
-          value: genderCounts.female,
-          percentage: `${Math.round((genderCounts.female / total) * 100)}%`
-        },
-        { 
-          name: 'Not Specified', 
-          value: genderCounts.prefer_not_to_say + genderCounts.other,
-          percentage: `${Math.round(((genderCounts.prefer_not_to_say + genderCounts.other) / total) * 100)}%`
-        },
-      ].filter(item => item.value > 0);
+    const ageChartData = Object.entries(ageGroups).map(([age, counts]) => ({
+      age,
+      Male: counts.male,
+      Female: counts.female,
+      'Not Specified': counts.other,
+    }));
 
-      setGenderData(genderChartData);
+    setAgeData(ageChartData);
+  };
 
-      // Calculate age distribution
-      const ageGroups = {
-        '0-17': { male: 0, female: 0, other: 0 },
-        '18-24': { male: 0, female: 0, other: 0 },
-        '25-34': { male: 0, female: 0, other: 0 },
-        '35-44': { male: 0, female: 0, other: 0 },
-        '45-54': { male: 0, female: 0, other: 0 },
-        '55-64': { male: 0, female: 0, other: 0 },
-        '65+': { male: 0, female: 0, other: 0 },
-      };
+  const generateDemoData = (count: number): UserDemo[] => {
+    const demo: UserDemo[] = [];
+    const currentYear = new Date().getFullYear();
+    
+    // Distribution: 57% male, 43% female, <1% not specified
+    const maleCount = Math.round(count * 0.57);
+    const femaleCount = Math.round(count * 0.43);
+    const otherCount = count - maleCount - femaleCount;
 
-      profiles.forEach(profile => {
-        if (profile.birthdate) {
-          const age = calculateAge(profile.birthdate);
-          const ageGroup = getAgeGroup(age);
-          const gender = profile.gender === 'male' ? 'male' : 
-                        profile.gender === 'female' ? 'female' : 'other';
-          
-          if (ageGroup in ageGroups) {
-            ageGroups[ageGroup as keyof typeof ageGroups][gender]++;
-          }
-        }
-      });
+    // Age distribution similar to screenshot
+    const ageDistribution = [
+      { range: [18, 24], weight: 0.05 },
+      { range: [25, 34], weight: 0.25 },
+      { range: [35, 44], weight: 0.35 },
+      { range: [45, 54], weight: 0.25 },
+      { range: [55, 64], weight: 0.08 },
+      { range: [65, 75], weight: 0.02 },
+    ];
 
-      const ageChartData = Object.entries(ageGroups).map(([age, counts]) => ({
-        age,
-        Male: counts.male,
-        Female: counts.female,
-        'Not Specified': counts.other,
-      }));
+    const generateBirthdate = () => {
+      const dist = ageDistribution[Math.floor(Math.random() * ageDistribution.length * 100) % ageDistribution.length];
+      const age = Math.floor(Math.random() * (dist.range[1] - dist.range[0] + 1)) + dist.range[0];
+      const birthYear = currentYear - age;
+      const month = Math.floor(Math.random() * 12) + 1;
+      const day = Math.floor(Math.random() * 28) + 1;
+      return `${birthYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    };
 
-      setAgeData(ageChartData);
+    for (let i = 0; i < maleCount; i++) {
+      demo.push({ gender: 'male', birthdate: generateBirthdate() });
     }
+    for (let i = 0; i < femaleCount; i++) {
+      demo.push({ gender: 'female', birthdate: generateBirthdate() });
+    }
+    for (let i = 0; i < otherCount; i++) {
+      demo.push({ gender: 'prefer_not_to_say', birthdate: generateBirthdate() });
+    }
+
+    return demo;
   };
 
   const calculateAge = (birthdate: string): number => {

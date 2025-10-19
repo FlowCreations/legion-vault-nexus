@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
+import { supabase } from "@/integrations/supabase/client";
+import { GlobeUserPopup } from './GlobeUserPopup';
 
 interface CityData {
   rank: number;
@@ -24,6 +26,7 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
   const [error, setError] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const spinEnabledRef = useRef(true);
+  const [selectedCity, setSelectedCity] = useState<{ users: any[], cityName: string } | null>(null);
 
   useEffect(() => {
     // Load Mapbox CSS dynamically
@@ -137,7 +140,26 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
           dot.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3)';
         });
         
-        dot.addEventListener('click', () => {
+        dot.addEventListener('click', async () => {
+          // Stop globe spinning
+          setIsPaused(true);
+          spinEnabledRef.current = false;
+          
+          // Fetch users for this city
+          if (city.userIds && city.userIds.length > 0) {
+            const { data: users } = await supabase
+              .from('user_profiles')
+              .select('user_id, display_name, avatar_url, location')
+              .in('user_id', city.userIds);
+            
+            if (users && users.length > 0) {
+              setSelectedCity({
+                users,
+                cityName: `${city.city}${city.state ? ', ' + city.state : ''}`
+              });
+            }
+          }
+          
           if (onCityClick && city.userIds) {
             onCityClick(city.userIds);
           }
@@ -268,22 +290,37 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
   }
 
   return (
-    <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-black">
-      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
-      
-      {/* Pause/Play Button */}
-      <button
-        onClick={toggleSpin}
-        className="absolute top-4 left-4 z-10 p-3 bg-black/80 hover:bg-black border border-white/20 rounded-lg transition-all hover:border-blue-500"
-        title={isPaused ? "Resume rotation" : "Pause rotation"}
-      >
-        {isPaused ? (
-          <Play className="w-5 h-5 text-white" />
-        ) : (
-          <Pause className="w-5 h-5 text-white" />
-        )}
-      </button>
-    </div>
+    <>
+      <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-black">
+        <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
+        
+        {/* Pause/Play Button */}
+        <button
+          onClick={toggleSpin}
+          className="absolute top-4 left-4 z-10 p-3 bg-black/80 hover:bg-black border border-white/20 rounded-lg transition-all hover:border-blue-500"
+          title={isPaused ? "Resume rotation" : "Pause rotation"}
+        >
+          {isPaused ? (
+            <Play className="w-5 h-5 text-white" />
+          ) : (
+            <Pause className="w-5 h-5 text-white" />
+          )}
+        </button>
+      </div>
+
+      {/* User Popup */}
+      {selectedCity && (
+        <GlobeUserPopup
+          users={selectedCity.users}
+          cityName={selectedCity.cityName}
+          onClose={() => {
+            setSelectedCity(null);
+            setIsPaused(false);
+            spinEnabledRef.current = true;
+          }}
+        />
+      )}
+    </>
   );
 };
 
