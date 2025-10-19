@@ -1,10 +1,7 @@
 import { useState, lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { SeedCoordinatesButton } from "./SeedCoordinatesButton";
 
 const Globe = lazy(() => import('./Globe'));
-const GlobeRealtime = lazy(() => import('./GlobeRealtime').then(module => ({ default: module.GlobeRealtime })));
 
 interface CityData {
   rank: number;
@@ -18,11 +15,9 @@ interface CityData {
 }
 
 export const Geography = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"demo" | "realtime">("realtime");
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"america" | "world">("america");
 
-  const citiesDemo: CityData[] = [
+  const citiesAmerica: CityData[] = [
     { rank: 1, city: "Nashville", state: "TN", streams: 125000, fans: 3420, lat: 36.1627, lng: -86.7816 },
     { rank: 2, city: "Austin", state: "TX", streams: 98000, fans: 2890, lat: 30.2672, lng: -97.7431 },
     { rank: 3, city: "Atlanta", state: "GA", streams: 87000, fans: 2560, lat: 33.7490, lng: -84.3880 },
@@ -33,33 +28,43 @@ export const Geography = () => {
     { rank: 8, city: "Denver", state: "CO", streams: 42000, fans: 1450, lat: 39.7392, lng: -104.9903 },
   ];
 
+  const citiesWorld: CityData[] = [
+    { rank: 1, city: "London", streams: 145000, fans: 4120, lat: 51.5074, lng: -0.1278 },
+    { rank: 2, city: "Tokyo", streams: 132000, fans: 3890, lat: 35.6762, lng: 139.6503 },
+    { rank: 3, city: "Sydney", streams: 98000, fans: 2890, lat: -33.8688, lng: 151.2093 },
+    { rank: 4, city: "Toronto", streams: 87000, fans: 2560, lat: 43.6532, lng: -79.3832 },
+    { rank: 5, city: "Berlin", streams: 76000, fans: 2340, lat: 52.5200, lng: 13.4050 },
+    { rank: 6, city: "Paris", streams: 65000, fans: 2110, lat: 48.8566, lng: 2.3522 },
+    { rank: 7, city: "São Paulo", streams: 54000, fans: 1890, lat: -23.5505, lng: -46.6333 },
+    { rank: 8, city: "Seoul", streams: 48000, fans: 1670, lat: 37.5665, lng: 126.9780 },
+  ];
+
+  const cities = activeTab === "america" ? citiesAmerica : citiesWorld;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold">Member Locations</h2>
-        <SeedCoordinatesButton />
-      </div>
+      <h2 className="text-3xl font-bold">Global Reach</h2>
 
       <div className="flex gap-4">
         <button
-          onClick={() => setActiveTab("realtime")}
+          onClick={() => setActiveTab("america")}
           className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-            activeTab === "realtime"
-              ? "bg-blue-500 text-white"
+            activeTab === "america"
+              ? "bg-white text-black"
               : "bg-white/5 text-gray-400 hover:bg-white/10"
           }`}
         >
-          LIVE MEMBER MAP
+          IN AMERICA
         </button>
         <button
-          onClick={() => setActiveTab("demo")}
+          onClick={() => setActiveTab("world")}
           className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-            activeTab === "demo"
-              ? "bg-blue-500 text-white"
+            activeTab === "world"
+              ? "bg-white text-black"
               : "bg-white/5 text-gray-400 hover:bg-white/10"
           }`}
         >
-          GLOBAL USERS
+          AROUND THE WORLD
         </button>
       </div>
 
@@ -72,38 +77,8 @@ export const Geography = () => {
             </div>
           </div>
         }>
-          {activeTab === "realtime" ? (
-            <GlobeRealtime
-              focusMemberId={selectedMemberId}
-              onMemberClick={(memberId) => {
-                navigate(`/community?member=${memberId}`);
-              }}
-            />
-          ) : (
-            <Globe cities={citiesDemo} onCityClick={() => {}} />
-          )}
+          <Globe cities={cities} onCityClick={() => {}} />
         </Suspense>
-
-        {activeTab === "demo" && (
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Top Cities</h3>
-            {citiesDemo.map((city) => (
-              <div
-                key={city.rank}
-                className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-xl font-bold text-gray-400">{city.rank}</span>
-                  <div>
-                    <span className="font-medium">{city.city}</span>
-                    {city.state && <span className="text-gray-400 text-sm ml-2">{city.state}</span>}
-                  </div>
-                </div>
-                <span className="font-semibold text-lg">{city.fans.toLocaleString()} fans</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
