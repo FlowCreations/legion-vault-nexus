@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      cohort_members: {
+        Row: {
+          cohort_id: string
+          id: string
+          joined_at: string | null
+          member_id: string
+        }
+        Insert: {
+          cohort_id: string
+          id?: string
+          joined_at?: string | null
+          member_id: string
+        }
+        Update: {
+          cohort_id?: string
+          id?: string
+          joined_at?: string | null
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_members_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohorts: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          definition: Json
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          definition: Json
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          definition?: Json
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       community_messages: {
         Row: {
           content: string
@@ -80,6 +133,87 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           view_count?: number | null
+        }
+        Relationships: []
+      }
+      era_ptp_scores_daily: {
+        Row: {
+          created_at: string | null
+          date: string
+          era: number | null
+          era_components: Json | null
+          flags: Json | null
+          id: string
+          member_id: string
+          ptp: number | null
+          ptp_components: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          era?: number | null
+          era_components?: Json | null
+          flags?: Json | null
+          id?: string
+          member_id: string
+          ptp?: number | null
+          ptp_components?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          era?: number | null
+          era_components?: Json | null
+          flags?: Json | null
+          id?: string
+          member_id?: string
+          ptp?: number | null
+          ptp_components?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          click_latency_ms: number | null
+          content_id: string | null
+          created_at: string | null
+          duration_sec: number | null
+          id: string
+          member_id: string | null
+          meta: Json | null
+          sentiment: number | null
+          ts: string
+          type: Database["public"]["Enums"]["event_type"]
+          value: number | null
+        }
+        Insert: {
+          click_latency_ms?: number | null
+          content_id?: string | null
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          member_id?: string | null
+          meta?: Json | null
+          sentiment?: number | null
+          ts?: string
+          type: Database["public"]["Enums"]["event_type"]
+          value?: number | null
+        }
+        Update: {
+          click_latency_ms?: number | null
+          content_id?: string | null
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          member_id?: string | null
+          meta?: Json | null
+          sentiment?: number | null
+          ts?: string
+          type?: Database["public"]["Enums"]["event_type"]
+          value?: number | null
         }
         Relationships: []
       }
@@ -486,6 +620,8 @@ export type Database = {
           bio: string | null
           created_at: string | null
           display_name: string | null
+          era_current: number | null
+          era_label: string | null
           id: string
           intro_answers: Json | null
           last_login: string | null
@@ -493,6 +629,8 @@ export type Database = {
           location: string | null
           mrr: number | null
           products_purchased: string[] | null
+          ptp_current: number | null
+          ptp_status: string | null
           tier: string | null
           total_spend: number | null
           updated_at: string | null
@@ -504,6 +642,8 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
+          era_current?: number | null
+          era_label?: string | null
           id?: string
           intro_answers?: Json | null
           last_login?: string | null
@@ -511,6 +651,8 @@ export type Database = {
           location?: string | null
           mrr?: number | null
           products_purchased?: string[] | null
+          ptp_current?: number | null
+          ptp_status?: string | null
           tier?: string | null
           total_spend?: number | null
           updated_at?: string | null
@@ -522,6 +664,8 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
+          era_current?: number | null
+          era_label?: string | null
           id?: string
           intro_answers?: Json | null
           last_login?: string | null
@@ -529,6 +673,8 @@ export type Database = {
           location?: string | null
           mrr?: number | null
           products_purchased?: string[] | null
+          ptp_current?: number | null
+          ptp_status?: string | null
           tier?: string | null
           total_spend?: number | null
           updated_at?: string | null
@@ -621,6 +767,18 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "merchant" | "user"
+      event_type:
+        | "watch_start"
+        | "watch_complete"
+        | "listen_start"
+        | "listen_complete"
+        | "page_view"
+        | "series_step"
+        | "reaction"
+        | "comment"
+        | "add_to_cart"
+        | "purchase"
+        | "reward_claim"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -749,6 +907,19 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "merchant", "user"],
+      event_type: [
+        "watch_start",
+        "watch_complete",
+        "listen_start",
+        "listen_complete",
+        "page_view",
+        "series_step",
+        "reaction",
+        "comment",
+        "add_to_cart",
+        "purchase",
+        "reward_claim",
+      ],
     },
   },
 } as const

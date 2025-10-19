@@ -20,6 +20,8 @@ import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clo
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { ERABadge } from "@/components/merchant/ERABadge";
+import { PTPChip } from "@/components/merchant/PTPChip";
 import { getTierColor } from "@/lib/tierColors";
 
 interface Member {
@@ -38,6 +40,10 @@ interface Member {
   intro_answers?: Record<string, any>;
   last_login: string;
   created_at: string;
+  era_current?: number;
+  ptp_current?: number;
+  era_label?: string;
+  ptp_status?: string;
 }
 
 export default function AdminDashboard() {
@@ -45,6 +51,9 @@ export default function AdminDashboard() {
   const [tierCounts, setTierCounts] = useState<Record<string, number>>({});
   const [pixels, setPixels] = useState([]);
   const [legalDocs, setLegalDocs] = useState([]);
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [filterERA, setFilterERA] = useState<string>('all');
+  const [filterPTP, setFilterPTP] = useState<string>('all');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -133,6 +142,45 @@ export default function AdminDashboard() {
   const totalMembers = 355;
   const totalMRR = 7100;
   const totalRevenue = 21300;
+  
+  // Compute analytics
+  const avgERA = members.length > 0 
+    ? Math.round(members.reduce((sum, m) => sum + (m.era_current || 5), 0) / members.length)
+    : 5;
+  
+  const hotPTPLeads = members.filter(m => (m.ptp_current || 0) >= 70).length;
+  
+  // Filter and sort members
+  const getFilteredMembers = () => {
+    let filtered = [...members];
+    
+    // Filter by ERA
+    if (filterERA !== 'all') {
+      filtered = filtered.filter(m => m.era_label === filterERA);
+    }
+    
+    // Filter by PTP
+    if (filterPTP !== 'all') {
+      filtered = filtered.filter(m => m.ptp_status === filterPTP);
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === 'era') return (b.era_current || 0) - (a.era_current || 0);
+      if (sortBy === 'ptp') return (b.ptp_current || 0) - (a.ptp_current || 0);
+      if (sortBy === 'total_spend') return (b.total_spend || 0) - (a.total_spend || 0);
+      if (sortBy === 'last_login') {
+        const dateA = a.last_login ? new Date(a.last_login).getTime() : 0;
+        const dateB = b.last_login ? new Date(b.last_login).getTime() : 0;
+        return dateB - dateA;
+      }
+      return 0;
+    });
+    
+    return filtered;
+  };
+  
+  const filteredMembers = getFilteredMembers();
 
   return (
     <div className="space-y-6">
@@ -147,7 +195,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Total Members</CardTitle>
@@ -177,6 +225,30 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold text-foreground">${totalRevenue.toLocaleString()}</div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-foreground">Avg ERA (7d)</CardTitle>
+            <TrendingUp className="h-4 w-4 text-foreground/70" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">{avgERA}/10</div>
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => {
+          setFilterPTP('Hot');
+          setSortBy('ptp');
+        }}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-foreground">Hot PTP Leads</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-400">{hotPTPLeads}</div>
+            <p className="text-xs text-muted-foreground mt-1">Click to view</p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="members" className="space-y-6">
@@ -196,8 +268,55 @@ export default function AdminDashboard() {
               <CardDescription>View all community members with their profiles</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Filters and Sort */}
+              <div className="flex gap-4 mb-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Sort by:</span>
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-1 border rounded-md bg-background text-sm"
+                  >
+                    <option value="created_at">Join Date</option>
+                    <option value="era">ERA</option>
+                    <option value="ptp">PTP</option>
+                    <option value="last_login">Last Activity</option>
+                    <option value="total_spend">Total Spend</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">ERA:</span>
+                  <select 
+                    value={filterERA}
+                    onChange={(e) => setFilterERA(e.target.value)}
+                    className="px-3 py-1 border rounded-md bg-background text-sm"
+                  >
+                    <option value="all">All</option>
+                    <option value="Dormant">Dormant</option>
+                    <option value="Engaged">Engaged</option>
+                    <option value="Tribe">Tribe</option>
+                    <option value="Integrated">Integrated</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">PTP:</span>
+                  <select 
+                    value={filterPTP}
+                    onChange={(e) => setFilterPTP(e.target.value)}
+                    className="px-3 py-1 border rounded-md bg-background text-sm"
+                  >
+                    <option value="all">All</option>
+                    <option value="Cold">Cold</option>
+                    <option value="Warm">Warm</option>
+                    <option value="Hot">Hot</option>
+                  </select>
+                </div>
+              </div>
+              
               <div className="grid gap-4">
-                {members.map((member) => (
+                {filteredMembers.map((member) => (
                   <div key={member.id} className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                     <div className="flex items-start gap-4">
                       <Avatar className="h-12 w-12">
@@ -212,6 +331,12 @@ export default function AdminDashboard() {
                             <Badge className={getTierColor(member.tier)}>
                               {member.tier || "N/A"}
                             </Badge>
+                            {member.era_current && member.era_label && (
+                              <ERABadge era={member.era_current} label={member.era_label} />
+                            )}
+                            {member.ptp_current !== undefined && member.ptp_status && (
+                              <PTPChip ptp={member.ptp_current} status={member.ptp_status} />
+                            )}
                           </div>
                           <div className="flex gap-6 text-sm">
                             <div className="text-center">
@@ -272,9 +397,9 @@ export default function AdminDashboard() {
                   </div>
                 ))}
                 
-                {members.length === 0 && (
+                {filteredMembers.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    No members found
+                    No members found matching filters
                   </div>
                 )}
               </div>
@@ -285,30 +410,34 @@ export default function AdminDashboard() {
         <TabsContent value="superfans" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Superfan Index</CardTitle>
-              <CardDescription>Ranked by engagement, watch time, purchases, and shares</CardDescription>
+              <CardTitle>Behavior Heatmap</CardTitle>
+              <CardDescription>Purchase readiness ranked by PTP score</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {members
                   .sort((a, b) => {
-                    const scoreA = (a.watch_time || 0) + (a.listen_time || 0) + (a.total_spend || 0) * 100;
-                    const scoreB = (b.watch_time || 0) + (b.listen_time || 0) + (b.total_spend || 0) * 100;
-                    return scoreB - scoreA;
+                    const ptpA = a.ptp_current || 0;
+                    const ptpB = b.ptp_current || 0;
+                    return ptpB - ptpA;
                   })
                   .map((member, index) => {
-                    const score = Math.floor(((member.watch_time || 0) + (member.listen_time || 0) + (member.total_spend || 0) * 100) / 100);
                     return (
-                      <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                         <div className="flex items-center gap-4">
                           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
                             {index + 1}
                           </div>
                           <div>
                             <h3 className="font-semibold">{member.display_name}</h3>
-                            <Badge className={getTierColor(member.tier)}>
-                              {member.tier}
-                            </Badge>
+                            <div className="flex gap-2 mt-1">
+                              <Badge className={getTierColor(member.tier)}>
+                                {member.tier}
+                              </Badge>
+                              {member.era_current && member.era_label && (
+                                <ERABadge era={member.era_current} label={member.era_label} />
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-6 text-sm">
@@ -321,8 +450,12 @@ export default function AdminDashboard() {
                             <p className="font-bold text-foreground">${(member.total_spend || 0).toFixed(2)}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-foreground/70 font-medium">Score</p>
-                            <p className="font-bold text-primary">{score}</p>
+                            <p className="text-foreground/70 font-medium">PTP</p>
+                            {member.ptp_current !== undefined && member.ptp_status ? (
+                              <PTPChip ptp={member.ptp_current} status={member.ptp_status} />
+                            ) : (
+                              <p className="font-bold text-muted-foreground">N/A</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -334,14 +467,31 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
+          <div className="mb-6 flex justify-end">
+            <Button 
+              onClick={async () => {
+                const { data, error } = await supabase.functions.invoke('seed-demo-data');
+                if (error) {
+                  toast({ title: "Error seeding data", variant: "destructive" });
+                } else {
+                  toast({ title: "Demo data seeded successfully! Refreshing..." });
+                  setTimeout(() => window.location.reload(), 1000);
+                }
+              }}
+              variant="outline"
+            >
+              Seed Demo ERA/PTP Data
+            </Button>
+          </div>
+          
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Geo-Heatmap
+                  Cohort Rivers
                 </CardTitle>
-                <CardDescription>High-engagement regions</CardDescription>
+                <CardDescription>Overlapping behavioral segments</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
