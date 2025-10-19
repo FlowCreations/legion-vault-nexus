@@ -473,7 +473,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-lg">{member.display_name || "Unknown"}</h3>
-                            <Badge className={getTierColor(member.tier)}>
+                            <Badge className={`${getTierColor(member.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
                               {member.tier || "N/A"}
                             </Badge>
                             {member.era_current && member.era_label && (
@@ -597,7 +597,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                           <div>
                             <h3 className="font-semibold">{member.display_name}</h3>
                             <div className="flex gap-2 mt-1">
-                              <Badge className={getTierColor(member.tier)}>
+                              <Badge className={`${getTierColor(member.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
                                 {member.tier}
                               </Badge>
                               {member.era_current && member.era_label && (
@@ -898,7 +898,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                 <div>
                   <h2 className="text-3xl font-bold">{selectedMember.display_name}</h2>
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge className={getTierColor(selectedMember.tier)}>
+                    <Badge className={`${getTierColor(selectedMember.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
                       {selectedMember.tier || "N/A"}
                     </Badge>
                     {selectedMember.era_current && selectedMember.era_label && (

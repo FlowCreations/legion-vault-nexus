@@ -25,7 +25,7 @@ export const ERABadge = ({ era, label }: ERABadgeProps) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Badge className={`${getColor()} font-semibold px-3 py-1`}>
+          <Badge className={`${getColor()} font-semibold px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
             ERA • {getLabel()}
           </Badge>
         </TooltipTrigger>
