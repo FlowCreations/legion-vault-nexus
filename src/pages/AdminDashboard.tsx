@@ -47,7 +47,11 @@ interface Member {
   ptp_status?: string;
 }
 
-export default function AdminDashboard() {
+interface AdminDashboardProps {
+  selectedUserId?: string | null;
+}
+
+export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [tierCounts, setTierCounts] = useState<Record<string, number>>({});
   const [pixels, setPixels] = useState([]);
@@ -56,6 +60,7 @@ export default function AdminDashboard() {
   const [filterERA, setFilterERA] = useState<string>('all');
   const [filterPTP, setFilterPTP] = useState<string>('all');
   const [selectedPattern, setSelectedPattern] = useState<{ member: any; pattern: any } | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -145,6 +150,16 @@ export default function AdminDashboard() {
     loadPixels();
     loadLegalDocs();
   }, []);
+
+  useEffect(() => {
+    // If a user was selected from the globe, show their profile
+    if (selectedUserId && members.length > 0) {
+      const member = members.find(m => m.user_id === selectedUserId);
+      if (member) {
+        setSelectedMember(member);
+      }
+    }
+  }, [selectedUserId, members]);
 
   const loadMembers = async () => {
     const { data, error } = await supabase
@@ -523,16 +538,25 @@ export default function AdminDashboard() {
                             <span>•</span>
                             <span>Joined: {new Date(member.created_at).toLocaleDateString()}</span>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              const patternIndex = (member as any).patternIndex || Math.floor(Math.random() * patterns.length);
-                              setSelectedPattern({ member, pattern: patterns[patternIndex] });
-                            }}
-                          >
-                            View Pattern
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setSelectedMember(member)}
+                            >
+                              View Profile
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const patternIndex = (member as any).patternIndex || Math.floor(Math.random() * patterns.length);
+                                setSelectedPattern({ member, pattern: patterns[patternIndex] });
+                              }}
+                            >
+                              View Pattern
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -860,6 +884,102 @@ export default function AdminDashboard() {
           memberName={selectedPattern.member.display_name}
           pattern={selectedPattern.pattern}
         />
+      )}
+
+      {selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-card border border-white/20 rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedMember.display_name}`} />
+                  <AvatarFallback>{selectedMember.display_name?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-3xl font-bold">{selectedMember.display_name}</h2>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge className={getTierColor(selectedMember.tier)}>
+                      {selectedMember.tier || "N/A"}
+                    </Badge>
+                    {selectedMember.era_current && selectedMember.era_label && (
+                      <ERABadge era={selectedMember.era_current} label={selectedMember.era_label} />
+                    )}
+                    {selectedMember.ptp_current !== undefined && selectedMember.ptp_status && (
+                      <PTPChip ptp={selectedMember.ptp_current} status={selectedMember.ptp_status} />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMember(null)}
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {selectedMember.bio && (
+                <div>
+                  <h3 className="text-sm font-bold text-foreground/70 mb-2">BIO</h3>
+                  <p className="text-foreground">{selectedMember.bio}</p>
+                </div>
+              )}
+
+              {selectedMember.location && (
+                <div>
+                  <h3 className="text-sm font-bold text-foreground/70 mb-2">LOCATION</h3>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{selectedMember.location}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h3 className="text-xs font-bold text-foreground/70 mb-2">TOTAL SPEND</h3>
+                  <p className="text-2xl font-bold">${selectedMember.total_spend?.toFixed(2) || "0.00"}</p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h3 className="text-xs font-bold text-foreground/70 mb-2">MRR</h3>
+                  <p className="text-2xl font-bold">${selectedMember.mrr?.toFixed(2) || "0.00"}</p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h3 className="text-xs font-bold text-foreground/70 mb-2">WATCH TIME</h3>
+                  <p className="text-2xl font-bold">{Math.floor((selectedMember.watch_time || 0) / 60)}h</p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h3 className="text-xs font-bold text-foreground/70 mb-2">LISTEN TIME</h3>
+                  <p className="text-2xl font-bold">{Math.floor((selectedMember.listen_time || 0) / 60)}h</p>
+                </div>
+              </div>
+
+              {selectedMember.intro_answers && (
+                <div>
+                  <h3 className="text-sm font-bold text-foreground/70 mb-3">INTRO ANSWERS</h3>
+                  <div className="space-y-2">
+                    {Object.entries(selectedMember.intro_answers).map(([key, value]) => (
+                      <div key={key} className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs font-bold text-foreground/70 mb-1">{key}</p>
+                        <p className="text-foreground">{value as string}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 text-sm text-foreground/70 pt-4 border-t">
+                <span>Last login: {selectedMember.last_login
+                  ? formatDistanceToNow(new Date(selectedMember.last_login), { addSuffix: true })
+                  : "Never"}</span>
+                <span>•</span>
+                <span>Joined: {new Date(selectedMember.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -18,13 +18,13 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
   const navigate = useNavigate();
 
   const handleUserClick = (userId: string) => {
+    // Navigate to merchant dashboard, community tab, with selected user
     navigate('/merchant', { 
       state: { 
-        tab: 'community',
+        activeTab: 'community',
         selectedUserId: userId 
       } 
     });
-    onClose();
   };
 
   return (

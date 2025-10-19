@@ -40,9 +40,20 @@ const Merchant = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [activeTab, setActiveTab] = useState("analytics");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAnalytics();
+    
+    // Check for navigation state
+    const state = window.history.state?.usr;
+    if (state?.activeTab) {
+      setActiveTab(state.activeTab);
+    }
+    if (state?.selectedUserId) {
+      setSelectedUserId(state.selectedUserId);
+    }
   }, []);
 
 
@@ -101,7 +112,7 @@ const Merchant = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="analytics" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 bg-card border-2 border-yellow-500/30">
             <TabsTrigger 
               value="analytics"
@@ -189,7 +200,7 @@ const Merchant = () => {
           </TabsContent>
 
           <TabsContent value="community">
-            <AdminDashboard />
+            <AdminDashboard selectedUserId={selectedUserId} />
           </TabsContent>
 
           <TabsContent value="campaigns">
