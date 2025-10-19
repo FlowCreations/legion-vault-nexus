@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { SeedCoordinatesButton } from "./SeedCoordinatesButton";
 
 const Globe = lazy(() => import('./Globe'));
 const GlobeRealtime = lazy(() => import('./GlobeRealtime').then(module => ({ default: module.GlobeRealtime })));
@@ -34,7 +35,10 @@ export const Geography = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold">Member Locations</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold">Member Locations</h2>
+        <SeedCoordinatesButton />
+      </div>
 
       <div className="flex gap-4">
         <button
@@ -55,7 +59,7 @@ export const Geography = () => {
               : "bg-white/5 text-gray-400 hover:bg-white/10"
           }`}
         >
-          DEMO DATA
+          GLOBAL USERS
         </button>
       </div>
 
