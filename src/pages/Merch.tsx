@@ -150,6 +150,16 @@ export default function Merch() {
     return 'scale-100'; // Default scale
   };
 
+  // Helper function to get custom positioning for specific products
+  const getImagePosition = (title: string): string => {
+    const upperTitle = title.toUpperCase();
+    
+    // Green bandana needs to be moved down slightly to center better
+    if (upperTitle.includes('BANDANA - GREEN')) return 'translate-y-1';
+    
+    return ''; // Default no translation
+  };
+
 
   const handleAddToCart = async (product: Product) => {
     // For products with variants, open customizer
@@ -420,7 +430,7 @@ export default function Merch() {
                       <img
                         src={product.image_url}
                         alt={product.title}
-                        className={`w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300 ${getImageScale(product.title)}`}
+                        className={`w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300 ${getImageScale(product.title)} ${getImagePosition(product.title)}`}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
