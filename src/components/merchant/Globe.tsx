@@ -30,7 +30,26 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
   const [selectedCity, setSelectedCity] = useState<{ users: any[], cityName: string } | null>(null);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
 
-  // Fetch all user profiles on mount
+  // Mock members data - synced with AdminDashboard and Geography
+  const mockMembers = [
+    { user_id: "1", display_name: "Sarah Johnson", location: "Nashville", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah" },
+    { user_id: "2", display_name: "Mike Chen", location: "Austin", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike" },
+    { user_id: "3", display_name: "Emily Rodriguez", location: "Los Angeles", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily" },
+    { user_id: "4", display_name: "David Kim", location: "Chicago", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=david" },
+    { user_id: "5", display_name: "Jessica Martinez", location: "New York", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jessica" },
+    { user_id: "6", display_name: "Robert Taylor", location: "Dallas", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=robert" },
+    { user_id: "7", display_name: "Amanda White", location: "Nashville", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=amanda" },
+    { user_id: "8", display_name: "Chris Anderson", location: "Phoenix", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=chris" },
+    { user_id: "9", display_name: "Jordan Blake", location: "Denver", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jordan" },
+    { user_id: "10", display_name: "Taylor Morgan", location: "Seattle", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=taylor" },
+    { user_id: "11", display_name: "Alex Rivera", location: "Miami", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex" },
+    { user_id: "12", display_name: "Morgan Hayes", location: "Portland", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=morgan" },
+    { user_id: "13", display_name: "Casey Jordan", location: "Boston", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=casey" },
+    { user_id: "14", display_name: "Riley Thompson", location: "San Diego", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=riley" },
+    { user_id: "15", display_name: "Sam Cooper", location: "Atlanta", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sam" },
+  ];
+
+  // Fetch all user profiles on mount and combine with mock members
   useEffect(() => {
     const fetchProfiles = async () => {
       const { data, error } = await supabase
@@ -41,9 +60,10 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
       console.log('Fetched user profiles:', data);
       console.log('Profile fetch error:', error);
       
-      if (data) {
-        setUserProfiles(data);
-      }
+      // Combine real profiles with mock members
+      const allProfiles = [...mockMembers, ...(data || [])];
+      setUserProfiles(allProfiles);
+      console.log('All profiles (mock + real):', allProfiles);
     };
     fetchProfiles();
   }, []);

@@ -45,15 +45,34 @@ export const Geography = () => {
     { rank: 8, city: "Seoul", streams: 48000, fans: 1670, lat: 37.5665, lng: 126.9780 },
   ];
 
+  // Mock members data - synced with AdminDashboard
+  const mockMembers = [
+    { user_id: "1", display_name: "Sarah Johnson", location: "Nashville", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah" },
+    { user_id: "2", display_name: "Mike Chen", location: "Austin", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike" },
+    { user_id: "3", display_name: "Emily Rodriguez", location: "Los Angeles", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily" },
+    { user_id: "4", display_name: "David Kim", location: "Chicago", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=david" },
+    { user_id: "5", display_name: "Jessica Martinez", location: "New York", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jessica" },
+    { user_id: "6", display_name: "Robert Taylor", location: "Dallas", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=robert" },
+    { user_id: "7", display_name: "Amanda White", location: "Nashville", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=amanda" },
+    { user_id: "8", display_name: "Chris Anderson", location: "Phoenix", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=chris" },
+    { user_id: "9", display_name: "Jordan Blake", location: "Denver", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jordan" },
+    { user_id: "10", display_name: "Taylor Morgan", location: "Seattle", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=taylor" },
+    { user_id: "11", display_name: "Alex Rivera", location: "Miami", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex" },
+    { user_id: "12", display_name: "Morgan Hayes", location: "Portland", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=morgan" },
+    { user_id: "13", display_name: "Casey Jordan", location: "Boston", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=casey" },
+    { user_id: "14", display_name: "Riley Thompson", location: "San Diego", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=riley" },
+    { user_id: "15", display_name: "Sam Cooper", location: "Atlanta", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sam" },
+  ];
+
   useEffect(() => {
-    // Fetch user profiles with location data and merge with demo data
+    // Merge real user profiles with mock members
     const fetchUserLocations = async () => {
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('user_id, display_name, avatar_url, location')
         .not('location', 'is', null);
 
-      // Start with demo data as base
+      // Start with demo cities as base
       const baseCities = activeTab === "america" ? [...citiesAmerica] : [...citiesWorld];
       const locationMap = new Map<string, CityData>();
       
@@ -62,23 +81,47 @@ export const Geography = () => {
         locationMap.set(city.city, { ...city, userIds: [] });
       });
 
+      // Add mock members to their locations
+      mockMembers.forEach(member => {
+        const cityName = member.location;
+        const coords = getApproximateCoords(cityName);
+        
+        if (coords) {
+          if (locationMap.has(cityName)) {
+            const existing = locationMap.get(cityName)!;
+            existing.userIds = [...(existing.userIds || []), member.user_id];
+            existing.fans += 1;
+          } else {
+            // Create new city for this member
+            locationMap.set(cityName, {
+              rank: 0,
+              city: cityName,
+              state: undefined,
+              streams: 500,
+              fans: 1,
+              lat: coords.lat,
+              lng: coords.lng,
+              userIds: [member.user_id]
+            });
+          }
+        }
+      });
+
+      // Add real profiles
       if (profiles && profiles.length > 0) {
-        // Add/merge real user data
         profiles.forEach(profile => {
           const location = profile.location || 'Unknown';
           const coords = getApproximateCoords(location);
           
           if (coords) {
             if (locationMap.has(location)) {
-              // City exists in demo data, add user to it
               const existing = locationMap.get(location)!;
               existing.fans += 1;
-              existing.streams += 500; // Estimated streams per user
+              existing.streams += 500;
               existing.userIds = [...(existing.userIds || []), profile.user_id];
             } else {
-              // New city from real user data
               locationMap.set(location, {
-                rank: 0, // Will be recalculated
+                rank: 0,
                 city: location,
                 state: undefined,
                 streams: 500,
@@ -122,7 +165,7 @@ export const Geography = () => {
           table: 'user_profiles'
         },
         () => {
-          fetchUserLocations(); // Refresh when new user signs up
+          fetchUserLocations();
         }
       )
       .subscribe();
@@ -132,7 +175,7 @@ export const Geography = () => {
     };
   }, [activeTab]);
 
-  // Simple geocoding helper - in production use real API
+  // Enhanced geocoding helper with more cities
   const getApproximateCoords = (city: string): { lat: number, lng: number } | null => {
     const knownCities: Record<string, { lat: number, lng: number }> = {
       'Nashville': { lat: 36.1627, lng: -86.7816 },
@@ -144,6 +187,12 @@ export const Geography = () => {
       'Chicago': { lat: 41.8781, lng: -87.6298 },
       'Dallas': { lat: 32.7767, lng: -96.7970 },
       'Denver': { lat: 39.7392, lng: -104.9903 },
+      'Phoenix': { lat: 33.4484, lng: -112.0740 },
+      'Seattle': { lat: 47.6062, lng: -122.3321 },
+      'Miami': { lat: 25.7617, lng: -80.1918 },
+      'Portland': { lat: 45.5152, lng: -122.6784 },
+      'Boston': { lat: 42.3601, lng: -71.0589 },
+      'San Diego': { lat: 32.7157, lng: -117.1611 },
       'London': { lat: 51.5074, lng: -0.1278 },
       'Tokyo': { lat: 35.6762, lng: 139.6503 },
       'Sydney': { lat: -33.8688, lng: 151.2093 },
@@ -157,7 +206,6 @@ export const Geography = () => {
   };
 
   const getCountryFromCity = (city: string): string => {
-    // Simple mapping - in production use proper API
     const countryMap: Record<string, string> = {
       'Nashville': 'USA',
       'Montreal': 'Canada',
@@ -168,6 +216,12 @@ export const Geography = () => {
       'Chicago': 'USA',
       'Dallas': 'USA',
       'Denver': 'USA',
+      'Phoenix': 'USA',
+      'Seattle': 'USA',
+      'Miami': 'USA',
+      'Portland': 'USA',
+      'Boston': 'USA',
+      'San Diego': 'USA',
       'London': 'UK',
       'Tokyo': 'Japan',
       'Sydney': 'Australia',
