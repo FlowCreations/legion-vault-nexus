@@ -262,32 +262,45 @@ export default function Auth() {
 
               <div>
                 <Label htmlFor="profilePicture">Profile Picture</Label>
-                <div className="mt-2 flex items-start gap-4">
-                  <div className="flex flex-col items-center justify-center">
+                <div className="mt-2 flex flex-col md:flex-row items-center md:items-start gap-6">
+                  <div className="flex flex-col items-center">
                     {profilePicturePreview ? (
                       <img 
                         src={profilePicturePreview} 
                         alt="Preview" 
-                        className="w-24 h-24 rounded-full object-cover border-2 border-primary"
+                        className="w-32 h-32 rounded-full object-cover border-4 border-primary"
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-muted border-2 border-dashed border-primary/50 flex flex-col items-center justify-center">
-                        <span className="text-4xl mb-1">📸</span>
+                      <div className="w-32 h-32 rounded-full bg-muted border-4 border-dashed border-primary/50 flex flex-col items-center justify-center">
+                        <span className="text-5xl mb-1">📸</span>
                         <span className="text-xs text-muted-foreground">Your photo</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 w-full space-y-3">
                     <div className="relative">
-                      <Input
-                        id="profilePicture"
+                      <label 
+                        htmlFor="profilePictureInput" 
+                        className="block w-full cursor-pointer"
+                      >
+                        <div className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 px-6 rounded-lg text-center transition-colors border-2 border-yellow-500">
+                          Choose File
+                        </div>
+                      </label>
+                      <input
+                        id="profilePictureInput"
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="cursor-pointer bg-yellow-400 hover:bg-yellow-500 border-yellow-500 text-black font-medium file:bg-yellow-500 file:text-black file:font-semibold file:border-0 file:mr-4 file:px-4 file:py-2 file:rounded"
+                        className="hidden"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    {profilePicture && (
+                      <p className="text-sm text-muted-foreground">
+                        Selected: {profilePicture.name}
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
                       👆 Click "Choose File" to upload your profile picture
                     </p>
                   </div>
