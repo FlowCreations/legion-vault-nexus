@@ -81,6 +81,7 @@ export default function CommunityHub() {
   const [searchQuery, setSearchQuery] = useState("");
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [allProfiles, setAllProfiles] = useState<any[]>([]);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -211,6 +212,9 @@ export default function CommunityHub() {
     if (activeTab === "announcements" || activeTab === "legion_speaks" || activeTab === "intros") {
       loadPosts();
     }
+    if (activeTab === "directory") {
+      loadDirectoryProfiles();
+    }
     loadUnreadCount();
     loadMessages();
     setupRealtimeSubscription();
@@ -231,6 +235,26 @@ export default function CommunityHub() {
   const loadMessages = async () => {
     // Keep using mock messages for demo purposes
     // Real database messages would be loaded here in production
+  };
+
+  const loadDirectoryProfiles = async () => {
+    // Load real user profiles
+    const { data: realProfiles } = await supabase
+      .from("user_profiles")
+      .select("user_id, display_name, avatar_url, location, bio, tier");
+
+    // Convert real profiles to directory format
+    const formattedRealProfiles = (realProfiles || []).map(profile => ({
+      id: profile.user_id,
+      name: profile.display_name,
+      avatar: profile.avatar_url || "",
+      tier: profile.tier || "Free Member",
+      location: profile.location || "",
+      bio: profile.bio || ""
+    }));
+
+    // Combine real profiles with mock profiles - always show all
+    setAllProfiles([...formattedRealProfiles, ...mockProfiles]);
   };
 
   const loadPosts = async () => {
@@ -513,7 +537,7 @@ export default function CommunityHub() {
     });
   };
 
-  const filteredProfiles = mockProfiles.filter(profile =>
+  const filteredProfiles = allProfiles.filter(profile =>
     profile.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     profile.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
     profile.tier.toLowerCase().includes(searchQuery.toLowerCase())
@@ -525,7 +549,7 @@ export default function CommunityHub() {
       post.content.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
       post.user_profiles?.display_name?.toLowerCase().includes(globalSearchQuery.toLowerCase())
     ).slice(0, 5),
-    members: mockProfiles.filter(profile =>
+    members: allProfiles.filter(profile =>
       profile.name.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
       profile.location.toLowerCase().includes(globalSearchQuery.toLowerCase())
     ).slice(0, 5)
@@ -788,7 +812,7 @@ export default function CommunityHub() {
             <div className="space-y-6">
               <h2 className="font-serif text-2xl font-bold">Community Directory</h2>
               <div className="grid md:grid-cols-2 gap-4">
-                {mockProfiles.map((profile) => (
+                {filteredProfiles.map((profile) => (
                   <div key={profile.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
                     <div className="flex items-start gap-4">
                       <Avatar className="h-16 w-16">
