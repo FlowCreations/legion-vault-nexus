@@ -104,7 +104,7 @@ export const Navigation = () => {
             <GlobalSearch />
             <CartDrawer />
             {!isLoggedIn && (
-              <Link to="/auth">
+              <Link to="/auth" className="ml-4">
                 <Button variant="outline" size="sm" className="gap-2">
                   <LogIn className="w-4 h-4" />
                   Sign In
