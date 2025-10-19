@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ERABadge } from "@/components/merchant/ERABadge";
 import { PTPChip } from "@/components/merchant/PTPChip";
+import { PatternDialog } from "@/components/merchant/PatternDialog";
 import { getTierColor } from "@/lib/tierColors";
 
 interface Member {
@@ -54,8 +55,89 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [filterERA, setFilterERA] = useState<string>('all');
   const [filterPTP, setFilterPTP] = useState<string>('all');
+  const [selectedPattern, setSelectedPattern] = useState<{ member: any; pattern: any } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const patterns = [
+    {
+      name: "The Emotional Warm-Up Loop",
+      emoji: "🔁",
+      description: "A fan replays short emotional clips (vlogs, behind-the-scenes, acoustic versions) multiple times before diving into longer content.",
+      signal: "Emotional attachment forming — they're warming up to identity alignment.",
+      action: "Trigger 'Deeper Dive' prompt or story recommendation."
+    },
+    {
+      name: "The Meaning-First Buyer",
+      emoji: "🛒",
+      description: "Watches or reads the story before visiting the store.",
+      signal: "Purchases are narrative-driven — buying for meaning, not merch.",
+      action: "Prioritize storytelling in their content feed; offer 'Era Drop' related to what they viewed."
+    },
+    {
+      name: "The Soundtrack Bond",
+      emoji: "💽",
+      description: "Listens to full albums in sequence rather than shuffle.",
+      signal: "Deep psychological absorption — more likely to buy physical or signed editions.",
+      action: "Push collector's items or vinyl offers; they crave completion."
+    },
+    {
+      name: "The Repetition-to-Reinforcement Cycle",
+      emoji: "🧠",
+      description: "Fan repeatedly watches the same doc, vlog, or live performance over several days.",
+      signal: "Emotional resonance has peaked — they're ready for a deeper bond (VIP, meet & greet, membership).",
+      action: "Trigger 'Join the Inner Circle' or exclusive content invite."
+    },
+    {
+      name: "The Social Mirror Pattern",
+      emoji: "💬",
+      description: "Comments or shares right after watching — especially tagging friends.",
+      signal: "Identity expression. They're using the brand as part of their self-image.",
+      action: "Reward them with spotlight features or personalized thank-you notes."
+    },
+    {
+      name: "The 7-Hour Activation",
+      emoji: "⏱️",
+      description: "Once a fan spends 7+ cumulative hours in the portal (music, gallery, videos).",
+      signal: "Tribe bond formed — they behave like lifelong members.",
+      action: "Trigger personalized message or physical touchpoint (gift card, signed postcard)."
+    },
+    {
+      name: "The Era Echo Pattern",
+      emoji: "🎟️",
+      description: "A fan re-engages with old era content right before a new era drop.",
+      signal: "They're nostalgic and emotionally primed — high likelihood of purchasing new merch or tickets.",
+      action: "Send 'Then & Now' campaign showing continuity between eras."
+    },
+    {
+      name: "The Reciprocity Loop",
+      emoji: "📦",
+      description: "After receiving something physical (gift card, signed photo, postcard), digital activity spikes 40–50%.",
+      signal: "Physical recognition fuels digital loyalty.",
+      action: "Automate 'offline echo' triggers after each fulfillment."
+    },
+    {
+      name: "The Exploration Flow",
+      emoji: "🧭",
+      description: "Navigates organically — homepage → music → vlog → gallery → merch (instead of jumping directly to one item).",
+      signal: "Explorers are 4× more loyal and higher lifetime value.",
+      action: "Encourage curiosity pathways through adaptive recommendations."
+    },
+    {
+      name: "The Drop-Time Surge",
+      emoji: "⚡",
+      description: "Sudden spikes in logins, replays, or chat messages within 24h of new content.",
+      signal: "Cultural heatwave — fans are synchronized emotionally.",
+      action: "Launch limited-time drop or exclusive Q&A during that window."
+    },
+    {
+      name: "The Loyalty Cascade",
+      emoji: "💎",
+      description: "One fan's activity (comment, repost, review) leads to measurable increases in 2–3 others' engagement.",
+      signal: "That fan is an emotional influencer inside the micro-community.",
+      action: "Tag them as 'Seed Node' for early releases or ambassador invites."
+    }
+  ];
 
   useEffect(() => {
     loadMembers();
@@ -433,12 +515,24 @@ export default function AdminDashboard() {
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-xs text-foreground/70 font-medium pt-2">
-                          <span>Last login: {member.last_login
-                            ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
-                            : "Never"}</span>
-                          <span>•</span>
-                          <span>Joined: {new Date(member.created_at).toLocaleDateString()}</span>
+                        <div className="flex items-center justify-between gap-2 text-xs text-foreground/70 font-medium pt-2">
+                          <div className="flex items-center gap-2">
+                            <span>Last login: {member.last_login
+                              ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
+                              : "Never"}</span>
+                            <span>•</span>
+                            <span>Joined: {new Date(member.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const patternIndex = (member as any).patternIndex || Math.floor(Math.random() * patterns.length);
+                              setSelectedPattern({ member, pattern: patterns[patternIndex] });
+                            }}
+                          >
+                            View Pattern
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -758,6 +852,15 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
       </Tabs>
+      
+      {selectedPattern && (
+        <PatternDialog
+          isOpen={!!selectedPattern}
+          onClose={() => setSelectedPattern(null)}
+          memberName={selectedPattern.member.display_name}
+          pattern={selectedPattern.pattern}
+        />
+      )}
     </div>
   );
 }
@@ -784,7 +887,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 7200000).toISOString(),
     created_at: new Date(Date.now() - 180 * 86400000).toISOString(),
-  },
+    patternIndex: 4,
+  } as any,
   {
     id: "2",
     user_id: "2",
@@ -805,7 +909,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 86400000).toISOString(),
     created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
-  },
+    patternIndex: 9,
+  } as any,
   {
     id: "3",
     user_id: "3",
@@ -826,7 +931,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 1800000).toISOString(),
     created_at: new Date(Date.now() - 365 * 86400000).toISOString(),
-  },
+    patternIndex: 0,
+  } as any,
   {
     id: "4",
     user_id: "4",
@@ -847,7 +953,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 18000000).toISOString(),
     created_at: new Date(Date.now() - 120 * 86400000).toISOString(),
-  },
+    patternIndex: 2,
+  } as any,
   {
     id: "5",
     user_id: "5",
@@ -868,7 +975,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 3600000).toISOString(),
     created_at: new Date(Date.now() - 450 * 86400000).toISOString(),
-  },
+    patternIndex: 1,
+  } as any,
   {
     id: "6",
     user_id: "6",
@@ -889,7 +997,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 172800000).toISOString(),
     created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-  },
+    patternIndex: 8,
+  } as any,
   {
     id: "7",
     user_id: "7",
@@ -910,7 +1019,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 43200000).toISOString(),
     created_at: new Date(Date.now() - 600 * 86400000).toISOString(),
-  },
+    patternIndex: 5,
+  } as any,
   {
     id: "8",
     user_id: "8",
@@ -931,7 +1041,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 14400000).toISOString(),
     created_at: new Date(Date.now() - 200 * 86400000).toISOString(),
-  },
+    patternIndex: 3,
+  } as any,
   {
     id: "9",
     user_id: "9",
@@ -952,7 +1063,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 28800000).toISOString(),
     created_at: new Date(Date.now() - 75 * 86400000).toISOString(),
-  },
+    patternIndex: 10,
+  } as any,
   {
     id: "10",
     user_id: "10",
@@ -973,7 +1085,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 10800000).toISOString(),
     created_at: new Date(Date.now() - 250 * 86400000).toISOString(),
-  },
+    patternIndex: 6,
+  } as any,
   {
     id: "11",
     user_id: "11",
@@ -994,7 +1107,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 259200000).toISOString(),
     created_at: new Date(Date.now() - 45 * 86400000).toISOString(),
-  },
+    patternIndex: 4,
+  } as any,
   {
     id: "12",
     user_id: "12",
@@ -1015,7 +1129,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 21600000).toISOString(),
     created_at: new Date(Date.now() - 400 * 86400000).toISOString(),
-  },
+    patternIndex: 7,
+  } as any,
   {
     id: "13",
     user_id: "13",
@@ -1036,7 +1151,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 345600000).toISOString(),
     created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
-  },
+    patternIndex: 0,
+  } as any,
   {
     id: "14",
     user_id: "14",
@@ -1057,7 +1173,8 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 36000000).toISOString(),
     created_at: new Date(Date.now() - 160 * 86400000).toISOString(),
-  },
+    patternIndex: 1,
+  } as any,
   {
     id: "15",
     user_id: "15",
@@ -1078,5 +1195,6 @@ const mockMembers: Member[] = [
     },
     last_login: new Date(Date.now() - 57600000).toISOString(),
     created_at: new Date(Date.now() - 110 * 86400000).toISOString(),
-  },
+    patternIndex: 2,
+  } as any,
 ];
