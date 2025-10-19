@@ -298,7 +298,7 @@ export const Geography = () => {
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div>
         {/* 3D Globe */}
         <div className="space-y-4">
           <Suspense fallback={
@@ -336,32 +336,6 @@ export const Geography = () => {
               <div className="text-xs text-gray-400 uppercase">Members</div>
             </div>
           </div>
-        </div>
-
-        {/* Cities list */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-gray-400 uppercase tracking-wider px-4">
-            <div className="col-span-6">CITY</div>
-            <div className="col-span-6 text-right">FANS</div>
-          </div>
-
-          {cities.map((city) => (
-            <div
-              key={city.rank}
-              className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              <div className="col-span-1">
-                <span className="text-xl font-bold text-gray-400">{city.rank}</span>
-              </div>
-              <div className="col-span-5">
-                <span className="font-medium">{city.city}</span>
-                {city.state && <span className="text-gray-400 text-sm ml-2">{city.state}</span>}
-              </div>
-              <div className="col-span-6 text-right font-semibold text-lg">
-                {city.fans.toLocaleString()}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
