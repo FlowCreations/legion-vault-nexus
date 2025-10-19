@@ -278,15 +278,17 @@ export default function Auth() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <Input
-                      id="profilePicture"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="cursor-pointer"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="profilePicture"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="cursor-pointer bg-yellow-400 hover:bg-yellow-500 border-yellow-500 text-black font-medium file:bg-yellow-500 file:text-black file:font-semibold file:border-0 file:mr-4 file:px-4 file:py-2 file:rounded"
+                      />
+                    </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      👆 Click here to upload your profile picture
+                      👆 Click "Choose File" to upload your profile picture
                     </p>
                   </div>
                 </div>
