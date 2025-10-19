@@ -46,58 +46,67 @@ export const Geography = () => {
   ];
 
   useEffect(() => {
-    // Fetch user profiles with location data
+    // Fetch user profiles with location data and merge with demo data
     const fetchUserLocations = async () => {
       const { data: profiles } = await supabase
         .from('user_profiles')
         .select('*')
         .not('location', 'is', null);
 
-      if (profiles) {
-        // Group users by location
-        const locationMap = new Map<string, { users: any[], coords: { lat: number, lng: number } | null }>();
-        
+      // Start with demo data as base
+      const baseCities = activeTab === "america" ? [...citiesAmerica] : [...citiesWorld];
+      const locationMap = new Map<string, CityData>();
+      
+      // Add demo cities to map
+      baseCities.forEach(city => {
+        locationMap.set(city.city, { ...city, userIds: [] });
+      });
+
+      if (profiles && profiles.length > 0) {
+        // Add/merge real user data
         profiles.forEach(profile => {
           const location = profile.location || 'Unknown';
-          if (!locationMap.has(location)) {
-            locationMap.set(location, { users: [], coords: null });
-          }
-          locationMap.get(location)!.users.push(profile);
-        });
-
-        // Geocode locations (simplified - you'd use a real geocoding API)
-        const geocodedData: CityData[] = [];
-        let rank = 1;
-        
-        for (const [city, data] of locationMap.entries()) {
-          // Simple geocoding approximations - in production use Google Maps API
-          const coords = getApproximateCoords(city);
+          const coords = getApproximateCoords(location);
+          
           if (coords) {
-            geocodedData.push({
-              rank: rank++,
-              city,
-              streams: data.users.length * 1000, // Estimated
-              fans: data.users.length,
-              lat: coords.lat,
-              lng: coords.lng,
-              userIds: data.users.map(u => u.user_id)
-            });
+            if (locationMap.has(location)) {
+              // City exists in demo data, add user to it
+              const existing = locationMap.get(location)!;
+              existing.fans += 1;
+              existing.streams += 500; // Estimated streams per user
+              existing.userIds = [...(existing.userIds || []), profile.user_id];
+            } else {
+              // New city from real user data
+              locationMap.set(location, {
+                rank: 0, // Will be recalculated
+                city: location,
+                state: undefined,
+                streams: 500,
+                fans: 1,
+                lat: coords.lat,
+                lng: coords.lng,
+                userIds: [profile.user_id]
+              });
+            }
           }
-        }
-
-        geocodedData.sort((a, b) => b.fans - a.fans);
-        geocodedData.forEach((city, idx) => city.rank = idx + 1);
-        
-        setRealUserData(geocodedData);
-        
-        // Calculate global stats
-        const uniqueCountries = new Set(geocodedData.map(c => getCountryFromCity(c.city)));
-        setGlobalStats({
-          totalCountries: uniqueCountries.size,
-          totalCities: geocodedData.length,
-          totalUsers: profiles.length
         });
       }
+
+      // Convert map to sorted array
+      const mergedData = Array.from(locationMap.values());
+      mergedData.sort((a, b) => b.fans - a.fans);
+      mergedData.forEach((city, idx) => city.rank = idx + 1);
+      
+      setRealUserData(mergedData);
+      
+      // Calculate global stats
+      const uniqueCountries = new Set(mergedData.map(c => getCountryFromCity(c.city)));
+      const totalUsers = mergedData.reduce((sum, city) => sum + (city.userIds?.length || 0), 0);
+      setGlobalStats({
+        totalCountries: uniqueCountries.size,
+        totalCities: mergedData.length,
+        totalUsers: totalUsers
+      });
     };
 
     fetchUserLocations();
@@ -121,7 +130,7 @@ export const Geography = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [activeTab]);
 
   // Simple geocoding helper - in production use real API
   const getApproximateCoords = (city: string): { lat: number, lng: number } | null => {
@@ -129,11 +138,20 @@ export const Geography = () => {
       'Nashville': { lat: 36.1627, lng: -86.7816 },
       'Montreal': { lat: 45.5017, lng: -73.5673 },
       'Austin': { lat: 30.2672, lng: -97.7431 },
+      'Atlanta': { lat: 33.7490, lng: -84.3880 },
       'Los Angeles': { lat: 34.0522, lng: -118.2437 },
       'New York': { lat: 40.7128, lng: -74.0060 },
+      'Chicago': { lat: 41.8781, lng: -87.6298 },
+      'Dallas': { lat: 32.7767, lng: -96.7970 },
+      'Denver': { lat: 39.7392, lng: -104.9903 },
       'London': { lat: 51.5074, lng: -0.1278 },
       'Tokyo': { lat: 35.6762, lng: 139.6503 },
       'Sydney': { lat: -33.8688, lng: 151.2093 },
+      'Toronto': { lat: 43.6532, lng: -79.3832 },
+      'Berlin': { lat: 52.5200, lng: 13.4050 },
+      'Paris': { lat: 48.8566, lng: 2.3522 },
+      'São Paulo': { lat: -23.5505, lng: -46.6333 },
+      'Seoul': { lat: 37.5665, lng: 126.9780 },
     };
     return knownCities[city] || null;
   };
@@ -144,11 +162,20 @@ export const Geography = () => {
       'Nashville': 'USA',
       'Montreal': 'Canada',
       'Austin': 'USA',
+      'Atlanta': 'USA',
       'Los Angeles': 'USA',
       'New York': 'USA',
+      'Chicago': 'USA',
+      'Dallas': 'USA',
+      'Denver': 'USA',
       'London': 'UK',
       'Tokyo': 'Japan',
       'Sydney': 'Australia',
+      'Toronto': 'Canada',
+      'Berlin': 'Germany',
+      'Paris': 'France',
+      'São Paulo': 'Brazil',
+      'Seoul': 'South Korea',
     };
     return countryMap[city] || 'Unknown';
   };
