@@ -18,6 +18,9 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
   const navigate = useNavigate();
 
   const handleUserClick = (userId: string) => {
+    // Close the popup first
+    onClose();
+    
     // Navigate to merchant dashboard, community tab, with selected user
     navigate('/merchant', { 
       state: { 
