@@ -147,6 +147,9 @@ export default function Merch() {
     if (upperTitle.includes('BEER CAN COOLER')) return 'scale-[1.2]';
     if (upperTitle.includes('COFFEE SLEEVE')) return 'scale-[1.2]';
     
+    // Prints/Posters need larger scale
+    if (upperTitle.includes('POSTER') || upperTitle.includes('PRINT')) return 'scale-[1.35]';
+    
     return 'scale-100'; // Default scale
   };
 
