@@ -29,7 +29,7 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl">
+      <div className="bg-card border border-white/20 rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-2xl font-bold">{cityName}</h3>
@@ -43,14 +43,14 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+        <div className="space-y-3 overflow-y-auto flex-1">
           {users.map((user) => (
             <button
               key={user.user_id}
               onClick={() => handleUserClick(user.user_id)}
-              className="flex flex-col items-center p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500 transition-all group"
+              className="w-full flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500 transition-all group"
             >
-              <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border-2 border-white/20 group-hover:border-blue-500 transition-all">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 group-hover:border-blue-500 transition-all flex-shrink-0">
                 {user.avatar_url ? (
                   <img 
                     src={user.avatar_url} 
@@ -63,9 +63,21 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
                   </div>
                 )}
               </div>
-              <span className="text-sm font-medium text-center line-clamp-2">
-                {user.display_name || 'Unknown User'}
-              </span>
+              
+              <div className="flex-1 text-left">
+                <div className="font-semibold text-lg text-white group-hover:text-blue-400 transition-colors">
+                  {user.display_name || 'Unknown User'}
+                </div>
+                <div className="text-sm text-gray-400">
+                  {user.location}
+                </div>
+              </div>
+
+              <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </button>
           ))}
         </div>
