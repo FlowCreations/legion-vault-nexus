@@ -128,7 +128,28 @@ export default function Merch() {
     }
   });
 
-  
+  // Helper function to get custom image scale for specific products
+  const getImageScale = (title: string): string => {
+    const upperTitle = title.toUpperCase();
+    
+    // Bandanas need larger scale
+    if (upperTitle.includes('BANDANA - ORANGE')) return 'scale-[1.4]';
+    if (upperTitle.includes('BANDANA - GREEN')) return 'scale-[1.2]';
+    
+    // Stickers need larger scale
+    if (upperTitle.includes('EAGLE STICKER')) return 'scale-[1.3]';
+    if (upperTitle.includes('LOGO STICKER')) return 'scale-[1.3]';
+    
+    // Keychains need larger scale
+    if (upperTitle.includes('KEYCHAIN')) return 'scale-[1.4]';
+    
+    // Beer/coffee sleeves might need adjustment
+    if (upperTitle.includes('BEER CAN COOLER')) return 'scale-[1.2]';
+    if (upperTitle.includes('COFFEE SLEEVE')) return 'scale-[1.2]';
+    
+    return 'scale-100'; // Default scale
+  };
+
 
   const handleAddToCart = async (product: Product) => {
     // For products with variants, open customizer
@@ -399,7 +420,7 @@ export default function Merch() {
                       <img
                         src={product.image_url}
                         alt={product.title}
-                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                        className={`w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300 ${getImageScale(product.title)}`}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
