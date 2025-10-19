@@ -28,23 +28,40 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
     if (!audio) return;
 
     const updateProgress = () => {
-      if (!isSeeking) {
+      if (!isSeeking && audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
         setProgress((audio.currentTime / audio.duration) * 100 || 0);
       }
     };
 
     const updateDuration = () => {
-      setDuration(audio.duration || 0);
+      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      updateDuration();
+    };
+
+    const handleDurationChange = () => {
+      updateDuration();
     };
 
     audio.addEventListener("timeupdate", updateProgress);
-    audio.addEventListener("loadedmetadata", updateDuration);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("durationchange", handleDurationChange);
+
+    // Force update duration if already loaded
+    if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+      setDuration(audio.duration);
+    }
 
     return () => {
       audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("loadedmetadata", updateDuration);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("durationchange", handleDurationChange);
     };
-  }, [audioRef]);
+  }, [audioRef, isSeeking]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -71,7 +88,7 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
   };
 
   const formatTime = (seconds: number) => {
-    if (!seconds || isNaN(seconds)) return "0:00";
+    if (!seconds || isNaN(seconds) || !isFinite(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;

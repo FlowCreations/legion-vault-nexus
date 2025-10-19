@@ -90,11 +90,9 @@ export function GlobalMusicPlayer() {
     };
   }, []);
 
-  if (!currentTrack || isMinimized) return null;
-
   return (
     <>
-      <audio ref={audioRef} preload="auto" />
+      <audio ref={audioRef} preload="metadata" />
       <MusicPlayer audioRef={audioRef} />
     </>
   );
