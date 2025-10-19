@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import solLogo from "@/assets/sol-logo-new.png";
 
 interface LogoIntroProps {
@@ -7,14 +7,64 @@ interface LogoIntroProps {
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "pulse" | "still">("black");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Create audio context for sound effects
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Deep cinematic rumble
+    const createRumble = () => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(40, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 2);
+      
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.5);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 3);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 3);
+    };
+
+    // Bright impact sound for logo reveal
+    const createImpact = () => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+      
+      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    };
+
     // Cinematic timing sequence
-    const blackTimer = setTimeout(() => setPhase("beams"), 800); // Black screen with rumble
-    const beamsTimer = setTimeout(() => setPhase("reveal"), 2300); // Beams rushing
-    const revealTimer = setTimeout(() => setPhase("pulse"), 3500); // Logo revealed
-    const pulseTimer = setTimeout(() => setPhase("still"), 4200); // Glow pulse
-    const completeTimer = setTimeout(() => onComplete(), 5000); // Hold on still
+    const blackTimer = setTimeout(() => {
+      setPhase("beams");
+      createRumble();
+    }, 500);
+    
+    const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
+    const revealTimer = setTimeout(() => {
+      setPhase("pulse");
+      createImpact();
+    }, 3200);
+    const pulseTimer = setTimeout(() => setPhase("still"), 4000);
+    const completeTimer = setTimeout(() => onComplete(), 5500);
 
     return () => {
       clearTimeout(blackTimer);
@@ -22,36 +72,42 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       clearTimeout(revealTimer);
       clearTimeout(pulseTimer);
       clearTimeout(completeTimer);
+      audioContext.close();
     };
   }, [onComplete]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden">
-      {/* Light Beams - Fast rushing motion */}
+      {/* Multiple rushing light beams with staggered timing */}
       {(phase === "beams" || phase === "reveal") && (
         <div className="absolute inset-0">
-          {/* Horizontal beams */}
-          <div className="absolute top-[45%] left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent animate-beam-1" />
-          <div className="absolute top-[55%] left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-primary-glow to-transparent animate-beam-2" />
-          <div className="absolute top-[50%] left-0 h-2 w-full bg-gradient-to-r from-transparent via-primary/80 to-transparent animate-beam-converge" />
+          {/* Main horizontal beams */}
+          <div className="absolute top-[48%] left-0 h-2 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-90 animate-beam-fast-1" />
+          <div className="absolute top-[52%] left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary-glow to-transparent opacity-80 animate-beam-fast-2" />
+          <div className="absolute top-[50%] left-0 h-3 w-full bg-gradient-to-r from-transparent via-primary/90 to-transparent animate-beam-converge-fast shadow-[0_0_30px_rgba(247,201,70,0.8)]" />
           
-          {/* Diagonal beams */}
-          <div className="absolute top-[35%] left-0 h-0.5 w-[150%] -translate-x-1/4 rotate-12 bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-beam-4" />
-          <div className="absolute top-[65%] left-0 h-1 w-[150%] -translate-x-1/4 -rotate-12 bg-gradient-to-r from-primary/0 via-primary-glow/90 to-primary/0 animate-beam-5" />
-          <div className="absolute top-[40%] left-0 h-0.5 w-[150%] -translate-x-1/4 rotate-6 bg-gradient-to-r from-transparent via-primary/60 to-transparent animate-beam-3" />
+          {/* Diagonal rushing beams */}
+          <div className="absolute top-[30%] left-0 h-1 w-[200%] -translate-x-1/2 rotate-[8deg] bg-gradient-to-r from-transparent via-primary/70 to-transparent animate-beam-diagonal-1" />
+          <div className="absolute top-[70%] left-0 h-1 w-[200%] -translate-x-1/2 -rotate-[8deg] bg-gradient-to-r from-transparent via-primary-glow/80 to-transparent animate-beam-diagonal-2" />
+          <div className="absolute top-[40%] left-0 h-0.5 w-[200%] -translate-x-1/2 rotate-[15deg] bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-beam-diagonal-3" />
+          <div className="absolute top-[60%] left-0 h-0.5 w-[200%] -translate-x-1/2 -rotate-[15deg] bg-gradient-to-r from-transparent via-primary/60 to-transparent animate-beam-diagonal-4" />
+          
+          {/* Additional accent beams */}
+          <div className="absolute top-[35%] left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-beam-fast-3" />
+          <div className="absolute top-[65%] left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-primary-glow/50 to-transparent animate-beam-fast-4" />
         </div>
       )}
 
-      {/* Logo Reveal with push-through effect */}
+      {/* Logo with camera push-through reveal */}
       {(phase === "reveal" || phase === "pulse" || phase === "still") && (
         <div 
           className={
-            phase === "reveal" ? "animate-logo-reveal" : 
-            phase === "pulse" ? "animate-logo-pulse" : ""
+            phase === "reveal" ? "animate-logo-push-reveal" : 
+            phase === "pulse" ? "animate-logo-pulse-bright" : ""
           }
           style={{
             filter: phase === "still" 
-              ? "drop-shadow(0 0 60px rgba(247, 201, 70, 0.5)) drop-shadow(0 0 30px rgba(247, 201, 70, 0.7))"
+              ? "drop-shadow(0 0 50px rgba(247, 201, 70, 0.4)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.6))"
               : undefined
           }}
         >
@@ -63,10 +119,10 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         </div>
       )}
 
-      {/* Subtle warm halo in final phase */}
-      {phase === "still" && (
+      {/* Subtle warm halo finale */}
+      {(phase === "still" || phase === "pulse") && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[800px] h-[800px] rounded-full bg-primary/5 blur-[100px] animate-fade-in" />
+          <div className="w-[900px] h-[900px] rounded-full bg-primary/4 blur-[120px] animate-fade-in" />
         </div>
       )}
     </div>

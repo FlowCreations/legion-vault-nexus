@@ -7,23 +7,16 @@ import LogoIntro from "@/components/LogoIntro";
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
-  const [introSeen, setIntroSeen] = useState(false);
 
   useEffect(() => {
-    const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
-    if (hasSeenIntro) {
-      setShowIntro(false);
-      setIntroSeen(true);
-    }
+    // Always show intro - removed sessionStorage check
   }, []);
 
   const handleIntroComplete = () => {
-    sessionStorage.setItem("hasSeenIntro", "true");
     setShowIntro(false);
-    setIntroSeen(true);
   };
 
-  if (showIntro && !introSeen) {
+  if (showIntro) {
     return <LogoIntro onComplete={handleIntroComplete} />;
   }
 
