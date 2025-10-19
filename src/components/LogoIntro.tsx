@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import solLogo from "@/assets/sol-logo-new.png";
-import introAudio from "@/assets/intro-audio.wav";
 
 interface LogoIntroProps {
   onComplete: () => void;
@@ -8,11 +7,10 @@ interface LogoIntroProps {
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "pulse" | "still">("black");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Play audio
-    const audio = new Audio(introAudio);
+    // Play audio from public folder
+    const audio = new Audio('/intro-audio.wav');
     audio.volume = 0.7;
     
     // When audio ends, complete the intro
