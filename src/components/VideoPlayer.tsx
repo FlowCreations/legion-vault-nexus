@@ -224,8 +224,8 @@ export function VideoPlayer({
             <div className="space-y-3">
               {/* Title */}
               <div>
-                <h3 className="font-semibold text-lg">{title}</h3>
-                <p className="text-sm text-muted-foreground">{description}</p>
+                <h3 className="font-semibold text-lg text-white">{title}</h3>
+                <p className="text-sm text-white/70">{description}</p>
               </div>
 
               {/* Progress Bar */}
