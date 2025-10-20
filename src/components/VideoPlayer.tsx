@@ -161,16 +161,6 @@ export function VideoPlayer({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-none w-screen h-screen p-0 bg-black border-0 m-0">
         <div ref={containerRef} className="relative bg-black w-full h-full flex flex-col">
-          {/* Close Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 z-50 h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
-            onClick={handleClose}
-          >
-            <X className="h-5 w-5" />
-          </Button>
-
           {/* Video */}
           <div className="relative bg-black flex-1 flex items-center justify-center">
             <video
@@ -183,7 +173,7 @@ export function VideoPlayer({
           </div>
 
           {/* Controls */}
-          <div className="bg-graphite border-t border-border p-4">
+          <div className="bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10">
             <div className="space-y-3">
               {/* Title */}
               <div>
