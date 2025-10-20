@@ -691,15 +691,15 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
                     <span className="font-medium">Peak Hours</span>
-                    <span className="text-sm text-muted-foreground">7PM - 10PM EST</span>
+                    <span className="text-sm font-semibold text-foreground">7PM - 10PM EST</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
                     <span className="font-medium">Purchase Peak</span>
-                    <span className="text-sm text-muted-foreground">8PM - 9PM EST</span>
+                    <span className="text-sm font-semibold text-foreground">8PM - 9PM EST</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
                     <span className="font-medium">Content Peak</span>
-                    <span className="text-sm text-muted-foreground">9PM - 11PM EST</span>
+                    <span className="text-sm font-semibold text-foreground">9PM - 11PM EST</span>
                   </div>
                 </div>
               </CardContent>
@@ -776,22 +776,22 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
               <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg">
                 <div className="text-center">
                   <p className="text-2xl font-bold">Video Views</p>
-                  <p className="text-sm text-muted-foreground mt-1">Entry Point</p>
+                  <p className="text-sm font-semibold text-foreground/80 mt-1">Entry Point</p>
                 </div>
                 <div className="text-2xl text-muted-foreground">→</div>
                 <div className="text-center">
                   <p className="text-2xl font-bold">Profile Visit</p>
-                  <p className="text-sm text-muted-foreground mt-1">45% convert</p>
+                  <p className="text-sm font-semibold text-foreground/80 mt-1">45% convert</p>
                 </div>
                 <div className="text-2xl text-muted-foreground">→</div>
                 <div className="text-center">
                   <p className="text-2xl font-bold">Merch Browse</p>
-                  <p className="text-sm text-muted-foreground mt-1">62% engage</p>
+                  <p className="text-sm font-semibold text-foreground/80 mt-1">62% engage</p>
                 </div>
                 <div className="text-2xl text-muted-foreground">→</div>
                 <div className="text-center">
                   <p className="text-2xl font-bold">Purchase</p>
-                  <p className="text-sm text-muted-foreground mt-1">28% convert</p>
+                  <p className="text-sm font-semibold text-foreground/80 mt-1">28% convert</p>
                 </div>
               </div>
             </CardContent>
