@@ -30,6 +30,7 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import Subscribe from "./pages/Subscribe";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/videos/manage" element={<VideoManager />} />
           <Route path="/music" element={<Music />} />

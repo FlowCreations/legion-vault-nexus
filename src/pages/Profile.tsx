@@ -443,7 +443,7 @@ export default function Profile() {
                     <div className="text-center py-8">
                       <p className="text-muted-foreground mb-4">You don't have an active subscription</p>
                       <Button asChild>
-                        <a href="/community">View Plans</a>
+                        <a href="/subscribe">View Plans</a>
                       </Button>
                     </div>
                   )}
