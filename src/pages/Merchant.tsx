@@ -105,9 +105,7 @@ const Merchant = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 mt-20 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3">Backend Dashboard</h1>
-          <p className="text-muted-foreground text-lg">Manage your content, community, and analytics</p>
-          <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <p className="text-sm text-center">
               <span className="font-semibold">Demo Mode</span> - All sections accessible for testing
             </p>
