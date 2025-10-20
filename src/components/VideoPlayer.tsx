@@ -5,7 +5,10 @@ import { useEffect, useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -30,15 +33,36 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isSeeking, setIsSeeking] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
 
   // Check if this category should open fullscreen
   const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
+
+  // Handle mouse movement to show/hide controls in fullscreen
+  const handleMouseMove = () => {
+    if (shouldBeFullscreen) {
+      setShowControls(true);
+      
+      // Clear existing timeout
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      
+      // Hide controls after 3 seconds of no movement
+      controlsTimeoutRef.current = setTimeout(() => {
+        if (isPlaying) {
+          setShowControls(false);
+        }
+      }, 3000);
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -89,7 +113,14 @@ export function VideoPlayer({
     if (isOpen && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
+      setShowControls(true);
     }
+    
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
   }, [isOpen]);
 
   const togglePlayPause = () => {
@@ -164,7 +195,14 @@ export function VideoPlayer({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className={shouldBeFullscreen ? "max-w-none w-screen h-screen p-0 bg-black border-0 m-0" : "max-w-6xl p-0 bg-black border-border"}>
+      <DialogContent 
+        className={shouldBeFullscreen ? "max-w-none w-screen h-screen p-0 bg-black border-0 m-0" : "max-w-6xl p-0 bg-black border-border"}
+        onPointerMove={handleMouseMove}
+      >
+        <VisuallyHidden>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </VisuallyHidden>
         <div ref={containerRef} className={shouldBeFullscreen ? "relative bg-black w-full h-full flex flex-col" : "relative bg-black"}>
           {/* Video */}
           <div className={shouldBeFullscreen ? "relative bg-black flex-1 flex items-center justify-center" : "relative bg-black aspect-video"}>
@@ -178,7 +216,11 @@ export function VideoPlayer({
           </div>
 
           {/* Controls */}
-          <div className={shouldBeFullscreen ? "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10 shrink-0" : "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10"}>
+          <div className={`
+            ${shouldBeFullscreen ? "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10 shrink-0" : "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10"}
+            ${shouldBeFullscreen && !showControls ? "opacity-0 pointer-events-none" : "opacity-100"}
+            transition-opacity duration-300
+          `}>
             <div className="space-y-3">
               {/* Title */}
               <div>
