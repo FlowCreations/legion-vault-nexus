@@ -201,16 +201,12 @@ export default function Videos() {
               <Button 
                 size="lg" 
                 className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 text-sm rounded-lg shadow-lg transition-all"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    setShowAuthDialog(true);
-                  }
-                }}
+                onClick={() => navigate('/subscribe')}
               >
                 Accept Free Trial
               </Button>
               <p className="text-xs text-gray-300">
-                7 days free, then $12.99/month.
+                7 days free, then pick your subscription
               </p>
             </div>
           </div>
