@@ -115,46 +115,46 @@ const Merchant = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 bg-card border-2 border-yellow-500/30">
+          <TabsList className="grid w-full grid-cols-7 bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg">
             <TabsTrigger 
               value="analytics"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Analytics
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Videos
             </TabsTrigger>
             <TabsTrigger 
               value="community"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Community
             </TabsTrigger>
             <TabsTrigger 
               value="partnerships"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Partnerships
             </TabsTrigger>
             <TabsTrigger 
               value="royalties"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Royalties
             </TabsTrigger>
             <TabsTrigger 
               value="campaigns"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Campaigns
             </TabsTrigger>
             <TabsTrigger 
               value="funnel"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Funnel
             </TabsTrigger>
