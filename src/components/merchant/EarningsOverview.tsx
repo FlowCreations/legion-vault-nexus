@@ -155,9 +155,6 @@ export const EarningsOverview = () => {
 
       {/* Sales Categories */}
       <div>
-        <p className="text-sm text-foreground/70 font-medium uppercase tracking-wide mb-4">
-          {selectedMonth.toUpperCase()}
-        </p>
         <h2 className="text-3xl font-bold mb-6 text-foreground">Sales</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
