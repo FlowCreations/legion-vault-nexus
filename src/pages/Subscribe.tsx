@@ -44,7 +44,7 @@ export default function Subscribe() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12">
+    <div className="min-h-screen bg-background pt-40 pb-12">
       <div className="container max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h1 className="font-serif text-4xl sm:text-5xl font-bold mb-4">
