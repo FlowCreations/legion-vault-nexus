@@ -37,6 +37,19 @@ export default function Profile() {
   useEffect(() => {
     checkUser();
     loadSubscriptionData();
+    
+    // Check if returning from successful subscription
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      toast({
+        title: "Success!",
+        description: "Your subscription is now active. It may take a moment to update.",
+      });
+      // Refresh after a short delay to allow Stripe webhook to process
+      setTimeout(() => {
+        loadSubscriptionData();
+      }, 2000);
+    }
   }, []);
 
   const checkUser = async () => {

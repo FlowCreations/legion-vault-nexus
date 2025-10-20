@@ -1,9 +1,64 @@
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Loader2, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+// Mapping of tier names to Stripe price IDs
+const TIER_PRICE_IDS: Record<string, string> = {
+  "Rebels": "price_rebels_monthly", // Replace with actual Stripe price ID
+  "Outlaws": "price_outlaws_monthly", // Replace with actual Stripe price ID
+  "Legionnaires": "price_legionnaires_monthly", // Replace with actual Stripe price ID
+};
 
 export default function Subscribe() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const handleSubscribe = async (tierName: string) => {
+    // Check if user is logged in
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    setLoadingTier(tierName);
+    try {
+      const priceId = TIER_PRICE_IDS[tierName];
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
+      });
+    } finally {
+      setLoadingTier(null);
+    }
+  };
+
   const memberTiers = [
     {
       name: "Rebels",
@@ -94,9 +149,22 @@ export default function Subscribe() {
               <Button 
                 className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
                 variant={tier.featured ? 'default' : 'outline'}
-                asChild
+                onClick={() => handleSubscribe(tier.name)}
+                disabled={loadingTier === tier.name}
               >
-                <Link to="/auth">Subscribe Now</Link>
+                {loadingTier === tier.name ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : user ? (
+                  <>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Subscribe Now
+                  </>
+                ) : (
+                  "Sign In to Subscribe"
+                )}
               </Button>
             </Card>
           ))}
