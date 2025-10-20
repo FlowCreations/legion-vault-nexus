@@ -26,6 +26,7 @@ interface VideoItem {
   thumbnail_url: string;
   is_premium: boolean;
   storage_path: string;
+  category?: string;
 }
 
 export default function Videos() {
@@ -115,7 +116,8 @@ export default function Videos() {
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false,
-        storage_path: v.storage_path
+        storage_path: v.storage_path,
+        category: v.category
       })));
       
       setBehindTheScenes(data.filter(v => v.category === 'behind_the_scenes').map(v => ({
@@ -124,7 +126,8 @@ export default function Videos() {
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false,
-        storage_path: v.storage_path
+        storage_path: v.storage_path,
+        category: v.category
       })));
       
       setPerformances(data.filter(v => v.category === 'performances').map(v => ({
@@ -133,7 +136,8 @@ export default function Videos() {
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false,
-        storage_path: v.storage_path
+        storage_path: v.storage_path,
+        category: v.category
       })));
       
       setDocumentary(data.filter(v => v.category === 'documentary').map(v => ({
@@ -142,7 +146,8 @@ export default function Videos() {
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
         is_premium: v.is_premium || false,
-        storage_path: v.storage_path
+        storage_path: v.storage_path,
+        category: v.category
       })));
     }
   };
@@ -257,6 +262,7 @@ export default function Videos() {
             setSelectedVideo(null);
             setSelectedVideoUrl("");
           }}
+          category={selectedVideo.category}
         />
       )}
 

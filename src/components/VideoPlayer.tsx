@@ -15,6 +15,7 @@ interface VideoPlayerProps {
   thumbnailUrl?: string;
   isOpen: boolean;
   onClose: () => void;
+  category?: string;
 }
 
 export function VideoPlayer({ 
@@ -24,7 +25,8 @@ export function VideoPlayer({
   description,
   thumbnailUrl,
   isOpen, 
-  onClose 
+  onClose,
+  category 
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,6 +36,9 @@ export function VideoPlayer({
   const [volume, setVolume] = useState(80);
   const [isSeeking, setIsSeeking] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Check if this category should open fullscreen
+  const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
 
   useEffect(() => {
     const video = videoRef.current;
@@ -159,15 +164,15 @@ export function VideoPlayer({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-none w-screen h-screen p-0 bg-black border-0 m-0">
-        <div ref={containerRef} className="relative bg-black w-full h-full flex flex-col">
+      <DialogContent className={shouldBeFullscreen ? "max-w-none w-screen h-screen p-0 bg-black border-0 m-0" : "max-w-6xl p-0 bg-black border-border"}>
+        <div ref={containerRef} className={shouldBeFullscreen ? "relative bg-black w-full h-full flex flex-col" : "relative bg-black"}>
           {/* Video */}
-          <div className="relative bg-black flex-1 flex items-center justify-center">
+          <div className={shouldBeFullscreen ? "relative bg-black flex-1 flex items-center justify-center" : "relative bg-black aspect-video"}>
             <video
               ref={videoRef}
               src={videoUrl}
               poster={thumbnailUrl}
-              className="w-full h-full object-contain"
+              className={shouldBeFullscreen ? "w-full h-full object-contain" : "w-full h-full"}
               onClick={togglePlayPause}
             />
           </div>
