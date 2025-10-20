@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Target, TrendingUp, Calendar, DollarSign } from "lucide-react";
+import { Sparkles, Target, TrendingUp, Calendar, DollarSign, Edit2, Rocket } from "lucide-react";
 
 interface CampaignSuggestion {
   title: string;
@@ -20,6 +20,8 @@ export const CreateCampaigns = () => {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<CampaignSuggestion[]>([]);
   const [campaignGoal, setCampaignGoal] = useState("");
+  const [editingCampaign, setEditingCampaign] = useState<number | null>(null);
+  const [editedContent, setEditedContent] = useState<CampaignSuggestion | null>(null);
   const { toast } = useToast();
 
   const generateCampaigns = async () => {
@@ -241,6 +243,37 @@ export const CreateCampaigns = () => {
     }, 1500);
   };
 
+  const handleEditCampaign = (index: number, campaign: CampaignSuggestion) => {
+    setEditingCampaign(index);
+    setEditedContent(campaign);
+  };
+
+  const handleSaveEdit = (index: number) => {
+    if (editedContent) {
+      const updatedSuggestions = [...suggestions];
+      updatedSuggestions[index] = editedContent;
+      setSuggestions(updatedSuggestions);
+      setEditingCampaign(null);
+      setEditedContent(null);
+      toast({
+        title: "Campaign Updated",
+        description: "Your changes have been saved."
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCampaign(null);
+    setEditedContent(null);
+  };
+
+  const handleBuildCampaign = () => {
+    toast({
+      title: "Campaign Build Started",
+      description: "Your campaigns are being set up. You'll be notified when ready."
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -295,42 +328,108 @@ export const CreateCampaigns = () => {
           {suggestions.map((suggestion, index) => (
             <Card key={index} className="border-2 border-yellow-500/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-yellow-500" />
-                  {suggestion.title}
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-yellow-500" />
+                    {editingCampaign === index ? (
+                      <Input
+                        value={editedContent?.title || ''}
+                        onChange={(e) => setEditedContent({ ...editedContent!, title: e.target.value })}
+                        className="text-lg font-semibold"
+                      />
+                    ) : (
+                      suggestion.title
+                    )}
+                  </div>
+                  {editingCampaign === index ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleSaveEdit(index)}>Save</Button>
+                      <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleEditCampaign(index, suggestion)}
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-foreground/80">{suggestion.description}</p>
+                {editingCampaign === index ? (
+                  <Textarea
+                    value={editedContent?.description || ''}
+                    onChange={(e) => setEditedContent({ ...editedContent!, description: e.target.value })}
+                    className="min-h-[100px]"
+                  />
+                ) : (
+                  <p className="text-foreground/80">{suggestion.description}</p>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
                   <div className="flex items-start gap-3">
                     <Target className="h-5 w-5 text-muted-foreground mt-1" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-semibold">Target Audience</p>
-                      <p className="text-sm text-muted-foreground">{suggestion.targetAudience}</p>
+                      {editingCampaign === index ? (
+                        <Input
+                          value={editedContent?.targetAudience || ''}
+                          onChange={(e) => setEditedContent({ ...editedContent!, targetAudience: e.target.value })}
+                          className="text-sm mt-1"
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{suggestion.targetAudience}</p>
+                      )}
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
                     <DollarSign className="h-5 w-5 text-muted-foreground mt-1" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-semibold">Expected ROI</p>
-                      <p className="text-sm text-muted-foreground">{suggestion.expectedROI}</p>
+                      {editingCampaign === index ? (
+                        <Input
+                          value={editedContent?.expectedROI || ''}
+                          onChange={(e) => setEditedContent({ ...editedContent!, expectedROI: e.target.value })}
+                          className="text-sm mt-1"
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{suggestion.expectedROI}</p>
+                      )}
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-muted-foreground mt-1" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-semibold">Timeline</p>
-                      <p className="text-sm text-muted-foreground">{suggestion.timeline}</p>
+                      {editingCampaign === index ? (
+                        <Input
+                          value={editedContent?.timeline || ''}
+                          onChange={(e) => setEditedContent({ ...editedContent!, timeline: e.target.value })}
+                          className="text-sm mt-1"
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{suggestion.timeline}</p>
+                      )}
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
+          
+          <Button 
+            onClick={handleBuildCampaign}
+            className="w-full bg-gradient-gold"
+            size="lg"
+          >
+            <Rocket className="mr-2 h-5 w-5" />
+            Build Campaign
+          </Button>
         </div>
       )}
     </div>
