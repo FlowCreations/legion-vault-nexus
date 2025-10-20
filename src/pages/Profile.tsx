@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ShoppingBag, Shield, LogOut } from "lucide-react";
+import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -27,9 +28,15 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
+  
+  // Subscription state
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   useEffect(() => {
     checkUser();
+    loadSubscriptionData();
   }, []);
 
   const checkUser = async () => {
@@ -143,6 +150,45 @@ export default function Profile() {
     navigate("/");
   };
 
+  const loadSubscriptionData = async () => {
+    setLoadingSubscription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+      
+      setSubscriptionData(data);
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to open subscription portal",
+      });
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pt-24 pb-12">
       <div className="container max-w-4xl mx-auto px-4">
@@ -152,10 +198,14 @@ export default function Profile() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="gap-2">
+              <CreditCard className="w-4 h-4" />
+              Subscription
             </TabsTrigger>
             <TabsTrigger value="account" className="gap-2">
               <Shield className="w-4 h-4" />
@@ -308,6 +358,133 @@ export default function Profile() {
                 </form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="subscription">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Subscription Status</CardTitle>
+                      <CardDescription>Manage your membership and billing</CardDescription>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={loadSubscriptionData}
+                      disabled={loadingSubscription}
+                    >
+                      {loadingSubscription ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {loadingSubscription ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : subscriptionData?.subscribed ? (
+                    <>
+                      <div className="p-6 bg-primary/5 border-2 border-primary rounded-lg">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold">{subscriptionData.subscription.plan_name}</h3>
+                            {subscriptionData.subscription.plan_description && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {subscriptionData.subscription.plan_description}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="bg-primary">Active</Badge>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount</span>
+                            <span className="font-semibold">
+                              ${subscriptionData.subscription.amount}/{subscriptionData.subscription.interval}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Renews on</span>
+                            <span className="font-semibold">
+                              {new Date(subscriptionData.subscription.current_period_end).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {subscriptionData.subscription.cancel_at_period_end && (
+                            <div className="flex justify-between">
+                              <span className="text-destructive font-medium">Cancels on</span>
+                              <span className="font-semibold text-destructive">
+                                {new Date(subscriptionData.subscription.current_period_end).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        className="w-full" 
+                        onClick={handleManageSubscription}
+                        disabled={loadingPortal}
+                      >
+                        {loadingPortal ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                        )}
+                        Manage Subscription & Payment
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">You don't have an active subscription</p>
+                      <Button asChild>
+                        <a href="/community">View Plans</a>
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {subscriptionData?.payment_method && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Information</CardTitle>
+                    <CardDescription>Your default payment method</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 p-4 border rounded-lg">
+                      <CreditCard className="w-8 h-8 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="font-semibold capitalize">
+                          {subscriptionData.payment_method.brand} •••• {subscriptionData.payment_method.last4}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Expires {subscriptionData.payment_method.exp_month}/{subscriptionData.payment_method.exp_year}
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4"
+                      onClick={handleManageSubscription}
+                      disabled={loadingPortal}
+                    >
+                      {loadingPortal ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                      )}
+                      Update Payment Method
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="account">
