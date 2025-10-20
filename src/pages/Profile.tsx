@@ -453,15 +453,21 @@ export default function Profile() {
               <Card>
                 <CardHeader>
                   <CardTitle>Payment Information</CardTitle>
-                  <CardDescription>Manage your payment methods</CardDescription>
+                  <CardDescription>Manage your payment methods and billing</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {subscriptionData?.payment_method ? (
+                  {loadingSubscription ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : subscriptionData?.payment_method ? (
                     <>
-                      <div className="flex items-center gap-4 p-4 border rounded-lg mb-4">
-                        <CreditCard className="w-8 h-8 text-muted-foreground" />
+                      <div className="flex items-center gap-4 p-4 bg-muted/50 border-2 rounded-lg mb-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <CreditCard className="w-6 h-6 text-primary" />
+                        </div>
                         <div className="flex-1">
-                          <p className="font-semibold capitalize">
+                          <p className="font-semibold capitalize text-lg">
                             {subscriptionData.payment_method.brand} •••• {subscriptionData.payment_method.last4}
                           </p>
                           <p className="text-sm text-muted-foreground">
@@ -470,8 +476,7 @@ export default function Profile() {
                         </div>
                       </div>
                       <Button 
-                        variant="outline" 
-                        className="w-full"
+                        className="w-full bg-gradient-gold hover:shadow-glow"
                         onClick={handleManageSubscription}
                         disabled={loadingPortal}
                       >
@@ -485,25 +490,37 @@ export default function Profile() {
                     </>
                   ) : (
                     <div className="text-center py-8">
-                      <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-4">No payment method on file</p>
+                      <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                        <CreditCard className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-semibold text-lg mb-2">No Payment Method</h3>
+                      <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                        {subscriptionData?.subscribed 
+                          ? "Add a payment method to ensure uninterrupted access to your subscription"
+                          : "Subscribe to a membership plan and add your payment information"
+                        }
+                      </p>
                       {subscriptionData?.subscribed ? (
                         <Button 
-                          variant="outline"
+                          className="bg-gradient-gold hover:shadow-glow"
                           onClick={handleManageSubscription}
                           disabled={loadingPortal}
                         >
                           {loadingPortal ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           ) : (
-                            <ExternalLink className="w-4 h-4 mr-2" />
+                            <>
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Add Payment Method
+                            </>
                           )}
-                          Add Payment Method
                         </Button>
                       ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Subscribe to a plan to add a payment method
-                        </p>
+                        <Button asChild className="bg-gradient-gold hover:shadow-glow">
+                          <a href="/subscribe">
+                            View Subscription Plans
+                          </a>
+                        </Button>
                       )}
                     </div>
                   )}
