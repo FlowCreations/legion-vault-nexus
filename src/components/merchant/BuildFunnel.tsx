@@ -933,9 +933,9 @@ export const BuildFunnel = () => {
                     <h4 className="font-semibold text-sm">Key Tactics:</h4>
                     <ul className="space-y-2">
                       {stage.tactics?.map((tactic, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-yellow-500 mt-1">•</span>
-                          <span className="text-sm text-foreground/80">{tactic}</span>
+                        <li key={i} className="flex items-start gap-2.5 pl-0">
+                          <span className="text-yellow-500 flex-shrink-0 leading-[1.4] select-none">•</span>
+                          <span className="text-sm text-foreground/80 leading-[1.4]">{tactic}</span>
                         </li>
                       ))}
                     </ul>
