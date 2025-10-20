@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_partnerships: {
+        Row: {
+          approved_at: string | null
+          artist_id: string
+          created_at: string | null
+          id: string
+          partner_artist_id: string
+          partnership_type: string | null
+          status: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          artist_id: string
+          created_at?: string | null
+          id?: string
+          partner_artist_id: string
+          partnership_type?: string | null
+          status?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          artist_id?: string
+          created_at?: string | null
+          id?: string
+          partner_artist_id?: string
+          partnership_type?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       cohort_members: {
         Row: {
           cohort_id: string
@@ -133,6 +163,36 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           view_count?: number | null
+        }
+        Relationships: []
+      }
+      distributor_integrations: {
+        Row: {
+          api_credentials: Json | null
+          created_at: string | null
+          distributor_name: string
+          id: string
+          last_sync: string | null
+          merchant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_credentials?: Json | null
+          created_at?: string | null
+          distributor_name: string
+          id?: string
+          last_sync?: string | null
+          merchant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_credentials?: Json | null
+          created_at?: string | null
+          distributor_name?: string
+          id?: string
+          last_sync?: string | null
+          merchant_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -494,6 +554,39 @@ export type Database = {
           image_url?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      streaming_stats: {
+        Row: {
+          created_at: string | null
+          estimated_revenue: number | null
+          id: string
+          merchant_id: string
+          period_end: string
+          period_start: string
+          platform: string
+          streams: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          estimated_revenue?: number | null
+          id?: string
+          merchant_id: string
+          period_end: string
+          period_start: string
+          platform: string
+          streams?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          estimated_revenue?: number | null
+          id?: string
+          merchant_id?: string
+          period_end?: string
+          period_start?: string
+          platform?: string
+          streams?: number | null
         }
         Relationships: []
       }

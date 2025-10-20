@@ -13,6 +13,8 @@ import { Demographics } from "@/components/merchant/Demographics";
 import { EarningsOverview } from "@/components/merchant/EarningsOverview";
 import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
+import { Partnerships } from "@/components/merchant/Partnerships";
+import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -113,7 +115,7 @@ const Merchant = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-card border-2 border-yellow-500/30">
+          <TabsList className="grid w-full grid-cols-7 bg-card border-2 border-yellow-500/30">
             <TabsTrigger 
               value="analytics"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
@@ -133,16 +135,28 @@ const Merchant = () => {
               Community
             </TabsTrigger>
             <TabsTrigger 
+              value="partnerships"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Partnerships
+            </TabsTrigger>
+            <TabsTrigger 
+              value="royalties"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
+            >
+              Royalties
+            </TabsTrigger>
+            <TabsTrigger 
               value="campaigns"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
             >
-              Create Campaigns
+              Campaigns
             </TabsTrigger>
             <TabsTrigger 
               value="funnel"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black font-semibold"
             >
-              Build Funnel
+              Funnel
             </TabsTrigger>
           </TabsList>
 
@@ -201,6 +215,14 @@ const Merchant = () => {
 
           <TabsContent value="community">
             <AdminDashboard selectedUserId={selectedUserId} />
+          </TabsContent>
+
+          <TabsContent value="partnerships">
+            <Partnerships />
+          </TabsContent>
+
+          <TabsContent value="royalties">
+            <DistributorIntegration />
           </TabsContent>
 
           <TabsContent value="campaigns">
