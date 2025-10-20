@@ -450,40 +450,65 @@ export default function Profile() {
                 </CardContent>
               </Card>
 
-              {subscriptionData?.payment_method && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Information</CardTitle>
-                    <CardDescription>Your default payment method</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4 p-4 border rounded-lg">
-                      <CreditCard className="w-8 h-8 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="font-semibold capitalize">
-                          {subscriptionData.payment_method.brand} •••• {subscriptionData.payment_method.last4}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Expires {subscriptionData.payment_method.exp_month}/{subscriptionData.payment_method.exp_year}
-                        </p>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Information</CardTitle>
+                  <CardDescription>Manage your payment methods</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {subscriptionData?.payment_method ? (
+                    <>
+                      <div className="flex items-center gap-4 p-4 border rounded-lg mb-4">
+                        <CreditCard className="w-8 h-8 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="font-semibold capitalize">
+                            {subscriptionData.payment_method.brand} •••• {subscriptionData.payment_method.last4}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Expires {subscriptionData.payment_method.exp_month}/{subscriptionData.payment_method.exp_year}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-4"
-                      onClick={handleManageSubscription}
-                      disabled={loadingPortal}
-                    >
-                      {loadingPortal ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={handleManageSubscription}
+                        disabled={loadingPortal}
+                      >
+                        {loadingPortal ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                        )}
+                        Update Payment Method
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">No payment method on file</p>
+                      {subscriptionData?.subscribed ? (
+                        <Button 
+                          variant="outline"
+                          onClick={handleManageSubscription}
+                          disabled={loadingPortal}
+                        >
+                          {loadingPortal ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                          )}
+                          Add Payment Method
+                        </Button>
                       ) : (
-                        <ExternalLink className="w-4 h-4 mr-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Subscribe to a plan to add a payment method
+                        </p>
                       )}
-                      Update Payment Method
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
