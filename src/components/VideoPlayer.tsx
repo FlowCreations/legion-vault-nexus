@@ -178,7 +178,7 @@ export function VideoPlayer({
           </div>
 
           {/* Controls */}
-          <div className="bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10">
+          <div className={shouldBeFullscreen ? "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10 shrink-0" : "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10"}>
             <div className="space-y-3">
               {/* Title */}
               <div>
