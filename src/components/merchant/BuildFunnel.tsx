@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, ArrowDown, Users, ShoppingCart, Heart, Rocket } from "lucide-react";
+import { Sparkles, ArrowDown, Users, ShoppingCart, Heart, Rocket, Edit2, Zap } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -37,6 +37,8 @@ export const BuildFunnel = () => {
   const [funnelStages, setFunnelStages] = useState<FunnelStage[]>([]);
   const [funnelGoal, setFunnelGoal] = useState("");
   const [funnelType, setFunnelType] = useState("conversion");
+  const [editingStage, setEditingStage] = useState<number | null>(null);
+  const [editedContent, setEditedContent] = useState<FunnelStage | null>(null);
   const { toast } = useToast();
 
   const generateFunnel = async () => {
@@ -846,6 +848,37 @@ export const BuildFunnel = () => {
     return <Icon className="h-5 w-5 text-yellow-500" />;
   };
 
+  const handleEditStage = (index: number) => {
+    setEditingStage(index);
+    setEditedContent({ ...funnelStages[index] });
+  };
+
+  const handleSaveEdit = (index: number) => {
+    if (editedContent) {
+      const updatedStages = [...funnelStages];
+      updatedStages[index] = editedContent;
+      setFunnelStages(updatedStages);
+      setEditingStage(null);
+      setEditedContent(null);
+      toast({
+        title: "Stage updated",
+        description: "Your funnel stage has been updated successfully."
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStage(null);
+    setEditedContent(null);
+  };
+
+  const handleBuildFunnel = () => {
+    toast({
+      title: "Building Funnel",
+      description: "Your funnel is being built based on this strategy."
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -917,17 +950,52 @@ export const BuildFunnel = () => {
             <div key={index}>
               <Card className="border-2 border-yellow-500/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {getStageIcon(index)}
-                    <span className="text-yellow-500 font-mono text-sm mr-2">
-                      STAGE {index + 1}
-                    </span>
-                    {stage.title}
-                  </CardTitle>
-                  <CardDescription>{stage.stage}</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      {getStageIcon(index)}
+                      <span className="text-yellow-500 font-mono text-sm mr-2">
+                        STAGE {index + 1}
+                      </span>
+                      {editingStage === index ? (
+                        <Input
+                          value={editedContent?.title || ""}
+                          onChange={(e) => setEditedContent({ ...editedContent!, title: e.target.value })}
+                          className="max-w-md"
+                        />
+                      ) : (
+                        stage.title
+                      )}
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => editingStage === index ? handleCancelEdit() : handleEditStage(index)}
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      {editingStage === index ? "Cancel" : "Edit"}
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    {editingStage === index ? (
+                      <Input
+                        value={editedContent?.stage || ""}
+                        onChange={(e) => setEditedContent({ ...editedContent!, stage: e.target.value })}
+                      />
+                    ) : (
+                      stage.stage
+                    )}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-foreground/80">{stage.description}</p>
+                  {editingStage === index ? (
+                    <textarea
+                      value={editedContent?.description || ""}
+                      onChange={(e) => setEditedContent({ ...editedContent!, description: e.target.value })}
+                      className="w-full p-2 border rounded-md min-h-[60px] bg-background"
+                    />
+                  ) : (
+                    <p className="text-foreground/80">{stage.description}</p>
+                  )}
                   
                   <div className="space-y-3">
                     <h4 className="font-semibold text-sm">Key Tactics:</h4>
@@ -935,7 +1003,19 @@ export const BuildFunnel = () => {
                       {stage.tactics?.map((tactic, i) => (
                         <li key={i} className="flex items-start gap-2.5 pl-0">
                           <span className="text-yellow-500 flex-shrink-0 leading-[1.4] select-none">•</span>
-                          <span className="text-sm text-foreground/80 leading-[1.4]">{tactic}</span>
+                          {editingStage === index ? (
+                            <Input
+                              value={editedContent?.tactics[i] || ""}
+                              onChange={(e) => {
+                                const newTactics = [...(editedContent?.tactics || [])];
+                                newTactics[i] = e.target.value;
+                                setEditedContent({ ...editedContent!, tactics: newTactics });
+                              }}
+                              className="text-sm"
+                            />
+                          ) : (
+                            <span className="text-sm text-foreground/80 leading-[1.4]">{tactic}</span>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -974,9 +1054,25 @@ export const BuildFunnel = () => {
                   <div className="pt-3 border-t">
                     <p className="text-sm">
                       <span className="font-semibold">Track:</span>{" "}
-                      <span className="text-muted-foreground">{stage.metrics}</span>
+                      {editingStage === index ? (
+                        <Input
+                          value={editedContent?.metrics || ""}
+                          onChange={(e) => setEditedContent({ ...editedContent!, metrics: e.target.value })}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <span className="text-muted-foreground">{stage.metrics}</span>
+                      )}
                     </p>
                   </div>
+                  
+                  {editingStage === index && (
+                    <div className="pt-3 border-t">
+                      <Button onClick={() => handleSaveEdit(index)} className="w-full">
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
@@ -987,6 +1083,19 @@ export const BuildFunnel = () => {
               )}
             </div>
           ))}
+          
+          <Card className="border-2 border-green-500/30 bg-green-500/5">
+            <CardContent className="pt-6">
+              <Button 
+                onClick={handleBuildFunnel}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                size="lg"
+              >
+                <Zap className="mr-2 h-5 w-5" />
+                Build Funnel
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
