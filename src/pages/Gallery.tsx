@@ -325,8 +325,8 @@ export default function Gallery() {
                         onClick={() => handleItemClick(item)}
                         className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
                       >
-                        <Mail className="w-4 h-4 mr-2" />
-                        Get Free
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
                       </Button>
                     ) : (
                       <Button 
@@ -487,14 +487,14 @@ export default function Gallery() {
 const socialReadyPhotos: GalleryItem[] = [
   {
     id: "1",
-    title: "Download social ready photos",
+    title: "Social Media Ready Photos (Low Res)",
     image: show1,
     price: "FREE",
     isFree: true,
   },
   {
     id: "3",
-    title: "High resolution print quality photos",
+    title: "Print Quality Photos (High Res)",
     image: show3,
     price: "$14.99",
     isFree: false,
