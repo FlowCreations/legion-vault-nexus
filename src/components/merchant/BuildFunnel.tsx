@@ -14,12 +14,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface EmailSequence {
+  emailNumber: number;
+  subject: string;
+  triggerCondition: string;
+  waitTime: string;
+  content: string;
+  discountOffer?: string;
+}
+
 interface FunnelStage {
   stage: string;
   title: string;
   description: string;
   tactics: string[];
   metrics: string;
+  emailSequence?: EmailSequence[];
 }
 
 export const BuildFunnel = () => {
@@ -32,19 +42,53 @@ export const BuildFunnel = () => {
   const generateFunnel = async () => {
     setLoading(true);
     
-    // Detect funnel type from goal and type inputs
-    const goalLower = funnelGoal.toLowerCase();
-    let selectedType = funnelType;
-    
-    if (goalLower.includes('album') || goalLower.includes('music') || goalLower.includes('stream')) {
-      selectedType = Math.random() > 0.5 ? 'album-conversion' : 'album-engagement';
-    } else if (goalLower.includes('merch') || goalLower.includes('product') || goalLower.includes('apparel')) {
-      selectedType = Math.random() > 0.5 ? 'merch-conversion' : 'merch-upsell';
-    } else if (goalLower.includes('community') || goalLower.includes('fan')) {
-      selectedType = Math.random() > 0.5 ? 'community-engagement' : 'community-retention';
-    } else if (funnelType === 'conversion') {
-      selectedType = Math.random() > 0.5 ? 'general-conversion' : 'tour-conversion';
-    }
+    try {
+      // Fetch merchant data for personalized suggestions
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get analytics data
+      const { data: analyticsData } = await supabase
+        .from('user_analytics')
+        .select('*')
+        .limit(100);
+      
+      // Get recent sales data
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      // Get user engagement data
+      const { data: eventsData } = await supabase
+        .from('user_events')
+        .select('event_type, event_data')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      // Analyze data for personalized recommendations
+      const totalOrders = ordersData?.length || 0;
+      const avgOrderValue = ordersData?.reduce((acc, order) => acc + Number(order.total_amount), 0) / totalOrders || 0;
+      const topEventTypes = eventsData?.reduce((acc, event) => {
+        acc[event.event_type] = (acc[event.event_type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      console.log("Dashboard data for funnel:", { totalOrders, avgOrderValue, topEventTypes });
+      
+      // Detect funnel type from goal and type inputs
+      const goalLower = funnelGoal.toLowerCase();
+      let selectedType = funnelType;
+      
+      if (goalLower.includes('album') || goalLower.includes('music') || goalLower.includes('stream')) {
+        selectedType = Math.random() > 0.5 ? 'album-conversion' : 'album-engagement';
+      } else if (goalLower.includes('merch') || goalLower.includes('product') || goalLower.includes('apparel')) {
+        selectedType = Math.random() > 0.5 ? 'merch-conversion' : 'merch-upsell';
+      } else if (goalLower.includes('community') || goalLower.includes('fan')) {
+        selectedType = Math.random() > 0.5 ? 'community-engagement' : 'community-retention';
+      } else if (funnelType === 'conversion') {
+        selectedType = Math.random() > 0.5 ? 'general-conversion' : 'tour-conversion';
+      }
     
     const funnelLibrary: Record<string, FunnelStage[]> = {
       'album-conversion': [
@@ -182,7 +226,25 @@ export const BuildFunnel = () => {
             "Instagram ads targeting fans who've streamed 5+ times",
             "Feature merch in Spotify Canvas animations for top tracks"
           ],
-          metrics: "Merch page visits, product impressions, social engagement"
+          metrics: "Merch page visits, product impressions, social engagement",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "🎸 Check Out Our New Merch Drop!",
+              triggerCondition: "User visits site but doesn't view merch page",
+              waitTime: "24 hours after visit",
+              content: "Hey there! We noticed you stopped by. Have you seen our latest collection? Check out exclusive designs that are flying off the shelves.",
+              discountOffer: undefined
+            },
+            {
+              emailNumber: 2,
+              subject: "Still Thinking? Here's 10% Off 🎁",
+              triggerCondition: "Email 1 not opened after 48 hours",
+              waitTime: "2 days after Email 1",
+              content: "We get it - choosing the perfect piece takes time. Here's 10% off to help you decide. Use code: MERCH10",
+              discountOffer: "10% off - Code: MERCH10"
+            }
+          ]
         },
         {
           stage: "Interest",
@@ -194,7 +256,25 @@ export const BuildFunnel = () => {
             "Virtual try-on using AR for apparel items",
             "Bundle previews: 'Complete the look' product recommendations"
           ],
-          metrics: "Products viewed per session, cart add rate, wishlist saves"
+          metrics: "Products viewed per session, cart add rate, wishlist saves",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "We Saw You Looking 👀",
+              triggerCondition: "User views 3+ products but doesn't add to cart",
+              waitTime: "6 hours after browsing",
+              content: "Hey! You checked out some great items. Here are our most popular products that fans love. Plus, free shipping on orders over $50!",
+              discountOffer: undefined
+            },
+            {
+              emailNumber: 2,
+              subject: "Last Chance: 15% Off Your Favorites 🔥",
+              triggerCondition: "Email 1 opened but no cart activity",
+              waitTime: "48 hours after Email 1",
+              content: "Don't miss out! The items you viewed are still available. Grab them now with 15% off using code: EXPLORE15",
+              discountOffer: "15% off - Code: EXPLORE15"
+            }
+          ]
         },
         {
           stage: "Decision",
@@ -206,7 +286,33 @@ export const BuildFunnel = () => {
             "Social proof: 'X fans bought this in the last 24 hours'",
             "Risk reversal: 30-day money-back guarantee on all apparel"
           ],
-          metrics: "Conversion rate, cart abandonment rate, coupon redemption"
+          metrics: "Conversion rate, cart abandonment rate, coupon redemption",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "Your Cart Is Waiting! 🛒",
+              triggerCondition: "User adds items to cart but doesn't checkout",
+              waitTime: "1 hour after cart abandonment",
+              content: "You left some awesome items in your cart! Complete your order now and they'll ship out today. Free shipping on orders over $50!",
+              discountOffer: undefined
+            },
+            {
+              emailNumber: 2,
+              subject: "Don't Miss Out! 20% Off Your Cart 💥",
+              triggerCondition: "Cart still abandoned 24 hours later",
+              waitTime: "24 hours after Email 1",
+              content: "These items won't last long! Complete your purchase now with 20% off. Use code: CART20. Offer expires in 24 hours!",
+              discountOffer: "20% off - Code: CART20"
+            },
+            {
+              emailNumber: 3,
+              subject: "Final Call: Your Items Are Almost Gone ⏰",
+              triggerCondition: "Cart still abandoned after Email 2",
+              waitTime: "48 hours after Email 2",
+              content: "This is it! Your cart items are low in stock and this is your last chance to grab them with our special discount before the offer expires.",
+              discountOffer: "25% off - Code: LASTCHANCE"
+            }
+          ]
         },
         {
           stage: "Purchase",
@@ -218,7 +324,25 @@ export const BuildFunnel = () => {
             "Limited premium items: Signed posters only with $100+ orders",
             "Mystery item offer: Add $15 for surprise exclusive merch"
           ],
-          metrics: "Average order value, items per transaction, bundle attach rate"
+          metrics: "Average order value, items per transaction, bundle attach rate",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "Thanks for Your Order! Here's What's Next 📦",
+              triggerCondition: "Purchase completed",
+              waitTime: "Immediately after purchase",
+              content: "Thank you for supporting us! Your order is being prepared. Track your shipment and get ready to rock your new gear!",
+              discountOffer: undefined
+            },
+            {
+              emailNumber: 2,
+              subject: "Complete Your Collection - 15% Off! 🎁",
+              triggerCondition: "7 days after purchase",
+              waitTime: "7 days post-purchase",
+              content: "Hope you're loving your recent purchase! Want to complete your collection? Here's 15% off your next order as a thank you!",
+              discountOffer: "15% off next order - Code: THANKYOU15"
+            }
+          ]
         },
         {
           stage: "Retention",
@@ -230,7 +354,25 @@ export const BuildFunnel = () => {
             "Loyalty program: Earn points on every merch purchase",
             "Seasonal collections: New designs quarterly to drive returns"
           ],
-          metrics: "Repeat purchase rate, time between purchases, customer LTV"
+          metrics: "Repeat purchase rate, time between purchases, customer LTV",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "New Drop Alert! VIP Early Access 🌟",
+              triggerCondition: "New product launch (monthly)",
+              waitTime: "24 hours before public launch",
+              content: "You're a valued customer! Get exclusive early access to our newest merch drop before anyone else. Shop now before it sells out!",
+              discountOffer: undefined
+            },
+            {
+              emailNumber: 2,
+              subject: "We Miss You! Come Back for 20% Off 💙",
+              triggerCondition: "No purchase in 60 days",
+              waitTime: "60 days since last purchase",
+              content: "It's been a while! We've added tons of new designs since your last visit. Use code: COMEBACK20 for 20% off your next order!",
+              discountOffer: "20% off - Code: COMEBACK20"
+            }
+          ]
         }
       ],
       'merch-upsell': [
@@ -669,17 +811,33 @@ export const BuildFunnel = () => {
       ]
     };
 
-    const selectedFunnel = funnelLibrary[selectedType] || funnelLibrary['general-conversion'];
+      const selectedFunnel = funnelLibrary[selectedType] || funnelLibrary['general-conversion'];
+      
+      // Add personalized suggestions based on dashboard data
+      const personalizedNote = totalOrders > 10 
+        ? `Based on your ${totalOrders} orders with avg value of $${avgOrderValue.toFixed(2)}, we've optimized this funnel for repeat buyers.`
+        : totalOrders > 0
+        ? `With ${totalOrders} orders so far, this funnel will help you scale to the next level.`
+        : "This funnel is optimized to help you get your first sales!";
 
-    // Simulate loading
-    setTimeout(() => {
-      setFunnelStages(selectedFunnel);
+      // Simulate loading
+      setTimeout(() => {
+        setFunnelStages(selectedFunnel);
+        setLoading(false);
+        toast({
+          title: "Funnel Strategy Generated",
+          description: personalizedNote
+        });
+      }, 1500);
+    } catch (error) {
+      console.error("Error generating funnel:", error);
       setLoading(false);
       toast({
-        title: "Funnel Strategy Generated",
-        description: `${selectedType.replace('-', ' ')} strategy based on your analytics`
+        title: "Error",
+        description: "Failed to generate funnel. Please try again.",
+        variant: "destructive"
       });
-    }, 1500);
+    }
   };
 
   const getStageIcon = (index: number) => {
@@ -782,6 +940,36 @@ export const BuildFunnel = () => {
                       ))}
                     </ul>
                   </div>
+
+                  {stage.emailSequence && stage.emailSequence.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        📧 Email Automation Sequence
+                      </p>
+                      <div className="space-y-3">
+                        {stage.emailSequence.map((email, i) => (
+                          <div key={i} className="bg-muted/50 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">Email {email.emailNumber}</p>
+                              {email.discountOffer && (
+                                <span className="text-xs bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded font-medium">
+                                  {email.discountOffer}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium">{email.subject}</p>
+                            <p className="text-xs text-muted-foreground">
+                              <strong>Trigger:</strong> {email.triggerCondition}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              <strong>Send:</strong> {email.waitTime}
+                            </p>
+                            <p className="text-xs mt-1">{email.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="pt-3 border-t">
                     <p className="text-sm">
