@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { VideoPlayer } from "@/components/VideoPlayer";
 
 interface VideoItem {
   id: string;
@@ -24,6 +25,7 @@ interface VideoItem {
   description: string;
   thumbnail_url: string;
   is_premium: boolean;
+  storage_path: string;
 }
 
 export default function Videos() {
@@ -35,6 +37,8 @@ export default function Videos() {
   const [documentary, setDocumentary] = useState<VideoItem[]>([]);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,7 +97,7 @@ export default function Videos() {
     // Load all other videos (excluding hero)
     const { data, error } = await supabase
       .from('videos')
-      .select('id, title, description, category, thumbnail_url, is_premium')
+      .select('id, title, description, category, thumbnail_url, is_premium, storage_path')
       .neq('category', 'hero')
       .order('created_at', { ascending: false });
 
@@ -110,7 +114,8 @@ export default function Videos() {
         title: v.title,
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false
+        is_premium: v.is_premium || false,
+        storage_path: v.storage_path
       })));
       
       setBehindTheScenes(data.filter(v => v.category === 'behind_the_scenes').map(v => ({
@@ -118,7 +123,8 @@ export default function Videos() {
         title: v.title,
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false
+        is_premium: v.is_premium || false,
+        storage_path: v.storage_path
       })));
       
       setPerformances(data.filter(v => v.category === 'performances').map(v => ({
@@ -126,7 +132,8 @@ export default function Videos() {
         title: v.title,
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false
+        is_premium: v.is_premium || false,
+        storage_path: v.storage_path
       })));
       
       setDocumentary(data.filter(v => v.category === 'documentary').map(v => ({
@@ -134,18 +141,26 @@ export default function Videos() {
         title: v.title,
         description: v.description || '',
         thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false
+        is_premium: v.is_premium || false,
+        storage_path: v.storage_path
       })));
     }
   };
 
-  const handleVideoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleVideoClick = async (video: VideoItem) => {
     console.log('Video clicked, authenticated:', isAuthenticated);
     if (!isAuthenticated) {
       setShowAuthDialog(true);
+      return;
     }
+
+    // Get the video URL from storage
+    const { data: { publicUrl } } = supabase.storage
+      .from('videos')
+      .getPublicUrl(video.storage_path);
+    
+    setSelectedVideo(video);
+    setSelectedVideoUrl(publicUrl);
   };
 
   return (
@@ -229,6 +244,22 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
+      {/* Video Player */}
+      {selectedVideo && (
+        <VideoPlayer
+          videoId={selectedVideo.id}
+          videoUrl={selectedVideoUrl}
+          title={selectedVideo.title}
+          description={selectedVideo.description}
+          thumbnailUrl={selectedVideo.thumbnail_url}
+          isOpen={!!selectedVideo}
+          onClose={() => {
+            setSelectedVideo(null);
+            setSelectedVideoUrl("");
+          }}
+        />
+      )}
+
       {/* Content Rows */}
       <div className="px-4 sm:px-8 lg:px-12 pb-16 space-y-12">
         {/* Performances Row */}
@@ -283,7 +314,7 @@ interface ContentRowProps {
   hoveredId: string | null;
   setHoveredId: (id: string | null) => void;
   isPremium?: boolean;
-  onVideoClick: (e: React.MouseEvent) => void;
+  onVideoClick: (video: VideoItem) => void;
 }
 
 function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium, onVideoClick }: ContentRowProps) {
@@ -314,7 +345,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                 className="group cursor-pointer"
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                onClick={(e) => onVideoClick(e)}
+                onClick={() => onVideoClick(item)}
               >
                 <div className="relative rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 transform group-hover:scale-105">
                   <div className={`${
