@@ -191,8 +191,8 @@ const Merchant = () => {
             <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
               <div className="space-y-12">
                 <EarningsOverview />
-                <TopTracks period="7days" />
                 <Geography />
+                <TopTracks period="7days" />
                 <Demographics />
               </div>
             </div>
