@@ -183,9 +183,9 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
         else if (era > 6 && era <= 8) eraLabel = 'Invest';
         else if (era > 8) eraLabel = 'Loyal';
         
-        let ptpStatus = 'Cold';
-        if (ptp >= 40 && ptp < 70) ptpStatus = 'Warm';
-        else if (ptp >= 70) ptpStatus = 'Hot';
+        let ptpStatus = 'Stop';
+        if (ptp >= 40 && ptp < 70) ptpStatus = 'Wait';
+        else if (ptp >= 70) ptpStatus = 'Go';
         
         return {
           ...member,
@@ -208,9 +208,9 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       else if (era > 6 && era <= 8) eraLabel = 'Invest';
       else if (era > 8) eraLabel = 'Loyal';
       
-      let ptpStatus = 'Cold';
-      if (ptp >= 40 && ptp < 70) ptpStatus = 'Warm';
-      else if (ptp >= 70) ptpStatus = 'Hot';
+      let ptpStatus = 'Stop';
+      if (ptp >= 40 && ptp < 70) ptpStatus = 'Wait';
+      else if (ptp >= 70) ptpStatus = 'Go';
       
       return {
         ...member,
@@ -455,9 +455,9 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                     className="px-3 py-1 border rounded-md bg-background text-sm"
                   >
                     <option value="all">All</option>
-                    <option value="Cold">Cold</option>
-                    <option value="Warm">Warm</option>
-                    <option value="Hot">Hot</option>
+                    <option value="Stop">Stop</option>
+                    <option value="Wait">Wait</option>
+                    <option value="Go">Go</option>
                   </select>
                 </div>
               </div>

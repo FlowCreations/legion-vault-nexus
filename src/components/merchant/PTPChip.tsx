@@ -10,8 +10,8 @@ interface PTPChipProps {
 
 export const PTPChip = ({ ptp, status, delta }: PTPChipProps) => {
   const getColor = () => {
-    if (status === 'Cold') return "bg-red-600 border-red-400";
-    if (status === 'Warm') return "bg-yellow-400 border-yellow-300";
+    if (status === 'Stop') return "bg-red-600 border-red-400";
+    if (status === 'Wait') return "bg-yellow-400 border-yellow-300";
     return "bg-green-400 border-green-300 animate-pulse";
   };
 
@@ -26,7 +26,7 @@ export const PTPChip = ({ ptp, status, delta }: PTPChipProps) => {
             <strong>PTP (Prime to Purchase):</strong> Real-time purchase readiness; 
             spikes within 48h of emotional events.
             <br /><br />
-            Cold → Warm → Hot
+            Stop → Wait → Go
           </p>
         </TooltipContent>
       </Tooltip>
