@@ -178,10 +178,10 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
         const era = Math.floor(Math.random() * 10) + 1; // 1-10
         const ptp = Math.floor(Math.random() * 100); // 0-100
         
-        let eraLabel = 'Dormant';
-        if (era > 3 && era <= 6) eraLabel = 'Engaged';
-        else if (era > 6 && era <= 8) eraLabel = 'Tribe';
-        else if (era > 8) eraLabel = 'Integrated';
+        let eraLabel = 'Discover';
+        if (era > 3 && era <= 6) eraLabel = 'Engage';
+        else if (era > 6 && era <= 8) eraLabel = 'Invest';
+        else if (era > 8) eraLabel = 'Loyal';
         
         let ptpStatus = 'Cold';
         if (ptp >= 40 && ptp < 70) ptpStatus = 'Warm';
@@ -203,10 +203,10 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       const era = Math.floor(Math.random() * 10) + 1;
       const ptp = Math.floor(Math.random() * 100);
       
-      let eraLabel = 'Dormant';
-      if (era > 3 && era <= 6) eraLabel = 'Engaged';
-      else if (era > 6 && era <= 8) eraLabel = 'Tribe';
-      else if (era > 8) eraLabel = 'Integrated';
+      let eraLabel = 'Discover';
+      if (era > 3 && era <= 6) eraLabel = 'Engage';
+      else if (era > 6 && era <= 8) eraLabel = 'Invest';
+      else if (era > 8) eraLabel = 'Loyal';
       
       let ptpStatus = 'Cold';
       if (ptp >= 40 && ptp < 70) ptpStatus = 'Warm';
@@ -440,10 +440,10 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                     className="px-3 py-1 border rounded-md bg-background text-sm"
                   >
                     <option value="all">All</option>
-                    <option value="Dormant">Dormant</option>
-                    <option value="Engaged">Engaged</option>
-                    <option value="Tribe">Tribe</option>
-                    <option value="Integrated">Integrated</option>
+                    <option value="Discover">Discover</option>
+                    <option value="Engage">Engage</option>
+                    <option value="Invest">Invest</option>
+                    <option value="Loyal">Loyal</option>
                   </select>
                 </div>
                 
