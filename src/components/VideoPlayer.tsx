@@ -83,6 +83,13 @@ export function VideoPlayer({
     if (isOpen && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
+      // Auto-enter fullscreen
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen().catch(err => {
+          console.log("Fullscreen request failed:", err);
+        });
+      }
+      setIsFullscreen(true);
     }
   }, [isOpen]);
 
