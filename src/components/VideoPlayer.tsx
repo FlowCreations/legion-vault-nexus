@@ -81,16 +81,9 @@ export function VideoPlayer({
   }, [volume]);
 
   useEffect(() => {
-    if (isOpen && containerRef.current && videoRef.current) {
+    if (isOpen && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
-      // Auto-enter fullscreen on the container
-      if (containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen().catch(err => {
-          console.log("Fullscreen request failed:", err);
-        });
-        setIsFullscreen(true);
-      }
     }
   }, [isOpen]);
 
@@ -166,8 +159,8 @@ export function VideoPlayer({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl p-0 bg-black border-border">
-        <div ref={containerRef} className="relative bg-black">
+      <DialogContent className="max-w-none w-screen h-screen p-0 bg-black border-0 m-0">
+        <div ref={containerRef} className="relative bg-black w-full h-full flex flex-col">
           {/* Close Button */}
           <Button
             variant="ghost"
@@ -179,12 +172,12 @@ export function VideoPlayer({
           </Button>
 
           {/* Video */}
-          <div className="relative bg-black aspect-video">
+          <div className="relative bg-black flex-1 flex items-center justify-center">
             <video
               ref={videoRef}
               src={videoUrl}
               poster={thumbnailUrl}
-              className="w-full h-full"
+              className="w-full h-full object-contain"
               onClick={togglePlayPause}
             />
           </div>
