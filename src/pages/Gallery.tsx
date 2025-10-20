@@ -313,7 +313,7 @@ export default function Gallery() {
                   />
                 </div>
                 <div className="p-4 space-y-3">
-                  <h3 className="text-sm font-medium line-clamp-2">
+                  <h3 className="text-sm font-medium">
                     {item.title}
                   </h3>
                   <div className="flex items-center justify-between">
