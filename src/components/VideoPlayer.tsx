@@ -27,6 +27,7 @@ export function VideoPlayer({
   onClose 
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -80,16 +81,16 @@ export function VideoPlayer({
   }, [volume]);
 
   useEffect(() => {
-    if (isOpen && videoRef.current) {
+    if (isOpen && containerRef.current && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
-      // Auto-enter fullscreen
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen().catch(err => {
+      // Auto-enter fullscreen on the container
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen().catch(err => {
           console.log("Fullscreen request failed:", err);
         });
+        setIsFullscreen(true);
       }
-      setIsFullscreen(true);
     }
   }, [isOpen]);
 
@@ -130,19 +131,20 @@ export function VideoPlayer({
   };
 
   const toggleFullscreen = () => {
-    const video = videoRef.current;
-    if (!video) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     if (!isFullscreen) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen();
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+        setIsFullscreen(true);
       }
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen();
+        setIsFullscreen(false);
       }
     }
-    setIsFullscreen(!isFullscreen);
   };
 
   const formatTime = (seconds: number) => {
@@ -165,7 +167,7 @@ export function VideoPlayer({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl p-0 bg-black border-border">
-        <div className="relative">
+        <div ref={containerRef} className="relative bg-black">
           {/* Close Button */}
           <Button
             variant="ghost"
