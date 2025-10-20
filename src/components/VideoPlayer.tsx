@@ -230,7 +230,7 @@ export function VideoPlayer({
 
               {/* Progress Bar */}
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-foreground tabular-nums min-w-[40px]">
+                <span className="text-xs font-semibold text-white tabular-nums min-w-[40px]">
                   {formatTime((progress / 100) * duration)}
                 </span>
                 <Slider
@@ -243,7 +243,7 @@ export function VideoPlayer({
                   className="flex-1 cursor-pointer"
                   disabled={!duration || isNaN(duration) || duration === 0}
                 />
-                <span className="text-xs font-semibold text-foreground tabular-nums min-w-[40px]">
+                <span className="text-xs font-semibold text-white tabular-nums min-w-[40px]">
                   {formatTime(duration)}
                 </span>
               </div>
