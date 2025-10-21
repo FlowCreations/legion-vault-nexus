@@ -19,11 +19,15 @@ interface Affiliate {
   };
   analytics: {
     total_members?: number;
+    totalMembers?: number;
     active_members?: number;
+    activeMembers?: number;
     highly_active?: number;
     medium_active?: number;
     low_active?: number;
     top_locations?: string[];
+    topLocations?: string[];
+    affiliationScore?: number;
   };
 }
 
@@ -73,6 +77,17 @@ export function AffiliateDetail({ affiliate, content, onClose }: AffiliateDetail
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Affiliation Score */}
+          {affiliate.analytics.affiliationScore && (
+            <div className="flex items-center justify-between p-4 bg-affirmative-primary/10 rounded-lg border border-affirmative-primary/20">
+              <div>
+                <p className="text-sm text-muted-foreground">Affiliation Performance Score</p>
+                <p className="text-3xl font-bold text-affirmative-primary">{affiliate.analytics.affiliationScore}/100</p>
+              </div>
+              <TrendingUp className="h-12 w-12 text-affirmative-primary" />
+            </div>
+          )}
+          
           {/* Analytics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
@@ -80,14 +95,14 @@ export function AffiliateDetail({ affiliate, content, onClose }: AffiliateDetail
                 <Users className="h-4 w-4" />
                 <span className="text-sm">Total Members</span>
               </div>
-              <p className="text-2xl font-bold">{affiliate.analytics.total_members?.toLocaleString() || '0'}</p>
+              <p className="text-2xl font-bold">{(affiliate.analytics.total_members || affiliate.analytics.totalMembers || 0).toLocaleString()}</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Activity className="h-4 w-4" />
                 <span className="text-sm">Active Members</span>
               </div>
-              <p className="text-2xl font-bold">{affiliate.analytics.active_members?.toLocaleString() || '0'}</p>
+              <p className="text-2xl font-bold">{(affiliate.analytics.active_members || affiliate.analytics.activeMembers || 0).toLocaleString()}</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -101,7 +116,7 @@ export function AffiliateDetail({ affiliate, content, onClose }: AffiliateDetail
                 <MapPin className="h-4 w-4" />
                 <span className="text-sm">Top Locations</span>
               </div>
-              <p className="text-sm font-medium">{affiliate.analytics.top_locations?.slice(0, 2).join(', ') || 'N/A'}</p>
+              <p className="text-sm font-medium">{(affiliate.analytics.top_locations || affiliate.analytics.topLocations || []).slice(0, 2).join(', ') || 'N/A'}</p>
             </div>
           </div>
 
