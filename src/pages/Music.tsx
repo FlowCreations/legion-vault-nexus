@@ -7,6 +7,7 @@ import { usePurchases } from "@/hooks/usePurchases";
 import { StripeCheckout } from "@/components/StripeCheckout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { AffiliateRecommendations } from "@/components/AffiliateRecommendations";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -409,6 +410,9 @@ export default function Music() {
             <CarouselNext className="right-0" />
           </Carousel>
         </div>
+
+        {/* Affiliate Recommendations */}
+        <AffiliateRecommendations contentType="music" limit={5} />
       </div>
 
 
