@@ -332,9 +332,13 @@ export function Partnerships() {
                           <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                             {affiliate.avatar_url ? (
                               <img 
-                                src={affiliate.avatar_url.replace('/src/assets/', '/src/assets/')} 
+                                src={affiliate.avatar_url} 
                                 alt={affiliate.name} 
                                 className="rounded-full object-cover w-full h-full"
+                                onError={(e) => {
+                                  console.error('Failed to load avatar:', affiliate.avatar_url);
+                                  e.currentTarget.style.display = 'none';
+                                }}
                               />
                             ) : (
                               <Users className="h-6 w-6" />
