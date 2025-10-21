@@ -18,7 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { VideoPlayer } from "@/components/VideoPlayer";
-import { AffiliateRecommendations } from "@/components/AffiliateRecommendations";
+import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 
 interface VideoItem {
   id: string;
@@ -306,8 +306,8 @@ export default function Videos() {
           onVideoClick={handleVideoClick}
         />
 
-        {/* Affiliate Recommendations */}
-        <AffiliateRecommendations contentType="video" limit={5} />
+        {/* You Might Also Like */}
+        <YouMightAlsoLike contentType="video" limit={5} />
       </div>
     </div>
   );
