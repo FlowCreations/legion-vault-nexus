@@ -33,8 +33,19 @@ export function BrandPartnershipCard({ partnership }: BrandPartnershipCardProps)
                 src={partnership.logo_url}
                 alt={partnership.brand_name}
                 className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
               />
-            ) : (
+            ) : null}
+            {partnership.logo_url && (
+              <div className="h-12 w-24 bg-muted rounded items-center justify-center" style={{ display: 'none' }}>
+                <span className="font-bold">{partnership.brand_name}</span>
+              </div>
+            )}
+            {!partnership.logo_url && (
               <div className="h-12 w-24 bg-muted rounded flex items-center justify-center">
                 <span className="font-bold">{partnership.brand_name}</span>
               </div>
@@ -72,6 +83,10 @@ export function BrandPartnershipCard({ partnership }: BrandPartnershipCardProps)
                       src={product.image_url}
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      onError={(e) => {
+                        e.currentTarget.src = '';
+                        e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Image</div>';
+                      }}
                     />
                   </div>
                   <p className="text-xs font-medium line-clamp-2 group-hover:text-affirmative-primary transition-colors">

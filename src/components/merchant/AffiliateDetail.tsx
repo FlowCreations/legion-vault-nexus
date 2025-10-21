@@ -65,7 +65,7 @@ export function AffiliateDetail({ affiliate, content, onClose }: AffiliateDetail
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={affiliate.avatar_url || ''} />
+                <AvatarImage src={affiliate.avatar_url || undefined} alt={affiliate.name} />
                 <AvatarFallback>{affiliate.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
@@ -206,6 +206,10 @@ export function AffiliateDetail({ affiliate, content, onClose }: AffiliateDetail
                         src={item.thumbnail_url}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        onError={(e) => {
+                          e.currentTarget.src = '';
+                          e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
