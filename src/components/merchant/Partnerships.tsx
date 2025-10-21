@@ -11,6 +11,7 @@ import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail, Tr
 import { AffiliateDetail } from "./AffiliateDetail";
 import { BrandPartnershipCard } from "./BrandPartnershipCard";
 import { EthosRequestDialog } from "./EthosRequestDialog";
+import { AddAffiliateForm } from "./AddAffiliateForm";
 import { Badge } from "@/components/ui/badge";
 
 interface Partnership {
@@ -75,8 +76,6 @@ export function Partnerships() {
   const [ethosDialogOpen, setEthosDialogOpen] = useState(false);
   const [ethosRecipient, setEthosRecipient] = useState("");
   const [addAffiliateDialogOpen, setAddAffiliateDialogOpen] = useState(false);
-  const [newAffiliateName, setNewAffiliateName] = useState("");
-  const [newAffiliateBio, setNewAffiliateBio] = useState("");
 
   useEffect(() => {
     fetchPartnerships();
@@ -533,73 +532,20 @@ export function Partnerships() {
 
       {/* Add Affiliate Dialog */}
       <Dialog open={addAffiliateDialogOpen} onOpenChange={setAddAffiliateDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Affiliate</DialogTitle>
             <DialogDescription>
               Add a new artist affiliate for cross-promotion opportunities
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="affiliate-name">Artist Name</Label>
-              <Input
-                id="affiliate-name"
-                placeholder="Enter artist name"
-                value={newAffiliateName}
-                onChange={(e) => setNewAffiliateName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="affiliate-bio">Bio</Label>
-              <Input
-                id="affiliate-bio"
-                placeholder="Short bio about the artist"
-                value={newAffiliateBio}
-                onChange={(e) => setNewAffiliateBio(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
+          <AddAffiliateForm 
+            onSuccess={() => {
               setAddAffiliateDialogOpen(false);
-              setNewAffiliateName("");
-              setNewAffiliateBio("");
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={async () => {
-              if (!newAffiliateName) {
-                toast.error("Please enter an artist name");
-                return;
-              }
-              
-              const { error } = await supabase
-                .from("affiliates")
-                .insert({
-                  artist_id: crypto.randomUUID(),
-                  name: newAffiliateName,
-                  bio: newAffiliateBio,
-                  analytics: {
-                    totalMembers: 0,
-                    activeMembers: 0,
-                    affiliationScore: 0
-                  }
-                });
-
-              if (error) {
-                toast.error("Failed to add affiliate");
-              } else {
-                toast.success("Affiliate added successfully");
-                setAddAffiliateDialogOpen(false);
-                setNewAffiliateName("");
-                setNewAffiliateBio("");
-                fetchAffiliates();
-              }
-            }}>
-              Add Affiliate
-            </Button>
-          </DialogFooter>
+              fetchAffiliates();
+            }}
+            onCancel={() => setAddAffiliateDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
