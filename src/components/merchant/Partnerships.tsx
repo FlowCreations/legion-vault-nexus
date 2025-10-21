@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail } from "lucide-react";
+import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail, TrendingUp } from "lucide-react";
 import { AffiliateDetail } from "./AffiliateDetail";
 import { BrandPartnershipCard } from "./BrandPartnershipCard";
 import { EthosRequestDialog } from "./EthosRequestDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Partnership {
   id: string;
@@ -72,6 +74,9 @@ export function Partnerships() {
   const [loading, setLoading] = useState(false);
   const [ethosDialogOpen, setEthosDialogOpen] = useState(false);
   const [ethosRecipient, setEthosRecipient] = useState("");
+  const [addAffiliateDialogOpen, setAddAffiliateDialogOpen] = useState(false);
+  const [newAffiliateName, setNewAffiliateName] = useState("");
+  const [newAffiliateBio, setNewAffiliateBio] = useState("");
 
   useEffect(() => {
     fetchPartnerships();
@@ -302,9 +307,15 @@ export function Partnerships() {
         {/* Affiliates Tab */}
         <TabsContent value="affiliates" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Affiliate Artists</CardTitle>
-              <CardDescription>Artists you're affiliated with for cross-promotion</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Affiliate Artists</CardTitle>
+                <CardDescription>Artists you're affiliated with for cross-promotion</CardDescription>
+              </div>
+              <Button onClick={() => setAddAffiliateDialogOpen(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Affiliate
+              </Button>
             </CardHeader>
             <CardContent>
               {affiliates.length === 0 ? (
@@ -321,15 +332,23 @@ export function Partnerships() {
                         <div className="flex items-center gap-3 mb-3">
                           <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                             {affiliate.avatar_url ? (
-                              <img src={affiliate.avatar_url} alt={affiliate.name} className="rounded-full" />
+                              <img src={affiliate.avatar_url} alt={affiliate.name} className="rounded-full object-cover w-full h-full" />
                             ) : (
                               <Users className="h-6 w-6" />
                             )}
                           </div>
-                          <div>
-                            <p className="font-semibold">{affiliate.name}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="font-semibold">{affiliate.name}</p>
+                              {affiliate.analytics?.affiliationScore && (
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  <TrendingUp className="h-3 w-3" />
+                                  {affiliate.analytics.affiliationScore}
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground">
-                              {affiliate.analytics?.total_members || 0} members
+                              {affiliate.analytics?.totalMembers?.toLocaleString() || affiliate.analytics?.total_members?.toLocaleString() || 0} members
                             </p>
                           </div>
                         </div>
@@ -511,6 +530,78 @@ export function Partnerships() {
         onOpenChange={setEthosDialogOpen}
         recipientEmail={ethosRecipient}
       />
+
+      {/* Add Affiliate Dialog */}
+      <Dialog open={addAffiliateDialogOpen} onOpenChange={setAddAffiliateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Affiliate</DialogTitle>
+            <DialogDescription>
+              Add a new artist affiliate for cross-promotion opportunities
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="affiliate-name">Artist Name</Label>
+              <Input
+                id="affiliate-name"
+                placeholder="Enter artist name"
+                value={newAffiliateName}
+                onChange={(e) => setNewAffiliateName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="affiliate-bio">Bio</Label>
+              <Input
+                id="affiliate-bio"
+                placeholder="Short bio about the artist"
+                value={newAffiliateBio}
+                onChange={(e) => setNewAffiliateBio(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setAddAffiliateDialogOpen(false);
+              setNewAffiliateName("");
+              setNewAffiliateBio("");
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (!newAffiliateName) {
+                toast.error("Please enter an artist name");
+                return;
+              }
+              
+              const { error } = await supabase
+                .from("affiliates")
+                .insert({
+                  artist_id: crypto.randomUUID(),
+                  name: newAffiliateName,
+                  bio: newAffiliateBio,
+                  analytics: {
+                    totalMembers: 0,
+                    activeMembers: 0,
+                    affiliationScore: 0
+                  }
+                });
+
+              if (error) {
+                toast.error("Failed to add affiliate");
+              } else {
+                toast.success("Affiliate added successfully");
+                setAddAffiliateDialogOpen(false);
+                setNewAffiliateName("");
+                setNewAffiliateBio("");
+                fetchAffiliates();
+              }
+            }}>
+              Add Affiliate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
