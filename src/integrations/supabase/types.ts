@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_content: {
+        Row: {
+          affiliate_id: string | null
+          content_type: string | null
+          content_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          content_type?: string | null
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          content_type?: string | null
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_content_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          analytics: Json | null
+          artist_id: string
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          ethos: string | null
+          id: string
+          name: string
+          non_negotiables: string[] | null
+          social_links: Json | null
+          updated_at: string
+        }
+        Insert: {
+          analytics?: Json | null
+          artist_id: string
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          ethos?: string | null
+          id?: string
+          name: string
+          non_negotiables?: string[] | null
+          social_links?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          analytics?: Json | null
+          artist_id?: string
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          ethos?: string | null
+          id?: string
+          name?: string
+          non_negotiables?: string[] | null
+          social_links?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       artist_partnerships: {
         Row: {
           approved_at: string | null
@@ -41,6 +124,45 @@ export type Database = {
           partner_artist_id?: string
           partnership_type?: string | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      brand_partnerships: {
+        Row: {
+          artist_id: string
+          brand_name: string
+          content: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          status: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          artist_id: string
+          brand_name: string
+          content?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          status?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          artist_id?: string
+          brand_name?: string
+          content?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          status?: string | null
+          updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -232,6 +354,39 @@ export type Database = {
           ptp?: number | null
           ptp_components?: Json | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ethos_requests: {
+        Row: {
+          created_at: string
+          ethos: string
+          from_artist_id: string
+          id: string
+          non_negotiables: string[] | null
+          responded_at: string | null
+          status: string | null
+          to_artist_id: string
+        }
+        Insert: {
+          created_at?: string
+          ethos: string
+          from_artist_id: string
+          id?: string
+          non_negotiables?: string[] | null
+          responded_at?: string | null
+          status?: string | null
+          to_artist_id: string
+        }
+        Update: {
+          created_at?: string
+          ethos?: string
+          from_artist_id?: string
+          id?: string
+          non_negotiables?: string[] | null
+          responded_at?: string | null
+          status?: string | null
+          to_artist_id?: string
         }
         Relationships: []
       }
