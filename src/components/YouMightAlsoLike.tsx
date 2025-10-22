@@ -79,10 +79,12 @@ export function YouMightAlsoLike({ contentType = 'all', limit = 4 }: YouMightAls
           {content.map((item) => (
             <div
               key={item.id}
-              className="group cursor-pointer space-y-2"
-              onClick={() => item.content_url && window.open(item.content_url, '_blank')}
+              className="group space-y-2"
             >
-              <div className="aspect-video rounded-lg overflow-hidden bg-muted relative">
+              <div 
+                className="aspect-video rounded-lg overflow-hidden bg-muted relative cursor-pointer"
+                onClick={() => item.content_url && window.open(item.content_url, '_blank')}
+              >
                 {item.thumbnail_url ? (
                   <img
                     src={item.thumbnail_url}
@@ -94,7 +96,9 @@ export function YouMightAlsoLike({ contentType = 'all', limit = 4 }: YouMightAls
                     No Image
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <ExternalLink className="h-8 w-8 text-white" />
+                </div>
               </div>
               <div>
                 <p className="font-medium text-sm line-clamp-2 group-hover:text-affirmative-primary transition-colors">
