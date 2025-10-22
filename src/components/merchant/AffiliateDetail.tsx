@@ -3,8 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Activity, MapPin, TrendingUp, Facebook, Instagram, Twitter, Youtube, ExternalLink } from "lucide-react";
+import { Users, Activity, MapPin, TrendingUp, Facebook, Instagram, Twitter, Youtube, ExternalLink, Power, PowerOff } from "lucide-react";
 import { AffiliateContentManager } from "./AffiliateContentManager";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Affiliate {
   id: string;
@@ -13,6 +15,7 @@ interface Affiliate {
   bio: string | null;
   ethos: string | null;
   non_negotiables: string[] | null;
+  status?: string;
   social_links: {
     facebook?: string;
     instagram?: string;
@@ -50,6 +53,26 @@ interface AffiliateDetailProps {
 }
 
 export function AffiliateDetail({ affiliate, content, onClose, onContentUpdate }: AffiliateDetailProps) {
+  const isActive = affiliate.status === 'active';
+
+  const handleToggleActivation = async () => {
+    try {
+      const newStatus = isActive ? 'inactive' : 'active';
+      const { error } = await supabase
+        .from('affiliates')
+        .update({ status: newStatus })
+        .eq('id', affiliate.id);
+
+      if (error) throw error;
+
+      toast.success(`Affiliate ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
+      onContentUpdate();
+    } catch (error) {
+      console.error('Error toggling activation:', error);
+      toast.error("Failed to update status");
+    }
+  };
+
   const getSocialIcon = (platform: string) => {
     switch (platform) {
       case 'facebook': return <Facebook className="h-4 w-4" />;
@@ -82,7 +105,25 @@ export function AffiliateDetail({ affiliate, content, onClose, onContentUpdate }
                   <CardDescription>{affiliate.bio}</CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" onClick={onClose}>Close</Button>
+              <div className="flex gap-2">
+                <Button
+                  variant={isActive ? "destructive" : "default"}
+                  onClick={handleToggleActivation}
+                >
+                  {isActive ? (
+                    <>
+                      <PowerOff className="mr-2 h-4 w-4" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <Power className="mr-2 h-4 w-4" />
+                      Activate
+                    </>
+                  )}
+                </Button>
+                <Button variant="ghost" onClick={onClose}>Close</Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">

@@ -67,6 +67,7 @@ export type Database = {
           name: string
           non_negotiables: string[] | null
           social_links: Json | null
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           name: string
           non_negotiables?: string[] | null
           social_links?: Json | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -93,6 +95,7 @@ export type Database = {
           name?: string
           non_negotiables?: string[] | null
           social_links?: Json | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: []

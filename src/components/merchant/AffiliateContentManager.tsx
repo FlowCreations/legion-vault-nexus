@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Trash2, Image as ImageIcon } from "lucide-react";
+import { Upload, Trash2, Image as ImageIcon, Edit } from "lucide-react";
 
 interface AffiliateContent {
   id: string;
@@ -113,6 +115,23 @@ export function AffiliateContentManager({
       toast.error("Failed to add content");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleUpdateContent = async (contentId: string, updates: Partial<AffiliateContent>) => {
+    try {
+      const { error } = await supabase
+        .from('affiliate_content')
+        .update(updates)
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      toast.success("Content updated");
+      onContentUpdate();
+    } catch (error) {
+      console.error('Error updating content:', error);
+      toast.error("Failed to update content");
     }
   };
 
@@ -232,11 +251,48 @@ export function AffiliateContentManager({
                 </div>
 
                 <div className="flex gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Content</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Title</Label>
+                          <Input
+                            defaultValue={item.title}
+                            onBlur={(e) => handleUpdateContent(item.id, { title: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Description</Label>
+                          <Textarea
+                            defaultValue={item.description || ''}
+                            onBlur={(e) => handleUpdateContent(item.id, { description: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Video URL</Label>
+                          <Input
+                            defaultValue={item.content_url || ''}
+                            onBlur={(e) => handleUpdateContent(item.id, { content_url: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                   <Label htmlFor={`thumb-${item.id}`} className="cursor-pointer">
                     <Button variant="outline" size="sm" asChild>
                       <span>
                         <Upload className="mr-2 h-4 w-4" />
-                        Upload Thumbnail
+                        Thumbnail
                       </span>
                     </Button>
                   </Label>

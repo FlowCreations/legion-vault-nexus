@@ -39,8 +39,9 @@ export function YouMightAlsoLike({ contentType = 'all', limit = 4 }: YouMightAls
         thumbnail_url,
         content_type,
         content_url,
-        affiliate:affiliates(name)
+        affiliate:affiliates!inner(name, status)
       `)
+      .eq('affiliate.status', 'active')
       .limit(limit);
 
     if (contentType !== 'all') {
