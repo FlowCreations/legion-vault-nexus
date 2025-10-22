@@ -39,6 +39,13 @@ export function AffiliateContentManager({
     content_type: "video"
   });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [editingContent, setEditingContent] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    content_url: string;
+  } | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleThumbnailUpload = async (contentId: string, file: File) => {
     try {
@@ -128,11 +135,22 @@ export function AffiliateContentManager({
       if (error) throw error;
 
       toast.success("Content updated");
+      setEditDialogOpen(false);
+      setEditingContent(null);
       onContentUpdate();
     } catch (error) {
       console.error('Error updating content:', error);
       toast.error("Failed to update content");
     }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingContent) return;
+    handleUpdateContent(editingContent.id, {
+      title: editingContent.title,
+      description: editingContent.description,
+      content_url: editingContent.content_url,
+    });
   };
 
   const handleDeleteContent = async (contentId: string) => {
@@ -251,9 +269,20 @@ export function AffiliateContentManager({
                 </div>
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingContent({
+                            id: item.id,
+                            title: item.title,
+                            description: item.description || '',
+                            content_url: item.content_url || '',
+                          });
+                        }}
+                      >
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </Button>
@@ -266,24 +295,27 @@ export function AffiliateContentManager({
                         <div>
                           <Label>Title</Label>
                           <Input
-                            defaultValue={item.title}
-                            onBlur={(e) => handleUpdateContent(item.id, { title: e.target.value })}
+                            value={editingContent?.title || ''}
+                            onChange={(e) => setEditingContent(prev => prev ? { ...prev, title: e.target.value } : null)}
                           />
                         </div>
                         <div>
                           <Label>Description</Label>
                           <Textarea
-                            defaultValue={item.description || ''}
-                            onBlur={(e) => handleUpdateContent(item.id, { description: e.target.value })}
+                            value={editingContent?.description || ''}
+                            onChange={(e) => setEditingContent(prev => prev ? { ...prev, description: e.target.value } : null)}
                           />
                         </div>
                         <div>
                           <Label>Video URL</Label>
                           <Input
-                            defaultValue={item.content_url || ''}
-                            onBlur={(e) => handleUpdateContent(item.id, { content_url: e.target.value })}
+                            value={editingContent?.content_url || ''}
+                            onChange={(e) => setEditingContent(prev => prev ? { ...prev, content_url: e.target.value } : null)}
                           />
                         </div>
+                        <Button onClick={handleSaveEdit} className="w-full">
+                          Save Changes
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
