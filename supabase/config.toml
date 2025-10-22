@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.update-thumbnail]
 verify_jwt = false
+
+[functions.analyze-content-performance]
+verify_jwt = true

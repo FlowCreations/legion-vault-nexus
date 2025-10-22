@@ -291,6 +291,54 @@ export type Database = {
         }
         Relationships: []
       }
+      content_analyses: {
+        Row: {
+          created_at: string | null
+          frame_analysis: Json | null
+          hook_score: number | null
+          id: string
+          merchant_id: string
+          overall_score: number | null
+          pacing_score: number | null
+          predicted_dropoff_points: Json | null
+          recommendations: Json | null
+          video_duration: number | null
+          video_title: string
+          video_url: string
+          visual_score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          frame_analysis?: Json | null
+          hook_score?: number | null
+          id?: string
+          merchant_id: string
+          overall_score?: number | null
+          pacing_score?: number | null
+          predicted_dropoff_points?: Json | null
+          recommendations?: Json | null
+          video_duration?: number | null
+          video_title: string
+          video_url: string
+          visual_score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          frame_analysis?: Json | null
+          hook_score?: number | null
+          id?: string
+          merchant_id?: string
+          overall_score?: number | null
+          pacing_score?: number | null
+          predicted_dropoff_points?: Json | null
+          recommendations?: Json | null
+          video_duration?: number | null
+          video_title?: string
+          video_url?: string
+          visual_score?: number | null
+        }
+        Relationships: []
+      }
       distributor_integrations: {
         Row: {
           api_credentials: Json | null

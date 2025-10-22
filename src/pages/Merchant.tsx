@@ -15,6 +15,7 @@ import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
+import { ContentLab } from "@/components/merchant/ContentLab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -113,7 +114,7 @@ const Merchant = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg">
+          <TabsList className="grid w-full grid-cols-8 bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg">
             <TabsTrigger 
               value="analytics"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
@@ -125,6 +126,12 @@ const Merchant = () => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Videos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="content-lab"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Content Lab
             </TabsTrigger>
             <TabsTrigger 
               value="community"
@@ -209,6 +216,10 @@ const Merchant = () => {
 
           <TabsContent value="videos">
             <VideoManager />
+          </TabsContent>
+
+          <TabsContent value="content-lab">
+            <ContentLab />
           </TabsContent>
 
           <TabsContent value="community">
