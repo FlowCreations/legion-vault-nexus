@@ -289,6 +289,9 @@ export function Partnerships() {
           setSelectedAffiliate(null);
           setAffiliateContent([]);
         }}
+        onContentUpdate={() => {
+          handleAffiliateClick(selectedAffiliate);
+        }}
       />
     );
   }
