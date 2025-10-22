@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, TrendingUp, TrendingDown, Clock, Download } from "lucide-react";
+import { AlertCircle, TrendingUp, TrendingDown, Clock, Download, Target } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DropoffPoint {
@@ -19,6 +19,7 @@ interface Recommendation {
 
 interface AnalysisResultsProps {
   videoTitle: string;
+  platform: string;
   videoDuration: number;
   overallScore: number;
   hookScore: number;
@@ -26,6 +27,11 @@ interface AnalysisResultsProps {
   visualScore: number;
   dropoffPoints: DropoffPoint[];
   recommendations: Recommendation[];
+  platformInsights?: {
+    bestPlatforms?: string[];
+    formatRecommendations?: string[];
+    viralPotential?: number;
+  };
 }
 
 const formatTime = (seconds: number): string => {
@@ -54,6 +60,7 @@ const getPriorityColor = (priority: string): string => {
 
 export const ContentAnalysisResults = ({
   videoTitle,
+  platform,
   videoDuration,
   overallScore,
   hookScore,
@@ -61,6 +68,7 @@ export const ContentAnalysisResults = ({
   visualScore,
   dropoffPoints,
   recommendations,
+  platformInsights,
 }: AnalysisResultsProps) => {
   const sortedRecommendations = [...recommendations].sort((a, b) => {
     const priorityOrder = { high: 0, medium: 1, low: 2 };
@@ -71,7 +79,13 @@ export const ContentAnalysisResults = ({
     <div className="space-y-6">
       {/* Overall Scores */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Analysis Results: {videoTitle}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Analysis Results: {videoTitle}</h3>
+          <Badge variant="outline" className="gap-1">
+            <Target className="h-3 w-3" />
+            {platform}
+          </Badge>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
@@ -103,6 +117,54 @@ export const ContentAnalysisResults = ({
           </div>
         </div>
       </Card>
+
+      {/* Platform-Specific Insights */}
+      {platformInsights && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Platform Optimization Insights
+          </h3>
+          <div className="space-y-4">
+            {platformInsights.viralPotential !== undefined && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Viral Potential on {platform}</span>
+                  <span className={`text-2xl font-bold ${getScoreColor(platformInsights.viralPotential)}`}>
+                    {platformInsights.viralPotential}%
+                  </span>
+                </div>
+                <Progress value={platformInsights.viralPotential} />
+              </div>
+            )}
+            
+            {platformInsights.bestPlatforms && platformInsights.bestPlatforms.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Also Recommended For:</p>
+                <div className="flex flex-wrap gap-2">
+                  {platformInsights.bestPlatforms.map((p, idx) => (
+                    <Badge key={idx} variant="secondary">{p}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {platformInsights.formatRecommendations && platformInsights.formatRecommendations.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Format Recommendations:</p>
+                <ul className="space-y-1">
+                  {platformInsights.formatRecommendations.map((rec, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      {rec}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Timeline Visualization */}
       <Card className="p-6">

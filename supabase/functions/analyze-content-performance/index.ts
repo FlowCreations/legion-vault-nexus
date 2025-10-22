@@ -11,10 +11,14 @@ serve(async (req) => {
   }
 
   try {
-    const { videoTitle, frames, metadata } = await req.json();
+    const { videoTitle, platform, frames, metadata } = await req.json();
 
     if (!frames || frames.length === 0) {
       throw new Error('No frames provided');
+    }
+
+    if (!platform) {
+      throw new Error('Platform not specified');
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -22,64 +26,121 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    // Platform-specific best practices
+    const platformGuidelines: Record<string, string> = {
+      tiktok: `
+**TikTok Best Practices:**
+- First 3 seconds MUST hook or viewers scroll (extremely critical)
+- Ideal length: 21-34 seconds for maximum engagement
+- Vertical 9:16 format required
+- Fast cuts every 1-3 seconds keep attention
+- On-screen text/captions boost retention 40%
+- Trending sounds increase discoverability 3x
+- Face-to-camera shots perform 2x better
+- Jump cuts and quick transitions essential
+- Authentic, raw content outperforms polished
+- Hook must be visual + auditory for sound-off viewing`,
+      
+      youtube: `
+**YouTube Best Practices:**
+- First 30 seconds determine 50% of retention
+- Thumbnail + title must promise value delivered in video
+- Ideal length varies: 8-15 min for tutorials, 4-6 min for entertainment
+- Pattern interrupts every 20-30 seconds maintain attention
+- Clear story arc: hook → value → payoff
+- Face presence in first 3 seconds increases clicks 20%
+- End screens and CTAs boost channel growth
+- Pacing should match content type (faster for entertainment)
+- YouTube algorithm favors watch time over views`,
+      
+      instagram: `
+**Instagram Reels Best Practices:**
+- First frame must be eye-catching (users decide in <1 second)
+- 15-30 seconds optimal for completion rate
+- Vertical 9:16 format essential
+- Aesthetic quality matters more than on TikTok
+- On-beat transitions boost engagement
+- Trending audio increases reach 5x
+- Text overlays critical (80% watch without sound)
+- Hook in first 2 seconds or users swipe
+- Visual variety every 3-5 seconds
+- Strong call-to-action in caption`,
+      
+      "youtube-shorts": `
+**YouTube Shorts Best Practices:**
+- Similar to TikTok but slightly longer hooks work (3-5 sec)
+- 30-60 seconds ideal length
+- Loop-able content gets re-watched
+- Clear, loud audio important
+- Vertical format required
+- Fast pacing but slightly less frantic than TikTok
+- Timestamps and chapters don't work in Shorts
+- Strong first frame (acts as thumbnail)`,
+      
+      facebook: `
+**Facebook Best Practices:**
+- Auto-play starts muted - visual hook essential
+- Square (1:1) or vertical (4:5) outperforms horizontal
+- Longer form content (2-5 min) performs well
+- Emotional storytelling drives shares
+- Captions required (85% watch without sound)
+- Native uploads outperform YouTube links 10x
+- Community engagement in comments boosts reach`,
+      
+      twitter: `
+**Twitter/X Best Practices:**
+- 20-45 seconds optimal (attention spans very short)
+- Square format (1:1) best for feed
+- First 2 seconds critical - users scroll fast
+- Provocative/controversial hooks drive engagement
+- Subtitles essential
+- Memes and trends spread fastest
+- Keep it punchy and quotable`
+    };
+
+    const platformGuide = platformGuidelines[platform] || platformGuidelines.tiktok;
+
     // Construct the analysis prompt
-    const systemPrompt = `You are an expert viral content analyst trained on successful video patterns across platforms like YouTube, TikTok, and Instagram.
+    const systemPrompt = `You are an expert viral content analyst specializing in ${platform.toUpperCase()} content optimization.
 
-Analyze the provided video frames and return a structured analysis with:
+Analyze the provided video frames and return a comprehensive, platform-specific analysis.
 
-1. **Overall Score (0-100)**: Based on viral potential
-2. **Hook Score (0-100)**: First 3 seconds effectiveness
-3. **Pacing Score (0-100)**: Scene change frequency and energy consistency
-4. **Visual Score (0-100)**: Visual engagement, face presence, movement, color vibrancy
-5. **Drop-off Points**: Timestamps where viewers are likely to leave with risk percentage and reason
-6. **Recommendations**: Specific actionable suggestions with timestamps and priority level
+${platformGuide}
 
-**Viral Video Patterns to Check:**
-- First 3 seconds MUST grab attention (movement, face, text, action)
-- Scene changes every 3-7 seconds optimal for retention
-- Face presence increases retention 40%
-- Text overlays boost completion 25%
-- Visual variety prevents drop-off
-- Energy/pacing consistency throughout
-- Clear visual storytelling
+**Analysis Requirements:**
 
-**Analysis Guidelines:**
-- Be specific with timestamps
-- Provide actionable suggestions
-- Identify exact moments of concern
-- Consider platform best practices
-- Focus on retention optimization`;
+1. **Overall Score (0-100)**: Based on viral potential specifically for ${platform}
+2. **Hook Score (0-100)**: Effectiveness of opening based on ${platform} standards
+3. **Pacing Score (0-100)**: Scene changes and energy for ${platform} algorithm
+4. **Visual Score (0-100)**: Visual quality and engagement for ${platform} audience
+5. **Drop-off Points**: Exact timestamps where ${platform} viewers will likely leave
+6. **Recommendations**: Platform-specific actionable suggestions
+7. **Platform Insights**: 
+   - Viral potential percentage for ${platform}
+   - Alternative platforms this would work on
+   - Format adjustments needed for ${platform}
 
-    // Prepare content for the AI with frames
+**Critical ${platform} Patterns to Check:**
+- Hook timing and effectiveness for platform
+- Optimal video length for platform
+- Aspect ratio suitability
+- Pacing appropriate for platform algorithm
+- Visual style matching platform trends
+- Audio/text overlay requirements
+- Platform-specific editing techniques
+
+Be ruthless but constructive. Provide specific timestamps and clear actions.`;
+
     const userContent = [
       {
         type: "text",
-        text: `Analyze this ${metadata.duration.toFixed(0)}-second video titled "${videoTitle}". 
-I'm providing ${frames.length} frames extracted at regular intervals. 
+        text: `Analyze this ${metadata.duration.toFixed(0)}-second video titled "${videoTitle}" for ${platform.toUpperCase()}. 
+I'm providing ${frames.length} frames extracted at regular intervals.
 Duration: ${metadata.duration.toFixed(2)}s
 Resolution: ${metadata.width}x${metadata.height}
+Target Platform: ${platform}
 
-Please analyze and provide your assessment in the following JSON structure (use tool calling):
-{
-  "overallScore": <number 0-100>,
-  "hookScore": <number 0-100>,
-  "pacingScore": <number 0-100>,
-  "visualScore": <number 0-100>,
-  "dropoffPoints": [
-    {
-      "timestamp": <seconds>,
-      "risk": <number 0-100>,
-      "reason": "<specific reason>"
-    }
-  ],
-  "recommendations": [
-    {
-      "timestamp": <seconds>,
-      "suggestion": "<actionable suggestion>",
-      "priority": "high" | "medium" | "low"
-    }
-  ]
-}`
+Provide comprehensive ${platform}-specific analysis including viral potential, format recommendations, and whether this content would work better on other platforms.`
       }
     ];
 
@@ -158,9 +219,28 @@ Please analyze and provide your assessment in the following JSON structure (use 
                       },
                       required: ["timestamp", "suggestion", "priority"]
                     }
+                  },
+                  platformInsights: {
+                    type: "object",
+                    properties: {
+                      viralPotential: { 
+                        type: "number",
+                        description: `Viral potential percentage specifically for ${platform} (0-100)`
+                      },
+                      bestPlatforms: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "Other platforms this content would perform well on"
+                      },
+                      formatRecommendations: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: `Specific format adjustments for ${platform}`
+                      }
+                    }
                   }
                 },
-                required: ["overallScore", "hookScore", "pacingScore", "visualScore", "dropoffPoints", "recommendations"]
+                required: ["overallScore", "hookScore", "pacingScore", "visualScore", "dropoffPoints", "recommendations", "platformInsights"]
               }
             }
           }

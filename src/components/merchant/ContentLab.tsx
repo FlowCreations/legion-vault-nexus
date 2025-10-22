@@ -4,15 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Sparkles, Video, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { extractVideoFrames } from "@/utils/videoFrameExtractor";
 import { ContentAnalysisResults } from "./ContentAnalysisResults";
 
+const PLATFORMS = [
+  { value: "tiktok", label: "TikTok" },
+  { value: "youtube", label: "YouTube" },
+  { value: "instagram", label: "Instagram Reels" },
+  { value: "youtube-shorts", label: "YouTube Shorts" },
+  { value: "facebook", label: "Facebook" },
+  { value: "twitter", label: "Twitter/X" },
+] as const;
+
 export const ContentLab = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [videoTitle, setVideoTitle] = useState("");
+  const [platform, setPlatform] = useState<string>("tiktok");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
@@ -48,10 +59,10 @@ export const ContentLab = () => {
   };
 
   const handleAnalyze = async () => {
-    if (!selectedFile || !videoTitle) {
+    if (!selectedFile || !videoTitle || !platform) {
       toast({
         title: "Missing information",
-        description: "Please select a video and provide a title",
+        description: "Please select a video, title, and target platform",
         variant: "destructive",
       });
       return;
@@ -86,6 +97,7 @@ export const ContentLab = () => {
       const { data, error } = await supabase.functions.invoke('analyze-content-performance', {
         body: {
           videoTitle,
+          platform,
           frames: frames.map(f => ({
             timestamp: f.timestamp,
             image: f.dataUrl.split(',')[1] // Remove data:image/jpeg;base64, prefix
@@ -112,7 +124,7 @@ export const ContentLab = () => {
           visual_score: data.visualScore,
           predicted_dropoff_points: data.dropoffPoints,
           recommendations: data.recommendations,
-          frame_analysis: data.frameAnalysis || {}
+          frame_analysis: { platform, ...data.frameAnalysis }
         });
 
       if (saveError) throw saveError;
@@ -145,7 +157,7 @@ export const ContentLab = () => {
           Content Lab
         </h2>
         <p className="text-muted-foreground mt-1">
-          Upload your videos and get AI-powered analysis on viewer engagement and drop-off predictions
+          Upload videos and get platform-specific AI analysis on engagement, drop-off predictions, and viral potential
         </p>
       </div>
 
@@ -161,6 +173,22 @@ export const ContentLab = () => {
                 placeholder="Enter video title"
                 disabled={isAnalyzing}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="platform">Target Platform</Label>
+              <Select value={platform} onValueChange={setPlatform} disabled={isAnalyzing}>
+                <SelectTrigger id="platform">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORMS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -217,7 +245,7 @@ export const ContentLab = () => {
 
             <Button
               onClick={handleAnalyze}
-              disabled={!selectedFile || !videoTitle || isAnalyzing}
+              disabled={!selectedFile || !videoTitle || !platform || isAnalyzing}
               className="w-full gap-2"
               size="lg"
             >
@@ -229,7 +257,7 @@ export const ContentLab = () => {
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Analyze Content
+                  Analyze for {PLATFORMS.find(p => p.value === platform)?.label}
                 </>
               )}
             </Button>
@@ -250,6 +278,7 @@ export const ContentLab = () => {
           
           <ContentAnalysisResults
             videoTitle={videoTitle}
+            platform={PLATFORMS.find(p => p.value === platform)?.label || platform}
             videoDuration={analysisResults.metadata?.duration || 0}
             overallScore={analysisResults.overallScore}
             hookScore={analysisResults.hookScore}
@@ -257,6 +286,7 @@ export const ContentLab = () => {
             visualScore={analysisResults.visualScore}
             dropoffPoints={analysisResults.dropoffPoints || []}
             recommendations={analysisResults.recommendations || []}
+            platformInsights={analysisResults.platformInsights}
           />
         </div>
       )}
