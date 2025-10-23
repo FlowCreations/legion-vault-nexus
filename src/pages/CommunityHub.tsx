@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { getTierColor } from "@/lib/tierColors";
+import { CameoBookingTab } from "@/components/community/CameoBookingTab";
+import { OnlineMembersSidebar } from "@/components/community/OnlineMembersSidebar";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 interface Post {
   id: string;
@@ -68,6 +71,7 @@ interface Message {
 export default function CommunityHub() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("announcements");
+  const { enabled: cameosEnabled } = useFeatureFlag('enable_cameo_booking');
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
   const [postMediaUrl, setPostMediaUrl] = useState("");
@@ -564,7 +568,8 @@ export default function CommunityHub() {
   const hasSearchResults = globalSearchQuery.length > 0 && (searchResults.posts.length > 0 || searchResults.members.length > 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative">
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -708,6 +713,16 @@ export default function CommunityHub() {
               Events
             </Button>
             
+            {cameosEnabled && (
+              <Button
+                variant={activeTab === "cameos" ? "default" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => setActiveTab("cameos")}
+              >
+                Cameos
+              </Button>
+            )}
+            
             <Button
               variant={activeTab === "directory" ? "default" : "ghost"}
               className="w-full justify-start"
@@ -845,6 +860,9 @@ export default function CommunityHub() {
               </div>
             </div>
           )}
+
+          {/* Cameos View */}
+          {activeTab === "cameos" && <CameoBookingTab />}
 
           {/* Events View */}
           {activeTab === "events" && (
@@ -1413,6 +1431,8 @@ export default function CommunityHub() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
+      <OnlineMembersSidebar />
     </div>
   );
 }

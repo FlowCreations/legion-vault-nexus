@@ -19,11 +19,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clock, ShoppingBag, BarChart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ERABadge } from "@/components/merchant/ERABadge";
 import { PTPChip } from "@/components/merchant/PTPChip";
 import { PatternDialog } from "@/components/merchant/PatternDialog";
 import { getTierColor } from "@/lib/tierColors";
+import { Switch } from "@/components/ui/switch";
 
 interface Member {
   id: string;
@@ -63,7 +65,8 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   const [filterPTP, setFilterPTP] = useState<string>('all');
   const [selectedPattern, setSelectedPattern] = useState<{ member: any; pattern: any } | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const { toast } = useToast();
+  const [cameoFlagEnabled, setCameoFlagEnabled] = useState(false);
+  const { toast: toastHook } = useToast();
   const navigate = useNavigate();
 
   const patterns = [
@@ -151,6 +154,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     loadTierCounts();
     loadPixels();
     loadLegalDocs();
+    loadFeatureFlags();
   }, []);
 
   useEffect(() => {
@@ -257,6 +261,32 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     if (data) setLegalDocs(data);
   };
 
+  const loadFeatureFlags = async () => {
+    const { data } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('flag_name', 'enable_cameo_booking')
+      .single();
+
+    if (data) {
+      setCameoFlagEnabled(data.enabled);
+    }
+  };
+
+  const toggleCameoFeature = async () => {
+    const { error } = await supabase
+      .from('feature_flags')
+      .update({ enabled: !cameoFlagEnabled })
+      .eq('flag_name', 'enable_cameo_booking');
+
+    if (!error) {
+      setCameoFlagEnabled(!cameoFlagEnabled);
+      toast.success('Feature flag updated');
+    } else {
+      toast.error('Failed to update feature flag');
+    }
+  };
+
   const addPixel = async (platform: string, pixelId: string) => {
     const { error } = await supabase.from("tracking_pixels").insert({
       name: platform,
@@ -266,7 +296,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     });
 
     if (!error) {
-      toast({ title: "Pixel added successfully" });
+      toast.success("Pixel added successfully");
       loadPixels();
     }
   };
@@ -280,7 +310,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     });
 
     if (!error) {
-      toast({ title: "Legal document added successfully" });
+      toast.success("Legal document added successfully");
       loadLegalDocs();
     }
   };
@@ -406,6 +436,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
           <TabsTrigger value="pixels">Tracking</TabsTrigger>
           <TabsTrigger value="legal">Legal</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members" className="space-y-4">
@@ -640,9 +671,9 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
               onClick={async () => {
                 const { data, error } = await supabase.functions.invoke('seed-demo-data');
                 if (error) {
-                  toast({ title: "Error seeding data", variant: "destructive" });
+                  toast.error("Error seeding data");
                 } else {
-                  toast({ title: "Demo data seeded successfully! Refreshing..." });
+                  toast.success("Demo data seeded successfully! Refreshing...");
                   setTimeout(() => window.location.reload(), 1000);
                 }
               }}
@@ -873,6 +904,29 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                     <h3 className="font-semibold mb-2">Data Processing Addendum</h3>
                     <Button variant="outline">Review And Accept</Button>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Feature Flags</CardTitle>
+                <CardDescription>Control which features are enabled for your community</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-semibold">Cameo Booking</p>
+                    <p className="text-sm text-muted-foreground">
+                      Allow fans to book personalized cameo videos
+                    </p>
+                  </div>
+                  <Switch
+                    checked={cameoFlagEnabled}
+                    onCheckedChange={toggleCameoFeature}
+                  />
                 </div>
               </CardContent>
             </Card>

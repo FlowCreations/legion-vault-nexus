@@ -285,6 +285,68 @@ export type Database = {
           },
         ]
       }
+      cameo_requests: {
+        Row: {
+          completed_cameo_id: string | null
+          created_at: string | null
+          fulfillment_status: string
+          id: string
+          occasion_type: string
+          payment_status: string
+          price_paid: number
+          recipient_name: string
+          requested_delivery_date: string | null
+          requester_email: string
+          requester_user_id: string | null
+          special_instructions: string | null
+          stripe_checkout_session_id: string | null
+          stripe_payment_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_cameo_id?: string | null
+          created_at?: string | null
+          fulfillment_status?: string
+          id?: string
+          occasion_type: string
+          payment_status?: string
+          price_paid?: number
+          recipient_name: string
+          requested_delivery_date?: string | null
+          requester_email: string
+          requester_user_id?: string | null
+          special_instructions?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_cameo_id?: string | null
+          created_at?: string | null
+          fulfillment_status?: string
+          id?: string
+          occasion_type?: string
+          payment_status?: string
+          price_paid?: number
+          recipient_name?: string
+          requested_delivery_date?: string | null
+          requester_email?: string
+          requester_user_id?: string | null
+          special_instructions?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cameo_requests_completed_cameo_id_fkey"
+            columns: ["completed_cameo_id"]
+            isOneToOne: false
+            referencedRelation: "cameos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cameos: {
         Row: {
           created_at: string | null
@@ -661,6 +723,30 @@ export type Database = {
           ts?: string
           type?: Database["public"]["Enums"]["event_type"]
           value?: number | null
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          flag_name: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          flag_name: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          flag_name?: string
+          id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1106,7 +1192,9 @@ export type Database = {
           gender: string | null
           id: string
           intro_answers: Json | null
+          is_online: boolean | null
           is_public: boolean | null
+          last_active_at: string | null
           last_login: string | null
           latitude: number | null
           listen_time: number | null
@@ -1134,7 +1222,9 @@ export type Database = {
           gender?: string | null
           id?: string
           intro_answers?: Json | null
+          is_online?: boolean | null
           is_public?: boolean | null
+          last_active_at?: string | null
           last_login?: string | null
           latitude?: number | null
           listen_time?: number | null
@@ -1162,7 +1252,9 @@ export type Database = {
           gender?: string | null
           id?: string
           intro_answers?: Json | null
+          is_online?: boolean | null
           is_public?: boolean | null
+          last_active_at?: string | null
           last_login?: string | null
           latitude?: number | null
           listen_time?: number | null

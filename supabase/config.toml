@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.process-scheduled-cameos]
 verify_jwt = false
+
+[functions.create-cameo-checkout]
+verify_jwt = false
