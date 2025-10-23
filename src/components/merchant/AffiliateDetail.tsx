@@ -1,12 +1,15 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Activity, MapPin, TrendingUp, Facebook, Instagram, Twitter, Youtube, ExternalLink, Power, PowerOff } from "lucide-react";
+import { Users, Activity, MapPin, TrendingUp, Facebook, Instagram, Twitter, Youtube, ExternalLink, Power, PowerOff, Music, Video, Clock } from "lucide-react";
 import { AffiliateContentManager } from "./AffiliateContentManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { trackAffiliateContentClick } from "@/utils/affiliateAnalytics";
+import { formatDistanceToNow } from "date-fns";
 
 interface Affiliate {
   id: string;
@@ -43,6 +46,8 @@ interface AffiliateContent {
   thumbnail_url: string | null;
   content_type: string | null;
   content_url: string | null;
+  click_count: number | null;
+  last_clicked_at: string | null;
 }
 
 interface AffiliateDetailProps {
@@ -54,6 +59,41 @@ interface AffiliateDetailProps {
 
 export function AffiliateDetail({ affiliate, content, onClose, onContentUpdate }: AffiliateDetailProps) {
   const isActive = affiliate.status === 'active';
+  const [contentAnalytics, setContentAnalytics] = useState({
+    totalClicks: 0,
+    musicClicks: 0,
+    videoClicks: 0,
+    lastClicked: null as string | null,
+  });
+
+  useEffect(() => {
+    calculateAnalytics();
+  }, [content]);
+
+  const calculateAnalytics = () => {
+    const totalClicks = content.reduce((sum, item) => sum + (item.click_count || 0), 0);
+    const musicClicks = content
+      .filter(item => item.content_type === 'music')
+      .reduce((sum, item) => sum + (item.click_count || 0), 0);
+    const videoClicks = content
+      .filter(item => item.content_type === 'video')
+      .reduce((sum, item) => sum + (item.click_count || 0), 0);
+    const lastClicked = content
+      .filter(item => item.last_clicked_at)
+      .sort((a, b) => new Date(b.last_clicked_at!).getTime() - new Date(a.last_clicked_at!).getTime())[0]?.last_clicked_at || null;
+
+    setContentAnalytics({
+      totalClicks,
+      musicClicks,
+      videoClicks,
+      lastClicked,
+    });
+  };
+
+  const topContent = [...content]
+    .filter(item => item.click_count && item.click_count > 0)
+    .sort((a, b) => (b.click_count || 0) - (a.click_count || 0))
+    .slice(0, 5);
 
   const handleToggleActivation = async () => {
     try {
@@ -127,6 +167,89 @@ export function AffiliateDetail({ affiliate, content, onClose, onContentUpdate }
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Content Performance Analytics */}
+            <Card className="border-2 border-accent/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Content Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <ExternalLink className="h-4 w-4" />
+                      <span className="text-sm">Total Clicks</span>
+                    </div>
+                    <p className="text-2xl font-bold text-affirmative-primary">
+                      {contentAnalytics.totalClicks.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Music className="h-4 w-4" />
+                      <span className="text-sm">Music Clicks</span>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {contentAnalytics.musicClicks.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Video className="h-4 w-4" />
+                      <span className="text-sm">Video Clicks</span>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {contentAnalytics.videoClicks.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm">Last Click</span>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {contentAnalytics.lastClicked 
+                        ? formatDistanceToNow(new Date(contentAnalytics.lastClicked), { addSuffix: true })
+                        : 'N/A'
+                      }
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Top Performing Content */}
+                {topContent.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <h4 className="font-semibold mb-3">Top Performing Content</h4>
+                    <div className="space-y-2">
+                      {topContent.map((item, idx) => (
+                        <div key={item.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted/50">
+                          <span className="text-lg font-bold text-muted-foreground w-6">
+                            #{idx + 1}
+                          </span>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{item.title}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {item.content_type}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-affirmative-primary">
+                              {item.click_count} clicks
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Affiliation Score */}
             {affiliate.analytics.affiliationScore && (
               <div className="flex items-center justify-between p-4 bg-affirmative-primary/10 rounded-lg border border-affirmative-primary/20">
@@ -248,7 +371,7 @@ export function AffiliateDetail({ affiliate, content, onClose, onContentUpdate }
                   <div
                     key={item.id}
                     className="group cursor-pointer space-y-2"
-                    onClick={() => item.content_url && window.open(item.content_url, '_blank')}
+                    onClick={() => item.content_url && trackAffiliateContentClick(item.id, item.content_url)}
                   >
                     <div className="aspect-video rounded-lg overflow-hidden bg-muted relative">
                       {item.thumbnail_url ? (

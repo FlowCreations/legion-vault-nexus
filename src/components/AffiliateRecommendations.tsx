@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink } from "lucide-react";
+import { trackAffiliateContentClick } from "@/utils/affiliateAnalytics";
 
 interface AffiliateContent {
   id: string;
@@ -68,7 +69,7 @@ export function AffiliateRecommendations({ contentType = 'all', limit = 5 }: Aff
             <div
               key={item.id}
               className="group cursor-pointer space-y-2"
-              onClick={() => item.content_url && window.open(item.content_url, '_blank')}
+              onClick={() => item.content_url && trackAffiliateContentClick(item.id, item.content_url)}
             >
               <div className="aspect-video rounded-lg overflow-hidden bg-muted relative">
                 {item.thumbnail_url ? (

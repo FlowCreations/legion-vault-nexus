@@ -33,6 +33,12 @@ interface Affiliate {
   non_negotiables: string[] | null;
   social_links: any;
   analytics: any;
+  contentAnalytics?: {
+    totalClicks: number;
+    totalContent: number;
+    videoCount: number;
+    musicCount: number;
+  };
 }
 
 interface BrandPartnership {
@@ -53,6 +59,8 @@ interface AffiliateContent {
   thumbnail_url: string | null;
   content_type: string | null;
   content_url: string | null;
+  click_count: number | null;
+  last_clicked_at: string | null;
 }
 
 interface EthosRequest {
@@ -99,14 +107,38 @@ export function Partnerships() {
   };
 
   const fetchAffiliates = async () => {
-    const { data, error } = await supabase
+    const { data: affiliatesData, error: affiliatesError } = await supabase
       .from("affiliates")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setAffiliates(data);
-    }
+    if (affiliatesError || !affiliatesData) return;
+
+    // Fetch content analytics for each affiliate
+    const affiliatesWithAnalytics = await Promise.all(
+      affiliatesData.map(async (affiliate) => {
+        const { data: contentData } = await supabase
+          .from("affiliate_content")
+          .select("id, click_count, content_type")
+          .eq("affiliate_id", affiliate.id);
+
+        const totalClicks = contentData?.reduce((sum, item) => sum + (item.click_count || 0), 0) || 0;
+        const videoCount = contentData?.filter(item => item.content_type === 'video').length || 0;
+        const musicCount = contentData?.filter(item => item.content_type === 'music').length || 0;
+
+        return {
+          ...affiliate,
+          contentAnalytics: {
+            totalClicks,
+            totalContent: contentData?.length || 0,
+            videoCount,
+            musicCount
+          }
+        };
+      })
+    );
+
+    setAffiliates(affiliatesWithAnalytics);
   };
 
   const fetchBrandPartnerships = async () => {
@@ -366,6 +398,30 @@ export function Partnerships() {
                           <p className="text-sm text-muted-foreground line-clamp-2 italic">
                             "{affiliate.ethos}"
                           </p>
+                        )}
+                        
+                        {/* Analytics Section */}
+                        {affiliate.contentAnalytics && (
+                          <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t">
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground">Clicks</p>
+                              <p className="text-lg font-bold text-affirmative-primary">
+                                {affiliate.contentAnalytics.totalClicks || 0}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground">Music</p>
+                              <p className="text-lg font-bold">
+                                {affiliate.contentAnalytics.musicCount || 0}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground">Videos</p>
+                              <p className="text-lg font-bold">
+                                {affiliate.contentAnalytics.videoCount || 0}
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </CardContent>
                     </Card>

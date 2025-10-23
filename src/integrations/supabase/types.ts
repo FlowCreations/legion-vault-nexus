@@ -17,31 +17,58 @@ export type Database = {
       affiliate_content: {
         Row: {
           affiliate_id: string | null
+          album_name: string | null
+          artist_name: string | null
+          click_count: number | null
           content_type: string | null
           content_url: string | null
           created_at: string
           description: string | null
+          duration_ms: number | null
           id: string
+          last_clicked_at: string | null
+          release_date: string | null
+          spotify_album_id: string | null
+          spotify_artist_id: string | null
+          spotify_track_id: string | null
           thumbnail_url: string | null
           title: string
         }
         Insert: {
           affiliate_id?: string | null
+          album_name?: string | null
+          artist_name?: string | null
+          click_count?: number | null
           content_type?: string | null
           content_url?: string | null
           created_at?: string
           description?: string | null
+          duration_ms?: number | null
           id?: string
+          last_clicked_at?: string | null
+          release_date?: string | null
+          spotify_album_id?: string | null
+          spotify_artist_id?: string | null
+          spotify_track_id?: string | null
           thumbnail_url?: string | null
           title: string
         }
         Update: {
           affiliate_id?: string | null
+          album_name?: string | null
+          artist_name?: string | null
+          click_count?: number | null
           content_type?: string | null
           content_url?: string | null
           created_at?: string
           description?: string | null
+          duration_ms?: number | null
           id?: string
+          last_clicked_at?: string | null
+          release_date?: string | null
+          spotify_album_id?: string | null
+          spotify_artist_id?: string | null
+          spotify_track_id?: string | null
           thumbnail_url?: string | null
           title?: string
         }
@@ -51,6 +78,47 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_content_clicks: {
+        Row: {
+          clicked_at: string | null
+          content_id: string | null
+          created_at: string | null
+          id: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          content_id?: string | null
+          created_at?: string | null
+          id?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          content_id?: string | null
+          created_at?: string | null
+          id?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_content_clicks_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_content"
             referencedColumns: ["id"]
           },
         ]
@@ -1193,6 +1261,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      track_affiliate_content_click: {
+        Args: {
+          p_content_id: string
+          p_referrer?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+        }
+        Returns: undefined
       }
       update_user_coordinates: {
         Args: { p_latitude: number; p_longitude: number; p_user_id: string }

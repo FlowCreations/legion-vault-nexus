@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Trash2, Image as ImageIcon, Edit } from "lucide-react";
+import { Upload, Trash2, Image as ImageIcon, Edit, Music, Video } from "lucide-react";
 
 interface AffiliateContent {
   id: string;
@@ -36,7 +37,11 @@ export function AffiliateContentManager({
     title: "",
     description: "",
     content_url: "",
-    content_type: "video"
+    content_type: "video",
+    artist_name: affiliateName,
+    album_name: "",
+    duration: "",
+    release_date: ""
   });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [editingContent, setEditingContent] = useState<{
@@ -114,7 +119,16 @@ export function AffiliateContentManager({
       }
 
       toast.success("Content added");
-      setNewContent({ title: "", description: "", content_url: "", content_type: "video" });
+      setNewContent({ 
+        title: "", 
+        description: "", 
+        content_url: "", 
+        content_type: "video",
+        artist_name: affiliateName,
+        album_name: "",
+        duration: "",
+        release_date: ""
+      });
       setThumbnailFile(null);
       onContentUpdate();
     } catch (error) {
@@ -177,18 +191,88 @@ export function AffiliateContentManager({
       <Card>
         <CardHeader>
           <CardTitle>Add New Content for {affiliateName}</CardTitle>
-          <CardDescription>Add videos or other content and upload custom thumbnails</CardDescription>
+          <CardDescription>Add music tracks or videos with custom thumbnails</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label>Content Type</Label>
+            <Select 
+              value={newContent.content_type} 
+              onValueChange={(value) => setNewContent({ ...newContent, content_type: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="video">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Video
+                  </div>
+                </SelectItem>
+                <SelectItem value="music">
+                  <div className="flex items-center gap-2">
+                    <Music className="h-4 w-4" />
+                    Music
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="title">{newContent.content_type === 'music' ? 'Track Title' : 'Video Title'}</Label>
             <Input
               id="title"
               value={newContent.title}
               onChange={(e) => setNewContent({ ...newContent, title: e.target.value })}
-              placeholder="e.g., Ashes and Grace (Music Video)"
+              placeholder={newContent.content_type === 'music' ? "e.g., Tennessee Whiskey" : "e.g., Music Video"}
             />
           </div>
+
+          {newContent.content_type === 'music' && (
+            <>
+              <div>
+                <Label htmlFor="artist_name">Artist Name</Label>
+                <Input
+                  id="artist_name"
+                  value={newContent.artist_name}
+                  onChange={(e) => setNewContent({ ...newContent, artist_name: e.target.value })}
+                  placeholder={affiliateName}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="album_name">Album/EP Name (Optional)</Label>
+                <Input
+                  id="album_name"
+                  value={newContent.album_name}
+                  onChange={(e) => setNewContent({ ...newContent, album_name: e.target.value })}
+                  placeholder="e.g., Traveller"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="duration">Duration (MM:SS)</Label>
+                <Input
+                  id="duration"
+                  value={newContent.duration}
+                  onChange={(e) => setNewContent({ ...newContent, duration: e.target.value })}
+                  placeholder="4:51"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="release_date">Release Date (Optional)</Label>
+                <Input
+                  id="release_date"
+                  type="date"
+                  value={newContent.release_date}
+                  onChange={(e) => setNewContent({ ...newContent, release_date: e.target.value })}
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <Label htmlFor="description">Description (Optional)</Label>
@@ -201,18 +285,18 @@ export function AffiliateContentManager({
           </div>
 
           <div>
-            <Label htmlFor="content_url">Video/Content URL</Label>
+            <Label htmlFor="content_url">{newContent.content_type === 'music' ? 'Spotify/Music URL' : 'Video URL'}</Label>
             <Input
               id="content_url"
               type="url"
               value={newContent.content_url}
               onChange={(e) => setNewContent({ ...newContent, content_url: e.target.value })}
-              placeholder="https://youtube.com/..."
+              placeholder={newContent.content_type === 'music' ? "https://open.spotify.com/..." : "https://youtube.com/..."}
             />
           </div>
 
           <div>
-            <Label htmlFor="thumbnail">Thumbnail Image</Label>
+            <Label htmlFor="thumbnail">{newContent.content_type === 'music' ? 'Album Art' : 'Thumbnail Image'}</Label>
             <Input
               id="thumbnail"
               type="file"
