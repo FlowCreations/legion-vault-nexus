@@ -115,7 +115,7 @@ const Merchant = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9 bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg">
+          <TabsList className="flex w-full overflow-x-auto bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <TabsTrigger 
               value="analytics"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
