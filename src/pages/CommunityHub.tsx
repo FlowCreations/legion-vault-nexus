@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
-  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X
+  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X, MapPin, Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -1326,18 +1326,62 @@ export default function CommunityHub() {
 
       {/* Direct Message Dialog */}
       <Dialog open={showDirectMessage} onOpenChange={setShowDirectMessage}>
-        <DialogContent className="max-w-2xl max-h-[600px]">
+        <DialogContent className="max-w-3xl max-h-[700px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-12 w-12">
                 <AvatarImage src={directMessageRecipient?.avatar} />
                 <AvatarFallback>{directMessageRecipient?.name[0]}</AvatarFallback>
               </Avatar>
-              <span>Chat with {directMessageRecipient?.name}</span>
+              <div>
+                <div className="font-semibold text-lg">{directMessageRecipient?.name}</div>
+                <p className="text-sm text-muted-foreground font-normal">Send a direct message</p>
+              </div>
             </DialogTitle>
           </DialogHeader>
+
+          {/* Member Profile Summary */}
+          {directMessageRecipient && (
+            <div className="border rounded-lg p-4 bg-muted/30 mb-4">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={directMessageRecipient.avatar} />
+                  <AvatarFallback>{directMessageRecipient.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-base">{directMessageRecipient.name}</h3>
+                    <Badge className="bg-primary/20 text-primary border-primary/30">
+                      {directMessageRecipient.id.startsWith('mock_') ? 
+                        mockProfiles.find(p => p.id === directMessageRecipient.id)?.tier || 'Member' 
+                        : 'Legion Member'}
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {directMessageRecipient.id.startsWith('mock_') 
+                      ? mockProfiles.find(p => p.id === directMessageRecipient.id)?.bio 
+                      : "Part of The Legion community. Music enthusiast and supporter."}
+                  </p>
+                  
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {directMessageRecipient.id.startsWith('mock_') 
+                        ? mockProfiles.find(p => p.id === directMessageRecipient.id)?.location 
+                        : 'Unknown'}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Member since 2024
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
-          <div className="flex flex-col h-[450px]">
+          <div className="flex flex-col h-[400px]">
             {/* Message Thread */}
             <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-4 bg-muted/20 rounded-lg">
               {directMessageRecipient && messages
