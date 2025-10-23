@@ -1327,17 +1327,6 @@ export default function CommunityHub() {
       {/* Direct Message Dialog */}
       <Dialog open={showDirectMessage} onOpenChange={setShowDirectMessage}>
         <DialogContent className="max-w-3xl max-h-[700px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={directMessageRecipient?.avatar} />
-                <AvatarFallback>{directMessageRecipient?.name[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold text-lg">{directMessageRecipient?.name}</div>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
 
           {/* Member Profile Summary */}
           {directMessageRecipient && (
