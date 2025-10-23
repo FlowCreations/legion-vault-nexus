@@ -1432,7 +1432,12 @@ export default function CommunityHub() {
         </DialogContent>
       </Dialog>
       </div>
-      <OnlineMembersSidebar />
+      <OnlineMembersSidebar 
+        onMemberClick={(member) => {
+          setDirectMessageRecipient(member);
+          setShowDirectMessage(true);
+        }}
+      />
     </div>
   );
 }
