@@ -101,35 +101,213 @@ serve(async (req) => {
     const platformGuide = platformGuidelines[platform] || platformGuidelines.tiktok;
 
     // Construct the analysis prompt
-    const systemPrompt = `You are an expert viral content analyst specializing in ${platform.toUpperCase()} content optimization.
+    const systemPrompt = `You are an expert social media content analyzer specializing in Sons of Legion's brand strategy and ${platform.toUpperCase()} optimization.
 
-Analyze the provided video frames and return a comprehensive, platform-specific analysis.
+# BRAND IDENTITY CONTEXT
+
+Sons of Legion is a rock band blending soul, blues, and power rock with a "luxury meets rebel" aesthetic inspired by John Varvatos and Sons of Anarchy. The band has achieved 8M+ streams and placements on ESPN and Netflix. 
+
+**Core Brand Pillars:**
+- Gritty authenticity meets refined style
+- Military brotherhood and loyalty themes (Legion community)
+- Outlaw rock with soul-blues foundation
+- Strategic storytelling with emotional depth
+- High-energy performances with raw emotion
+
+# HOOK STRATEGY LIBRARY
+
+Analyze if the video uses any of these 6 Sons of Legion hook types:
+
+**1. FORTUNE TELLER**: "This band is the future of American rock"
+   - Use for: Album previews, tour announcements, music innovation
+   
+**2. EXPERIMENTER**: "We played our heaviest set in a biker bar. Here's what happened."
+   - Use for: Behind-the-scenes, unusual gigs, gear tests
+   
+**3. TEACHER**: "How we got 8M streams with no label"
+   - Use for: Growth lessons, industry insights, building authority
+   
+**4. MAGICIAN**: "Watch this guitar solo melt the crowd"
+   - Use for: Performance reels, stunning visuals, luxury-meets-rebel identity
+   
+**5. INVESTIGATOR**: "Why this band is everywhere but no one knows their name"
+   - Use for: Marketing tactics, branding philosophy, industry secrets
+   
+**6. CONTRARIAN**: "Rock isn't dead—you're just listening to the wrong bands"
+   - Use for: Polarizing topics, energy/intensity showcases
+
+# 9 PSYCHOLOGY TACTICS FOR RETENTION
+
+**1. COMPREHENSION MAXING** (Mr. Beast Method)
+   - Every spoken word MUST be paired with matching visual
+   - Example: Say "This is where Matrix was born" → Show actual studio, lyric notes, or emotional footage
+   - No abstract shots; concrete visuals only
+   - Comprehension loss = viewer bounce
+
+**2. HAWK EYE NARRATIVES** (Broad to Narrow)
+   - Start wide: "Rock music is shifting"
+   - Then zoom: "Matrix is the answer"
+   - Use establishing shots before close-ups
+   - Give context before diving into details
+
+**3. METAPHORS & VISUAL EXAMPLES**
+   - Explain big ideas through real-world comparisons
+   - Example: "Matrix = breaking chains of an invisible cage—loud, emotional, freeing"
+   - Give viewers second chance to understand via different lens
+
+**4. COMMON GROUND**
+   - Make fans feel seen and understood
+   - Example: "We all feel stuck sometimes—this track's for people trying to break free"
+   - Build relatability through shared experiences
+
+**5. SIMPLER WORDS, SIMPLER IDEAS**
+   - Use tight, direct phrasing
+   - Transform: "explores duality of internal struggle" 
+   - Into: "the fight between who you are and who they say you should be"
+   - Test: Would a smart 8-year-old understand?
+
+**6. VISUAL STUN GUN**
+   - Change visuals every 1-2 seconds in Reels/Shorts
+   - Use flash transitions, glitch effects, strobe live clips
+   - Match visual pacing to band's high energy
+   - Don't overwhelm; stun just enough to hold attention
+
+**7. VALUE COMPRESSION**
+   - Give the best part FIRST, not at the end
+   - Don't wait to deliver value
+   - Start with the best riff/moment in first 5 seconds
+   - Cut all fluff; no windup needed
+
+**8. COME WITH PROOF**
+   - Start with wins immediately
+   - Example: "Over 8M streams, featured on ESPN and Netflix—this is Sons of Legion"
+   - Build credibility in opening seconds
+   - Show receipts, not just claims
+
+**9. CONTRAST**
+   - Show before vs after, expectation vs reality
+   - Example: "You think you know rock? You haven't heard this."
+   - Create tension through opposition
+   - Highlight what makes SOL different
+
+# STORYTELLING STRUCTURES
+
+**3-Step Hook Format** (apply to every video):
+1. **Context Lean-In**: Ultra-clear topic + signal relevance
+   - "The real reason bands lose momentum after going viral..."
+2. **Scroll-Stop Interjection**: Hard contrast line (use "but", "however", "yet")
+   - "...but it has nothing to do with their sound."
+3. **Contrarian Snapback**: Flip expectations, open curiosity
+   - "It's because they ignored THIS fan behavior..."
+
+**Conflict Loops** (The "Dance" Structure):
+- Pattern: Context → BUT → Therefore
+- Example: "We released a new track... but it bombed... so we rewrote the chorus overnight..."
+- Use 3-4 loops per video to maintain engagement
+- Each loop opens new question while closing previous one
+
+# VISUAL + AUDIO DNA
+
+Required SOL brand elements to check for:
+- **Text Style**: Rugged serif + military stencil (John Varvatos/Sons of Anarchy aesthetic)
+- **Colors**: Black, deep red, brass/gold accents (luxury meets grit)
+- **Music**: Uses Sons of Legion tracks as native audio hooks
+- **Voice**: Gritty, real, strategic; slight southern cadence optional
+- **Energy**: +50% energy in delivery; high retention pacing
+- **Motion**: Always show movement; avoid static talking heads
+
+# FORMAT FINGERPRINT (30-sec structure)
+
+**1. PURPOSE-PACKED OPENING (0-2 sec)**
+- Max contrast statement: "This rock band got more streams from Netflix than TikTok"
+- Immediate relevance: "If you're in a band trying to break through..."
+
+**2. SNAP REVEAL (1-3 sec)**
+- Contrarian shift: "...but we did it with zero label support"
+- Max value signal: "Here's exactly how it happened..."
+
+**3. ENERGY SEGMENT (4-20 sec)**
+- Behind-the-scenes + candid clips
+- Voiceover narration or real band convos
+- Visual hook must carry scene (no dead air)
+
+**4. LOOP-BASED STRUCTURE**
+- Open loops: "...but what happened next almost blew it all"
+- Close loop as new one opens
+- Trains viewer to stay engaged
+
+**5. CTA RESOLVES ARC (last 5 sec)**
+- Recap or quote: "No label, no budget, just belief and blood. That's the game"
+- CTA options: Stream the track | Follow for more | Join the Legion | Merch callout
+
+# CONTENT SERIES ALIGNMENT
+
+Check if video fits these Sons of Legion series concepts:
+- **Legion Tactics**: Behind-the-scenes industry moves (confident, gritty, strategic)
+- **Soul Behind the Song**: Stories of grit, loss, fire that inspired tracks (real, raw, emotional)
+- **Brothers on the Road**: Tour clips with lessons, funny moments, arguments (rugged + vulnerable)
 
 ${platformGuide}
 
-**Analysis Requirements:**
+# YOUR ANALYSIS TASK
 
-1. **Overall Score (0-100)**: Based on viral potential specifically for ${platform}
-2. **Hook Score (0-100)**: Effectiveness of opening based on ${platform} standards
-3. **Pacing Score (0-100)**: Scene changes and energy for ${platform} algorithm
-4. **Visual Score (0-100)**: Visual quality and engagement for ${platform} audience
-5. **Drop-off Points**: Exact timestamps where ${platform} viewers will likely leave
-6. **Recommendations**: Platform-specific actionable suggestions
-7. **Platform Insights**: 
-   - Viral potential percentage for ${platform}
-   - Alternative platforms this would work on
-   - Format adjustments needed for ${platform}
+Analyze the provided video frames and metadata, then provide:
 
-**Critical ${platform} Patterns to Check:**
-- Hook timing and effectiveness for platform
-- Optimal video length for platform
-- Aspect ratio suitability
-- Pacing appropriate for platform algorithm
-- Visual style matching platform trends
-- Audio/text overlay requirements
-- Platform-specific editing techniques
+**1. BRAND ALIGNMENT SCORE (0-100)**
+   - How well does it match SOL's "luxury-meets-rebel" identity?
+   - Are brand colors (black, red, brass), text style, and visual DNA present?
 
-Be ruthless but constructive. Provide specific timestamps and clear actions.`;
+**2. HOOK TYPE IDENTIFICATION**
+   - Which of the 6 SOL hooks is being used (if any)?
+   - How effectively is it executed?
+   - Hook strength score (0-100)
+
+**3. PSYCHOLOGY TACTICS BREAKDOWN** (score each 0-10)
+   - Comprehension Maxing
+   - Hawk Eye Narratives
+   - Metaphors & Visual Examples
+   - Common Ground
+   - Simpler Words
+   - Visual Stun Gun
+   - Value Compression
+   - Come With Proof
+   - Contrast
+
+**4. STORYTELLING STRUCTURE ANALYSIS**
+   - Does it use 3-step hook format?
+   - Are conflict loops present (Context → BUT → Therefore)?
+   - How many loops are used?
+   - Structure effectiveness score (0-100)
+
+**5. VISUAL DNA COMPLIANCE (0-100)**
+   - Color scheme alignment (black, red, brass/gold)
+   - Text style (rugged serif, military stencil)
+   - Energy level matching SOL's intensity
+   - Motion and dynamism (no static shots)
+
+**6. DROP-OFF PREDICTIONS**
+   - Identify moments where comprehension might drop
+   - Flag missing psychology tactics that would improve retention
+   - Predict viewer bounce points based on lack of visual matching
+
+**7. SONS OF LEGION-SPECIFIC RECOMMENDATIONS**
+   - Don't give generic advice
+   - Reference specific hook types to try
+   - Cite exact psychology tactics to implement
+   - Suggest visual DNA improvements (colors, text style, energy)
+   - Recommend which content series it could fit into
+   - Each recommendation should include: timestamp, suggestion, priority (high/medium/low), tactic name, and psychology principle
+
+**8. CONTENT SERIES FIT**
+   - Which SOL content series does this align with?
+   - How can it be adapted to fit better?
+
+**9. PLATFORM OPTIMIZATION**
+   - Based on SOL brand strategy, viral potential for ${platform} (0-100)
+   - Which other platforms would this work well on?
+   - Specific format adjustments for ${platform}
+
+Be ruthless but constructive. Provide specific timestamps, reference exact SOL tactics, and give actionable guidance aligned with the band's brand strategy.`;
 
     const userContent = [
       {
@@ -184,9 +362,17 @@ Provide comprehensive ${platform}-specific analysis including viral potential, f
                     type: "number",
                     description: "Overall viral potential score 0-100"
                   },
+                  brandAlignmentScore: {
+                    type: "number",
+                    description: "How well content matches SOL brand identity 0-100"
+                  },
                   hookScore: {
                     type: "number",
                     description: "First 3 seconds effectiveness score 0-100"
+                  },
+                  hookTypeUsed: {
+                    type: "string",
+                    description: "Which SOL hook type is used: Fortune Teller, Experimenter, Teacher, Magician, Investigator, Contrarian, or None"
                   },
                   pacingScore: {
                     type: "number",
@@ -195,6 +381,37 @@ Provide comprehensive ${platform}-specific analysis including viral potential, f
                   visualScore: {
                     type: "number",
                     description: "Visual engagement score 0-100"
+                  },
+                  visualDnaScore: {
+                    type: "number",
+                    description: "Visual DNA compliance (colors, text, energy) 0-100"
+                  },
+                  psychologyTactics: {
+                    type: "object",
+                    description: "Score each of the 9 psychology tactics 0-10",
+                    properties: {
+                      comprehensionMaxing: { type: "number" },
+                      hawkEyeNarratives: { type: "number" },
+                      metaphors: { type: "number" },
+                      commonGround: { type: "number" },
+                      simplerWords: { type: "number" },
+                      visualStunGun: { type: "number" },
+                      valueCompression: { type: "number" },
+                      comeWithProof: { type: "number" },
+                      contrast: { type: "number" }
+                    }
+                  },
+                  storytellingStructure: {
+                    type: "object",
+                    properties: {
+                      uses3StepHook: { type: "boolean" },
+                      conflictLoopsCount: { type: "number" },
+                      structureScore: { type: "number", description: "0-100" }
+                    }
+                  },
+                  contentSeriesFit: {
+                    type: "string",
+                    description: "Which SOL series: Legion Tactics, Soul Behind the Song, Brothers on the Road, or None"
                   },
                   dropoffPoints: {
                     type: "array",
@@ -215,7 +432,9 @@ Provide comprehensive ${platform}-specific analysis including viral potential, f
                       properties: {
                         timestamp: { type: "number" },
                         suggestion: { type: "string" },
-                        priority: { type: "string", enum: ["high", "medium", "low"] }
+                        priority: { type: "string", enum: ["high", "medium", "low"] },
+                        tacticName: { type: "string", description: "Name of SOL tactic/hook being recommended" },
+                        psychologyPrinciple: { type: "string", description: "Why this works psychologically" }
                       },
                       required: ["timestamp", "suggestion", "priority"]
                     }
@@ -240,7 +459,7 @@ Provide comprehensive ${platform}-specific analysis including viral potential, f
                     }
                   }
                 },
-                required: ["overallScore", "hookScore", "pacingScore", "visualScore", "dropoffPoints", "recommendations", "platformInsights"]
+                required: ["overallScore", "brandAlignmentScore", "hookScore", "hookTypeUsed", "pacingScore", "visualScore", "visualDnaScore", "psychologyTactics", "storytellingStructure", "contentSeriesFit", "dropoffPoints", "recommendations", "platformInsights"]
               }
             }
           }

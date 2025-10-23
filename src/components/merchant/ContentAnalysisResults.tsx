@@ -15,6 +15,26 @@ interface Recommendation {
   timestamp: number;
   suggestion: string;
   priority: "high" | "medium" | "low";
+  tacticName?: string;
+  psychologyPrinciple?: string;
+}
+
+interface PsychologyTactics {
+  comprehensionMaxing?: number;
+  hawkEyeNarratives?: number;
+  metaphors?: number;
+  commonGround?: number;
+  simplerWords?: number;
+  visualStunGun?: number;
+  valueCompression?: number;
+  comeWithProof?: number;
+  contrast?: number;
+}
+
+interface StorytellingStructure {
+  uses3StepHook?: boolean;
+  conflictLoopsCount?: number;
+  structureScore?: number;
 }
 
 interface AnalysisResultsProps {
@@ -22,9 +42,15 @@ interface AnalysisResultsProps {
   platform: string;
   videoDuration: number;
   overallScore: number;
+  brandAlignmentScore?: number;
   hookScore: number;
+  hookTypeUsed?: string;
   pacingScore: number;
   visualScore: number;
+  visualDnaScore?: number;
+  psychologyTactics?: PsychologyTactics;
+  storytellingStructure?: StorytellingStructure;
+  contentSeriesFit?: string;
   dropoffPoints: DropoffPoint[];
   recommendations: Recommendation[];
   platformInsights?: {
@@ -63,9 +89,15 @@ export const ContentAnalysisResults = ({
   platform,
   videoDuration,
   overallScore,
+  brandAlignmentScore,
   hookScore,
+  hookTypeUsed,
   pacingScore,
   visualScore,
+  visualDnaScore,
+  psychologyTactics,
+  storytellingStructure,
+  contentSeriesFit,
   dropoffPoints,
   recommendations,
   platformInsights,
@@ -86,7 +118,7 @@ export const ContentAnalysisResults = ({
             {platform}
           </Badge>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
             <p className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
@@ -94,12 +126,24 @@ export const ContentAnalysisResults = ({
             </p>
             <Progress value={overallScore} className="mt-2" />
           </div>
+          {brandAlignmentScore !== undefined && (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Brand Alignment</p>
+              <p className={`text-3xl font-bold ${getScoreColor(brandAlignmentScore)}`}>
+                {brandAlignmentScore}
+              </p>
+              <Progress value={brandAlignmentScore} className="mt-2" />
+            </div>
+          )}
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">Hook Strength</p>
             <p className={`text-3xl font-bold ${getScoreColor(hookScore)}`}>
               {hookScore}
             </p>
             <Progress value={hookScore} className="mt-2" />
+            {hookTypeUsed && hookTypeUsed !== "None" && (
+              <Badge variant="secondary" className="mt-2 text-xs">{hookTypeUsed}</Badge>
+            )}
           </div>
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">Pacing</p>
@@ -109,14 +153,72 @@ export const ContentAnalysisResults = ({
             <Progress value={pacingScore} className="mt-2" />
           </div>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Visual Engagement</p>
-            <p className={`text-3xl font-bold ${getScoreColor(visualScore)}`}>
-              {visualScore}
+            <p className="text-sm text-muted-foreground mb-2">Visual DNA</p>
+            <p className={`text-3xl font-bold ${getScoreColor(visualDnaScore || visualScore)}`}>
+              {visualDnaScore || visualScore}
             </p>
-            <Progress value={visualScore} className="mt-2" />
+            <Progress value={visualDnaScore || visualScore} className="mt-2" />
           </div>
         </div>
+
+        {/* SOL Brand Insights */}
+        {(hookTypeUsed || contentSeriesFit || storytellingStructure) && (
+          <div className="mt-6 pt-6 border-t space-y-3">
+            {hookTypeUsed && hookTypeUsed !== "None" && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Hook Type:</span>
+                <Badge variant="outline">{hookTypeUsed}</Badge>
+              </div>
+            )}
+            {contentSeriesFit && contentSeriesFit !== "None" && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Content Series Fit:</span>
+                <Badge variant="secondary">{contentSeriesFit}</Badge>
+              </div>
+            )}
+            {storytellingStructure && (
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Storytelling Structure:</span>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {storytellingStructure.uses3StepHook && (
+                    <Badge variant="outline">3-Step Hook ✓</Badge>
+                  )}
+                  {storytellingStructure.conflictLoopsCount !== undefined && (
+                    <Badge variant="outline">{storytellingStructure.conflictLoopsCount} Conflict Loops</Badge>
+                  )}
+                  {storytellingStructure.structureScore !== undefined && (
+                    <Badge variant={storytellingStructure.structureScore >= 70 ? "default" : "secondary"}>
+                      Structure Score: {storytellingStructure.structureScore}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
+
+      {/* Psychology Tactics Breakdown */}
+      {psychologyTactics && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Psychology Tactics Score (SOL Strategy)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Object.entries(psychologyTactics).map(([key, value]) => {
+              const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+              const score = (value / 10) * 100;
+              return (
+                <div key={key}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{label}</span>
+                    <span className={`text-sm font-bold ${getScoreColor(score)}`}>{value}/10</span>
+                  </div>
+                  <Progress value={score} />
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Platform-Specific Insights */}
       {platformInsights && (
@@ -247,17 +349,29 @@ export const ContentAnalysisResults = ({
           <ScrollArea className="h-[300px]">
             <div className="space-y-3">
               {sortedRecommendations.map((rec, idx) => (
-                <div key={idx} className="p-4 bg-muted/50 rounded-lg">
+                <div key={idx} className="p-4 bg-muted/50 rounded-lg border-l-4" style={{
+                  borderLeftColor: rec.priority === 'high' ? 'hsl(var(--destructive))' : rec.priority === 'medium' ? 'hsl(var(--warning))' : 'hsl(var(--muted-foreground))'
+                }}>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Clock className="h-4 w-4" />
                         <span className="font-medium">{formatTime(rec.timestamp)}</span>
                         <Badge variant={getPriorityColor(rec.priority) as any}>
                           {rec.priority}
                         </Badge>
+                        {rec.tacticName && (
+                          <Badge variant="outline" className="text-xs">
+                            {rec.tacticName}
+                          </Badge>
+                        )}
                       </div>
-                      <p className="text-sm">{rec.suggestion}</p>
+                      <p className="text-sm font-medium">{rec.suggestion}</p>
+                      {rec.psychologyPrinciple && (
+                        <p className="text-xs text-muted-foreground italic">
+                          Why it works: {rec.psychologyPrinciple}
+                        </p>
+                      )}
                     </div>
                     <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   </div>
