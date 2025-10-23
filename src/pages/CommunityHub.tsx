@@ -1335,7 +1335,6 @@ export default function CommunityHub() {
               </Avatar>
               <div>
                 <div className="font-semibold text-lg">{directMessageRecipient?.name}</div>
-                <p className="text-sm text-muted-foreground font-normal">Send a direct message</p>
               </div>
             </DialogTitle>
           </DialogHeader>
