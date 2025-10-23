@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.analyze-content-performance]
 verify_jwt = true
+
+[functions.process-scheduled-cameos]
+verify_jwt = false

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Sparkles } from "lucide-react";
 import solLogo from "@/assets/sol-logo-new.png";
 import LogoIntro from "@/components/LogoIntro";
+import { CameoDisplay } from "@/components/CameoDisplay";
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(() => {
@@ -24,6 +25,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Cameo Display - Shows at top if user has active cameos */}
+      <div className="container mx-auto px-4 pt-24">
+        <CameoDisplay />
+      </div>
+      
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Animated background glow */}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Activity, MessageSquare, Users, DollarSign, Video, FileText, TrendingUp, Eye } from "lucide-react";
+import { Activity, MessageSquare, Users, DollarSign, Video, FileText, TrendingUp, Eye, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIChat } from "@/components/merchant/AIChat";
 import { TopPlatforms } from "@/components/merchant/TopPlatforms";
@@ -14,6 +14,7 @@ import { EarningsOverview } from "@/components/merchant/EarningsOverview";
 import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
+import { CameoManager } from "@/components/merchant/CameoManager";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
 import { ContentLab } from "@/components/merchant/ContentLab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -114,7 +115,7 @@ const Merchant = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg">
+          <TabsList className="grid w-full grid-cols-9 bg-card border-2 border-yellow-500/30 p-0 h-auto gap-0 rounded-lg">
             <TabsTrigger 
               value="analytics"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
@@ -138,6 +139,12 @@ const Merchant = () => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Community
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cameos"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Cameos
             </TabsTrigger>
             <TabsTrigger 
               value="partnerships"
@@ -224,6 +231,10 @@ const Merchant = () => {
 
           <TabsContent value="community">
             <AdminDashboard selectedUserId={selectedUserId} />
+          </TabsContent>
+
+          <TabsContent value="cameos">
+            <CameoManager />
           </TabsContent>
 
           <TabsContent value="partnerships">

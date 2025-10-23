@@ -169,6 +169,119 @@ export type Database = {
         }
         Relationships: []
       }
+      cameo_notifications: {
+        Row: {
+          cameo_id: string | null
+          created_at: string | null
+          email_enabled: boolean | null
+          id: string
+          notification_type: string | null
+          read_at: string | null
+          recipient_user_id: string | null
+          sent_at: string | null
+        }
+        Insert: {
+          cameo_id?: string | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notification_type?: string | null
+          read_at?: string | null
+          recipient_user_id?: string | null
+          sent_at?: string | null
+        }
+        Update: {
+          cameo_id?: string | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notification_type?: string | null
+          read_at?: string | null
+          recipient_user_id?: string | null
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cameo_notifications_cameo_id_fkey"
+            columns: ["cameo_id"]
+            isOneToOne: false
+            referencedRelation: "cameos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cameo_notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      cameos: {
+        Row: {
+          created_at: string | null
+          display_duration: string
+          expires_at: string | null
+          id: string
+          last_viewed_at: string | null
+          merchant_id: string
+          message_text: string | null
+          message_type: string
+          recipient_manual_name: string | null
+          recipient_user_id: string | null
+          scheduled_for: string | null
+          status: string | null
+          updated_at: string | null
+          video_thumbnail_url: string | null
+          video_url: string | null
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_duration: string
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          merchant_id: string
+          message_text?: string | null
+          message_type: string
+          recipient_manual_name?: string | null
+          recipient_user_id?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          updated_at?: string | null
+          video_thumbnail_url?: string | null
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          display_duration?: string
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          merchant_id?: string
+          message_text?: string | null
+          message_type?: string
+          recipient_manual_name?: string | null
+          recipient_user_id?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          updated_at?: string | null
+          video_thumbnail_url?: string | null
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cameos_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       cohort_members: {
         Row: {
           cohort_id: string
