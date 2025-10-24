@@ -86,35 +86,73 @@ serve(async (req) => {
         console.log(`Syncing ${members.length} members to database`);
 
         // Sync members to user_profiles table
+        let syncedCount = 0;
+        const errors = [];
+        
         for (const member of members) {
-          // Check if user profile exists
-          const { data: existingProfile } = await supabase
-            .from('user_profiles')
-            .select('user_id')
-            .eq('heartbeat_member_id', member.id)
-            .maybeSingle();
-
-          if (!existingProfile) {
-            // Create or update profile
-            const { error } = await supabase
+          try {
+            // Check if user profile exists
+            const { data: existingProfile } = await supabase
               .from('user_profiles')
-              .upsert({
-                heartbeat_member_id: member.id,
-                display_name: member.name || member.email?.split('@')[0],
-                avatar_url: member.avatar_url,
-                bio: member.bio,
-                location: member.location,
-                tier: member.subscription_tier,
+              .select('user_id')
+              .eq('heartbeat_member_id', member.id)
+              .maybeSingle();
+
+            if (!existingProfile) {
+              // Create auth user for this Heartbeat member
+              const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                email: member.email || `heartbeat-${member.id}@placeholder.com`,
+                email_confirm: true,
+                user_metadata: {
+                  heartbeat_member_id: member.id,
+                  synced_from_heartbeat: true
+                }
               });
 
-            if (error) {
-              console.error('Error syncing member:', member.id, error);
+              if (authError) {
+                console.error('Error creating auth user for member:', member.id, authError);
+                errors.push({ memberId: member.id, error: authError.message });
+                continue;
+              }
+
+              // Create or update profile
+              const { error: profileError } = await supabase
+                .from('user_profiles')
+                .insert({
+                  user_id: authData.user.id,
+                  heartbeat_member_id: member.id,
+                  display_name: member.name || member.email?.split('@')[0],
+                  avatar_url: member.avatar_url,
+                  bio: member.bio,
+                  location: member.location,
+                  tier: member.subscription_tier || 'free',
+                });
+
+              if (profileError) {
+                console.error('Error syncing member:', member.id, profileError);
+                errors.push({ memberId: member.id, error: profileError.message });
+              } else {
+                syncedCount++;
+              }
             }
+          } catch (err) {
+            console.error('Unexpected error syncing member:', member.id, err);
+            errors.push({ memberId: member.id, error: err instanceof Error ? err.message : 'Unknown error' });
           }
         }
 
+        console.log(`Successfully synced ${syncedCount} out of ${members.length} members`);
+        if (errors.length > 0) {
+          console.log('Errors encountered:', errors);
+        }
+
         return new Response(
-          JSON.stringify({ success: true, synced: members.length }),
+          JSON.stringify({ 
+            success: true, 
+            synced: syncedCount,
+            total: members.length,
+            errors: errors.length > 0 ? errors : undefined
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
