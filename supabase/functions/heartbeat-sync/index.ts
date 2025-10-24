@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const HEARTBEAT_API_KEY = Deno.env.get('HEARTBEAT_API_KEY');
 const HEARTBEAT_API_URL = 'https://api.heartbeat.chat/v0';
-const HEARTBEAT_COMMUNITY_SLUG = 'sonsoflegion';
+const HEARTBEAT_WORKSPACE_ID = 'sonsoflegion';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,7 +29,7 @@ serve(async (req) => {
     switch (action) {
       case 'get_members': {
         // Fetch members from Heartbeat
-        const response = await fetch(`${HEARTBEAT_API_URL}/communities/${HEARTBEAT_COMMUNITY_SLUG}/members`, {
+        const response = await fetch(`${HEARTBEAT_API_URL}/workspaces/${HEARTBEAT_WORKSPACE_ID}/members`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ serve(async (req) => {
 
       case 'get_member': {
         
-        const response = await fetch(`${HEARTBEAT_API_URL}/communities/${HEARTBEAT_COMMUNITY_SLUG}/members/${memberId}`, {
+        const response = await fetch(`${HEARTBEAT_API_URL}/workspaces/${HEARTBEAT_WORKSPACE_ID}/members/${memberId}`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ serve(async (req) => {
 
       case 'sync_to_database': {
         // Fetch members from Heartbeat
-        const response = await fetch(`${HEARTBEAT_API_URL}/communities/${HEARTBEAT_COMMUNITY_SLUG}/members`, {
+        const response = await fetch(`${HEARTBEAT_API_URL}/workspaces/${HEARTBEAT_WORKSPACE_ID}/members`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
