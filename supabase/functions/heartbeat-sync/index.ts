@@ -15,7 +15,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action, memberId } = body;
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -48,7 +49,6 @@ serve(async (req) => {
       }
 
       case 'get_member': {
-        const { memberId } = await req.json();
         
         const response = await fetch(`${HEARTBEAT_API_URL}/members/${memberId}`, {
           headers: {
@@ -124,8 +124,9 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('Error in heartbeat-sync:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
