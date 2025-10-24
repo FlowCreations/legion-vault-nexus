@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.create-cameo-checkout]
 verify_jwt = false
+
+[functions.heartbeat-sync]
+verify_jwt = true
