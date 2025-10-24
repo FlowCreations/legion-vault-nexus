@@ -23,6 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDistanceToNow } from "date-fns";
 import AdminDashboard from "./AdminDashboard";
 import VideoManager from "./VideoManager";
+import { HeartbeatSyncButton } from "@/components/merchant/HeartbeatSyncButton";
+import { SeedCoordinatesButton } from "@/components/merchant/SeedCoordinatesButton";
 
 interface AnalyticsData {
   events: number;
@@ -174,6 +176,8 @@ const Merchant = () => {
 
           <TabsContent value="analytics" className="space-y-6">
             <div className="flex justify-end gap-3">
+              <HeartbeatSyncButton />
+              <SeedCoordinatesButton />
               <Button 
                 onClick={loadAnalytics} 
                 disabled={refreshing}

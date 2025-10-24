@@ -895,6 +895,69 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_admins: {
+        Row: {
+          created_at: string | null
+          id: string
+          permissions: Json | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permissions?: Json | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permissions?: Json | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_analytics: {
+        Row: {
+          active_tenants: number | null
+          api_calls: number | null
+          created_at: string | null
+          date: string
+          id: string
+          platform_fee_revenue: number | null
+          storage_used_gb: number | null
+          total_revenue: number | null
+          total_tenants: number | null
+          total_users: number | null
+        }
+        Insert: {
+          active_tenants?: number | null
+          api_calls?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          platform_fee_revenue?: number | null
+          storage_used_gb?: number | null
+          total_revenue?: number | null
+          total_tenants?: number | null
+          total_users?: number | null
+        }
+        Update: {
+          active_tenants?: number | null
+          api_calls?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          platform_fee_revenue?: number | null
+          storage_used_gb?: number | null
+          total_revenue?: number | null
+          total_tenants?: number | null
+          total_users?: number | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
@@ -1063,6 +1126,175 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_admins: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          id: string
+          invited_by: string | null
+          permissions: Json | null
+          role: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          permissions?: Json | null
+          role?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          permissions?: Json | null
+          role?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_admins_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          features_enabled: Json | null
+          id: string
+          plan_type: string
+          status: string | null
+          stripe_subscription_id: string | null
+          tenant_id: string
+          trial_ends_at: string | null
+          updated_at: string | null
+          usage_limits: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          features_enabled?: Json | null
+          id?: string
+          plan_type: string
+          status?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          usage_limits?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          features_enabled?: Json | null
+          id?: string
+          plan_type?: string
+          status?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          usage_limits?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          about_text: string | null
+          accent_color: string | null
+          created_at: string | null
+          custom_domain: string | null
+          favicon_url: string | null
+          hero_video_url: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          plan_tier: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          settings: Json | null
+          shopify_store_domain: string | null
+          shopify_storefront_token: string | null
+          slug: string
+          social_links: Json | null
+          status: string | null
+          stripe_account_id: string | null
+          subdomain: string
+          tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          about_text?: string | null
+          accent_color?: string | null
+          created_at?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          hero_video_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          plan_tier?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          settings?: Json | null
+          shopify_store_domain?: string | null
+          shopify_storefront_token?: string | null
+          slug: string
+          social_links?: Json | null
+          status?: string | null
+          stripe_account_id?: string | null
+          subdomain: string
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          about_text?: string | null
+          accent_color?: string | null
+          created_at?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          hero_video_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          plan_tier?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          settings?: Json | null
+          shopify_store_domain?: string | null
+          shopify_storefront_token?: string | null
+          slug?: string
+          social_links?: Json | null
+          status?: string | null
+          stripe_account_id?: string | null
+          subdomain?: string
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tracking_pixels: {
         Row: {
           created_at: string | null
@@ -1190,6 +1422,7 @@ export type Database = {
           era_current: number | null
           era_label: string | null
           gender: string | null
+          heartbeat_member_id: string | null
           id: string
           intro_answers: Json | null
           is_online: boolean | null
@@ -1220,6 +1453,7 @@ export type Database = {
           era_current?: number | null
           era_label?: string | null
           gender?: string | null
+          heartbeat_member_id?: string | null
           id?: string
           intro_answers?: Json | null
           is_online?: boolean | null
@@ -1250,6 +1484,7 @@ export type Database = {
           era_current?: number | null
           era_label?: string | null
           gender?: string | null
+          heartbeat_member_id?: string | null
           id?: string
           intro_answers?: Json | null
           is_online?: boolean | null
@@ -1347,6 +1582,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_tenant_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1354,6 +1590,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_admin: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
+      set_tenant_context: { Args: { _tenant_id: string }; Returns: undefined }
       track_affiliate_content_click: {
         Args: {
           p_content_id: string
