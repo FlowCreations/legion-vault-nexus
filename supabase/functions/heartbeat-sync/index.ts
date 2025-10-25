@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const HEARTBEAT_API_KEY = Deno.env.get('HEARTBEAT_API_KEY');
-const HEARTBEAT_API_URL = 'https://api.heartbeat.chat/v0';
-const HEARTBEAT_WORKSPACE_ID = 'sonsoflegion';
+const HEARTBEAT_API_URL = 'https://api.heartbeat.chat/api/v1';
+const HEARTBEAT_WORKSPACE_ID = '12345'; // Numeric workspace ID
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,8 +28,8 @@ serve(async (req) => {
 
     switch (action) {
       case 'get_members': {
-        // Fetch members from Heartbeat
-        const response = await fetch(`${HEARTBEAT_API_URL}/workspaces/${HEARTBEAT_WORKSPACE_ID}/members`, {
+        // Fetch members from Heartbeat with workspace_id as query param
+        const response = await fetch(`${HEARTBEAT_API_URL}/members?workspace_id=${HEARTBEAT_WORKSPACE_ID}`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
@@ -50,8 +50,8 @@ serve(async (req) => {
       }
 
       case 'get_member': {
-        
-        const response = await fetch(`${HEARTBEAT_API_URL}/workspaces/${HEARTBEAT_WORKSPACE_ID}/members/${memberId}`, {
+        // Fetch single member with workspace_id as query param
+        const response = await fetch(`${HEARTBEAT_API_URL}/members/${memberId}?workspace_id=${HEARTBEAT_WORKSPACE_ID}`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
@@ -71,8 +71,8 @@ serve(async (req) => {
       }
 
       case 'sync_to_database': {
-        // Fetch members from Heartbeat
-        const response = await fetch(`${HEARTBEAT_API_URL}/workspaces/${HEARTBEAT_WORKSPACE_ID}/members`, {
+        // Fetch members from Heartbeat with workspace_id as query param
+        const response = await fetch(`${HEARTBEAT_API_URL}/members?workspace_id=${HEARTBEAT_WORKSPACE_ID}`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
@@ -116,17 +116,19 @@ serve(async (req) => {
                 continue;
               }
 
-              // Create or update profile
+              // Create profile with proper Heartbeat data mapping
               const { error: profileError } = await supabase
                 .from('user_profiles')
                 .insert({
                   user_id: authData.user.id,
                   heartbeat_member_id: member.id,
-                  display_name: member.name || member.email?.split('@')[0],
-                  avatar_url: member.avatar_url,
-                  bio: member.bio,
-                  location: member.location,
-                  tier: member.subscription_tier || 'free',
+                  display_name: member.name || member.username || member.email?.split('@')[0],
+                  real_name: member.full_name || member.name,
+                  avatar_url: member.avatar_url || member.profile_picture_url,
+                  bio: member.bio || member.description,
+                  location: member.location || member.city,
+                  tier: member.subscription_tier || member.membership_level || 'free',
+                  is_public: true, // Make visible in Community Hub
                 });
 
               if (profileError) {
