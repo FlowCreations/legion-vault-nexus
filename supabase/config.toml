@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.heartbeat-sync]
 verify_jwt = true
+
+[functions.manage-social-credentials]
+verify_jwt = true

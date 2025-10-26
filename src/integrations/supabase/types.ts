@@ -1301,6 +1301,42 @@ export type Database = {
         }
         Relationships: []
       }
+      social_credentials: {
+        Row: {
+          created_at: string
+          credential_type: string
+          id: string
+          is_configured: boolean
+          last_verified_at: string | null
+          platform: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_type: string
+          id?: string
+          is_configured?: boolean
+          last_verified_at?: string | null
+          platform: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_type?: string
+          id?: string
+          is_configured?: boolean
+          last_verified_at?: string | null
+          platform?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       streaming_stats: {
         Row: {
           created_at: string | null

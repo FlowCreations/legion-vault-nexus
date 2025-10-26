@@ -18,6 +18,7 @@ import { CameoManager } from "@/components/merchant/CameoManager";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
 import { ContentLab } from "@/components/merchant/ContentLab";
 import { EmailMarketing } from "@/components/merchant/EmailMarketing";
+import { SocialTracking } from "@/components/merchant/SocialTracking";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -179,6 +180,12 @@ const Merchant = () => {
             >
               Email
             </TabsTrigger>
+            <TabsTrigger 
+              value="social"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Social
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-6">
@@ -266,6 +273,10 @@ const Merchant = () => {
 
           <TabsContent value="email">
             <EmailMarketing />
+          </TabsContent>
+
+          <TabsContent value="social">
+            <SocialTracking />
           </TabsContent>
         </Tabs>
       </div>
