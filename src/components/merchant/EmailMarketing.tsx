@@ -1,7 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Users, BarChart3, Zap, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mail, Users, BarChart3, Zap, FileText, Plus, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { EmailListBuilder } from "./EmailListBuilder";
+import { EmailListCard } from "./EmailListCard";
+import { createSmartLists } from "./SmartListTemplates";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const EmailMarketing = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -179,16 +195,44 @@ export const EmailMarketing = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="lists">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Lists</CardTitle>
-              <CardDescription>Create segments based on user behavior and attributes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">List management coming in Phase 2</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="lists" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">Email Lists</h2>
+              <p className="text-muted-foreground">Create and manage segmented audiences</p>
+            </div>
+            <Button onClick={() => { setEditingList(null); setIsBuilderOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create List
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : lists.length === 0 ? (
+            <Card className="p-12 text-center">
+              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No lists yet</h3>
+              <p className="text-muted-foreground mb-4">Create your first email list to get started</p>
+              <Button onClick={() => setIsBuilderOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First List
+              </Button>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {lists.map((list) => (
+                <EmailListCard
+                  key={list.id}
+                  list={list}
+                  onEdit={() => { setEditingList(list); setIsBuilderOpen(true); }}
+                  onDelete={() => setDeletingList(list)}
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="campaigns">

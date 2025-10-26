@@ -117,7 +117,7 @@ export const EmailListBuilder = ({ open, onOpenChange, onListCreated, editingLis
       const listData = {
         name,
         description,
-        filter_rules: { operator: filterGroup.operator, conditions: filterGroup.conditions },
+        filter_rules: { operator: filterGroup.operator, conditions: filterGroup.conditions } as any,
         member_count: memberCount || 0
       };
 
