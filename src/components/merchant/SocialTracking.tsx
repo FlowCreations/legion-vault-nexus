@@ -3,6 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings, BarChart3, Target, TrendingUp } from "lucide-react";
 import { CredentialCard } from "./CredentialCard";
+import { PixelEventStats } from "./PixelEventStats";
+import { MetaPixelAnalytics } from "./MetaPixelAnalytics";
 
 export const SocialTracking = () => {
   const [activeTab, setActiveTab] = useState("setup");
@@ -78,21 +80,7 @@ export const SocialTracking = () => {
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Social Attribution Overview</CardTitle>
-              <CardDescription>
-                High-level metrics from your social media campaigns
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center py-12">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">Configure Your Credentials</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Set up your social media credentials in the Setup tab to start tracking attribution data
-              </p>
-            </CardContent>
-          </Card>
+          <PixelEventStats />
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-6">
@@ -114,21 +102,7 @@ export const SocialTracking = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Social Analytics</CardTitle>
-              <CardDescription>
-                Deep dive into your social media performance and fan journey
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center py-12">
-              <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">Advanced Analytics Coming Soon</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Journey mapping, platform breakdown, and conversion insights
-              </p>
-            </CardContent>
-          </Card>
+          <MetaPixelAnalytics />
         </TabsContent>
       </Tabs>
     </div>

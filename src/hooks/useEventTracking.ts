@@ -33,11 +33,76 @@ export const useEventTracking = () => {
         } : undefined
       });
 
+      // Also store Meta Pixel events in database for analytics
+      if (shouldStorePixelEvent(eventType)) {
+        await supabase.from('user_events').insert({
+          event_type: `meta_pixel_${normalizeEventType(eventType)}`,
+          event_data: eventData,
+          session_id: sessionId,
+          user_id: session?.user?.id || null,
+          page_url: window.location.pathname,
+        });
+      }
+
       // Also track to Meta Pixel if configured
       trackToMetaPixel(eventType, eventData);
     } catch (error) {
       console.error('Event tracking error:', error);
     }
+  };
+
+  const shouldStorePixelEvent = (eventType: string): boolean => {
+    const pixelEvents = [
+      'page_view',
+      'view_product',
+      'view_merch',
+      'view_album',
+      'view_video',
+      'add_to_cart',
+      'initiate_checkout',
+      'purchase',
+      'email_signup',
+      'lead',
+      'user_registration',
+      'signup',
+      'subscribe',
+      'subscription_purchase',
+      'contact',
+      'contact_form',
+      'stream_song',
+      'play_music',
+      'view_gallery',
+      'book_cameo',
+      'join_community',
+    ];
+    return pixelEvents.includes(eventType);
+  };
+
+  const normalizeEventType = (eventType: string): string => {
+    const mapping: Record<string, string> = {
+      'page_view': 'pageview',
+      'view_product': 'viewcontent',
+      'view_merch': 'viewcontent',
+      'view_album': 'viewcontent',
+      'view_video': 'viewcontent',
+      'view_gallery': 'viewcontent',
+      'add_to_cart': 'addtocart',
+      'initiate_checkout': 'initiatecheckout',
+      'purchase': 'purchase',
+      'email_signup': 'lead',
+      'lead': 'lead',
+      'user_registration': 'completeregistration',
+      'signup': 'completeregistration',
+      'subscribe': 'subscribe',
+      'subscription_purchase': 'subscribe',
+      'contact': 'contact',
+      'contact_form': 'contact',
+      'stream_song': 'custom_streamsong',
+      'play_music': 'custom_streamsong',
+      'book_cameo': 'custom_bookcameo',
+      'join_community': 'custom_joincommunity',
+    };
+    return mapping[eventType] || eventType;
   };
 
   const trackToMetaPixel = (eventType: string, eventData?: any) => {
