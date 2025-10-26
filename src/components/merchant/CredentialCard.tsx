@@ -26,6 +26,7 @@ export const CredentialCard = ({ platform, platformName, description, comingSoon
   const [isConfigured, setIsConfigured] = useState(false);
   const [status, setStatus] = useState<"active" | "invalid" | "not_configured">("not_configured");
   const [lastVerified, setLastVerified] = useState<Date | null>(null);
+  const [trackingMode, setTrackingMode] = useState<"browser_only" | "full">("browser_only");
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -52,10 +53,11 @@ export const CredentialCard = ({ platform, platformName, description, comingSoon
 
       if (data && data.length > 0) {
         const pixelCredential = data.find(c => c.credential_type === "pixel_id");
-        const tokenCredential = data.find(c => c.credential_type === "access_token");
         
-        const configured = pixelCredential?.is_configured && tokenCredential?.is_configured;
-        setIsConfigured(configured);
+        const mode = pixelCredential?.tracking_mode as "browser_only" | "full" || "browser_only";
+        setTrackingMode(mode);
+        
+        setIsConfigured(pixelCredential?.is_configured || false);
         
         const credentialStatus = pixelCredential?.status as "active" | "invalid" | "not_configured" | null;
         setStatus(credentialStatus || "not_configured");
@@ -166,7 +168,14 @@ export const CredentialCard = ({ platform, platformName, description, comingSoon
                 <CardDescription>{description}</CardDescription>
               </div>
             </div>
-            <ConnectionStatus status={status} loading={loading} />
+            <div className="flex flex-col items-end gap-1">
+              <ConnectionStatus status={status} loading={loading} />
+              {isConfigured && (
+                <span className="text-xs text-muted-foreground">
+                  {trackingMode === "browser_only" ? "Browser Tracking" : "Full Tracking"}
+                </span>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>

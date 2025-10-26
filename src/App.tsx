@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { initMetaPixel } from "@/lib/metaPixel";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
@@ -34,12 +37,46 @@ import Subscribe from "./pages/Subscribe";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+const App = () => {
+  useEffect(() => {
+    // Initialize Meta Pixel on app mount
+    const initializeTracking = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("social_credentials")
+          .select("credential_metadata, browser_events_enabled")
+          .eq("user_id", user.id)
+          .eq("platform", "meta")
+          .eq("credential_type", "pixel_id")
+          .single();
+
+        if (error || !data) return;
+
+        const metadata = data.credential_metadata as any;
+        const pixelId = metadata?.pixel_id;
+        const enabled = data.browser_events_enabled;
+
+        if (pixelId && enabled) {
+          initMetaPixel(pixelId);
+          console.log("[App] Meta Pixel initialized successfully");
+        }
+      } catch (error) {
+        console.error("[App] Error initializing Meta Pixel:", error);
+      }
+    };
+
+    initializeTracking();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <Navigation />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -73,6 +110,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

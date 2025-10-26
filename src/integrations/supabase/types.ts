@@ -1303,35 +1303,44 @@ export type Database = {
       }
       social_credentials: {
         Row: {
+          browser_events_enabled: boolean | null
           created_at: string
+          credential_metadata: Json | null
           credential_type: string
           id: string
           is_configured: boolean
           last_verified_at: string | null
           platform: string
           status: string
+          tracking_mode: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          browser_events_enabled?: boolean | null
           created_at?: string
+          credential_metadata?: Json | null
           credential_type: string
           id?: string
           is_configured?: boolean
           last_verified_at?: string | null
           platform: string
           status?: string
+          tracking_mode?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          browser_events_enabled?: boolean | null
           created_at?: string
+          credential_metadata?: Json | null
           credential_type?: string
           id?: string
           is_configured?: boolean
           last_verified_at?: string | null
           platform?: string
           status?: string
+          tracking_mode?: string | null
           updated_at?: string
           user_id?: string
         }

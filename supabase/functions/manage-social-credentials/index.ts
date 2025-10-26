@@ -10,8 +10,9 @@ interface SaveCredentialsRequest {
   platform: 'meta' | 'instagram' | 'tiktok' | 'twitter';
   credentials: {
     pixel_id: string;
-    access_token: string;
+    access_token?: string;
   };
+  tracking_mode?: 'browser_only' | 'full';
 }
 
 interface TestCredentialsRequest {
@@ -66,10 +67,7 @@ Deno.serve(async (req) => {
     // Handle different actions
     switch (action) {
       case 'save': {
-        const { credentials } = body as SaveCredentialsRequest;
-        
-        // Store credentials in Supabase secrets (in production, you'd use a proper secrets manager)
-        // For now, we'll simulate this and store metadata in the database
+        const { credentials, tracking_mode = 'browser_only' } = body as SaveCredentialsRequest;
         
         // Validate Meta pixel ID format
         if (platform === 'meta' && !/^\d{15,16}$/.test(credentials.pixel_id)) {
@@ -82,20 +80,22 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Test the credentials before saving
-        const testResult = await testMetaCredentials(credentials.pixel_id, credentials.access_token);
-        
-        if (!testResult.success) {
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: testResult.error || 'Failed to verify credentials with Meta API' 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        // Test credentials only if in full tracking mode with access token
+        if (tracking_mode === 'full' && credentials.access_token) {
+          const testResult = await testMetaCredentials(credentials.pixel_id, credentials.access_token);
+          
+          if (!testResult.success) {
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                error: testResult.error || 'Failed to verify credentials with Meta API' 
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
 
-        // Store metadata in database
+        // Store pixel ID metadata
         const { error: pixelError } = await supabaseClient
           .from('social_credentials')
           .upsert({
@@ -104,6 +104,11 @@ Deno.serve(async (req) => {
             credential_type: 'pixel_id',
             is_configured: true,
             status: 'active',
+            tracking_mode,
+            browser_events_enabled: true,
+            credential_metadata: {
+              pixel_id: credentials.pixel_id,
+            },
             last_verified_at: new Date().toISOString(),
           }, {
             onConflict: 'user_id,platform,credential_type'
@@ -111,36 +116,46 @@ Deno.serve(async (req) => {
 
         if (pixelError) throw pixelError;
 
-        const { error: tokenError } = await supabaseClient
-          .from('social_credentials')
-          .upsert({
-            user_id: user.id,
-            platform,
-            credential_type: 'access_token',
-            is_configured: true,
-            status: 'active',
-            last_verified_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id,platform,credential_type'
-          });
+        // Store access token only if in full tracking mode
+        if (tracking_mode === 'full' && credentials.access_token) {
+          const { error: tokenError } = await supabaseClient
+            .from('social_credentials')
+            .upsert({
+              user_id: user.id,
+              platform,
+              credential_type: 'access_token',
+              is_configured: true,
+              status: 'active',
+              tracking_mode,
+              credential_metadata: {
+                access_token: credentials.access_token, // In production, encrypt this
+              },
+              last_verified_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id,platform,credential_type'
+            });
 
-        if (tokenError) throw tokenError;
+          if (tokenError) throw tokenError;
+        }
 
-        // In production, store actual credentials in Supabase Vault or encrypted storage
-        // For demo purposes, we're just storing the metadata
-        console.log(`Credentials saved successfully for user ${user.id}, platform ${platform}`);
+        console.log(`Credentials saved successfully for user ${user.id}, platform ${platform}, mode: ${tracking_mode}`);
 
         return new Response(
-          JSON.stringify({ success: true, message: 'Credentials saved and verified successfully' }),
+          JSON.stringify({ 
+            success: true, 
+            message: tracking_mode === 'browser_only' 
+              ? 'Browser tracking configured successfully' 
+              : 'Full tracking configured and verified successfully' 
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'test': {
-        // Retrieve credentials and test them
+        // Retrieve credentials
         const { data: credentials, error: credError } = await supabaseClient
           .from('social_credentials')
-          .select('*')
+          .select('credential_metadata, tracking_mode')
           .eq('user_id', user.id)
           .eq('platform', platform);
 
@@ -153,13 +168,18 @@ Deno.serve(async (req) => {
           );
         }
 
-        // In production, you would retrieve actual credentials from secure storage
-        // and test them against the platform's API
-        // For demo, we'll simulate a successful test
-        const testSuccess = true;
+        const pixelCred = credentials.find(c => (c.credential_metadata as any)?.pixel_id);
+        const tokenCred = credentials.find(c => (c.credential_metadata as any)?.access_token);
+        
+        if (!pixelCred) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Pixel ID not configured' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
-        if (testSuccess) {
-          // Update last_verified_at
+        // For browser-only mode, just verify pixel ID exists
+        if (pixelCred.tracking_mode === 'browser_only') {
           await supabaseClient
             .from('social_credentials')
             .update({ 
@@ -170,11 +190,41 @@ Deno.serve(async (req) => {
             .eq('platform', platform);
 
           return new Response(
-            JSON.stringify({ success: true, message: 'Credentials verified successfully' }),
+            JSON.stringify({ 
+              success: true, 
+              message: 'Browser tracking is configured (Pixel ID verified)' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // For full mode, test the API connection
+        if (!tokenCred || !(tokenCred.credential_metadata as any)?.access_token) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Access token not configured for full tracking' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const pixelId = (pixelCred.credential_metadata as any).pixel_id;
+        const accessToken = (tokenCred.credential_metadata as any).access_token;
+        const testResult = await testMetaCredentials(pixelId, accessToken);
+
+        if (testResult.success) {
+          await supabaseClient
+            .from('social_credentials')
+            .update({ 
+              last_verified_at: new Date().toISOString(),
+              status: 'active'
+            })
+            .eq('user_id', user.id)
+            .eq('platform', platform);
+
+          return new Response(
+            JSON.stringify({ success: true, message: 'Full tracking verified successfully' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } else {
-          // Update status to invalid
           await supabaseClient
             .from('social_credentials')
             .update({ status: 'invalid' })
@@ -182,7 +232,7 @@ Deno.serve(async (req) => {
             .eq('platform', platform);
 
           return new Response(
-            JSON.stringify({ success: false, error: 'Credential verification failed' }),
+            JSON.stringify({ success: false, error: testResult.error }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }

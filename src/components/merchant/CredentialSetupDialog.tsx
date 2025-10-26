@@ -23,6 +23,7 @@ export const CredentialSetupDialog = ({
   const { toast } = useToast();
   const [pixelId, setPixelId] = useState("");
   const [accessToken, setAccessToken] = useState("");
+  const [enableServerTracking, setEnableServerTracking] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const validatePixelId = (value: string) => {
@@ -50,10 +51,11 @@ export const CredentialSetupDialog = ({
       return;
     }
 
-    if (!accessToken.trim()) {
+    // Only require token if server-side tracking is enabled
+    if (enableServerTracking && !accessToken.trim()) {
       toast({
         title: "Access Token required",
-        description: "Please enter your Conversions API Access Token",
+        description: "Server-side tracking requires a Conversions API Access Token",
         variant: "destructive",
       });
       return;
@@ -77,8 +79,9 @@ export const CredentialSetupDialog = ({
           platform,
           credentials: {
             pixel_id: pixelId,
-            access_token: accessToken,
+            access_token: enableServerTracking ? accessToken : undefined,
           },
+          tracking_mode: enableServerTracking ? "full" : "browser_only",
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -152,28 +155,48 @@ export const CredentialSetupDialog = ({
             </Button>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="access-token">Conversions API Access Token *</Label>
-            <Input
-              id="access-token"
-              type="password"
-              placeholder="Enter your access token"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground">
-              Generate this in Meta Events Manager → Settings → Conversions API
-            </p>
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-xs"
-              onClick={() => window.open("https://developers.facebook.com/docs/marketing-api/conversions-api/get-started", "_blank")}
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              View Setup Guide
-            </Button>
+          <div className="space-y-3 pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="server-tracking">Enable Server-Side Tracking</Label>
+                <p className="text-sm text-muted-foreground">
+                  Requires Conversions API Access Token (optional)
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                id="server-tracking"
+                checked={enableServerTracking}
+                onChange={(e) => setEnableServerTracking(e.target.checked)}
+                className="h-4 w-4"
+              />
+            </div>
           </div>
+
+          {enableServerTracking && (
+            <div className="space-y-2">
+              <Label htmlFor="access-token">Conversions API Access Token *</Label>
+              <Input
+                id="access-token"
+                type="password"
+                placeholder="Enter your access token"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Generate this in Meta Events Manager → Settings → Conversions API
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs"
+                onClick={() => window.open("https://developers.facebook.com/docs/marketing-api/conversions-api/get-started", "_blank")}
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                View Setup Guide
+              </Button>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
@@ -181,7 +204,7 @@ export const CredentialSetupDialog = ({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save & Test"}
+            {saving ? "Saving..." : enableServerTracking ? "Save & Test" : "Save Browser Tracking"}
           </Button>
         </DialogFooter>
       </DialogContent>
