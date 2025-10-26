@@ -2,19 +2,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Activity, MessageSquare, Users, DollarSign, Video, FileText, TrendingUp, Eye, Gift } from "lucide-react";
+import { Activity, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIChat } from "@/components/merchant/AIChat";
-import { TopPlatforms } from "@/components/merchant/TopPlatforms";
 import { TopTracks } from "@/components/merchant/TopTracks";
-import { StreamsOverview } from "@/components/merchant/StreamsOverview";
 import { Geography } from "@/components/merchant/Geography";
 import { Demographics } from "@/components/merchant/Demographics";
 import { EarningsOverview } from "@/components/merchant/EarningsOverview";
 import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
-import { CameoManager } from "@/components/merchant/CameoManager";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
 import { ContentLab } from "@/components/merchant/ContentLab";
 import { EmailMarketing } from "@/components/merchant/EmailMarketing";
@@ -127,16 +124,16 @@ const Merchant = () => {
               Analytics
             </TabsTrigger>
             <TabsTrigger 
-              value="videos"
+              value="content"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
-              Videos
+              Content
             </TabsTrigger>
             <TabsTrigger 
-              value="content-lab"
+              value="marketing"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
-              Content Lab
+              Marketing
             </TabsTrigger>
             <TabsTrigger 
               value="community"
@@ -145,46 +142,10 @@ const Merchant = () => {
               Community
             </TabsTrigger>
             <TabsTrigger 
-              value="cameos"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Cameos
-            </TabsTrigger>
-            <TabsTrigger 
               value="partnerships"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Partnerships
-            </TabsTrigger>
-            <TabsTrigger 
-              value="royalties"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Royalties
-            </TabsTrigger>
-            <TabsTrigger 
-              value="campaigns"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Campaigns
-            </TabsTrigger>
-            <TabsTrigger 
-              value="funnel"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Funnel
-            </TabsTrigger>
-            <TabsTrigger 
-              value="email"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Email
-            </TabsTrigger>
-            <TabsTrigger 
-              value="social"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Social
             </TabsTrigger>
           </TabsList>
 
@@ -223,6 +184,7 @@ const Merchant = () => {
             <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
               <div className="space-y-12">
                 <EarningsOverview />
+                <DistributorIntegration />
                 <Geography />
                 <TopTracks period="7days" />
                 <Demographics />
@@ -239,44 +201,52 @@ const Merchant = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="videos">
-            <VideoManager />
+          <TabsContent value="content">
+            <Tabs defaultValue="videos" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="videos">Videos</TabsTrigger>
+                <TabsTrigger value="lab">Content Lab</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="videos">
+                <VideoManager />
+              </TabsContent>
+              <TabsContent value="lab">
+                <ContentLab />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          <TabsContent value="content-lab">
-            <ContentLab />
+          <TabsContent value="marketing">
+            <Tabs defaultValue="campaigns" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                <TabsTrigger value="funnels">Funnels</TabsTrigger>
+                <TabsTrigger value="email">Email</TabsTrigger>
+                <TabsTrigger value="social">Social</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="campaigns">
+                <CreateCampaigns />
+              </TabsContent>
+              <TabsContent value="funnels">
+                <BuildFunnel />
+              </TabsContent>
+              <TabsContent value="email">
+                <EmailMarketing />
+              </TabsContent>
+              <TabsContent value="social">
+                <SocialTracking />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="community">
             <AdminDashboard selectedUserId={selectedUserId} />
           </TabsContent>
 
-          <TabsContent value="cameos">
-            <CameoManager />
-          </TabsContent>
-
           <TabsContent value="partnerships">
             <Partnerships />
-          </TabsContent>
-
-          <TabsContent value="royalties">
-            <DistributorIntegration />
-          </TabsContent>
-
-          <TabsContent value="campaigns">
-            <CreateCampaigns />
-          </TabsContent>
-
-          <TabsContent value="funnel">
-            <BuildFunnel />
-          </TabsContent>
-
-          <TabsContent value="email">
-            <EmailMarketing />
-          </TabsContent>
-
-          <TabsContent value="social">
-            <SocialTracking />
           </TabsContent>
         </Tabs>
       </div>
