@@ -5,6 +5,60 @@ import { Mail, Users, BarChart3, Zap, FileText } from "lucide-react";
 
 export const EmailMarketing = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [lists, setLists] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [editingList, setEditingList] = useState<any>(null);
+  const [deletingList, setDeletingList] = useState<any>(null);
+  const [smartListsCreated, setSmartListsCreated] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === "lists") {
+      loadLists();
+    }
+  }, [activeTab]);
+
+  const loadLists = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('email_lists')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setLists(data || []);
+      
+      if (data && data.length === 0 && !smartListsCreated) {
+        await createSmartLists();
+        setSmartListsCreated(true);
+        loadLists();
+      }
+    } catch (error: any) {
+      toast.error("Failed to load lists");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteList = async () => {
+    if (!deletingList) return;
+    
+    try {
+      const { error } = await supabase
+        .from('email_lists')
+        .delete()
+        .eq('id', deletingList.id);
+      
+      if (error) throw error;
+      toast.success("List deleted successfully");
+      loadLists();
+    } catch (error: any) {
+      toast.error("Failed to delete list");
+    } finally {
+      setDeletingList(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -173,6 +227,28 @@ export const EmailMarketing = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <EmailListBuilder
+        open={isBuilderOpen}
+        onOpenChange={setIsBuilderOpen}
+        onListCreated={loadLists}
+        editingList={editingList}
+      />
+
+      <AlertDialog open={!!deletingList} onOpenChange={() => setDeletingList(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete List?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingList?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteList}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
