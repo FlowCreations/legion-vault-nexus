@@ -5,6 +5,7 @@ import { Settings, BarChart3, Target, TrendingUp } from "lucide-react";
 import { CredentialCard } from "./CredentialCard";
 import { PixelEventStats } from "./PixelEventStats";
 import { MetaPixelAnalytics } from "./MetaPixelAnalytics";
+import { FacebookInsightsSync } from "./FacebookInsightsSync";
 
 export const SocialTracking = () => {
   const [activeTab, setActiveTab] = useState("setup");
@@ -80,7 +81,10 @@ export const SocialTracking = () => {
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">
-          <PixelEventStats />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PixelEventStats />
+            <FacebookInsightsSync />
+          </div>
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-6">

@@ -991,6 +991,51 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_pixel_insights: {
+        Row: {
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          ctr: number | null
+          date: string
+          event_counts: Json
+          fetched_at: string | null
+          id: string
+          impressions: number | null
+          pixel_id: string
+          revenue: number | null
+          unique_users: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          date: string
+          event_counts?: Json
+          fetched_at?: string | null
+          id?: string
+          impressions?: number | null
+          pixel_id: string
+          revenue?: number | null
+          unique_users?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          date?: string
+          event_counts?: Json
+          fetched_at?: string | null
+          id?: string
+          impressions?: number | null
+          pixel_id?: string
+          revenue?: number | null
+          unique_users?: number | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
