@@ -39,8 +39,18 @@ export const PixelDebugPanel = () => {
 
   const loadPixelStatus = () => {
     const status = getPixelStatus();
-    console.log('[PixelDebug] Pixel status:', status);
-    setPixelStatus(status);
+    const globalFlag = (window as any).__META_PIXEL_INITIALIZED__;
+    
+    console.log('[PixelDebug] Pixel status:', {
+      ...status,
+      globalFlag,
+      fbqExists: !!window.fbq
+    });
+    
+    setPixelStatus({
+      ...status,
+      hasGlobalFlag: globalFlag,
+    } as any);
   };
 
   const manualInitialize = async () => {
@@ -116,6 +126,10 @@ export const PixelDebugPanel = () => {
             <Badge variant={pixelStatus?.isLoaded ? "default" : "destructive"} className="gap-1">
               {pixelStatus?.isLoaded ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
               {pixelStatus?.isLoaded ? "Script Loaded" : "Script Not Loaded"}
+            </Badge>
+            <Badge variant={(pixelStatus as any)?.hasGlobalFlag ? "default" : "secondary"} className="gap-1">
+              {(pixelStatus as any)?.hasGlobalFlag ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {(pixelStatus as any)?.hasGlobalFlag ? "Global Flag Set" : "No Global Flag"}
             </Badge>
             {pixelStatus?.pixelId && (
               <Badge variant="outline">

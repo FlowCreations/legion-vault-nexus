@@ -5,6 +5,7 @@ declare global {
   interface Window {
     fbq?: (...args: any[]) => void;
     _fbq?: (...args: any[]) => void;
+    __META_PIXEL_INITIALIZED__?: boolean;
   }
 }
 
@@ -15,12 +16,24 @@ let pixelId: string | null = null;
  * Initialize Meta Pixel with the given Pixel ID
  */
 export const initMetaPixel = (id: string, onReady?: () => void) => {
-  if (isInitialized || !id) {
-    console.log('[Meta Pixel] Already initialized or no ID provided');
+  // Check window-level flag first (persists across hot reloads)
+  if (window.__META_PIXEL_INITIALIZED__ || isInitialized || !id) {
+    console.log('[Meta Pixel] Already initialized globally, skipping');
+    return;
+  }
+
+  // Also check if fbq already exists (from previous load)
+  if (window.fbq) {
+    console.log('[Meta Pixel] fbq already exists, skipping initialization');
+    window.__META_PIXEL_INITIALIZED__ = true;
+    isInitialized = true;
+    pixelId = id;
+    onReady?.();
     return;
   }
 
   pixelId = id;
+  window.__META_PIXEL_INITIALIZED__ = true;
   console.log('[Meta Pixel] Starting initialization with ID:', id);
   
   const injectScript = () => {

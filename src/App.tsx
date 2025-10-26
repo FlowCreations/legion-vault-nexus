@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,7 +38,17 @@ import Subscribe from "./pages/Subscribe";
 const queryClient = new QueryClient();
 
 const App = () => {
+  const pixelInitialized = useRef(false);
+
   useEffect(() => {
+    // Skip if already initialized in this session
+    if (pixelInitialized.current) {
+      console.log('[App] Pixel initialization already attempted');
+      return;
+    }
+    
+    pixelInitialized.current = true;
+
     // Initialize Meta Pixel on app mount for ALL visitors
     const initializeTracking = async () => {
       try {
@@ -74,7 +84,9 @@ const App = () => {
 
         if (pixelId) {
           console.log('[App] Calling initMetaPixel...');
-          initMetaPixel(pixelId);
+          initMetaPixel(pixelId, () => {
+            console.log('[App] Pixel ready callback fired');
+          });
           
           setTimeout(() => {
             console.log('[App] After initMetaPixel, window.fbq exists:', !!window.fbq);
