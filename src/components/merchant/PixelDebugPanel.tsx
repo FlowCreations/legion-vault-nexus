@@ -43,6 +43,26 @@ export const PixelDebugPanel = () => {
     setPixelStatus(status);
   };
 
+  const manualInitialize = async () => {
+    const { data } = await supabase
+      .from("social_credentials")
+      .select("credential_metadata")
+      .eq("platform", "meta")
+      .eq("credential_type", "pixel_id")
+      .limit(1)
+      .maybeSingle();
+      
+    const metadata = data?.credential_metadata as any;
+    if (metadata?.pixel_id) {
+      const { initMetaPixel } = await import("@/lib/metaPixel");
+      initMetaPixel(metadata.pixel_id);
+      toast.success("Pixel manually initialized!");
+      setTimeout(() => loadPixelStatus(), 1000);
+    } else {
+      toast.error("No pixel configuration found");
+    }
+  };
+
   const loadRecentEvents = async () => {
     setIsLoading(true);
     try {
@@ -93,9 +113,9 @@ export const PixelDebugPanel = () => {
               {pixelStatus?.isInitialized ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
               {pixelStatus?.isInitialized ? "Initialized" : "Not Initialized"}
             </Badge>
-            <Badge variant={pixelStatus?.isFbqLoaded ? "default" : "destructive"} className="gap-1">
-              {pixelStatus?.isFbqLoaded ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-              {pixelStatus?.isFbqLoaded ? "Script Loaded" : "Script Not Loaded"}
+            <Badge variant={pixelStatus?.isLoaded ? "default" : "destructive"} className="gap-1">
+              {pixelStatus?.isLoaded ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {pixelStatus?.isLoaded ? "Script Loaded" : "Script Not Loaded"}
             </Badge>
             {pixelStatus?.pixelId && (
               <Badge variant="outline">
@@ -105,11 +125,15 @@ export const PixelDebugPanel = () => {
           </div>
         </div>
 
-        {/* Test Button */}
-        <div>
+        {/* Test Buttons */}
+        <div className="flex gap-2">
           <Button onClick={fireTestEvent} className="gap-2">
             <Zap className="h-4 w-4" />
             Fire Test Event
+          </Button>
+          <Button onClick={manualInitialize} variant="outline" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Manually Initialize
           </Button>
         </div>
 

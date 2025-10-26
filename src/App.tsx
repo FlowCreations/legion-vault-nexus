@@ -42,6 +42,8 @@ const App = () => {
     // Initialize Meta Pixel on app mount for ALL visitors
     const initializeTracking = async () => {
       try {
+        console.log('[App] Querying for Meta Pixel config...');
+        
         // Get any configured pixel (merchant's pixel tracks all visitors)
         const { data, error } = await supabase
           .from("social_credentials")
@@ -51,19 +53,32 @@ const App = () => {
           .eq("is_configured", true)
           .eq("browser_events_enabled", true)
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (error || !data) {
+        console.log('[App] Query result:', { data, error });
+
+        if (error) {
+          console.error("[App] Error loading pixel config:", error);
+          return;
+        }
+
+        if (!data) {
           console.log("[App] No Meta Pixel configured");
           return;
         }
 
         const metadata = data.credential_metadata as any;
         const pixelId = metadata?.pixel_id;
+        
+        console.log('[App] Pixel ID found:', pixelId);
 
         if (pixelId) {
+          console.log('[App] Calling initMetaPixel...');
           initMetaPixel(pixelId);
-          console.log("[App] Meta Pixel initialized for all visitors:", pixelId);
+          
+          setTimeout(() => {
+            console.log('[App] After initMetaPixel, window.fbq exists:', !!window.fbq);
+          }, 1000);
         }
       } catch (error) {
         console.error("[App] Error initializing Meta Pixel:", error);

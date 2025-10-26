@@ -14,38 +14,67 @@ let pixelId: string | null = null;
 /**
  * Initialize Meta Pixel with the given Pixel ID
  */
-export const initMetaPixel = (id: string) => {
-  if (isInitialized || !id) return;
+export const initMetaPixel = (id: string, onReady?: () => void) => {
+  if (isInitialized || !id) {
+    console.log('[Meta Pixel] Already initialized or no ID provided');
+    return;
+  }
 
   pixelId = id;
+  console.log('[Meta Pixel] Starting initialization with ID:', id);
   
-  // Inject the Meta Pixel base code
-  const script = document.createElement('script');
-  script.innerHTML = `
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '${id}');
-  `;
-  document.head.appendChild(script);
+  const injectScript = () => {
+    // Inject the Meta Pixel base code
+    const script = document.createElement('script');
+    script.innerHTML = `
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '${id}');
+    `;
+    document.head.appendChild(script);
 
-  // Add noscript fallback
-  const noscript = document.createElement('noscript');
-  const img = document.createElement('img');
-  img.height = 1;
-  img.width = 1;
-  img.style.display = 'none';
-  img.src = `https://www.facebook.com/tr?id=${id}&ev=PageView&noscript=1`;
-  noscript.appendChild(img);
-  document.body.appendChild(noscript);
+    // Add noscript fallback
+    const noscript = document.createElement('noscript');
+    const img = document.createElement('img');
+    img.height = 1;
+    img.width = 1;
+    img.style.display = 'none';
+    img.src = `https://www.facebook.com/tr?id=${id}&ev=PageView&noscript=1`;
+    document.body.appendChild(noscript);
 
-  isInitialized = true;
-  console.log('[Meta Pixel] Initialized with ID:', id);
+    console.log('[Meta Pixel] Script injected, waiting for fbq...');
+
+    // Wait for fbq to be available with retry logic
+    let attempts = 0;
+    const checkFbq = () => {
+      attempts++;
+      if (window.fbq) {
+        isInitialized = true;
+        console.log('[Meta Pixel] Script loaded and ready! (attempt', attempts, ')');
+        onReady?.();
+      } else if (attempts < 20) {
+        setTimeout(checkFbq, 100);
+      } else {
+        console.error('[Meta Pixel] Failed to load after 20 attempts (2 seconds)');
+      }
+    };
+    
+    setTimeout(checkFbq, 100);
+  };
+
+  // Check if DOM is ready
+  if (document.readyState === 'loading') {
+    console.log('[Meta Pixel] Waiting for DOM to load...');
+    document.addEventListener('DOMContentLoaded', injectScript);
+  } else {
+    injectScript();
+  }
 };
 
 /**
