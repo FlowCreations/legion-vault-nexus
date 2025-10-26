@@ -198,6 +198,42 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_sequences: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          steps: Json
+          trigger_rules: Json
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          steps?: Json
+          trigger_rules?: Json
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          steps?: Json
+          trigger_rules?: Json
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       brand_partnerships: {
         Row: {
           artist_id: string
@@ -609,6 +645,178 @@ export type Database = {
           last_sync?: string | null
           merchant_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_campaigns: {
+        Row: {
+          campaign_type: string | null
+          created_at: string | null
+          created_by: string | null
+          email_body: string
+          id: string
+          list_id: string | null
+          name: string
+          preview_text: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email_body: string
+          id?: string
+          list_id?: string | null
+          name: string
+          preview_text?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email_body?: string
+          id?: string
+          list_id?: string | null
+          name?: string
+          preview_text?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaigns_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "email_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_lists: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          filter_rules: Json
+          id: string
+          member_count: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          filter_rules?: Json
+          id?: string
+          member_count?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          filter_rules?: Json
+          id?: string
+          member_count?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_sends: {
+        Row: {
+          bounce_reason: string | null
+          bounced: boolean | null
+          campaign_id: string | null
+          clicked_at: string | null
+          email_address: string
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          sent_at: string | null
+          unsubscribed_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bounce_reason?: string | null
+          bounced?: boolean | null
+          campaign_id?: string | null
+          clicked_at?: string | null
+          email_address: string
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          sent_at?: string | null
+          unsubscribed_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bounce_reason?: string | null
+          bounced?: boolean | null
+          campaign_id?: string | null
+          clicked_at?: string | null
+          email_address?: string
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          sent_at?: string | null
+          unsubscribed_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          subject: string
+          template_code: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          subject: string
+          template_code: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          template_code?: string
+          updated_at?: string | null
+          variables?: Json | null
         }
         Relationships: []
       }
