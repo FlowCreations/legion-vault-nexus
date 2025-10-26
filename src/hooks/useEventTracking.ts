@@ -35,13 +35,28 @@ export const useEventTracking = () => {
 
       // Also store Meta Pixel events in database for analytics
       if (shouldStorePixelEvent(eventType)) {
-        await supabase.from('user_events').insert({
-          event_type: `meta_pixel_${normalizeEventType(eventType)}`,
+        const normalizedType = normalizeEventType(eventType);
+        console.log('[Tracking] Storing pixel event:', {
+          type: `meta_pixel_${normalizedType}`,
+          data: eventData,
+          url: window.location.pathname,
+          session: sessionId,
+          user: session?.user?.id || 'anonymous'
+        });
+
+        const { data, error } = await supabase.from('user_events').insert({
+          event_type: `meta_pixel_${normalizedType}`,
           event_data: eventData,
           session_id: sessionId,
           user_id: session?.user?.id || null,
           page_url: window.location.pathname,
         });
+
+        if (error) {
+          console.error('[Tracking] Database insert failed:', error);
+        } else {
+          console.log('[Tracking] Event stored successfully');
+        }
       }
 
       // Also track to Meta Pixel if configured

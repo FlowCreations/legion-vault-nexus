@@ -39,29 +39,31 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Initialize Meta Pixel on app mount
+    // Initialize Meta Pixel on app mount for ALL visitors
     const initializeTracking = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
+        // Get any configured pixel (merchant's pixel tracks all visitors)
         const { data, error } = await supabase
           .from("social_credentials")
           .select("credential_metadata, browser_events_enabled")
-          .eq("user_id", user.id)
           .eq("platform", "meta")
           .eq("credential_type", "pixel_id")
+          .eq("is_configured", true)
+          .eq("browser_events_enabled", true)
+          .limit(1)
           .single();
 
-        if (error || !data) return;
+        if (error || !data) {
+          console.log("[App] No Meta Pixel configured");
+          return;
+        }
 
         const metadata = data.credential_metadata as any;
         const pixelId = metadata?.pixel_id;
-        const enabled = data.browser_events_enabled;
 
-        if (pixelId && enabled) {
+        if (pixelId) {
           initMetaPixel(pixelId);
-          console.log("[App] Meta Pixel initialized successfully");
+          console.log("[App] Meta Pixel initialized for all visitors:", pixelId);
         }
       } catch (error) {
         console.error("[App] Error initializing Meta Pixel:", error);

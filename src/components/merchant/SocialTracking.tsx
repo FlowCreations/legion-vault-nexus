@@ -6,6 +6,7 @@ import { CredentialCard } from "./CredentialCard";
 import { PixelEventStats } from "./PixelEventStats";
 import { MetaPixelAnalytics } from "./MetaPixelAnalytics";
 import { FacebookInsightsSync } from "./FacebookInsightsSync";
+import { PixelDebugPanel } from "./PixelDebugPanel";
 
 export const SocialTracking = () => {
   const [activeTab, setActiveTab] = useState("setup");
@@ -81,6 +82,7 @@ export const SocialTracking = () => {
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">
+          <PixelDebugPanel />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <PixelEventStats />
             <FacebookInsightsSync />
