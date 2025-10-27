@@ -14,6 +14,7 @@ import { createSmartLists } from "./SmartListTemplates";
 import { AutomationBuilder } from "./AutomationBuilder";
 import { AUTOMATION_TEMPLATES } from "./AutomationTemplates";
 import { Switch } from "@/components/ui/switch";
+import { TunepipeSyncButton } from "./TunepipeSyncButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -218,6 +219,13 @@ export const EmailMarketing = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          <div className="flex justify-end mb-4">
+            <TunepipeSyncButton onSyncComplete={() => {
+              loadLists();
+              loadCampaigns();
+            }} />
+          </div>
+          
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

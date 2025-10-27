@@ -255,6 +255,78 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_email_insights: {
+        Row: {
+          actionable_steps: Json | null
+          applied_at: string | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          insight_data: Json | null
+          insight_description: string
+          insight_title: string
+          insight_type: string
+          result_metrics: Json | null
+        }
+        Insert: {
+          actionable_steps?: Json | null
+          applied_at?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          insight_data?: Json | null
+          insight_description: string
+          insight_title: string
+          insight_type: string
+          result_metrics?: Json | null
+        }
+        Update: {
+          actionable_steps?: Json | null
+          applied_at?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          insight_data?: Json | null
+          insight_description?: string
+          insight_title?: string
+          insight_type?: string
+          result_metrics?: Json | null
+        }
+        Relationships: []
+      }
+      api_sync_logs: {
+        Row: {
+          api_name: string
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          records_synced: number | null
+          started_at: string | null
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          api_name: string
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status: string
+          sync_type: string
+        }
+        Update: {
+          api_name?: string
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
       artist_partnerships: {
         Row: {
           approved_at: string | null
@@ -1200,6 +1272,36 @@ export type Database = {
         }
         Relationships: []
       }
+      messenger_interactions: {
+        Row: {
+          conversation_id: string | null
+          id: string
+          link_url: string | null
+          message_type: string | null
+          occurred_at: string | null
+          synced_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          id?: string
+          link_url?: string | null
+          message_type?: string | null
+          occurred_at?: string | null
+          synced_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          id?: string
+          link_url?: string | null
+          message_type?: string | null
+          occurred_at?: string | null
+          synced_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       meta_pixel_insights: {
         Row: {
           clicks: number | null
@@ -1242,6 +1344,51 @@ export type Database = {
           pixel_id?: string
           revenue?: number | null
           unique_users?: number | null
+        }
+        Relationships: []
+      }
+      music_streaming_data: {
+        Row: {
+          artist_name: string | null
+          id: string
+          last_played_at: string | null
+          platform: string
+          play_count: number | null
+          repeat_count: number | null
+          skip_count: number | null
+          synced_at: string | null
+          total_play_time_seconds: number | null
+          track_id: string | null
+          track_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          artist_name?: string | null
+          id?: string
+          last_played_at?: string | null
+          platform: string
+          play_count?: number | null
+          repeat_count?: number | null
+          skip_count?: number | null
+          synced_at?: string | null
+          total_play_time_seconds?: number | null
+          track_id?: string | null
+          track_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          artist_name?: string | null
+          id?: string
+          last_played_at?: string | null
+          platform?: string
+          play_count?: number | null
+          repeat_count?: number | null
+          skip_count?: number | null
+          synced_at?: string | null
+          total_play_time_seconds?: number | null
+          track_id?: string | null
+          track_name?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1555,6 +1702,45 @@ export type Database = {
         }
         Relationships: []
       }
+      session_analytics: {
+        Row: {
+          abandoned_cart: boolean | null
+          bounce_rate: number | null
+          conversion_funnel_stage: string | null
+          id: string
+          occurred_at: string | null
+          page_views: number | null
+          session_id: string | null
+          synced_at: string | null
+          time_on_site: number | null
+          user_id: string | null
+        }
+        Insert: {
+          abandoned_cart?: boolean | null
+          bounce_rate?: number | null
+          conversion_funnel_stage?: string | null
+          id?: string
+          occurred_at?: string | null
+          page_views?: number | null
+          session_id?: string | null
+          synced_at?: string | null
+          time_on_site?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          abandoned_cart?: boolean | null
+          bounce_rate?: number | null
+          conversion_funnel_stage?: string | null
+          id?: string
+          occurred_at?: string | null
+          page_views?: number | null
+          session_id?: string | null
+          synced_at?: string | null
+          time_on_site?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       social_credentials: {
         Row: {
           browser_events_enabled: boolean | null
@@ -1597,6 +1783,39 @@ export type Database = {
           tracking_mode?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      social_engagement_data: {
+        Row: {
+          engagement_type: string | null
+          engagement_value: Json | null
+          id: string
+          occurred_at: string | null
+          platform: string
+          post_id: string | null
+          synced_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          engagement_type?: string | null
+          engagement_value?: Json | null
+          id?: string
+          occurred_at?: string | null
+          platform: string
+          post_id?: string | null
+          synced_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          engagement_type?: string | null
+          engagement_value?: Json | null
+          id?: string
+          occurred_at?: string | null
+          platform?: string
+          post_id?: string | null
+          synced_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1924,29 +2143,35 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birthdate: string | null
+          community_engagement_score: number | null
           created_at: string | null
           display_name: string | null
           era_current: number | null
           era_label: string | null
+          external_ids: Json | null
           gender: string | null
           heartbeat_member_id: string | null
           id: string
           intro_answers: Json | null
           is_online: boolean | null
           is_public: boolean | null
+          jrny_member_id: string | null
           last_active_at: string | null
           last_login: string | null
           latitude: number | null
           listen_time: number | null
           location: string | null
           longitude: number | null
+          membership_tier: string | null
           mrr: number | null
           products_purchased: string[] | null
           ptp_current: number | null
           ptp_status: string | null
+          purchase_history: Json | null
           real_name: string | null
           tier: string | null
           total_spend: number | null
+          tunepipe_subscriber_id: string | null
           updated_at: string | null
           user_id: string
           watch_time: number | null
@@ -1955,29 +2180,35 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          community_engagement_score?: number | null
           created_at?: string | null
           display_name?: string | null
           era_current?: number | null
           era_label?: string | null
+          external_ids?: Json | null
           gender?: string | null
           heartbeat_member_id?: string | null
           id?: string
           intro_answers?: Json | null
           is_online?: boolean | null
           is_public?: boolean | null
+          jrny_member_id?: string | null
           last_active_at?: string | null
           last_login?: string | null
           latitude?: number | null
           listen_time?: number | null
           location?: string | null
           longitude?: number | null
+          membership_tier?: string | null
           mrr?: number | null
           products_purchased?: string[] | null
           ptp_current?: number | null
           ptp_status?: string | null
+          purchase_history?: Json | null
           real_name?: string | null
           tier?: string | null
           total_spend?: number | null
+          tunepipe_subscriber_id?: string | null
           updated_at?: string | null
           user_id: string
           watch_time?: number | null
@@ -1986,29 +2217,35 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          community_engagement_score?: number | null
           created_at?: string | null
           display_name?: string | null
           era_current?: number | null
           era_label?: string | null
+          external_ids?: Json | null
           gender?: string | null
           heartbeat_member_id?: string | null
           id?: string
           intro_answers?: Json | null
           is_online?: boolean | null
           is_public?: boolean | null
+          jrny_member_id?: string | null
           last_active_at?: string | null
           last_login?: string | null
           latitude?: number | null
           listen_time?: number | null
           location?: string | null
           longitude?: number | null
+          membership_tier?: string | null
           mrr?: number | null
           products_purchased?: string[] | null
           ptp_current?: number | null
           ptp_status?: string | null
+          purchase_history?: Json | null
           real_name?: string | null
           tier?: string | null
           total_spend?: number | null
+          tunepipe_subscriber_id?: string | null
           updated_at?: string | null
           user_id?: string
           watch_time?: number | null
