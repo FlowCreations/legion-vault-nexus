@@ -54,71 +54,101 @@ serve(async (req) => {
       throw new Error('Pixel ID not found in credentials');
     }
 
-    console.log(`Fetching insights for Pixel ID: ${pixelId}`);
+    console.log(`Aggregating insights from user_events for Pixel ID: ${pixelId}`);
 
     // Calculate date range (last 30 days)
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    const since = Math.floor(startDate.getTime() / 1000);
-    const until = Math.floor(endDate.getTime() / 1000);
+    console.log('Date range:', { start: startDate.toISOString(), end: endDate.toISOString() });
 
-    // Fetch pixel stats from Facebook Graph API
-    const apiUrl = `https://graph.facebook.com/v24.0/${pixelId}/stats`;
-    const params = new URLSearchParams({
-      access_token: metaAccessToken,
-      fields: 'name,values',
-      aggregation: 'event',
-      since: since.toString(),
-      until: until.toString(),
-    });
+    // Query user_events table for Meta Pixel events
+    const { data: events, error: eventsError } = await supabase
+      .from('user_events')
+      .select('event_type, created_at, session_id, user_id, event_data')
+      .like('event_type', 'meta_pixel_%')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
+      .order('created_at', { ascending: false });
 
-    console.log('Calling Facebook Graph API:', apiUrl);
-    const response = await fetch(`${apiUrl}?${params}`);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Facebook API error:', response.status, errorText);
-      throw new Error(`Facebook API error: ${response.status} - ${errorText}`);
+    if (eventsError) {
+      console.error('Error fetching user_events:', eventsError);
+      throw new Error(`Database error: ${eventsError.message}`);
     }
 
-    const pixelStats: FacebookPixelStats = await response.json();
-    console.log('Received pixel stats:', JSON.stringify(pixelStats, null, 2));
+    console.log(`Found ${events?.length || 0} Meta Pixel events in user_events table`);
 
     // Process and aggregate data by date
     const dailyInsights: Record<string, any> = {};
 
-    if (pixelStats.data) {
-      for (const stat of pixelStats.data) {
-        const eventName = stat.name;
+    if (events && events.length > 0) {
+      for (const event of events) {
+        // Extract date from created_at
+        const date = event.created_at.split('T')[0];
         
-        for (const value of stat.values) {
-          const date = value.end_time.split('T')[0];
+        // Remove 'meta_pixel_' prefix to get the actual event name
+        const eventName = event.event_type.replace('meta_pixel_', '');
+        
+        // Initialize daily insights object if it doesn't exist
+        if (!dailyInsights[date]) {
+          dailyInsights[date] = {
+            pixel_id: pixelId,
+            date,
+            event_counts: {},
+            unique_users: 0,
+            conversions: 0,
+            revenue: 0,
+            impressions: 0,
+            clicks: 0,
+            ctr: 0,
+            uniqueSessions: new Set(), // Temporary for counting unique sessions
+          };
+        }
+        
+        // Count this event
+        dailyInsights[date].event_counts[eventName] = 
+          (dailyInsights[date].event_counts[eventName] || 0) + 1;
+        
+        // Track unique sessions/users
+        const sessionKey = event.session_id || event.user_id;
+        if (sessionKey) {
+          dailyInsights[date].uniqueSessions.add(sessionKey);
+        }
+        
+        // Update specific metrics based on event type
+        if (eventName === 'Purchase') {
+          dailyInsights[date].conversions += 1;
           
-          if (!dailyInsights[date]) {
-            dailyInsights[date] = {
-              pixel_id: pixelId,
-              date,
-              event_counts: {},
-              unique_users: 0,
-              conversions: 0,
-              revenue: 0,
-              impressions: 0,
-              clicks: 0,
-              ctr: 0,
-            };
+          // Try to extract revenue from event_data
+          if (event.event_data && typeof event.event_data === 'object') {
+            const value = (event.event_data as any).value || 
+                         (event.event_data as any).revenue || 
+                         (event.event_data as any).amount;
+            if (value && !isNaN(parseFloat(value))) {
+              dailyInsights[date].revenue += parseFloat(value);
+            }
           }
-          
-          dailyInsights[date].event_counts[eventName] = value.value;
-          
-          // Update specific metrics
-          if (eventName === 'Purchase') {
-            dailyInsights[date].conversions += value.value;
-          }
-          if (eventName === 'PageView') {
-            dailyInsights[date].impressions += value.value;
-          }
+        }
+        
+        if (eventName === 'PageView') {
+          dailyInsights[date].impressions += 1;
+        }
+        
+        // Count clicks (AddToCart, InitiateCheckout, etc. are click-like events)
+        if (['AddToCart', 'InitiateCheckout', 'ViewContent', 'AddPaymentInfo'].includes(eventName)) {
+          dailyInsights[date].clicks += 1;
+        }
+      }
+      
+      // Convert unique sessions Set to count and calculate CTR
+      for (const date in dailyInsights) {
+        dailyInsights[date].unique_users = dailyInsights[date].uniqueSessions.size;
+        delete dailyInsights[date].uniqueSessions; // Remove temporary Set
+        
+        // Calculate CTR (Click-Through Rate)
+        if (dailyInsights[date].impressions > 0) {
+          dailyInsights[date].ctr = dailyInsights[date].clicks / dailyInsights[date].impressions;
         }
       }
     }
@@ -141,26 +171,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch revenue data from Purchase events
-    const revenueUrl = `https://graph.facebook.com/v24.0/${pixelId}/events`;
-    const revenueParams = new URLSearchParams({
-      access_token: metaAccessToken,
-      event: 'Purchase',
-      aggregation: 'value',
-      since: since.toString(),
-      until: until.toString(),
-    });
-
-    const revenueResponse = await fetch(`${revenueUrl}?${revenueParams}`);
-    if (revenueResponse.ok) {
-      const revenueData = await revenueResponse.json();
-      console.log('Revenue data:', JSON.stringify(revenueData, null, 2));
-      
-      // Update revenue in insights (if available)
-      // This would require additional processing based on Facebook's response format
-    }
-
-    console.log('Meta Pixel insights sync completed successfully');
+    console.log('Meta Pixel insights aggregation completed successfully from user_events table');
 
     return new Response(
       JSON.stringify({
