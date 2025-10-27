@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import spinningRecord from "@/assets/spinning-record.mp4";
 import apparelVideo from "@/assets/apparel-video.mp4";
+import { useEventTracking } from "@/hooks/useEventTracking";
 import {
   Carousel,
   CarouselContent,
@@ -48,6 +49,7 @@ interface Product {
 }
 
 export default function Merch() {
+  const { trackEvent } = useEventTracking();
   const [activeCategory, setActiveCategory] = useState("apparel");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,6 +170,13 @@ export default function Merch() {
 
 
   const handleAddToCart = async (product: Product) => {
+    trackEvent('add_to_cart', {
+      id: product.id,
+      name: product.title,
+      category: product.category,
+      price: product.base_price
+    });
+
     // For products with variants, open customizer
     if (product.variants && product.variants.length > 0) {
       setSelectedProduct(product);

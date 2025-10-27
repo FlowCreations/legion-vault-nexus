@@ -8,6 +8,7 @@ import { StripeCheckout } from "@/components/StripeCheckout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
+import { useEventTracking } from "@/hooks/useEventTracking";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/carousel";
 
 export default function Music() {
+  const { trackEvent } = useEventTracking();
   const navigate = useNavigate();
   const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
@@ -83,6 +85,12 @@ export default function Music() {
       console.warn('Track has no URL:', track);
       return;
     }
+    
+    trackEvent('play_music', {
+      title: track.title,
+      artist: track.artist,
+      album: track.album
+    });
     
     if (trackList) {
       const index = trackList.findIndex(t => t.id === track.id);

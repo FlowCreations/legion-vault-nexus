@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Music2, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
 import contactVideo from "@/assets/contact-video.mp4";
+import { useEventTracking } from "@/hooks/useEventTracking";
 
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
@@ -21,6 +22,7 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function Contact() {
+  const { trackEvent } = useEventTracking();
   const { toast } = useToast();
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -35,6 +37,9 @@ export default function Contact() {
 
   const onSubmit = (data: ContactFormData) => {
     console.log("Form submitted:", data);
+    trackEvent('contact_form', {
+      subject: data.subject
+    });
     toast({
       title: "Message sent!",
       description: "We'll get back to you as soon as possible.",

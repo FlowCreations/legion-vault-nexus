@@ -5,8 +5,10 @@ import { Play, Sparkles } from "lucide-react";
 import solLogo from "@/assets/sol-logo-new.png";
 import LogoIntro from "@/components/LogoIntro";
 import { CameoDisplay } from "@/components/CameoDisplay";
+import { useEventTracking } from "@/hooks/useEventTracking";
 
 export default function Home() {
+  const { trackEvent } = useEventTracking();
   const [showIntro, setShowIntro] = useState(() => {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
@@ -64,6 +66,7 @@ export default function Home() {
               size="lg" 
               className="group bg-gradient-gold hover:shadow-glow transition-all duration-300 text-primary-foreground"
               asChild
+              onClick={() => trackEvent('view_video', { source: 'hero_cta' })}
             >
               <Link to="/videos">
                 <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
@@ -75,6 +78,7 @@ export default function Home() {
               variant="secondary"
               className="hover:shadow-glow transition-all duration-300"
               asChild
+              onClick={() => trackEvent('view_album', { name: 'Free EP', source: 'hero_cta' })}
             >
               <Link to="/free-ep">
                 <Sparkles className="w-5 h-5 mr-2" />
@@ -86,6 +90,7 @@ export default function Home() {
               variant="outline"
               className="border-primary/30 hover:border-primary hover:bg-card/50"
               asChild
+              onClick={() => trackEvent('view_product', { category: 'music', source: 'hero_cta' })}
             >
               <Link to="/music">
                 Explore Music
@@ -180,6 +185,7 @@ export default function Home() {
                   className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
                   variant={tier.featured ? 'default' : 'outline'}
                   asChild
+                  onClick={() => trackEvent('subscribe', { tier: tier.name, price: tier.price, source: 'home_tiers' })}
                 >
                   <Link to="/community">Subscribe</Link>
                 </Button>

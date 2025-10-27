@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Check, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useEventTracking } from "@/hooks/useEventTracking";
 
 // Mapping of tier names to Stripe price IDs
 const TIER_PRICE_IDS: Record<string, string> = {
@@ -14,6 +15,7 @@ const TIER_PRICE_IDS: Record<string, string> = {
 };
 
 export default function Subscribe() {
+  const { trackEvent } = useEventTracking();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
@@ -34,6 +36,13 @@ export default function Subscribe() {
       navigate("/auth");
       return;
     }
+
+    const tier = memberTiers.find(t => t.name === tierName);
+    trackEvent('initiate_checkout', {
+      tier: tierName,
+      price: tier?.price,
+      type: 'subscription'
+    });
 
     setLoadingTier(tierName);
     try {

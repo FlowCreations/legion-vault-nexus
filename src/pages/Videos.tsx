@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEventTracking } from "@/hooks/useEventTracking";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ interface VideoItem {
 }
 
 export default function Videos() {
+  const { trackEvent } = useEventTracking();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [heroVideoUrl, setHeroVideoUrl] = useState<string>("");
   const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
@@ -155,6 +157,14 @@ export default function Videos() {
 
   const handleVideoClick = async (video: VideoItem) => {
     console.log('Video clicked, authenticated:', isAuthenticated);
+    
+    trackEvent('view_video', {
+      id: video.id,
+      title: video.title,
+      category: video.category,
+      is_premium: video.is_premium
+    });
+
     if (!isAuthenticated) {
       setShowAuthDialog(true);
       return;
