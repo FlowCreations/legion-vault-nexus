@@ -650,6 +650,9 @@ export type Database = {
       }
       email_campaigns: {
         Row: {
+          ai_generated: boolean | null
+          analytics: Json | null
+          campaign_goal: string | null
           campaign_type: string | null
           created_at: string | null
           created_by: string | null
@@ -662,9 +665,13 @@ export type Database = {
           sent_at: string | null
           status: string | null
           subject: string
+          tone: string | null
           updated_at: string | null
         }
         Insert: {
+          ai_generated?: boolean | null
+          analytics?: Json | null
+          campaign_goal?: string | null
           campaign_type?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -677,9 +684,13 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           subject: string
+          tone?: string | null
           updated_at?: string | null
         }
         Update: {
+          ai_generated?: boolean | null
+          analytics?: Json | null
+          campaign_goal?: string | null
           campaign_type?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -692,6 +703,7 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           subject?: string
+          tone?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -790,9 +802,11 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_custom: boolean | null
           name: string
           subject: string
           template_code: string
+          thumbnail_url: string | null
           updated_at: string | null
           variables: Json | null
         }
@@ -801,9 +815,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_custom?: boolean | null
           name: string
           subject: string
           template_code: string
+          thumbnail_url?: string | null
           updated_at?: string | null
           variables?: Json | null
         }
@@ -812,9 +828,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_custom?: boolean | null
           name?: string
           subject?: string
           template_code?: string
+          thumbnail_url?: string | null
           updated_at?: string | null
           variables?: Json | null
         }

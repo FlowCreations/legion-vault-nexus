@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Mail, Users, BarChart3, Zap, FileText, Plus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EmailListBuilder } from "./EmailListBuilder";
 import { EmailListCard } from "./EmailListCard";
+import { CampaignBuilder } from "./CampaignBuilder";
+import { CampaignAnalytics } from "./CampaignAnalytics";
 import { createSmartLists } from "./SmartListTemplates";
 import {
   AlertDialog,
@@ -22,8 +25,12 @@ import {
 export const EmailMarketing = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [lists, setLists] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [showCampaignBuilder, setShowCampaignBuilder] = useState(false);
+  const [showCampaignAnalytics, setShowCampaignAnalytics] = useState<string | null>(null);
   const [editingList, setEditingList] = useState<any>(null);
   const [deletingList, setDeletingList] = useState<any>(null);
   const [smartListsCreated, setSmartListsCreated] = useState(false);
@@ -31,6 +38,8 @@ export const EmailMarketing = () => {
   useEffect(() => {
     if (activeTab === "lists") {
       loadLists();
+    } else if (activeTab === "campaigns") {
+      loadCampaigns();
     }
   }, [activeTab]);
 
@@ -54,6 +63,23 @@ export const EmailMarketing = () => {
       toast.error("Failed to load lists");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCampaigns = async () => {
+    setLoadingCampaigns(true);
+    try {
+      const { data, error } = await supabase
+        .from('email_campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setCampaigns(data || []);
+    } catch (error: any) {
+      toast.error("Failed to load campaigns");
+    } finally {
+      setLoadingCampaigns(false);
     }
   };
 
@@ -130,8 +156,8 @@ export const EmailMarketing = () => {
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">This month</p>
+                <div className="text-2xl font-bold">{campaigns.length}</div>
+                <p className="text-xs text-muted-foreground">Total</p>
               </CardContent>
             </Card>
 
@@ -236,15 +262,64 @@ export const EmailMarketing = () => {
         </TabsContent>
 
         <TabsContent value="campaigns">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Campaigns</CardTitle>
-              <CardDescription>Send broadcast emails to your segments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Campaign builder coming in Phase 3</p>
-            </CardContent>
-          </Card>
+          {showCampaignBuilder ? (
+            <CampaignBuilder
+              onClose={() => setShowCampaignBuilder(false)}
+              onSave={() => {
+                setShowCampaignBuilder(false);
+                loadCampaigns();
+              }}
+            />
+          ) : showCampaignAnalytics ? (
+            <div>
+              <Button variant="outline" className="mb-4" onClick={() => setShowCampaignAnalytics(null)}>
+                ← Back
+              </Button>
+              <CampaignAnalytics campaignId={showCampaignAnalytics} />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Email Campaigns</CardTitle>
+                    <CardDescription>Send broadcast emails to your segments</CardDescription>
+                  </div>
+                  <Button onClick={() => setShowCampaignBuilder(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Campaign
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingCampaigns ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : campaigns.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No campaigns yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {campaigns.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => setShowCampaignAnalytics(c.id)}
+                        className="p-4 border rounded hover:bg-accent cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">{c.name}</h4>
+                            <p className="text-sm text-muted-foreground">{c.subject}</p>
+                          </div>
+                          <Badge>{c.status}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="automations">
