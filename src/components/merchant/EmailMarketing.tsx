@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Users, BarChart3, Zap, FileText, Plus, Loader2 } from "lucide-react";
+import { Mail, Users, BarChart3, Zap, Plus, Loader2, ShoppingCart, Star, Mail as MailIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EmailListBuilder } from "./EmailListBuilder";
@@ -11,6 +11,9 @@ import { EmailListCard } from "./EmailListCard";
 import { CampaignBuilder } from "./CampaignBuilder";
 import { CampaignAnalytics } from "./CampaignAnalytics";
 import { createSmartLists } from "./SmartListTemplates";
+import { AutomationBuilder } from "./AutomationBuilder";
+import { AUTOMATION_TEMPLATES } from "./AutomationTemplates";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,12 +37,18 @@ export const EmailMarketing = () => {
   const [editingList, setEditingList] = useState<any>(null);
   const [deletingList, setDeletingList] = useState<any>(null);
   const [smartListsCreated, setSmartListsCreated] = useState(false);
+  const [automations, setAutomations] = useState<any[]>([]);
+  const [loadingAutomations, setLoadingAutomations] = useState(false);
+  const [showAutomationBuilder, setShowAutomationBuilder] = useState(false);
+  const [editingAutomationId, setEditingAutomationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === "lists") {
       loadLists();
     } else if (activeTab === "campaigns") {
       loadCampaigns();
+    } else if (activeTab === "automations") {
+      loadAutomations();
     }
   }, [activeTab]);
 
@@ -83,6 +92,81 @@ export const EmailMarketing = () => {
     }
   };
 
+  const loadAutomations = async () => {
+    setLoadingAutomations(true);
+    try {
+      const { data, error } = await supabase
+        .from('automation_sequences')
+        .select(`
+          *,
+          enrollments:automation_enrollments(count)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      const automationsWithCounts = (data || []).map(automation => ({
+        ...automation,
+        enrollments_count: automation.enrollments?.[0]?.count || 0
+      }));
+      
+      setAutomations(automationsWithCounts);
+    } catch (error: any) {
+      toast.error("Failed to load automations");
+    } finally {
+      setLoadingAutomations(false);
+    }
+  };
+
+  const createFromTemplate = async (templateName: string) => {
+    const template = AUTOMATION_TEMPLATES.find(t => t.name === templateName);
+    if (!template) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('automation_sequences')
+        .insert({
+          name: template.name,
+          description: template.description,
+          trigger_type: template.trigger_type,
+          trigger_rules: template.trigger_rules as any || {},
+          steps: template.steps as any,
+          is_active: false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success(`Created automation: ${template.name}`);
+      setEditingAutomationId(data.id);
+      setShowAutomationBuilder(true);
+    } catch (error: any) {
+      toast.error("Failed to create automation from template");
+    }
+  };
+
+  const toggleAutomation = async (automationId: string) => {
+    const automation = automations.find(a => a.id === automationId);
+    if (!automation) return;
+
+    const newStatus = !automation.is_active;
+
+    try {
+      const { error } = await supabase
+        .from('automation_sequences')
+        .update({ is_active: newStatus })
+        .eq('id', automationId);
+
+      if (error) throw error;
+
+      toast.success(newStatus ? 'Automation activated' : 'Automation deactivated');
+      loadAutomations();
+    } catch (error: any) {
+      toast.error('Failed to update automation status');
+    }
+  };
+
   const handleDeleteList = async () => {
     if (!deletingList) return;
     
@@ -114,7 +198,7 @@ export const EmailMarketing = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Overview
@@ -130,10 +214,6 @@ export const EmailMarketing = () => {
           <TabsTrigger value="automations" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Automations
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Templates
           </TabsTrigger>
         </TabsList>
 
@@ -178,7 +258,9 @@ export const EmailMarketing = () => {
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-2xl font-bold">
+                  {automations.filter(a => a.is_active).length}
+                </div>
                 <p className="text-xs text-muted-foreground">Running sequences</p>
               </CardContent>
             </Card>
@@ -323,27 +405,174 @@ export const EmailMarketing = () => {
         </TabsContent>
 
         <TabsContent value="automations">
-          <Card>
-            <CardHeader>
-              <CardTitle>Automation Sequences</CardTitle>
-              <CardDescription>Build behavior-triggered email flows</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Automation builder coming in Phase 4</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {showAutomationBuilder ? (
+            <AutomationBuilder
+              automationId={editingAutomationId || undefined}
+              isNew={!editingAutomationId}
+              onClose={() => {
+                setShowAutomationBuilder(false);
+                setEditingAutomationId(null);
+              }}
+              onSave={() => {
+                setShowAutomationBuilder(false);
+                setEditingAutomationId(null);
+                loadAutomations();
+              }}
+            />
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Automation Sequences</h2>
+                  <p className="text-muted-foreground">
+                    Behavior-driven email flows that run automatically
+                  </p>
+                </div>
+                <Button onClick={() => {
+                  setEditingAutomationId(null);
+                  setShowAutomationBuilder(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Automation
+                </Button>
+              </div>
 
-        <TabsContent value="templates">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Templates</CardTitle>
-              <CardDescription>Pre-built templates for common scenarios</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Template library coming in Phase 3</p>
-            </CardContent>
-          </Card>
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Start from a Template</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors" 
+                    onClick={() => createFromTemplate('Welcome Series')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <MailIcon className="h-5 w-5" />
+                        Welcome Series
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Onboard new subscribers with a 3-email series
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => createFromTemplate('Abandoned Cart Recovery')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <ShoppingCart className="h-5 w-5" />
+                        Abandoned Cart
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Recover sales with timely reminders
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => createFromTemplate('VIP Engagement Flow')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Star className="h-5 w-5" />
+                        VIP Engagement
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Nurture your top fans with exclusive content
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => createFromTemplate('Re-engagement Campaign')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Zap className="h-5 w-5" />
+                        Re-engagement
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Win back inactive subscribers
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Your Automations</h3>
+                {loadingAutomations ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : automations.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No automations yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Create your first automation or start from a template
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {automations.map((automation) => (
+                      <Card key={automation.id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4 className="font-semibold text-lg">{automation.name}</h4>
+                              <Badge variant={automation.is_active ? "default" : "secondary"}>
+                                {automation.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {automation.description}
+                            </p>
+                            <div className="flex items-center gap-4">
+                              <Badge variant="outline" className="text-xs">
+                                <Users className="h-3 w-3 mr-1" />
+                                {automation.enrollments_count} enrolled
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {automation.trigger_type}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {automation.steps?.length || 0} steps
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingAutomationId(automation.id);
+                                setShowAutomationBuilder(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                {automation.is_active ? "On" : "Off"}
+                              </span>
+                              <Switch
+                                checked={automation.is_active}
+                                onCheckedChange={() => toggleAutomation(automation.id)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
