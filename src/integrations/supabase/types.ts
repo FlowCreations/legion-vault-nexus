@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_test_assignments: {
+        Row: {
+          assigned_at: string | null
+          campaign_id: string | null
+          id: string
+          user_id: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          campaign_id?: string | null
+          id?: string
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          campaign_id?: string | null
+          id?: string
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_test_assignments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_test_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ab_test_assignments_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "ab_test_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ab_test_variants: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          email_body: string | null
+          id: string
+          is_winner: boolean | null
+          subject_line: string | null
+          traffic_percentage: number | null
+          variant_name: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          email_body?: string | null
+          id?: string
+          is_winner?: boolean | null
+          subject_line?: string | null
+          traffic_percentage?: number | null
+          variant_name: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          email_body?: string | null
+          id?: string
+          is_winner?: boolean | null
+          subject_line?: string | null
+          traffic_percentage?: number | null
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_test_variants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_content: {
         Row: {
           affiliate_id: string | null
@@ -198,6 +285,57 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_enrollments: {
+        Row: {
+          automation_id: string | null
+          completed_at: string | null
+          current_step_index: number | null
+          enrolled_at: string | null
+          exit_reason: string | null
+          id: string
+          metadata: Json | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          automation_id?: string | null
+          completed_at?: string | null
+          current_step_index?: number | null
+          enrolled_at?: string | null
+          exit_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          automation_id?: string | null
+          completed_at?: string | null
+          current_step_index?: number | null
+          enrolled_at?: string | null
+          exit_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_enrollments_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automation_sequences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       automation_sequences: {
         Row: {
           created_at: string | null
@@ -233,6 +371,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      automation_step_executions: {
+        Row: {
+          created_at: string | null
+          enrollment_id: string | null
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          result: Json | null
+          scheduled_for: string
+          status: string | null
+          step_index: number
+          step_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          enrollment_id?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          result?: Json | null
+          scheduled_for: string
+          status?: string | null
+          step_index: number
+          step_type: string
+        }
+        Update: {
+          created_at?: string | null
+          enrollment_id?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          result?: Json | null
+          scheduled_for?: string
+          status?: string | null
+          step_index?: number
+          step_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_step_executions_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "automation_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brand_partnerships: {
         Row: {
@@ -665,8 +850,10 @@ export type Database = {
           sent_at: string | null
           status: string | null
           subject: string
+          test_duration: number | null
           tone: string | null
           updated_at: string | null
+          winner_criteria: string | null
         }
         Insert: {
           ai_generated?: boolean | null
@@ -684,8 +871,10 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           subject: string
+          test_duration?: number | null
           tone?: string | null
           updated_at?: string | null
+          winner_criteria?: string | null
         }
         Update: {
           ai_generated?: boolean | null
@@ -703,8 +892,10 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           subject?: string
+          test_duration?: number | null
           tone?: string | null
           updated_at?: string | null
+          winner_criteria?: string | null
         }
         Relationships: [
           {
@@ -1844,6 +2035,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_send_preferences: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          last_calculated_at: string | null
+          open_pattern: Json | null
+          optimal_send_day: string | null
+          optimal_send_hour: number | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          last_calculated_at?: string | null
+          open_pattern?: Json | null
+          optimal_send_day?: string | null
+          optimal_send_hour?: number | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          last_calculated_at?: string | null
+          open_pattern?: Json | null
+          optimal_send_day?: string | null
+          optimal_send_hour?: number | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_send_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       videos: {
         Row: {
