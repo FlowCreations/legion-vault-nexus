@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import clientsData from '@/data/clients.json';
@@ -19,9 +19,13 @@ export const GlobalReachMap = () => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [activeTab, setActiveTab] = useState<'america' | 'world'>('america');
   const [isPaused, setIsPaused] = useState(false);
-  const spinEnabledRef = useRef(true);
-  const userInteractingRef = useRef(false);
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Interaction state refs
+  const isInteractingRef = useRef(false);
+  const userPausedRef = useRef(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(Date.now());
 
   // Filter clients by active tab and validate coordinates
   const filteredClients = useMemo(() => {
@@ -56,34 +60,55 @@ export const GlobalReachMap = () => {
     };
   }, [filteredClients]);
 
-  // Globe rotation logic
-  const spinGlobe = useCallback(() => {
-    if (!map.current || !spinEnabledRef.current) return;
+  // Auto-rotation loop using requestAnimationFrame
+  useEffect(() => {
+    const speedDegPerSec = 3;
 
-    const secondsPerRevolution = 120;
-    const maxSpinZoom = 5;
-    const slowSpinZoom = 3;
-
-    const zoom = map.current.getZoom();
-    if (!userInteractingRef.current && zoom < maxSpinZoom) {
-      let distancePerSecond = 360 / secondsPerRevolution;
-      if (zoom > slowSpinZoom) {
-        const zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
-        distancePerSecond *= zoomDif;
+    function animate() {
+      if (!map.current) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return;
       }
-      const center = map.current.getCenter();
-      center.lng -= distancePerSecond;
-      map.current.easeTo({ center, duration: 1000, easing: (n) => n });
+
+      const now = Date.now();
+      const dtSeconds = (now - lastTimeRef.current) / 1000;
+      lastTimeRef.current = now;
+
+      // Only rotate if NOT paused by user AND NOT currently interacting
+      if (!userPausedRef.current && !isInteractingRef.current) {
+        const center = map.current.getCenter();
+        map.current.setCenter({
+          lng: center.lng - speedDegPerSec * dtSeconds,
+          lat: center.lat,
+        });
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animate);
     }
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
-  const toggleSpin = useCallback(() => {
-    setIsPaused(!isPaused);
-    spinEnabledRef.current = !spinEnabledRef.current;
-    if (!isPaused) {
-      spinGlobe();
+  // Pause/Play toggle handler
+  const toggleSpin = () => {
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
+    userPausedRef.current = newPausedState;
+    
+    if (newPausedState) {
+      // Paused - stop rotation
+      isInteractingRef.current = true;
+    } else {
+      // Playing - resume rotation
+      isInteractingRef.current = false;
     }
-  }, [isPaused, spinGlobe]);
+  };
 
   // Initialize map
   useEffect(() => {
@@ -99,6 +124,12 @@ export const GlobalReachMap = () => {
       zoom: 2.2,
       pitch: 0,
       bearing: 0,
+      // Enable all interactions
+      dragPan: true,
+      scrollZoom: true,
+      boxZoom: true,
+      keyboard: true,
+      touchZoomRotate: true,
     });
 
     // Add navigation controls
@@ -108,9 +139,6 @@ export const GlobalReachMap = () => {
       }),
       'top-right'
     );
-
-    // Disable scroll zoom for smoother experience
-    map.current.scrollZoom.disable();
 
     // Setup fog/atmosphere
     map.current.on('style.load', () => {
@@ -122,6 +150,30 @@ export const GlobalReachMap = () => {
         'star-intensity': 0.8,
       });
     });
+
+    // Interaction handlers
+    function onInteractStart() {
+      isInteractingRef.current = true;
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    }
+
+    function onInteractEnd() {
+      if (userPausedRef.current) return; // User explicitly paused, never auto-resume
+      
+      idleTimerRef.current = setTimeout(() => {
+        isInteractingRef.current = false;
+      }, 4000);
+    }
+
+    map.current.on('dragstart', onInteractStart);
+    map.current.on('zoomstart', onInteractStart);
+    map.current.on('rotatestart', onInteractStart);
+
+    map.current.on('dragend', onInteractEnd);
+    map.current.on('zoomend', onInteractEnd);
+    map.current.on('rotateend', onInteractEnd);
 
     // Add source and layers when map loads
     map.current.on('load', () => {
@@ -190,43 +242,17 @@ export const GlobalReachMap = () => {
       });
     });
 
-    // Interaction handlers for auto-rotation
-    map.current.on('dragstart', () => {
-      userInteractingRef.current = true;
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current);
-      }
-    });
-
-    map.current.on('dragend', () => {
-      userInteractingRef.current = false;
-      if (!isPaused && spinEnabledRef.current) {
-        pauseTimeoutRef.current = setTimeout(() => {
-          spinGlobe();
-        }, 4000);
-      }
-    });
-
-    map.current.on('moveend', () => {
-      if (!userInteractingRef.current && spinEnabledRef.current) {
-        spinGlobe();
-      }
-    });
-
-    // Start spinning
-    spinGlobe();
-
     // Cleanup
     return () => {
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current);
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
       }
       map.current?.remove();
       map.current = null;
     };
   }, []);
 
-    // Update source data when tab changes
+  // Update source data when tab changes
   useEffect(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
 
@@ -283,7 +309,7 @@ export const GlobalReachMap = () => {
         <button
           onClick={toggleSpin}
           className="absolute top-4 left-4 z-10 w-10 h-10 flex items-center justify-center bg-black/60 border border-white/20 rounded-lg hover:bg-black/80 hover:border-blue-500 transition-all text-white text-sm"
-          title={isPaused ? 'Resume rotation' : 'Pause rotation'}
+          title={isPaused ? 'Play Globe' : 'Pause Globe'}
         >
           {isPaused ? '▶' : '❚❚'}
         </button>
@@ -291,3 +317,4 @@ export const GlobalReachMap = () => {
     </div>
   );
 };
+
