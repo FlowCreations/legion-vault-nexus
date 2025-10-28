@@ -474,23 +474,26 @@ export const parseAudienceDemographics = async (): Promise<AudienceDemographicsD
         transformHeader: (h) => h.trim().replace(/^"|"$/g, ''),
         complete: (results) => {
           const rows = results.data as any[];
+          
+          console.log('✅ Demographics CSV columns:', Object.keys(rows[0] || {}));
+          
           const data: AudienceDemographicsData[] = rows
             .filter(r => {
-              const ageGroup = (r['Age Group'] || r['age group'] || '').toLowerCase();
+              const ageGroup = (r['Age group'] || '').toLowerCase();
               return ageGroup && !ageGroup.includes('overall') && ageGroup.trim() !== '';
             })
             .map(r => {
-              const male = parseNumber(r['Male Count'] || r['male count'] || '0');
-              const female = parseNumber(r['Female Count'] || r['female count'] || '0');
-              const youtubeMale = parseNumber(r['YouTube Male'] || r['youtube male'] || '0');
-              const youtubeFemale = parseNumber(r['YouTube Female'] || r['youtube female'] || '0');
-              const instagramMale = parseNumber(r['Instagram Male'] || r['instagram male'] || '0');
-              const instagramFemale = parseNumber(r['Instagram Female'] || r['instagram female'] || '0');
-              const tiktokMale = parseNumber(r['TikTok Male'] || r['tiktok male'] || '0');
-              const tiktokFemale = parseNumber(r['TikTok Female'] || r['tiktok female'] || '0');
+              const male = parseNumber(r['Overall Male'] || '0');
+              const female = parseNumber(r['Overall Female'] || '0');
+              const youtubeMale = parseNumber(r['YouTube Male Subscribers'] || '0');
+              const youtubeFemale = parseNumber(r['YouTube Female Subscribers'] || '0');
+              const instagramMale = parseNumber(r['Instagram Male Followers'] || '0');
+              const instagramFemale = parseNumber(r['Instagram Female Followers'] || '0');
+              const tiktokMale = parseNumber(r['TikTok Male Followers'] || '0');
+              const tiktokFemale = parseNumber(r['TikTok Female Followers'] || '0');
               
               return {
-                ageGroup: r['Age Group'] || r['age group'],
+                ageGroup: r['Age group'],
                 totalCount: male + female,
                 maleCount: male,
                 femaleCount: female,
