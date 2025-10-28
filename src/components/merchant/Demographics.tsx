@@ -319,7 +319,7 @@ export const Demographics = () => {
         {/* Age Distribution - Stacked Bar Chart */}
         <div className="bg-white/5 rounded-lg p-6 border border-white/10">
           <h3 className="text-xl font-bold mb-6">Age Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={ageData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
