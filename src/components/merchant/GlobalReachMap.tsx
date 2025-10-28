@@ -1,24 +1,19 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import clientsData from '@/data/clients.json';
+import { fetchCommunityMembers, getTerritoryGroup, type CommunityMemberPoint } from '@/lib/communityData';
 
-interface Client {
-  id: string;
-  name: string;
-  city: string;
-  region?: string;
-  country: string;
-  lat: number;
-  lng: number;
+type MemberWithTerritory = CommunityMemberPoint & {
   territoryGroup: 'america' | 'world';
-}
+};
 
 export const GlobalReachMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [activeTab, setActiveTab] = useState<'america' | 'world'>('america');
   const [isPaused, setIsPaused] = useState(false);
+  const [members, setMembers] = useState<MemberWithTerritory[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Interaction state refs
   const isInteractingRef = useRef(false);
@@ -27,38 +22,55 @@ export const GlobalReachMap = () => {
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(Date.now());
 
-  // Filter clients by active tab and validate coordinates
-  const filteredClients = useMemo(() => {
-    return (clientsData as Client[]).filter(
-      (c) =>
-        c.territoryGroup === activeTab &&
-        typeof c.lat === 'number' &&
-        typeof c.lng === 'number' &&
-        !isNaN(c.lat) &&
-        !isNaN(c.lng)
-    );
-  }, [activeTab]);
+  // Load community members on mount
+  useEffect(() => {
+    async function loadMembers() {
+      setLoading(true);
+      const communityMembers = await fetchCommunityMembers();
+      
+      // Filter to only valid members with coordinates
+      const validMembers = communityMembers.filter(
+        (m) => typeof m.lat === 'number' && typeof m.lng === 'number'
+      );
+
+      // Add territory group to each member
+      const membersWithTerritory: MemberWithTerritory[] = validMembers.map((m) => ({
+        ...m,
+        territoryGroup: getTerritoryGroup(m.country),
+      }));
+
+      setMembers(membersWithTerritory);
+      setLoading(false);
+    }
+
+    loadMembers();
+  }, []);
+
+  // Filter members by active tab
+  const filteredMembers = useMemo(() => {
+    return members.filter((m) => m.territoryGroup === activeTab);
+  }, [members, activeTab]);
 
   // Convert to GeoJSON with correct [lng, lat] order
   const geojson = useMemo(() => {
     return {
       type: 'FeatureCollection' as const,
-      features: filteredClients.map((c) => ({
+      features: filteredMembers.map((m) => ({
         type: 'Feature' as const,
         geometry: {
           type: 'Point' as const,
-          coordinates: [c.lng, c.lat], // CRITICAL: [lng, lat] order
+          coordinates: [m.lng!, m.lat!], // CRITICAL: [lng, lat] order
         },
         properties: {
-          id: c.id,
-          name: c.name,
-          city: c.city,
-          region: c.region || '',
-          country: c.country,
+          id: m.id,
+          name: m.displayName,
+          city: m.city || '',
+          region: m.region || '',
+          country: m.country || '',
         },
       })),
     };
-  }, [filteredClients]);
+  }, [filteredMembers]);
 
   // Auto-rotation loop using requestAnimationFrame
   useEffect(() => {
@@ -179,13 +191,13 @@ export const GlobalReachMap = () => {
     map.current.on('load', () => {
       if (!map.current) return;
 
-      // Add clients source
+      // Add community members source
       map.current.addSource('clients', {
         type: 'geojson',
         data: geojson,
       });
 
-      // Add circle layer for client markers
+      // Add circle layer for member markers
       map.current.addLayer({
         id: 'client-points',
         type: 'circle',
@@ -205,6 +217,10 @@ export const GlobalReachMap = () => {
         const props = e.features[0].properties;
         const coordinates = (e.features[0].geometry as any).coordinates.slice();
 
+        // Build location string, skipping empty parts
+        const locationParts = [props.city, props.region, props.country].filter(Boolean);
+        const locationString = locationParts.join(', ');
+
         new mapboxgl.Popup({
           closeButton: false,
           className: 'client-popup',
@@ -220,9 +236,7 @@ export const GlobalReachMap = () => {
               font-family: system-ui, -apple-system, sans-serif;
             ">
               <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${props.name}</div>
-              <div style="font-size: 12px; color: rgba(255,255,255,0.7);">
-                ${props.city}${props.region ? ', ' + props.region : ''}, ${props.country}
-              </div>
+              ${locationString ? `<div style="font-size: 12px; color: rgba(255,255,255,0.7);">${locationString}</div>` : ''}
             </div>
           `)
           .addTo(map.current);
@@ -252,7 +266,7 @@ export const GlobalReachMap = () => {
     };
   }, []);
 
-  // Update source data when tab changes
+  // Update source data when members or tab changes
   useEffect(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
 
@@ -298,6 +312,15 @@ export const GlobalReachMap = () => {
 
       {/* Map Container */}
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E] z-20">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading community members...</p>
+            </div>
+          </div>
+        )}
+
         <div ref={mapContainer} className="absolute inset-0" />
 
         {/* Starfield background overlay */}
@@ -313,8 +336,16 @@ export const GlobalReachMap = () => {
         >
           {isPaused ? '▶' : '❚❚'}
         </button>
+
+        {/* Member count badge */}
+        {!loading && (
+          <div className="absolute bottom-4 left-4 z-10 px-3 py-2 bg-black/60 border border-white/20 rounded-lg text-white text-sm">
+            <span className="font-semibold">{filteredMembers.length}</span> members
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
 
