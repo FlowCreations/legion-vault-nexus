@@ -1,0 +1,97 @@
+[
+  {
+    "id": "client_001",
+    "name": "Red Light Management",
+    "city": "Nashville",
+    "region": "TN",
+    "country": "USA",
+    "lat": 36.1627,
+    "lng": -86.7816,
+    "territoryGroup": "america"
+  },
+  {
+    "id": "client_002",
+    "name": "KALEO",
+    "city": "Reykjavík",
+    "country": "Iceland",
+    "lat": 64.1466,
+    "lng": -21.9426,
+    "territoryGroup": "world"
+  },
+  {
+    "id": "client_003",
+    "name": "Chris Stapleton",
+    "city": "Nashville",
+    "region": "TN",
+    "country": "USA",
+    "lat": 36.1627,
+    "lng": -86.7816,
+    "territoryGroup": "america"
+  },
+  {
+    "id": "client_004",
+    "name": "Luke Combs",
+    "city": "Charlotte",
+    "region": "NC",
+    "country": "USA",
+    "lat": 35.2271,
+    "lng": -80.8431,
+    "territoryGroup": "america"
+  },
+  {
+    "id": "client_005",
+    "name": "Daddy Jack",
+    "city": "Austin",
+    "region": "TX",
+    "country": "USA",
+    "lat": 30.2672,
+    "lng": -97.7431,
+    "territoryGroup": "america"
+  },
+  {
+    "id": "client_006",
+    "name": "Adam McInnis",
+    "city": "Los Angeles",
+    "region": "CA",
+    "country": "USA",
+    "lat": 34.0522,
+    "lng": -118.2437,
+    "territoryGroup": "america"
+  },
+  {
+    "id": "client_007",
+    "name": "Ed Sheeran",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "territoryGroup": "world"
+  },
+  {
+    "id": "client_008",
+    "name": "Coldplay",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "territoryGroup": "world"
+  },
+  {
+    "id": "client_009",
+    "name": "AC/DC",
+    "city": "Sydney",
+    "country": "Australia",
+    "lat": -33.8688,
+    "lng": 151.2093,
+    "territoryGroup": "world"
+  },
+  {
+    "id": "client_010",
+    "name": "BTS",
+    "city": "Seoul",
+    "country": "South Korea",
+    "lat": 37.5665,
+    "lng": 126.9780,
+    "territoryGroup": "world"
+  }
+]
