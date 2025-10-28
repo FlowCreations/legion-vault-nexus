@@ -285,9 +285,15 @@ export const Demographics = () => {
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'rgb(18, 18, 18)', 
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '8px',
-                    color: 'white'
+                    color: '#ffffff'
+                  }}
+                  itemStyle={{
+                    color: '#ffffff'
+                  }}
+                  labelStyle={{
+                    color: '#ffffff'
                   }}
                   formatter={(value: any, name: any, props: any) => [
                     `${value} members (${props.payload.percentage})`,
@@ -335,9 +341,15 @@ export const Demographics = () => {
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'rgb(18, 18, 18)', 
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '8px',
-                    color: 'white'
+                    color: '#ffffff'
+                  }}
+                  itemStyle={{
+                    color: '#ffffff'
+                  }}
+                  labelStyle={{
+                    color: '#ffffff'
                   }}
                 />
                 <Legend 
