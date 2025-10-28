@@ -187,11 +187,11 @@ const Merchant = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
               <div className="space-y-8">
-                {/* Original Top Row - Geography and Earnings */}
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Geography />
-                  <EarningsOverview />
-                </div>
+                {/* Earnings - Full Width */}
+                <EarningsOverview />
+                
+                {/* Geography - Full Width Below Earnings */}
+                <Geography />
 
                 <TopTracks period="7days" />
                 <Demographics />
