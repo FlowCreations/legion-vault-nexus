@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Music2 } from "lucide-react";
+import { Music2, Loader2 } from "lucide-react";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import walkingOnTheEdge from "@/assets/walking-on-the-edge.jpg";
 import carolinaSingle from "@/assets/carolina-single.jpg";
+import { parseTopTracks, type TopTrackData } from "@/utils/analyticsDataParser";
 
 // Map track names to album images
 const trackImageMap: Record<string, string> = {
@@ -17,12 +18,7 @@ const trackImageMap: Record<string, string> = {
   "Leave the Light On": outlawAlbum,
 };
 
-interface TopTrack {
-  rank: number;
-  title: string;
-  streams: number;
-  change?: number;
-  percentOfTotal?: number;
+interface TopTrack extends TopTrackData {
   image?: string;
 }
 
@@ -33,24 +29,19 @@ interface TopTracksProps {
 export const TopTracks = ({ period }: TopTracksProps) => {
   const [activeTab, setActiveTab] = useState<"7days" | "28days" | "alltime">(period);
   const [tracks, setTracks] = useState<TopTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTracksData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        // For now, use hardcoded data - will be replaced with Viberate API
-        const hardcodedTracks: TopTrack[] = [
-          { rank: 1, title: "In The Air Tonight", streams: 234567, percentOfTotal: 18.5 },
-          { rank: 2, title: "Fire Starter", streams: 198543, percentOfTotal: 15.7 },
-          { rank: 3, title: "Strange", streams: 176234, percentOfTotal: 13.9 },
-          { rank: 4, title: "Power", streams: 154321, percentOfTotal: 12.2 },
-          { rank: 5, title: "Carolina", streams: 142109, percentOfTotal: 11.2 },
-          { rank: 6, title: "Walking On The Edge", streams: 128456, percentOfTotal: 10.1 },
-          { rank: 7, title: "Remember My Name", streams: 115678, percentOfTotal: 9.1 },
-          { rank: 8, title: "Leave the Light On", streams: 98234, percentOfTotal: 7.8 },
-        ];
-
+        const data = await parseTopTracks(activeTab);
+        
         // Add images to tracks
-        const tracksWithImages = hardcodedTracks.map(track => ({
+        const tracksWithImages = data.map(track => ({
           ...track,
           image: trackImageMap[track.title] || powerAlbum
         }));
@@ -58,6 +49,9 @@ export const TopTracks = ({ period }: TopTracksProps) => {
         setTracks(tracksWithImages);
       } catch (error) {
         console.error('Error loading tracks data:', error);
+        setError('Failed to load track data');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -104,13 +98,23 @@ export const TopTracks = ({ period }: TopTracksProps) => {
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-gray-400 uppercase tracking-wider px-4">
-          <div className="col-span-6">TRACK</div>
-          <div className="col-span-3 text-center">STREAMS</div>
-          <div className="col-span-3 text-right">% OF TOTAL</div>
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-400">
+            {error}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-gray-400 uppercase tracking-wider px-4">
+              <div className="col-span-6">TRACK</div>
+              <div className="col-span-3 text-center">STREAMS</div>
+              <div className="col-span-3 text-right">% OF TOTAL</div>
+            </div>
 
-        {tracks.map((track) => (
+            {tracks.map((track) => (
           <div
             key={track.rank}
             className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
@@ -140,6 +144,8 @@ export const TopTracks = ({ period }: TopTracksProps) => {
             </div>
           </div>
         ))}
+          </>
+        )}
       </div>
     </div>
   );

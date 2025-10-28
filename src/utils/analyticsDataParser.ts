@@ -458,6 +458,53 @@ export const formatPercentage = (percent: number): string => {
   return `${percent >= 0 ? '+' : ''}${percent.toFixed(1)}%`;
 };
 
+export interface TopTrackData {
+  rank: number;
+  title: string;
+  streams: number;
+  percentOfTotal: number;
+}
+
+export const parseTopTracks = async (period: '7days' | '28days' | 'alltime'): Promise<TopTrackData[]> => {
+  try {
+    const fileName = `top-tracks-${period}.csv`;
+    const response = await fetch(`/data/analytics/${fileName}`);
+    if (!response.ok) {
+      console.error(`Failed to fetch ${fileName}:`, response.statusText);
+      return [];
+    }
+    const csvText = await response.text();
+    
+    return new Promise((resolve, reject) => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.trim().replace(/^"|"$/g, ''),
+        complete: (results) => {
+          const rows = results.data as any[];
+          
+          const data: TopTrackData[] = rows.map(row => ({
+            rank: parseInt(row['Rank'] || '0', 10),
+            title: row['Track Name'] || '',
+            streams: parseInt(row['Streams']?.replace(/,/g, '') || '0', 10),
+            percentOfTotal: parseFloat(row['Percent of Total'] || '0'),
+          })).filter(track => track.title && track.rank > 0);
+          
+          console.log(`✅ Top Tracks (${period}) loaded:`, data.length, 'tracks');
+          resolve(data);
+        },
+        error: (error) => {
+          console.error(`❌ Error parsing top tracks (${period}):`, error);
+          reject(error);
+        }
+      });
+    });
+  } catch (error) {
+    console.error(`❌ Error loading top tracks (${period}):`, error);
+    return [];
+  }
+};
+
 export const parseAudienceDemographics = async (): Promise<AudienceDemographicsData[]> => {
   try {
     const response = await fetch('/data/analytics/audience-gender-age.csv');
