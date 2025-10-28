@@ -1,260 +1,84 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-
-interface UserDemo {
-  gender: string;
-  birthdate: string | null;
-}
+import { parseAudienceDemographics } from "@/utils/analyticsDataParser";
 
 interface DemographicStats {
   totalMembers: number;
   maleCount: number;
   femaleCount: number;
-  otherCount: number;
 }
 
 export const Demographics = () => {
-  const [timeFilter, setTimeFilter] = useState<"7days" | "28days" | "alltime">("7days");
   const [genderData, setGenderData] = useState<{ name: string; value: number; percentage: string; count: number }[]>([]);
   const [ageData, setAgeData] = useState<any[]>([]);
-  const [stats, setStats] = useState<DemographicStats>({ totalMembers: 0, maleCount: 0, femaleCount: 0, otherCount: 0 });
+  const [stats, setStats] = useState<DemographicStats>({ totalMembers: 0, maleCount: 0, femaleCount: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDemographics();
-
-    // Real-time updates
-    const channel = supabase
-      .channel('demographics-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_profiles'
-        },
-        () => {
-          fetchDemographics();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [timeFilter]);
+  }, []);
 
   const fetchDemographics = async () => {
-    const { data: profiles } = await supabase
-      .from('user_profiles')
-      .select('gender, birthdate');
-
-    // Generate time-sensitive demo data
-    const demoCount = timeFilter === '7days' ? 85 : timeFilter === '28days' ? 245 : 355;
-    const demoData = generateDemoData(demoCount, timeFilter);
+    setLoading(true);
+    const demographicsData = await parseAudienceDemographics();
     
-    // Merge real profiles with demo data
-    const allProfiles = [...demoData, ...(profiles || [])];
+    if (demographicsData.length === 0) {
+      setLoading(false);
+      return;
+    }
 
-    // Calculate gender distribution
-    const genderCounts = {
-      male: 0,
-      female: 0,
-      other: 0,
-      'prefer_not_to_say': 0
-    };
+    // Calculate total gender counts across all age groups
+    const totalMale = demographicsData.reduce((sum, group) => sum + group.maleCount, 0);
+    const totalFemale = demographicsData.reduce((sum, group) => sum + group.femaleCount, 0);
+    const total = totalMale + totalFemale;
 
-    allProfiles.forEach(profile => {
-      const gender = profile.gender || 'prefer_not_to_say';
-      if (gender in genderCounts) {
-        genderCounts[gender as keyof typeof genderCounts]++;
-      }
-    });
-
-    const total = allProfiles.length;
-    const notSpecifiedCount = genderCounts.prefer_not_to_say + genderCounts.other;
-    
+    // Gender chart data
     const genderChartData = [
       { 
         name: 'Male', 
-        value: genderCounts.male,
-        count: genderCounts.male,
-        percentage: `${Math.round((genderCounts.male / total) * 100)}%`
+        value: totalMale,
+        count: totalMale,
+        percentage: `${Math.round((totalMale / total) * 100)}%`
       },
       { 
         name: 'Female', 
-        value: genderCounts.female,
-        count: genderCounts.female,
-        percentage: `${Math.round((genderCounts.female / total) * 100)}%`
-      },
-      { 
-        name: 'Not Specified', 
-        value: notSpecifiedCount,
-        count: notSpecifiedCount,
-        percentage: `${Math.round((notSpecifiedCount / total) * 100)}%`
+        value: totalFemale,
+        count: totalFemale,
+        percentage: `${Math.round((totalFemale / total) * 100)}%`
       },
     ].filter(item => item.value > 0);
 
     setGenderData(genderChartData);
     setStats({
       totalMembers: total,
-      maleCount: genderCounts.male,
-      femaleCount: genderCounts.female,
-      otherCount: notSpecifiedCount
+      maleCount: totalMale,
+      femaleCount: totalFemale,
     });
 
-    // Calculate age distribution
-    const ageGroups = {
-      '0-17': { male: 0, female: 0, other: 0 },
-      '18-24': { male: 0, female: 0, other: 0 },
-      '25-34': { male: 0, female: 0, other: 0 },
-      '35-44': { male: 0, female: 0, other: 0 },
-      '45-54': { male: 0, female: 0, other: 0 },
-      '55-64': { male: 0, female: 0, other: 0 },
-      '65+': { male: 0, female: 0, other: 0 },
-    };
-
-    allProfiles.forEach(profile => {
-      if (profile.birthdate) {
-        const age = calculateAge(profile.birthdate);
-        const ageGroup = getAgeGroup(age);
-        const gender = profile.gender === 'male' ? 'male' : 
-                      profile.gender === 'female' ? 'female' : 'other';
-        
-        if (ageGroup in ageGroups) {
-          ageGroups[ageGroup as keyof typeof ageGroups][gender]++;
-        }
-      }
-    });
-
-    const ageChartData = Object.entries(ageGroups).map(([age, counts]) => ({
-      age,
-      Male: counts.male,
-      Female: counts.female,
-      'Not Specified': counts.other,
+    // Age chart data - stacked by gender
+    const ageChartData = demographicsData.map(group => ({
+      age: group.ageGroup,
+      Male: group.maleCount,
+      Female: group.femaleCount,
     }));
 
     setAgeData(ageChartData);
-  };
-
-  const generateDemoData = (count: number, timeFilter: string): UserDemo[] => {
-    const demo: UserDemo[] = [];
-    const currentYear = new Date().getFullYear();
-    
-    // Different distributions for different time periods
-    let malePercentage = 0.57;
-    let femalePercentage = 0.43;
-    
-    if (timeFilter === '7days') {
-      // More female engagement in recent week
-      malePercentage = 0.48;
-      femalePercentage = 0.52;
-    } else if (timeFilter === '28days') {
-      // Balanced
-      malePercentage = 0.52;
-      femalePercentage = 0.48;
-    }
-    
-    const maleCount = Math.round(count * malePercentage);
-    const femaleCount = Math.round(count * femalePercentage);
-    const otherCount = count - maleCount - femaleCount;
-
-    // Age distribution similar to screenshot
-    const ageDistribution = [
-      { range: [18, 24], weight: 0.05 },
-      { range: [25, 34], weight: 0.25 },
-      { range: [35, 44], weight: 0.35 },
-      { range: [45, 54], weight: 0.25 },
-      { range: [55, 64], weight: 0.08 },
-      { range: [65, 75], weight: 0.02 },
-    ];
-
-    const generateBirthdate = () => {
-      const dist = ageDistribution[Math.floor(Math.random() * ageDistribution.length * 100) % ageDistribution.length];
-      const age = Math.floor(Math.random() * (dist.range[1] - dist.range[0] + 1)) + dist.range[0];
-      const birthYear = currentYear - age;
-      const month = Math.floor(Math.random() * 12) + 1;
-      const day = Math.floor(Math.random() * 28) + 1;
-      return `${birthYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    };
-
-    for (let i = 0; i < maleCount; i++) {
-      demo.push({ gender: 'male', birthdate: generateBirthdate() });
-    }
-    for (let i = 0; i < femaleCount; i++) {
-      demo.push({ gender: 'female', birthdate: generateBirthdate() });
-    }
-    for (let i = 0; i < otherCount; i++) {
-      demo.push({ gender: 'prefer_not_to_say', birthdate: generateBirthdate() });
-    }
-
-    return demo;
-  };
-
-  const calculateAge = (birthdate: string): number => {
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const getAgeGroup = (age: number): string => {
-    if (age < 18) return '0-17';
-    if (age < 25) return '18-24';
-    if (age < 35) return '25-34';
-    if (age < 45) return '35-44';
-    if (age < 55) return '45-54';
-    if (age < 65) return '55-64';
-    return '65+';
+    setLoading(false);
   };
 
   const COLORS = {
     Male: '#6C8BEF',
     Female: '#C68FE6',
-    'Not Specified': '#9CA3AF',
   };
+
+  if (loading) {
+    return <div className="text-center text-gray-400 py-8">Loading demographics...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-4xl font-bold">Demographics</h2>
-      </div>
-
-      <div className="flex gap-6 border-b border-gray-800 pb-4">
-        <button
-          onClick={() => setTimeFilter("7days")}
-          className={`text-sm font-semibold pb-2 transition-colors ${
-            timeFilter === "7days" 
-              ? "text-white border-b-2 border-white" 
-              : "text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          7 DAYS
-        </button>
-        <button
-          onClick={() => setTimeFilter("28days")}
-          className={`text-sm font-semibold pb-2 transition-colors ${
-            timeFilter === "28days" 
-              ? "text-white border-b-2 border-white" 
-              : "text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          28 DAYS
-        </button>
-        <button
-          onClick={() => setTimeFilter("alltime")}
-          className={`text-sm font-semibold pb-2 transition-colors ${
-            timeFilter === "alltime" 
-              ? "text-white border-b-2 border-white" 
-              : "text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          ALL TIME
-        </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-6xl mx-auto">
@@ -358,7 +182,6 @@ export const Demographics = () => {
                 />
                 <Bar dataKey="Male" stackId="a" fill={COLORS.Male} />
                 <Bar dataKey="Female" stackId="a" fill={COLORS.Female} />
-                <Bar dataKey="Not Specified" stackId="a" fill={COLORS['Not Specified']} />
               </BarChart>
             </ResponsiveContainer>
           </div>
