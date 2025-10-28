@@ -1,3 +1,5 @@
+import Papa from 'papaparse';
+import { parse as dfParse, isValid } from 'date-fns';
 import type {
   ViberateMetrics,
   AudienceMapData,
@@ -6,6 +8,32 @@ import type {
   PlatformDistributionData,
   GrowthMetrics,
 } from "@/types/analytics";
+
+// Flexible date parsing for various CSV formats
+const DATE_PATTERNS = [
+  "yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy", "MMM d, yyyy", "d MMM yyyy",
+  "yyyy/MM/dd", "MM-dd-yyyy", "dd-MM-yyyy", "M/d/yyyy"
+];
+
+function parseFlexibleDate(s: string): Date | null {
+  const trimmed = s?.toString().trim();
+  if (!trimmed) return null;
+
+  for (const pattern of DATE_PATTERNS) {
+    const d = dfParse(trimmed, pattern, new Date());
+    if (isValid(d)) return d;
+  }
+  const d2 = new Date(trimmed);
+  return isValid(d2) ? d2 : null;
+}
+
+// Helper to parse numbers, handling "N/A" and commas
+function parseNumber(value: string): number {
+  if (!value || value === 'N/A' || value === '') return 0;
+  const cleaned = value.replace(/[,"]/g, '');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+}
 
 export interface AudienceDemographicsData {
   ageGroup: string;
@@ -87,7 +115,7 @@ export const parseViberateProfile = async (): Promise<ViberateMetrics | null> =>
         totalStreams: getNumber('Spotify Streams Total'),
         totalStreamsChange1m: getNumber('Spotify Streams 1m'),
         playlistReach: getNumber('Spotify Playlist Reach Total'),
-        playlistReachChange1m: 0, // Not in CSV
+        playlistReachChange1m: 0,
         rank: getNumber('Spotify Rank'),
       },
       youtube: {
@@ -104,29 +132,29 @@ export const parseViberateProfile = async (): Promise<ViberateMetrics | null> =>
         followersChange1m: getNumber('TikTok Followers 1m'),
         views1m: getNumber('TikTok Views 1m'),
         likes1m: getNumber('TikTok Likes 1m'),
-        rank: 0, // Not in CSV
+        rank: 0,
       },
       instagram: {
         followers: getNumber('Instagram Followers Total'),
         followersChange1m: getNumber('Instagram Followers 1m'),
         likes1m: getNumber('Instagram Likes 1m'),
-        rank: 0, // Not in CSV
+        rank: 0,
       },
       facebook: {
         followers: getNumber('Facebook Followers Total'),
         followersChange1m: getNumber('Facebook Followers 1m'),
-        rank: 0, // Not in CSV
+        rank: 0,
       },
       deezer: {
         fans: getNumber('Deezer Fans Total'),
         fansChange1m: getNumber('Deezer Fans 1m'),
-        rank: 0, // Not in CSV
+        rank: 0,
       },
       soundcloud: {
         followers: getNumber('SoundCloud Followers Total'),
         followersChange1m: getNumber('SoundCloud Followers 1m'),
         plays: getNumber('SoundCloud Plays 1m'),
-        rank: 0, // Not in CSV
+        rank: 0,
       },
       radio: {
         spins1m: getNumber('Radio Airplay Spins 1m'),
@@ -136,11 +164,11 @@ export const parseViberateProfile = async (): Promise<ViberateMetrics | null> =>
       },
       shazam: {
         shazams1m: getNumber('Shazam Shazams 1m'),
-        rank: 0, // Not in CSV
+        rank: 0,
       },
       beatport: {
-        followers: 0, // Not in CSV
-        rank: 0, // Not in CSV
+        followers: 0,
+        rank: 0,
       },
     };
   } catch (error) {
@@ -201,90 +229,53 @@ export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> 
       console.error('Failed to fetch engagement-fanbase.csv:', response.statusText);
       return [];
     }
-    const text = await response.text();
-    const lines = text.split('\n').filter(line => line.trim());
+    const csvText = await response.text();
     
-    if (lines.length < 2) {
-      console.error('Engagement CSV has insufficient data');
-      return [];
-    }
-    
-    // Helper to parse CSV line with quoted fields
-    const parseCSVLine = (line: string): string[] => {
-      const result: string[] = [];
-      let current = '';
-      let inQuotes = false;
-      
-      // Remove UTF-8 BOM if present
-      if (line.charCodeAt(0) === 0xFEFF) {
-        line = line.substring(1);
-      }
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          result.push(current.trim().replace(/^"|"$/g, ''));
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim().replace(/^"|"$/g, ''));
-      return result;
-    };
-    
-    const parseNumber = (value: string): number => {
-      if (!value || value === 'N/A' || value === '') return 0;
-      const cleaned = value.replace(/,/g, '');
-      const num = parseInt(cleaned, 10);
-      return isNaN(num) ? 0 : num;
-    };
-    
-    const headers = parseCSVLine(lines[0]);
-    const data: DailyEngagementData[] = [];
-    
-    console.log('Engagement Timeline - Headers:', headers);
-    console.log('Engagement Timeline - Total rows:', lines.length - 1);
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCSVLine(lines[i]);
-      
-      // Map columns by header name
-      const getValueByHeader = (headerName: string): number => {
-        const index = headers.indexOf(headerName);
-        return index >= 0 ? parseNumber(values[index]) : 0;
-      };
-      
-      data.push({
-        date: values[0],
-        spotify: {
-          followers: getValueByHeader('Spotify Followers'),
-          likes: 0, // Not in CSV
+    return new Promise((resolve, reject) => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false,
+        transformHeader: (h) => h.trim().replace(/^"|"$/g, ''),
+        complete: (results) => {
+          const data: DailyEngagementData[] = [];
+          const rows = results.data as any[];
+          
+          for (const row of rows) {
+            const dateStr = row['Date'] || row['date'];
+            
+            data.push({
+              date: dateStr,
+              spotify: {
+                followers: parseNumber(row['Spotify Followers'] || '0'),
+                likes: 0,
+              },
+              instagram: {
+                followers: parseNumber(row['Instagram Followers'] || '0'),
+                likes: 0,
+              },
+              tiktok: {
+                followers: parseNumber(row['Tiktok Followers'] || '0'),
+                likes: 0,
+              },
+              facebook: {
+                followers: parseNumber(row['Facebook Followers'] || '0'),
+                likes: 0,
+              },
+              youtube: {
+                followers: parseNumber(row['Youtube Subscribers'] || '0'),
+                subscribers: parseNumber(row['Youtube Subscribers'] || '0'),
+                likes: 0,
+              },
+            });
+          }
+          
+          console.log(`Engagement Timeline loaded: ${data.length} data points`);
+          resolve(data);
         },
-        instagram: {
-          followers: getValueByHeader('Instagram Followers'),
-          likes: 0, // Not in CSV
-        },
-        tiktok: {
-          followers: getValueByHeader('Tiktok Followers'),
-          likes: 0, // Not in CSV
-        },
-        facebook: {
-          followers: getValueByHeader('Facebook Followers'),
-          likes: 0, // Not in CSV
-        },
-        youtube: {
-          followers: getValueByHeader('Youtube Subscribers'),
-          subscribers: getValueByHeader('Youtube Subscribers'),
-          likes: 0, // Not in CSV
-        },
+        error: (error) => reject(error)
       });
-    }
-    
-    console.log('Engagement Timeline - Sample data (first 3 rows):', data.slice(0, 3));
-    return data;
+    });
   } catch (error) {
     console.error('Error parsing engagement timeline:', error);
     return [];
@@ -330,83 +321,49 @@ export const parsePlatformDistribution = async (): Promise<PlatformDistributionD
       console.error('Failed to fetch fanbase-total-distribution.csv:', response.statusText);
       return [];
     }
-    const text = await response.text();
-    const lines = text.split('\n').filter(line => line.trim());
+    const csvText = await response.text();
     
-    if (lines.length < 2) {
-      console.error('Platform distribution CSV has insufficient data');
-      return [];
-    }
-    
-    // Helper to parse CSV line with quoted fields
-    const parseCSVLine = (line: string): string[] => {
-      const result: string[] = [];
-      let current = '';
-      let inQuotes = false;
-      
-      // Remove UTF-8 BOM if present
-      if (line.charCodeAt(0) === 0xFEFF) {
-        line = line.substring(1);
-      }
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          result.push(current.trim().replace(/^"|"$/g, ''));
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim().replace(/^"|"$/g, ''));
-      return result;
-    };
-    
-    const parseNumber = (value: string): number => {
-      if (!value || value === 'N/A' || value === '') return 0;
-      const cleaned = value.replace(/,/g, '');
-      const num = parseFloat(cleaned);
-      return isNaN(num) ? 0 : num;
-    };
-    
-    const data: PlatformDistributionData[] = [];
-    const colors = {
-      'Facebook followers': 'hsl(var(--chart-1))',
-      'Instagram followers': 'hsl(var(--chart-2))',
-      'TikTok followers': 'hsl(var(--chart-3))',
-      'Spotify followers': 'hsl(var(--chart-4))',
-      'YouTube subscribers': 'hsl(var(--chart-5))',
-      'Deezer fans': 'hsl(var(--chart-1))',
-      'Soundcloud followers': 'hsl(var(--chart-2))',
-    };
-    
-    console.log('Platform Distribution - Parsing CSV...');
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCSVLine(lines[i]);
-      const channel = values[0];
-      
-      // Skip the "Total Fanbase Size" row
-      if (channel === 'Total Fanbase Size') continue;
-      
-      // Extract platform name from "Facebook followers" -> "Facebook"
-      const platformName = channel.replace(/\s+(followers|subscribers|fans)/i, '');
-      
-      const followers = parseNumber(values[1]);
-      const percentage = parseNumber(values[2]);
-      
-      data.push({
-        platform: platformName,
-        followers,
-        percentage,
-        color: colors[channel as keyof typeof colors] || 'hsl(var(--muted))',
+    return new Promise((resolve, reject) => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.trim().replace(/^"|"$/g, ''),
+        complete: (results) => {
+          const data: PlatformDistributionData[] = [];
+          const colors = {
+            'Facebook followers': 'hsl(var(--chart-1))',
+            'Instagram followers': 'hsl(var(--chart-2))',
+            'TikTok followers': 'hsl(var(--chart-3))',
+            'Spotify followers': 'hsl(var(--chart-4))',
+            'YouTube subscribers': 'hsl(var(--chart-5))',
+            'Deezer fans': 'hsl(var(--chart-1))',
+            'Soundcloud followers': 'hsl(var(--chart-2))',
+          };
+          
+          for (const row of results.data as any[]) {
+            const channel = row['Channel'] || row['channel'];
+            const total = parseNumber(row['Total'] || row['total'] || '0');
+            const percentage = parseFloat(row['Percentage'] || row['percentage'] || '0');
+            
+            // Skip "Total Fanbase Size" row
+            if (channel && channel !== 'Total Fanbase Size' && total > 0) {
+              const platformName = channel.replace(/\s+(followers|subscribers|fans)/i, '');
+              
+              data.push({
+                platform: platformName,
+                followers: total,
+                percentage: percentage,
+                color: colors[channel as keyof typeof colors] || 'hsl(var(--muted))',
+              });
+            }
+          }
+          
+          console.log('Platform Distribution loaded:', data);
+          resolve(data);
+        },
+        error: (error) => reject(error)
       });
-    }
-    
-    console.log('Platform Distribution - Parsed data:', data);
-    return data;
+    });
   } catch (error) {
     console.error('Error parsing platform distribution:', error);
     return [];
@@ -487,87 +444,49 @@ export const parseAudienceDemographics = async (): Promise<AudienceDemographicsD
       console.error('Failed to fetch audience-gender-age.csv:', response.statusText);
       return [];
     }
-    const text = await response.text();
-    const lines = text.split('\n').filter(line => line.trim());
+    const csvText = await response.text();
     
-    if (lines.length < 2) {
-      console.error('Demographics CSV has insufficient data');
-      return [];
-    }
-    
-    // Helper to parse CSV line with quoted fields
-    const parseCSVLine = (line: string): string[] => {
-      const result: string[] = [];
-      let current = '';
-      let inQuotes = false;
-      
-      // Remove UTF-8 BOM if present
-      if (line.charCodeAt(0) === 0xFEFF) {
-        line = line.substring(1);
-      }
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          result.push(current.trim().replace(/^"|"$/g, ''));
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim().replace(/^"|"$/g, ''));
-      return result;
-    };
-    
-    const parseNumber = (value: string): number => {
-      if (!value || value === 'N/A' || value === '') return 0;
-      const cleaned = value.replace(/,/g, '');
-      const num = parseInt(cleaned, 10);
-      return isNaN(num) ? 0 : num;
-    };
-    
-    const headers = parseCSVLine(lines[0]);
-    const data: AudienceDemographicsData[] = [];
-    
-    console.log('Audience Demographics - Headers:', headers);
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCSVLine(lines[i]);
-      
-      const ageGroup = values[0];
-      const overallTotal = parseNumber(values[1]);
-      const overallFemale = parseNumber(values[2]);
-      const overallMale = parseNumber(values[3]);
-      
-      const youtubeTotal = parseNumber(values[4]);
-      const youtubeFemale = parseNumber(values[5]);
-      const youtubeMale = parseNumber(values[6]);
-      
-      const instagramTotal = parseNumber(values[7]);
-      const instagramFemale = parseNumber(values[8]);
-      const instagramMale = parseNumber(values[9]);
-      
-      const tiktokTotal = parseNumber(values[10]);
-      const tiktokFemale = parseNumber(values[11]);
-      const tiktokMale = parseNumber(values[12]);
-      
-      data.push({
-        ageGroup,
-        totalCount: overallTotal,
-        maleCount: overallMale,
-        femaleCount: overallFemale,
-        youtube: { total: youtubeTotal, male: youtubeMale, female: youtubeFemale },
-        instagram: { total: instagramTotal, male: instagramMale, female: instagramFemale },
-        tiktok: { total: tiktokTotal, male: tiktokMale, female: tiktokFemale },
+    return new Promise((resolve, reject) => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.trim().replace(/^"|"$/g, ''),
+        complete: (results) => {
+          const rows = results.data as any[];
+          const data: AudienceDemographicsData[] = rows
+            .filter(r => {
+              const ageGroup = (r['Age Group'] || r['age group'] || '').toLowerCase();
+              return ageGroup && !ageGroup.includes('overall') && ageGroup.trim() !== '';
+            })
+            .map(r => {
+              const male = parseNumber(r['Male Count'] || r['male count'] || '0');
+              const female = parseNumber(r['Female Count'] || r['female count'] || '0');
+              const youtubeMale = parseNumber(r['YouTube Male'] || r['youtube male'] || '0');
+              const youtubeFemale = parseNumber(r['YouTube Female'] || r['youtube female'] || '0');
+              const instagramMale = parseNumber(r['Instagram Male'] || r['instagram male'] || '0');
+              const instagramFemale = parseNumber(r['Instagram Female'] || r['instagram female'] || '0');
+              const tiktokMale = parseNumber(r['TikTok Male'] || r['tiktok male'] || '0');
+              const tiktokFemale = parseNumber(r['TikTok Female'] || r['tiktok female'] || '0');
+              
+              return {
+                ageGroup: r['Age Group'] || r['age group'],
+                totalCount: male + female,
+                maleCount: male,
+                femaleCount: female,
+                youtube: { total: youtubeMale + youtubeFemale, male: youtubeMale, female: youtubeFemale },
+                instagram: { total: instagramMale + instagramFemale, male: instagramMale, female: instagramFemale },
+                tiktok: { total: tiktokMale + tiktokFemale, male: tiktokMale, female: tiktokFemale }
+              };
+            });
+          
+          console.log('Demographics loaded:', data.length, 'age groups');
+          resolve(data);
+        },
+        error: (error) => reject(error)
       });
-    }
-    
-    console.log('Audience Demographics - Parsed data:', data);
-    return data;
+    });
   } catch (error) {
-    console.error('Error parsing audience demographics:', error);
+    console.error('Error loading demographics:', error);
     return [];
   }
 };
