@@ -213,9 +213,9 @@ export const Demographics = () => {
   };
 
   const COLORS = {
-    Male: '#6B7280',
-    Female: '#9CA3AF',
-    'Not Specified': '#D1D5DB',
+    Male: '#6C8BEF',
+    Female: '#C68FE6',
+    'Not Specified': '#9CA3AF',
   };
 
   return (
@@ -257,24 +257,24 @@ export const Demographics = () => {
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-6xl mx-auto">
         {/* Gender Distribution - Donut Chart */}
-        <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-          <div className="mb-4">
-            <h3 className="text-xl font-bold mb-2">Gender Distribution</h3>
+        <div className="bg-[#1E1E1E] rounded-xl p-6 border border-white/10 flex flex-col justify-center items-center min-h-[360px] shadow-lg transition-transform duration-200 hover:scale-[1.02]">
+          <div className="mb-4 w-full">
+            <h3 className="text-xl font-medium mb-2">Gender Distribution</h3>
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span>Total Members: <span className="font-bold text-white">{stats.totalMembers}</span></span>
             </div>
           </div>
-          <div className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={280}>
+          <div className="flex items-center justify-center w-full" style={{ maxWidth: '280px', aspectRatio: '1/1' }}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={genderData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={110}
+                  innerRadius="60%"
+                  outerRadius="85%"
                   paddingAngle={2}
                   dataKey="value"
                 >
@@ -285,7 +285,7 @@ export const Demographics = () => {
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'rgb(18, 18, 18)', 
-                    border: '1px solid rgb(59, 130, 246)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     color: 'white'
                   }}
@@ -297,7 +297,7 @@ export const Demographics = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3 w-full">
             {genderData.map((item, index) => (
               <div key={item.name} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -317,37 +317,39 @@ export const Demographics = () => {
         </div>
 
         {/* Age Distribution - Stacked Bar Chart */}
-        <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-          <h3 className="text-xl font-bold mb-6">Age Distribution</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={ageData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="age" 
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF' }}
-              />
-              <YAxis 
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF' }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgb(18, 18, 18)', 
-                  border: '1px solid rgb(59, 130, 246)',
-                  borderRadius: '8px',
-                  color: 'white'
-                }}
-              />
-              <Legend 
-                wrapperStyle={{ color: 'white' }}
-                iconType="circle"
-              />
-              <Bar dataKey="Male" stackId="a" fill={COLORS.Male} />
-              <Bar dataKey="Female" stackId="a" fill={COLORS.Female} />
-              <Bar dataKey="Not Specified" stackId="a" fill={COLORS['Not Specified']} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-[#1E1E1E] rounded-xl p-6 border border-white/10 flex flex-col justify-center min-h-[360px] shadow-lg transition-transform duration-200 hover:scale-[1.02]">
+          <h3 className="text-xl font-medium mb-6">Age Distribution</h3>
+          <div className="flex-1 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={ageData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis 
+                  dataKey="age" 
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgb(18, 18, 18)', 
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    color: 'white'
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{ color: 'white' }}
+                  iconType="circle"
+                />
+                <Bar dataKey="Male" stackId="a" fill={COLORS.Male} />
+                <Bar dataKey="Female" stackId="a" fill={COLORS.Female} />
+                <Bar dataKey="Not Specified" stackId="a" fill={COLORS['Not Specified']} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           <div className="mt-6 flex items-center justify-center gap-6">
             {Object.entries(COLORS).map(([name, color]) => (
               <div key={name} className="flex items-center gap-2">
