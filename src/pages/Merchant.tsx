@@ -186,22 +186,27 @@ const Merchant = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
-              <div className="space-y-12">
+              <div className="space-y-8">
+                {/* Platform Overview Section */}
                 <PlatformOverview />
                 <PlatformCards />
                 
+                {/* Charts Row */}
                 <div className="grid gap-6 md:grid-cols-2">
                   <PlatformDistribution />
-                  <EarningsOverview />
+                  <EngagementTimeline />
                 </div>
                 
-                <EngagementTimeline />
-                
+                {/* Geography and Earnings Row */}
                 <div className="grid gap-6 md:grid-cols-2">
                   <Geography />
-                  <TopTracks period="7days" />
+                  <EarningsOverview />
                 </div>
 
+                {/* Top Tracks - Full Width Below Geography */}
+                <TopTracks period="7days" />
+
+                {/* Demographics and Integrations */}
                 <Demographics />
                 <DistributorIntegration />
               </div>

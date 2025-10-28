@@ -24,6 +24,19 @@ export const EngagementTimeline = () => {
     return <Card><CardContent className="h-96 animate-pulse bg-muted" /></Card>;
   }
 
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Timeline</CardTitle>
+        </CardHeader>
+        <CardContent className="h-96 flex items-center justify-center">
+          <p className="text-muted-foreground">No timeline data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const chartData = data.map(item => ({
     date: format(new Date(item.date), 'MMM yy'),
     Spotify: item.spotify.followers,
@@ -42,7 +55,7 @@ export const EngagementTimeline = () => {
         </p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 

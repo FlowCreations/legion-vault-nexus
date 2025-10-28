@@ -21,6 +21,19 @@ export const PlatformDistribution = () => {
     return <Card><CardContent className="h-96 animate-pulse bg-muted" /></Card>;
   }
 
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Platform Distribution</CardTitle>
+        </CardHeader>
+        <CardContent className="h-96 flex items-center justify-center">
+          <p className="text-muted-foreground">No distribution data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const totalFollowers = data.reduce((sum, item) => sum + item.followers, 0);
 
   return (
