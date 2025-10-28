@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Users, BarChart3, Zap, Plus, Loader2, ShoppingCart, Star, Mail as MailIcon } from "lucide-react";
+import { Mail, Users, BarChart3, Zap, Plus, Loader2, ShoppingCart, Star, Mail as MailIcon, Brain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EmailListBuilder } from "./EmailListBuilder";
@@ -15,6 +15,7 @@ import { AutomationBuilder } from "./AutomationBuilder";
 import { AUTOMATION_TEMPLATES } from "./AutomationTemplates";
 import { Switch } from "@/components/ui/switch";
 import { TunepipeSyncButton } from "./TunepipeSyncButton";
+import { AIEmailIntelligence } from "./AIEmailIntelligence";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -199,10 +200,14 @@ export const EmailMarketing = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Overview
+          </TabsTrigger>
+          <TabsTrigger value="intelligence" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            Intelligence
           </TabsTrigger>
           <TabsTrigger value="lists" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -309,6 +314,10 @@ export const EmailMarketing = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="intelligence">
+          <AIEmailIntelligence />
         </TabsContent>
 
         <TabsContent value="lists" className="space-y-4">

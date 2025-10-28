@@ -75,8 +75,7 @@ serve(async (req) => {
 
     try {
       // Based on websitebuilder.docs.apiary.io documentation
-      // Using hypothetical API endpoints - adjust based on actual API docs
-      const tunepipeBaseUrl = 'https://api.tunepipe.com/v1'; // Adjust to actual base URL
+      const tunepipeBaseUrl = 'https://websitebuilder.com/api';
       
       if (action === 'sync_all' || action === 'fetch_campaigns') {
         result.synced.campaigns = await fetchCampaigns(supabase, tunepipeBaseUrl, tunepipeApiKey);
@@ -129,8 +128,7 @@ async function fetchCampaigns(supabase: any, baseUrl: string, apiKey: string): P
   console.log('Fetching campaigns from Tunepipe...');
   
   try {
-    // TODO: Adjust endpoint based on actual Tunepipe API documentation
-    const response = await fetch(`${baseUrl}/campaigns`, {
+    const response = await fetch(`${baseUrl}/subscriber-lists`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
