@@ -140,21 +140,21 @@ export const EngagementTimeline = () => {
             <defs>
               {PLATFORMS.map((platform) => (
                 <linearGradient key={platform} id={`gradient-${platform}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={PLATFORM_COLORS[platform]} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={PLATFORM_COLORS[platform]} stopOpacity={0} />
+                  <stop offset="0%" stopColor={PLATFORM_COLORS[platform]} stopOpacity={0.6} />
+                  <stop offset="100%" stopColor={PLATFORM_COLORS[platform]} stopOpacity={0.1} />
                 </linearGradient>
               ))}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis 
               dataKey="date" 
-              stroke="#6b7280"
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              stroke="#9ca3af"
+              tick={{ fill: '#d1d5db', fontSize: 12 }}
               tickMargin={10}
             />
             <YAxis 
-              stroke="#6b7280"
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              stroke="#9ca3af"
+              tick={{ fill: '#d1d5db', fontSize: 12 }}
               tickFormatter={formatNumber}
               width={70}
             />
@@ -191,18 +191,19 @@ export const EngagementTimeline = () => {
                   type="monotone"
                   dataKey={platform}
                   stroke={PLATFORM_COLORS[platform]}
-                  strokeWidth={3}
+                  strokeWidth={4}
                   dot={false}
                   activeDot={{ 
-                    r: 7, 
-                    strokeWidth: 2, 
+                    r: 8, 
+                    strokeWidth: 3, 
                     stroke: '#fff',
-                    style: { filter: `drop-shadow(0 0 8px ${PLATFORM_COLORS[platform]})` }
+                    fill: PLATFORM_COLORS[platform],
+                    style: { filter: `drop-shadow(0 0 12px ${PLATFORM_COLORS[platform]})` }
                   }}
                   animationDuration={1500}
                   animationEasing="ease-out"
                   style={{
-                    filter: `drop-shadow(0 0 4px ${PLATFORM_COLORS[platform]}80)`
+                    filter: `drop-shadow(0 2px 8px ${PLATFORM_COLORS[platform]}99)`
                   }}
                 />
               )

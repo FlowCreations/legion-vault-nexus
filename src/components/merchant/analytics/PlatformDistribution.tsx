@@ -69,9 +69,12 @@ export const PlatformDistribution = () => {
     );
   }
 
-  const totalFollowers = data.reduce((sum, item) => sum + item.followers, 0);
+  // Filter out Soundcloud
+  const filteredData = data.filter(item => item.platform !== 'Soundcloud');
+  
+  const totalFollowers = filteredData.reduce((sum, item) => sum + item.followers, 0);
 
-  const pieData = data.map((item) => ({
+  const pieData = filteredData.map((item) => ({
     name: item.platform,
     value: item.followers,
     percentage: item.percentage,
