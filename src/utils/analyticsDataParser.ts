@@ -187,44 +187,93 @@ export const parseAudienceMap = async (): Promise<AudienceMapData[]> => {
 export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> => {
   try {
     const response = await fetch('/data/analytics/engagement-fanbase.csv');
+    if (!response.ok) {
+      console.error('Failed to fetch engagement-fanbase.csv:', response.statusText);
+      return [];
+    }
     const text = await response.text();
     const lines = text.split('\n').filter(line => line.trim());
     
-    if (lines.length < 2) return [];
+    if (lines.length < 2) {
+      console.error('Engagement CSV has insufficient data');
+      return [];
+    }
     
+    // Helper to parse CSV line with quoted fields
+    const parseCSVLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      
+      // Remove UTF-8 BOM if present
+      if (line.charCodeAt(0) === 0xFEFF) {
+        line = line.substring(1);
+      }
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim().replace(/^"|"$/g, ''));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim().replace(/^"|"$/g, ''));
+      return result;
+    };
+    
+    const parseNumber = (value: string): number => {
+      if (!value || value === 'N/A' || value === '') return 0;
+      const cleaned = value.replace(/,/g, '');
+      const num = parseInt(cleaned, 10);
+      return isNaN(num) ? 0 : num;
+    };
+    
+    const headers = parseCSVLine(lines[0]);
     const data: DailyEngagementData[] = [];
     
+    console.log('Engagement Timeline - Headers:', headers);
+    console.log('Engagement Timeline - Total rows:', lines.length - 1);
+    
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
+      const values = parseCSVLine(lines[i]);
       
-      const getNum = (index: number) => parseInt(values[index]) || 0;
+      // Map columns by header name
+      const getValueByHeader = (headerName: string): number => {
+        const index = headers.indexOf(headerName);
+        return index >= 0 ? parseNumber(values[index]) : 0;
+      };
       
       data.push({
         date: values[0],
         spotify: {
-          followers: getNum(1),
-          likes: getNum(2),
+          followers: getValueByHeader('Spotify Followers'),
+          likes: 0, // Not in CSV
         },
         instagram: {
-          followers: getNum(3),
-          likes: getNum(4),
+          followers: getValueByHeader('Instagram Followers'),
+          likes: 0, // Not in CSV
         },
         tiktok: {
-          followers: getNum(5),
-          likes: getNum(6),
+          followers: getValueByHeader('Tiktok Followers'),
+          likes: 0, // Not in CSV
         },
         facebook: {
-          followers: getNum(7),
-          likes: getNum(8),
+          followers: getValueByHeader('Facebook Followers'),
+          likes: 0, // Not in CSV
         },
         youtube: {
-          followers: getNum(9),
-          subscribers: getNum(9),
-          likes: getNum(10),
+          followers: getValueByHeader('Youtube Subscribers'),
+          subscribers: getValueByHeader('Youtube Subscribers'),
+          likes: 0, // Not in CSV
         },
       });
     }
     
+    console.log('Engagement Timeline - Sample data (first 3 rows):', data.slice(0, 3));
     return data;
   } catch (error) {
     console.error('Error parsing engagement timeline:', error);
@@ -267,31 +316,86 @@ export const parseWeeklyMetrics = async (): Promise<WeeklyMetricsData[]> => {
 export const parsePlatformDistribution = async (): Promise<PlatformDistributionData[]> => {
   try {
     const response = await fetch('/data/analytics/fanbase-total-distribution.csv');
+    if (!response.ok) {
+      console.error('Failed to fetch fanbase-total-distribution.csv:', response.statusText);
+      return [];
+    }
     const text = await response.text();
     const lines = text.split('\n').filter(line => line.trim());
     
-    if (lines.length < 2) return [];
+    if (lines.length < 2) {
+      console.error('Platform distribution CSV has insufficient data');
+      return [];
+    }
+    
+    // Helper to parse CSV line with quoted fields
+    const parseCSVLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      
+      // Remove UTF-8 BOM if present
+      if (line.charCodeAt(0) === 0xFEFF) {
+        line = line.substring(1);
+      }
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim().replace(/^"|"$/g, ''));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim().replace(/^"|"$/g, ''));
+      return result;
+    };
+    
+    const parseNumber = (value: string): number => {
+      if (!value || value === 'N/A' || value === '') return 0;
+      const cleaned = value.replace(/,/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    };
     
     const data: PlatformDistributionData[] = [];
     const colors = {
-      Facebook: 'hsl(var(--chart-1))',
-      Instagram: 'hsl(var(--chart-2))',
-      TikTok: 'hsl(var(--chart-3))',
-      Spotify: 'hsl(var(--chart-4))',
-      YouTube: 'hsl(var(--chart-5))',
+      'Facebook followers': 'hsl(var(--chart-1))',
+      'Instagram followers': 'hsl(var(--chart-2))',
+      'TikTok followers': 'hsl(var(--chart-3))',
+      'Spotify followers': 'hsl(var(--chart-4))',
+      'YouTube subscribers': 'hsl(var(--chart-5))',
+      'Deezer fans': 'hsl(var(--chart-1))',
+      'Soundcloud followers': 'hsl(var(--chart-2))',
     };
     
+    console.log('Platform Distribution - Parsing CSV...');
+    
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
+      const values = parseCSVLine(lines[i]);
+      const channel = values[0];
+      
+      // Skip the "Total Fanbase Size" row
+      if (channel === 'Total Fanbase Size') continue;
+      
+      // Extract platform name from "Facebook followers" -> "Facebook"
+      const platformName = channel.replace(/\s+(followers|subscribers|fans)/i, '');
+      
+      const followers = parseNumber(values[1]);
+      const percentage = parseNumber(values[2]);
       
       data.push({
-        platform: values[0],
-        followers: parseInt(values[1]) || 0,
-        percentage: parseFloat(values[2]) || 0,
-        color: colors[values[0] as keyof typeof colors] || 'hsl(var(--muted))',
+        platform: platformName,
+        followers,
+        percentage,
+        color: colors[channel as keyof typeof colors] || 'hsl(var(--muted))',
       });
     }
     
+    console.log('Platform Distribution - Parsed data:', data);
     return data;
   } catch (error) {
     console.error('Error parsing platform distribution:', error);
