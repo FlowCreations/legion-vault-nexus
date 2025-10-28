@@ -1,98 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
+import { parseViberateProfile, formatNumber, formatPercentage } from "@/utils/analyticsDataParser";
+import type { ViberateMetrics } from "@/types/analytics";
 
 export const StreamsOverview = () => {
-  const [timeFilter, setTimeFilter] = useState<"7days" | "28days" | "alltime">("28days");
+  const [metrics, setMetrics] = useState<ViberateMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const streamData = {
-    current: 15847,
-    trend: 12.5,
-    allTime: 94301,
-  };
+  useEffect(() => {
+    const loadMetrics = async () => {
+      const data = await parseViberateProfile();
+      setMetrics(data);
+      setLoading(false);
+    };
+    loadMetrics();
+  }, []);
+
+  if (loading) {
+    return <Card className="w-full"><CardContent className="h-64 animate-pulse bg-muted" /></Card>;
+  }
+
+  if (!metrics) return null;
+
+  const totalStreams = metrics.spotify.totalStreams;
+  const monthlyStreams = metrics.spotify.totalStreamsChange1m;
+  const monthlyListeners = metrics.spotify.monthlyListeners;
+  const playlistReach = metrics.spotify.playlistReach;
+  
+  const streamsPerListener = monthlyListeners > 0 ? (monthlyStreams / monthlyListeners).toFixed(1) : 0;
+  const growthPercent = ((monthlyStreams / (totalStreams - monthlyStreams)) * 100);
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-4xl font-bold">Streams</h2>
-
-      <div className="flex gap-6 border-b border-gray-800 pb-4">
-        <button
-          onClick={() => setTimeFilter("7days")}
-          className={`text-sm font-semibold pb-2 transition-colors ${
-            timeFilter === "7days" 
-              ? "text-white border-b-2 border-white" 
-              : "text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          7 DAYS
-        </button>
-        <button
-          onClick={() => setTimeFilter("28days")}
-          className={`text-sm font-semibold pb-2 transition-colors ${
-            timeFilter === "28days" 
-              ? "text-white border-b-2 border-white" 
-              : "text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          28 DAYS
-        </button>
-        <button
-          onClick={() => setTimeFilter("alltime")}
-          className={`text-sm font-semibold pb-2 transition-colors ${
-            timeFilter === "alltime" 
-              ? "text-white border-b-2 border-white" 
-              : "text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          ALL TIME
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        <div className="text-8xl font-bold">{streamData.current.toLocaleString()}</div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-gray-400">
-            <span>Trending up</span>
-            <span className="text-green-500 font-semibold flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
-              {streamData.trend}%
-            </span>
-            <span>for the 28 days ending {new Date().toLocaleDateString()} as compared to the previous 28 days.</span>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Spotify Streams Overview
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Streams</p>
+              <p className="text-2xl font-bold">{formatNumber(totalStreams)}</p>
+              <p className="text-xs text-success mt-1">{formatPercentage(growthPercent)} this month</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Monthly Listeners</p>
+              <p className="text-2xl font-bold">{formatNumber(monthlyListeners)}</p>
+              <p className="text-xs text-muted-foreground mt-1">{streamsPerListener} streams/listener</p>
+            </div>
           </div>
-          
-          <div className="text-gray-400">
-            Your all-time total is <span className="text-white font-semibold">{streamData.allTime.toLocaleString()}</span>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+            <div>
+              <p className="text-sm text-muted-foreground">Streams This Month</p>
+              <p className="text-xl font-semibold">{formatNumber(monthlyStreams)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Playlist Reach</p>
+              <p className="text-xl font-semibold">{formatNumber(playlistReach)}</p>
+            </div>
           </div>
         </div>
-
-        {/* Chart placeholder */}
-        <div className="bg-white/5 rounded-lg p-8 min-h-[300px] border border-white/10 flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <div className="text-4xl mb-4">📈</div>
-            <p>Stream trend visualization</p>
-            <p className="text-sm mt-2">Line chart showing daily streams over time</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-gray-400">Website</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-white"></div>
-            <span className="text-gray-400">Mobile App</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span className="text-gray-400">Social</span>
-          </div>
-        </div>
-
-        <div className="text-xs text-gray-500">
-          Source: Platform Analytics - As of {new Date().toLocaleDateString()}
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

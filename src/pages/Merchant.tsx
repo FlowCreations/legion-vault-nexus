@@ -10,6 +10,10 @@ import { Geography } from "@/components/merchant/Geography";
 import { Demographics } from "@/components/merchant/Demographics";
 import { EarningsOverview } from "@/components/merchant/EarningsOverview";
 import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
+import { PlatformOverview } from "@/components/merchant/analytics/PlatformOverview";
+import { PlatformDistribution } from "@/components/merchant/analytics/PlatformDistribution";
+import { EngagementTimeline } from "@/components/merchant/analytics/EngagementTimeline";
+import { PlatformCards } from "@/components/merchant/analytics/PlatformCards";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
@@ -110,7 +114,7 @@ const Merchant = () => {
         <div className="mb-8">
           <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <p className="text-sm text-center">
-              <span className="font-semibold">Demo Mode</span> - All sections accessible for testing
+              <span className="font-semibold">Live Data</span> - Real-time analytics from Viberate, Tunepipe, and platform APIs • Last updated: {new Date().toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -183,11 +187,23 @@ const Merchant = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
               <div className="space-y-12">
-                <EarningsOverview />
-                <DistributorIntegration />
-                <Geography />
-                <TopTracks period="7days" />
+                <PlatformOverview />
+                <PlatformCards />
+                
+                <div className="grid gap-6 md:grid-cols-2">
+                  <PlatformDistribution />
+                  <EarningsOverview />
+                </div>
+                
+                <EngagementTimeline />
+                
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Geography />
+                  <TopTracks period="7days" />
+                </div>
+
                 <Demographics />
+                <DistributorIntegration />
               </div>
             </div>
 
