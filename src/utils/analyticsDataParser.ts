@@ -241,8 +241,13 @@ export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> 
           const data: DailyEngagementData[] = [];
           const rows = results.data as any[];
           
+          if (rows.length > 0) {
+            console.log('✅ Engagement CSV columns:', Object.keys(rows[0]));
+          }
+          
           for (const row of rows) {
             const dateStr = row['Date'] || row['date'];
+            if (!dateStr) continue;
             
             data.push({
               date: dateStr,
@@ -255,7 +260,7 @@ export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> 
                 likes: 0,
               },
               tiktok: {
-                followers: parseNumber(row['Tiktok Followers'] || '0'),
+                followers: parseNumber(row['TikTok Followers'] || '0'),
                 likes: 0,
               },
               facebook: {
@@ -270,14 +275,21 @@ export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> 
             });
           }
           
-          console.log(`Engagement Timeline loaded: ${data.length} data points`);
+          console.log(`✅ Engagement Timeline loaded: ${data.length} data points`);
+          if (data.length > 0) {
+            console.log('First entry:', data[0]);
+            console.log('Last entry:', data[data.length - 1]);
+          }
           resolve(data);
         },
-        error: (error) => reject(error)
+        error: (error) => {
+          console.error('❌ Error parsing engagement timeline:', error);
+          reject(error);
+        }
       });
     });
   } catch (error) {
-    console.error('Error parsing engagement timeline:', error);
+    console.error('❌ Error loading engagement timeline:', error);
     return [];
   }
 };
@@ -330,6 +342,12 @@ export const parsePlatformDistribution = async (): Promise<PlatformDistributionD
         transformHeader: (h) => h.trim().replace(/^"|"$/g, ''),
         complete: (results) => {
           const data: PlatformDistributionData[] = [];
+          const rows = results.data as any[];
+          
+          if (rows.length > 0) {
+            console.log('✅ Platform CSV columns:', Object.keys(rows[0]));
+          }
+          
           const colors = {
             'Facebook followers': 'hsl(var(--chart-1))',
             'Instagram followers': 'hsl(var(--chart-2))',
@@ -340,7 +358,7 @@ export const parsePlatformDistribution = async (): Promise<PlatformDistributionD
             'Soundcloud followers': 'hsl(var(--chart-2))',
           };
           
-          for (const row of results.data as any[]) {
+          for (const row of rows) {
             const channel = row['Channel'] || row['channel'];
             const total = parseNumber(row['Total'] || row['total'] || '0');
             const percentage = parseFloat(row['Percentage'] || row['percentage'] || '0');
@@ -358,14 +376,17 @@ export const parsePlatformDistribution = async (): Promise<PlatformDistributionD
             }
           }
           
-          console.log('Platform Distribution loaded:', data);
+          console.log('✅ Platform Distribution loaded:', data);
           resolve(data);
         },
-        error: (error) => reject(error)
+        error: (error) => {
+          console.error('❌ Error parsing platform distribution:', error);
+          reject(error);
+        }
       });
     });
   } catch (error) {
-    console.error('Error parsing platform distribution:', error);
+    console.error('❌ Error parsing platform distribution:', error);
     return [];
   }
 };

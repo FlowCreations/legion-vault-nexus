@@ -28,7 +28,9 @@ export const PlatformDistribution = () => {
           <CardTitle>Platform Distribution</CardTitle>
         </CardHeader>
         <CardContent className="h-96 flex items-center justify-center">
-          <p className="text-muted-foreground">No distribution data available</p>
+          <p className="text-muted-foreground">
+            No distribution data available. Check console for errors.
+          </p>
         </CardContent>
       </Card>
     );

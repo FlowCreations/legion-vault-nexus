@@ -31,7 +31,9 @@ export const EngagementTimeline = () => {
           <CardTitle>Engagement Timeline</CardTitle>
         </CardHeader>
         <CardContent className="h-96 flex items-center justify-center">
-          <p className="text-muted-foreground">No timeline data available</p>
+          <p className="text-muted-foreground">
+            No timeline data available. Check console for errors.
+          </p>
         </CardContent>
       </Card>
     );
