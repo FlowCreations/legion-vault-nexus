@@ -1,9 +1,21 @@
-import { useState } from "react";
-import { Music2, Users, TrendingUp, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Music2 } from "lucide-react";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import walkingOnTheEdge from "@/assets/walking-on-the-edge.jpg";
 import carolinaSingle from "@/assets/carolina-single.jpg";
+
+// Map track names to album images
+const trackImageMap: Record<string, string> = {
+  "In The Air Tonight": powerAlbum,
+  "Fire Starter": powerAlbum,
+  "Strange": outlawAlbum,
+  "Power": powerAlbum,
+  "Carolina": carolinaSingle,
+  "Walking On The Edge": walkingOnTheEdge,
+  "Remember My Name": outlawAlbum,
+  "Leave the Light On": outlawAlbum,
+};
 
 interface TopTrack {
   rank: number;
@@ -20,27 +32,37 @@ interface TopTracksProps {
 
 export const TopTracks = ({ period }: TopTracksProps) => {
   const [activeTab, setActiveTab] = useState<"7days" | "28days" | "alltime">(period);
+  const [tracks, setTracks] = useState<TopTrack[]>([]);
 
-  const tracks: TopTrack[] = [
-    { rank: 1, title: "In The Air Tonight", streams: 234567, change: 12, percentOfTotal: 18.5, image: powerAlbum },
-    { rank: 2, title: "Fire Starter", streams: 198543, change: 8, percentOfTotal: 15.7, image: powerAlbum },
-    { rank: 3, title: "Strange", streams: 176234, change: 5, percentOfTotal: 13.9, image: outlawAlbum },
-    { rank: 4, title: "Power", streams: 154321, change: -2, percentOfTotal: 12.2, image: powerAlbum },
-    { rank: 5, title: "Carolina", streams: 142109, change: 3, percentOfTotal: 11.2, image: carolinaSingle },
-    { rank: 6, title: "Walking On The Edge", streams: 128456, change: 6, percentOfTotal: 10.1, image: walkingOnTheEdge },
-    { rank: 7, title: "Remember My Name", streams: 115678, change: 1, percentOfTotal: 9.1, image: outlawAlbum },
-    { rank: 8, title: "Leave the Light On", streams: 98234, change: -1, percentOfTotal: 7.8, image: outlawAlbum },
-  ];
+  useEffect(() => {
+    const loadTracksData = async () => {
+      try {
+        // For now, use hardcoded data - will be replaced with Viberate API
+        const hardcodedTracks: TopTrack[] = [
+          { rank: 1, title: "In The Air Tonight", streams: 234567, percentOfTotal: 18.5 },
+          { rank: 2, title: "Fire Starter", streams: 198543, percentOfTotal: 15.7 },
+          { rank: 3, title: "Strange", streams: 176234, percentOfTotal: 13.9 },
+          { rank: 4, title: "Power", streams: 154321, percentOfTotal: 12.2 },
+          { rank: 5, title: "Carolina", streams: 142109, percentOfTotal: 11.2 },
+          { rank: 6, title: "Walking On The Edge", streams: 128456, percentOfTotal: 10.1 },
+          { rank: 7, title: "Remember My Name", streams: 115678, percentOfTotal: 9.1 },
+          { rank: 8, title: "Leave the Light On", streams: 98234, percentOfTotal: 7.8 },
+        ];
 
-  const getChangeIcon = (change?: number) => {
-    if (!change || change === 0) return <Minus className="h-3 w-3" />;
-    return change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
-  };
+        // Add images to tracks
+        const tracksWithImages = hardcodedTracks.map(track => ({
+          ...track,
+          image: trackImageMap[track.title] || powerAlbum
+        }));
 
-  const getChangeColor = (change?: number) => {
-    if (!change || change === 0) return "text-gray-500";
-    return change > 0 ? "text-green-500" : "text-red-500";
-  };
+        setTracks(tracksWithImages);
+      } catch (error) {
+        console.error('Error loading tracks data:', error);
+      }
+    };
+
+    loadTracksData();
+  }, [activeTab]);
 
   return (
     <div className="space-y-6">

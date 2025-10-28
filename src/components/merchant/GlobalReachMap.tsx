@@ -10,9 +10,8 @@ type MemberWithTerritory = CommunityMemberPoint & {
 export const GlobalReachMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [activeTab, setActiveTab] = useState<'america' | 'world'>('america');
   const [isPaused, setIsPaused] = useState(false);
-  const [members, setMembers] = useState<MemberWithTerritory[]>([]);
+  const [members, setMembers] = useState<CommunityMemberPoint[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Interaction state refs
@@ -33,23 +32,17 @@ export const GlobalReachMap = () => {
         (m) => typeof m.lat === 'number' && typeof m.lng === 'number'
       );
 
-      // Add territory group to each member
-      const membersWithTerritory: MemberWithTerritory[] = validMembers.map((m) => ({
-        ...m,
-        territoryGroup: getTerritoryGroup(m.country),
-      }));
-
-      setMembers(membersWithTerritory);
+      setMembers(validMembers);
       setLoading(false);
     }
 
     loadMembers();
   }, []);
 
-  // Filter members by active tab
+  // Show all members globally
   const filteredMembers = useMemo(() => {
-    return members.filter((m) => m.territoryGroup === activeTab);
-  }, [members, activeTab]);
+    return members;
+  }, [members]);
 
   // Convert to GeoJSON with correct [lng, lat] order
   const geojson = useMemo(() => {
@@ -132,8 +125,8 @@ export const GlobalReachMap = () => {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       projection: { name: 'globe' },
-      center: activeTab === 'america' ? [-95, 30] : [20, 30],
-      zoom: 2.2,
+      center: [0, 20],
+      zoom: 1.5,
       pitch: 0,
       bearing: 0,
       // Enable all interactions
@@ -266,7 +259,7 @@ export const GlobalReachMap = () => {
     };
   }, []);
 
-  // Update source data when members or tab changes
+  // Update source data when members change
   useEffect(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
 
@@ -274,42 +267,10 @@ export const GlobalReachMap = () => {
     if (source && source.type === 'geojson') {
       source.setData(geojson);
     }
-
-    // Re-center map based on active tab
-    const newCenter: [number, number] = activeTab === 'america' ? [-95, 30] : [20, 30];
-    map.current.easeTo({
-      center: newCenter,
-      zoom: 2.2,
-      duration: 1500,
-    });
-  }, [activeTab, geojson]);
+  }, [geojson]);
 
   return (
     <div className="space-y-6">
-      {/* Tab Buttons */}
-      <div className="flex gap-4">
-        <button
-          onClick={() => setActiveTab('america')}
-          className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-            activeTab === 'america'
-              ? 'bg-white text-black'
-              : 'bg-white/5 text-muted-foreground hover:bg-white/10'
-          }`}
-        >
-          IN AMERICA
-        </button>
-        <button
-          onClick={() => setActiveTab('world')}
-          className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-            activeTab === 'world'
-              ? 'bg-white text-black'
-              : 'bg-white/5 text-muted-foreground hover:bg-white/10'
-          }`}
-        >
-          AROUND THE WORLD
-        </button>
-      </div>
-
       {/* Map Container */}
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
         {loading && (
