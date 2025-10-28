@@ -125,18 +125,23 @@ serve(async (req) => {
 });
 
 async function fetchCampaigns(supabase: any, baseUrl: string, apiKey: string): Promise<number> {
-  console.log('Fetching campaigns from Tunepipe...');
+  console.log('Fetching subscriber lists (campaigns) from Tunepipe...');
   
   try {
     const response = await fetch(`${baseUrl}/subscriber-lists`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'LegionVault/1.0'
       }
     });
 
+    console.log('Tunepipe API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Tunepipe API error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error('Tunepipe API error response:', errorBody);
+      throw new Error(`Tunepipe API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
     const campaigns: TunepipeCampaign[] = await response.json();
@@ -188,19 +193,24 @@ async function fetchCampaigns(supabase: any, baseUrl: string, apiKey: string): P
 }
 
 async function fetchSubscribers(supabase: any, baseUrl: string, apiKey: string): Promise<number> {
-  console.log('Fetching subscribers from Tunepipe...');
+  console.log('Fetching contacts/subscribers from Tunepipe...');
   
   try {
-    // TODO: Adjust endpoint based on actual Tunepipe API documentation
-    const response = await fetch(`${baseUrl}/subscribers`, {
+    // Get contacts that are subscribed (for email marketing)
+    const response = await fetch(`${baseUrl}/contacts?subscribed=true&limit=50`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'LegionVault/1.0'
       }
     });
 
+    console.log('Tunepipe contacts API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Tunepipe API error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error('Tunepipe contacts API error response:', errorBody);
+      throw new Error(`Tunepipe API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
     const subscribers: TunepipeSubscriber[] = await response.json();
@@ -261,16 +271,23 @@ async function fetchAnalytics(supabase: any, baseUrl: string, apiKey: string): P
   console.log('Fetching analytics from Tunepipe...');
   
   try {
-    // TODO: Adjust endpoint based on actual Tunepipe API documentation
-    const response = await fetch(`${baseUrl}/analytics`, {
+    // Note: Tunepipe API docs don't show a dedicated analytics endpoint
+    // Analytics data comes from subscriber lists (opens/clicks rates)
+    // For now, we'll use the contacts endpoint to get engagement data
+    const response = await fetch(`${baseUrl}/contacts?limit=50`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'LegionVault/1.0'
       }
     });
 
+    console.log('Tunepipe analytics API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Tunepipe API error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error('Tunepipe analytics API error response:', errorBody);
+      throw new Error(`Tunepipe API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
     const analyticsData: TunepipeAnalytics[] = await response.json();
