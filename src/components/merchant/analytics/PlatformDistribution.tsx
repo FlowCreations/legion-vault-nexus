@@ -4,6 +4,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { parsePlatformDistribution, formatNumber } from "@/utils/analyticsDataParser";
 import type { PlatformDistributionData } from "@/types/analytics";
 
+const COLORS = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ef4444'];
+
 export const PlatformDistribution = () => {
   const [data, setData] = useState<PlatformDistributionData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +40,14 @@ export const PlatformDistribution = () => {
 
   const totalFollowers = data.reduce((sum, item) => sum + item.followers, 0);
 
+  const pieData = data.map((item, index) => ({
+    name: item.platform,
+    value: item.followers,
+    percentage: item.percentage,
+  }));
+
   return (
-    <Card>
+    <Card className="bg-card">
       <CardHeader>
         <CardTitle>Platform Distribution</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -47,33 +55,37 @@ export const PlatformDistribution = () => {
         </p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={400}>
           <PieChart>
             <Pie
-              data={data}
+              data={pieData}
               cx="50%"
               cy="50%"
-              innerRadius="60%"
-              outerRadius="85%"
-              paddingAngle={2}
-              labelLine={false}
-              label={({ platform, percentage }) => `${platform} ${percentage.toFixed(1)}%`}
-              fill="#8884d8"
-              dataKey="followers"
+              innerRadius={80}
+              outerRadius={130}
+              paddingAngle={3}
+              dataKey="value"
+              label={(entry) => `${entry.name} ${entry.percentage.toFixed(1)}%`}
+              labelLine={true}
             >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+              {pieData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip
               formatter={(value: number) => formatNumber(value)}
               contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
+                backgroundColor: '#1f2937',
+                border: '1px solid #374151',
+                borderRadius: '8px',
+                color: '#f3f4f6',
               }}
             />
-            <Legend />
+            <Legend 
+              verticalAlign="bottom" 
+              height={36}
+              wrapperStyle={{ color: 'hsl(var(--foreground))' }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>

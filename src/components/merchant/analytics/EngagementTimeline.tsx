@@ -5,6 +5,14 @@ import { parseEngagementTimeline, formatNumber } from "@/utils/analyticsDataPars
 import type { DailyEngagementData } from "@/types/analytics";
 import { format } from "date-fns";
 
+const PLATFORM_COLORS = {
+  Spotify: '#1DB954',
+  Instagram: '#E4405F',
+  TikTok: '#00F2EA',
+  Facebook: '#1877F2',
+  YouTube: '#FF0000',
+};
+
 export const EngagementTimeline = () => {
   const [data, setData] = useState<DailyEngagementData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +57,7 @@ export const EngagementTimeline = () => {
   }));
 
   return (
-    <Card>
+    <Card className="bg-card">
       <CardHeader>
         <CardTitle>Engagement Timeline</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -57,33 +65,75 @@ export const EngagementTimeline = () => {
         </p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
             <XAxis 
               dataKey="date" 
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              stroke="#9ca3af"
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              tickMargin={10}
             />
             <YAxis 
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              stroke="#9ca3af"
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
               tickFormatter={formatNumber}
+              width={60}
             />
             <Tooltip
               formatter={(value: number) => formatNumber(value)}
               contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
+                backgroundColor: '#1f2937',
+                border: '1px solid #374151',
+                borderRadius: '8px',
+                color: '#f3f4f6',
               }}
+              labelStyle={{ color: '#f3f4f6' }}
             />
-            <Legend />
-            <Line type="monotone" dataKey="Spotify" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Instagram" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="TikTok" stroke="hsl(var(--chart-3))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Facebook" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="YouTube" stroke="hsl(var(--chart-5))" strokeWidth={2} dot={false} />
+            <Legend 
+              wrapperStyle={{ color: '#f3f4f6' }}
+              iconType="line"
+            />
+            <Line 
+              type="monotone" 
+              dataKey="Spotify" 
+              stroke={PLATFORM_COLORS.Spotify} 
+              strokeWidth={2.5} 
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="Instagram" 
+              stroke={PLATFORM_COLORS.Instagram} 
+              strokeWidth={2.5} 
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="TikTok" 
+              stroke={PLATFORM_COLORS.TikTok} 
+              strokeWidth={2.5} 
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="Facebook" 
+              stroke={PLATFORM_COLORS.Facebook} 
+              strokeWidth={2.5} 
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="YouTube" 
+              stroke={PLATFORM_COLORS.YouTube} 
+              strokeWidth={2.5} 
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
