@@ -38,6 +38,15 @@ import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Subscribe from "./pages/Subscribe";
+import Step1LeadCapture from "./pages/funnel/Step1LeadCapture";
+import Step2ThankYou from "./pages/funnel/Step2ThankYou";
+import Step3SalesPage from "./pages/funnel/Step3SalesPage";
+import Step5Upsell from "./pages/funnel/Step5Upsell";
+import Step6Downsell1 from "./pages/funnel/Step6Downsell1";
+import Step9ThankYouPurchase from "./pages/funnel/Step9ThankYouPurchase";
+import Step10PortalOnboarding from "./pages/funnel/Step10PortalOnboarding";
+import Step11MerchUpsell from "./pages/funnel/Step11MerchUpsell";
+import Step12RewardsLoop from "./pages/funnel/Step12RewardsLoop";
 
 const queryClient = new QueryClient();
 
@@ -138,6 +147,15 @@ const App = () => {
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/funnel/step-1" element={<Step1LeadCapture />} />
+          <Route path="/funnel/step-2" element={<Step2ThankYou />} />
+          <Route path="/funnel/step-3" element={<Step3SalesPage />} />
+          <Route path="/funnel/step-5" element={<Step5Upsell />} />
+          <Route path="/funnel/step-6" element={<Step6Downsell1 />} />
+          <Route path="/funnel/step-9" element={<Step9ThankYouPurchase />} />
+          <Route path="/funnel/step-10" element={<Step10PortalOnboarding />} />
+          <Route path="/funnel/step-11" element={<Step11MerchUpsell />} />
+          <Route path="/funnel/step-12" element={<Step12RewardsLoop />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />

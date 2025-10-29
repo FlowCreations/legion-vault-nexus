@@ -16,6 +16,7 @@ import { EngagementTimeline } from "@/components/merchant/analytics/EngagementTi
 import { PlatformCards } from "@/components/merchant/analytics/PlatformCards";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
+import FunnelOverview from "@/components/merchant/FunnelOverview";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
 import { ContentLab } from "@/components/merchant/ContentLab";
 import { EmailMarketing } from "@/components/merchant/EmailMarketing";
@@ -263,9 +264,13 @@ const Merchant = () => {
             <AdminDashboard selectedUserId={selectedUserId} />
           </TabsContent>
 
-          <TabsContent value="partnerships">
-            <Partnerships />
-          </TabsContent>
+        <TabsContent value="funnels">
+          <FunnelOverview />
+        </TabsContent>
+
+        <TabsContent value="partnerships">
+          <Partnerships />
+        </TabsContent>
         </Tabs>
       </div>
     </div>

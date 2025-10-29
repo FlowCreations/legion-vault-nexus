@@ -60,6 +60,42 @@ export type Database = {
           },
         ]
       }
+      ab_test_results: {
+        Row: {
+          avg_order_value: number | null
+          conversion_rate: number | null
+          conversions: number | null
+          id: string
+          last_updated: string | null
+          step_number: number
+          total_revenue: number | null
+          variant_name: string
+          views: number | null
+        }
+        Insert: {
+          avg_order_value?: number | null
+          conversion_rate?: number | null
+          conversions?: number | null
+          id?: string
+          last_updated?: string | null
+          step_number: number
+          total_revenue?: number | null
+          variant_name: string
+          views?: number | null
+        }
+        Update: {
+          avg_order_value?: number | null
+          conversion_rate?: number | null
+          conversions?: number | null
+          id?: string
+          last_updated?: string | null
+          step_number?: number
+          total_revenue?: number | null
+          variant_name?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
       ab_test_variants: {
         Row: {
           campaign_id: string | null
@@ -1351,6 +1387,173 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      funnel_conversions: {
+        Row: {
+          amount: number | null
+          conversion_type: string
+          id: string
+          meta: Json | null
+          occurred_at: string | null
+          product_id: string | null
+          session_id: string | null
+          step_number: number
+          user_id: string | null
+          variant_name: string
+        }
+        Insert: {
+          amount?: number | null
+          conversion_type: string
+          id?: string
+          meta?: Json | null
+          occurred_at?: string | null
+          product_id?: string | null
+          session_id?: string | null
+          step_number: number
+          user_id?: string | null
+          variant_name: string
+        }
+        Update: {
+          amount?: number | null
+          conversion_type?: string
+          id?: string
+          meta?: Json | null
+          occurred_at?: string | null
+          product_id?: string | null
+          session_id?: string | null
+          step_number?: number
+          user_id?: string | null
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_conversions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_conversions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      funnel_pages: {
+        Row: {
+          background_image_url: string | null
+          body_copy: string | null
+          created_at: string | null
+          cta_text: string | null
+          cta_url: string | null
+          headline: string | null
+          id: string
+          is_active: boolean | null
+          meta: Json | null
+          page_type: string
+          price: number | null
+          product_id: string | null
+          step_number: number
+          subheadline: string | null
+          updated_at: string | null
+          variant_name: string
+        }
+        Insert: {
+          background_image_url?: string | null
+          body_copy?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          headline?: string | null
+          id?: string
+          is_active?: boolean | null
+          meta?: Json | null
+          page_type: string
+          price?: number | null
+          product_id?: string | null
+          step_number: number
+          subheadline?: string | null
+          updated_at?: string | null
+          variant_name: string
+        }
+        Update: {
+          background_image_url?: string | null
+          body_copy?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          headline?: string | null
+          id?: string
+          is_active?: boolean | null
+          meta?: Json | null
+          page_type?: string
+          price?: number | null
+          product_id?: string | null
+          step_number?: number
+          subheadline?: string | null
+          updated_at?: string | null
+          variant_name?: string
+        }
+        Relationships: []
+      }
+      funnel_sessions: {
+        Row: {
+          abandoned_at: string | null
+          completed_at: string | null
+          completed_steps: number[] | null
+          conversion_step: number | null
+          current_step: number | null
+          entry_step: number | null
+          id: string
+          meta: Json | null
+          session_id: string
+          started_at: string | null
+          total_revenue: number | null
+          user_id: string | null
+          variant_assignments: Json | null
+        }
+        Insert: {
+          abandoned_at?: string | null
+          completed_at?: string | null
+          completed_steps?: number[] | null
+          conversion_step?: number | null
+          current_step?: number | null
+          entry_step?: number | null
+          id?: string
+          meta?: Json | null
+          session_id: string
+          started_at?: string | null
+          total_revenue?: number | null
+          user_id?: string | null
+          variant_assignments?: Json | null
+        }
+        Update: {
+          abandoned_at?: string | null
+          completed_at?: string | null
+          completed_steps?: number[] | null
+          conversion_step?: number | null
+          current_step?: number | null
+          entry_step?: number | null
+          id?: string
+          meta?: Json | null
+          session_id?: string
+          started_at?: string | null
+          total_revenue?: number | null
+          user_id?: string | null
+          variant_assignments?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       legal_documents: {
         Row: {
