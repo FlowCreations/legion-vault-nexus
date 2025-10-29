@@ -90,7 +90,7 @@ export const Agent = () => {
     <>
       {/* Floating Agent Indicator */}
       <motion.div
-        className="fixed bottom-8 right-8 z-50"
+        className="fixed bottom-8 left-8 z-50"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -162,7 +162,7 @@ export const Agent = () => {
 
         {/* Agent Label */}
         <motion.div
-          className="absolute -top-10 right-0 whitespace-nowrap"
+          className="absolute -top-10 left-0 whitespace-nowrap"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
@@ -177,7 +177,7 @@ export const Agent = () => {
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            className="fixed bottom-28 right-8 z-50 w-96 max-w-[calc(100vw-4rem)]"
+            className="fixed bottom-28 left-8 z-50 w-96 max-w-[calc(100vw-4rem)]"
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
