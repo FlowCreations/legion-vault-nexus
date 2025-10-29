@@ -19,15 +19,25 @@ serve(async (req) => {
 
     const { sessionId, userId, step, eventType, variant, meta = {} } = await req.json();
 
+    // Get current session to update it properly
+    const { data: currentSession } = await supabase
+      .from("funnel_sessions")
+      .select("completed_steps, total_revenue")
+      .eq("session_id", sessionId)
+      .maybeSingle();
+
+    // Update completed steps array
+    const completedSteps = currentSession?.completed_steps || [];
+    if (!completedSteps.includes(step)) {
+      completedSteps.push(step);
+    }
+
     // Update funnel session
     await supabase
       .from("funnel_sessions")
       .update({
         current_step: step,
-        completed_steps: supabase.rpc('array_append', { 
-          arr: 'completed_steps', 
-          elem: step 
-        }),
+        completed_steps: completedSteps,
         updated_at: new Date().toISOString(),
       })
       .eq("session_id", sessionId);
@@ -48,30 +58,54 @@ serve(async (req) => {
       });
 
       // Update session revenue
+      const newRevenue = (currentSession?.total_revenue || 0) + (amount || 0);
       await supabase
         .from("funnel_sessions")
         .update({
-          total_revenue: supabase.rpc('increment_revenue', { 
-            session_id: sessionId, 
-            amount 
-          }),
+          total_revenue: newRevenue,
           conversion_step: step,
         })
         .eq("session_id", sessionId);
 
-      // Update AB test results
-      await supabase.rpc('increment_ab_conversions', {
-        p_step: step,
-        p_variant: variant,
-        p_revenue: amount,
-      });
+      // Update AB test conversions
+      const { data: abResult } = await supabase
+        .from("ab_test_results")
+        .select("conversions, total_revenue")
+        .eq("step_number", step)
+        .eq("variant_name", variant)
+        .maybeSingle();
+
+      if (abResult) {
+        await supabase
+          .from("ab_test_results")
+          .update({
+            conversions: (abResult.conversions || 0) + 1,
+            total_revenue: (abResult.total_revenue || 0) + (amount || 0),
+            last_updated: new Date().toISOString(),
+          })
+          .eq("step_number", step)
+          .eq("variant_name", variant);
+      }
     }
 
     // Update AB test views
-    await supabase.rpc('increment_ab_views', {
-      p_step: step,
-      p_variant: variant,
-    });
+    const { data: abViews } = await supabase
+      .from("ab_test_results")
+      .select("views")
+      .eq("step_number", step)
+      .eq("variant_name", variant)
+      .maybeSingle();
+
+    if (abViews) {
+      await supabase
+        .from("ab_test_results")
+        .update({
+          views: (abViews.views || 0) + 1,
+          last_updated: new Date().toISOString(),
+        })
+        .eq("step_number", step)
+        .eq("variant_name", variant);
+    }
 
     // Track Meta Pixel events
     const pixelEvents: Record<string, string> = {
