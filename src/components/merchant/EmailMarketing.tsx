@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Users, BarChart3, Zap, Plus, Loader2, ShoppingCart, Star, Mail as MailIcon, Brain } from "lucide-react";
+import { Mail, Users, BarChart3, Zap, Plus, Loader2, ShoppingCart, Star, Mail as MailIcon, Brain, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EmailListBuilder } from "./EmailListBuilder";
@@ -26,6 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export const EmailMarketing = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -43,6 +45,7 @@ export const EmailMarketing = () => {
   const [loadingAutomations, setLoadingAutomations] = useState(false);
   const [showAutomationBuilder, setShowAutomationBuilder] = useState(false);
   const [editingAutomationId, setEditingAutomationId] = useState<string | null>(null);
+  const [autoEngageEnabled, setAutoEngageEnabled] = useState(false);
 
   useEffect(() => {
     if (activeTab === "lists") {
@@ -185,6 +188,19 @@ export const EmailMarketing = () => {
       toast.error("Failed to delete list");
     } finally {
       setDeletingList(null);
+    }
+  };
+
+  const handleAutoEngageToggle = (checked: boolean) => {
+    setAutoEngageEnabled(checked);
+    if (checked) {
+      toast.success("Auto-Engage Fans activated", {
+        description: "Smart campaigns will now auto-engage your top fans"
+      });
+    } else {
+      toast("Auto-Engage Fans disabled", {
+        description: "Automatic fan engagement paused"
+      });
     }
   };
 
@@ -438,20 +454,59 @@ export const EmailMarketing = () => {
             />
           ) : (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1">
                   <h2 className="text-2xl font-bold">Automation Sequences</h2>
                   <p className="text-muted-foreground">
                     Behavior-driven email flows that run automatically
                   </p>
                 </div>
-                <Button onClick={() => {
-                  setEditingAutomationId(null);
-                  setShowAutomationBuilder(true);
-                }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Automation
-                </Button>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>
+                            When ON, JRNY tracks fan activity and auto-sends smart campaigns 
+                            to re-engage top fans and boost sales, streams, and attendance.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <label 
+                      htmlFor="auto-engage-toggle" 
+                      className={cn(
+                        "text-sm font-medium cursor-pointer transition-colors",
+                        autoEngageEnabled ? "text-green-600" : "text-muted-foreground"
+                      )}
+                    >
+                      Auto-Engage Fans
+                    </label>
+                    
+                    <Switch
+                      id="auto-engage-toggle"
+                      checked={autoEngageEnabled}
+                      onCheckedChange={handleAutoEngageToggle}
+                      className={cn(
+                        "data-[state=checked]:bg-green-600",
+                        autoEngageEnabled && "shadow-lg shadow-green-600/30"
+                      )}
+                    />
+                  </div>
+                  
+                  <Button onClick={() => {
+                    setEditingAutomationId(null);
+                    setShowAutomationBuilder(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Automation
+                  </Button>
+                </div>
               </div>
 
               <div>
