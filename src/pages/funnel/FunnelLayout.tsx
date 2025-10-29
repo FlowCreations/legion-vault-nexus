@@ -16,9 +16,9 @@ export default function FunnelLayout({ children, step }: FunnelLayoutProps) {
     
     return () => {
       const timeOnPage = (Date.now() - startTime) / 1000;
-      trackFunnelEvent('time_on_page', { seconds: timeOnPage });
+      trackFunnelEvent('page_exit', { seconds: timeOnPage });
     };
-  }, []);
+  }, [trackFunnelEvent]);
 
   if (loading) {
     return (
