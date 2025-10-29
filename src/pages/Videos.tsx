@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Play } from "lucide-react";
+import { Play, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +35,7 @@ interface VideoItem {
 
 export default function Videos() {
   const { trackEvent } = useEventTracking();
+  const { hasAccess } = useSubscription();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [heroVideoUrl, setHeroVideoUrl] = useState<string>("");
   const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
@@ -275,46 +278,52 @@ export default function Videos() {
 
       {/* Content Rows */}
       <div className="px-4 sm:px-8 lg:px-12 pb-16 space-y-12">
-        {/* Performances Row */}
-        <ContentRow
-          title="Performances"
-          items={performances}
-          aspectRatio="portrait"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          onVideoClick={handleVideoClick}
-        />
-
-        {/* BTS Row */}
-        <ContentRow
-          title="Behind The Scenes"
-          items={behindTheScenes}
-          aspectRatio="portrait"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          onVideoClick={handleVideoClick}
-        />
-
-        {/* Music Videos Row */}
+        {/* Music Videos Row - FREE */}
         <ContentRow
           title="Music Videos"
           items={musicVideos}
-          aspectRatio="landscape-large"
+          aspectRatio="landscape"
           hoveredId={hoveredId}
           setHoveredId={setHoveredId}
           onVideoClick={handleVideoClick}
         />
 
-        {/* Documentary Row */}
-        <ContentRow
-          title="Documentary"
-          items={documentary}
-          aspectRatio="landscape"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          isPremium
-          onVideoClick={handleVideoClick}
-        />
+        {/* Performances Row - REBELS */}
+        <SubscriptionGate feature="performances">
+          <ContentRow
+            title="Performances"
+            items={performances}
+            aspectRatio="portrait"
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+            onVideoClick={handleVideoClick}
+          />
+        </SubscriptionGate>
+
+        {/* BTS Row - REBELS */}
+        <SubscriptionGate feature="bts_videos">
+          <ContentRow
+            title="Behind The Scenes"
+            items={behindTheScenes}
+            aspectRatio="portrait"
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+            onVideoClick={handleVideoClick}
+          />
+        </SubscriptionGate>
+
+        {/* Documentary Row - OUTLAWS */}
+        <SubscriptionGate feature="documentary">
+          <ContentRow
+            title="Documentary"
+            items={documentary}
+            aspectRatio="landscape"
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+            isPremium
+            onVideoClick={handleVideoClick}
+          />
+        </SubscriptionGate>
 
         {/* You Might Also Like */}
         <YouMightAlsoLike contentType="video" limit={5} />

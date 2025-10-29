@@ -1,12 +1,15 @@
-import { Film, Music, Users, ShoppingBag, Radio, LogIn, LogOut, Calendar, Shield, User, Settings } from "lucide-react";
+import { Film, Music, Users, ShoppingBag, Radio, LogIn, LogOut, Calendar, Shield, User, Settings, Crown, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import solLogo from "@/assets/sol-logo.png";
 import { CartDrawer } from "@/components/CartDrawer";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { getTierColor } from "@/lib/tierColors";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +32,7 @@ const navItems = [
 export const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { tier, isAdmin: isAdminFromSub, isSubscribed } = useSubscription();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -141,19 +145,31 @@ export const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20">
                       <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.display_name} />
                       <AvatarFallback>
                         <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
+                    {isSubscribed && (
+                      <div className="absolute -top-1 -right-1">
+                        <Crown className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{userProfile?.display_name || "My Account"}</p>
-                      <p className="text-xs text-muted-foreground">{userProfile?.location}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{userProfile?.display_name || "My Account"}</p>
+                        <p className="text-xs text-muted-foreground">{userProfile?.location}</p>
+                      </div>
+                      {tier !== 'free' && (
+                        <Badge className={cn("text-xs", getTierColor(tier))}>
+                          {tier}
+                        </Badge>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -161,12 +177,20 @@ export const Navigation = () => {
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
+                  
+                  {!isSubscribed && (
+                    <DropdownMenuItem onClick={() => navigate("/subscribe")}>
+                      <Crown className="mr-2 h-4 w-4 text-primary" />
+                      <span className="text-primary font-medium">Upgrade Plan</span>
+                    </DropdownMenuItem>
+                  )}
+                  
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Settings className="mr-2 h-4 w-4" />
                     Account
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    <Package className="mr-2 h-4 w-4" />
                     Orders
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>

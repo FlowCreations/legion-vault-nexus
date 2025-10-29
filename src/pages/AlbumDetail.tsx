@@ -7,6 +7,7 @@ import { usePurchases } from "@/hooks/usePurchases";
 import { StripeCheckout } from "@/components/StripeCheckout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -17,6 +18,7 @@ export default function AlbumDetail() {
   const navigate = useNavigate();
   const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
+  const { hasAccess } = useSubscription();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   // Album data
@@ -100,7 +102,11 @@ export default function AlbumDetail() {
 
   const album = albumsData.find(a => a.id === albumId);
   const albumPurchased = album ? isPurchased(album.id) : false;
-  const isLocked = album?.forSale && !albumPurchased;
+  
+  // Power album (a1) is always free, other albums require premium_albums feature
+  const isPowerAlbum = album?.id === 'a1';
+  const hasAlbumAccess = isPowerAlbum || hasAccess('premium_albums');
+  const isLocked = album?.forSale && !albumPurchased && !hasAlbumAccess;
 
   const handlePlayTrack = (track: any, trackList?: any[]) => {
     if (isLocked) return;

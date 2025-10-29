@@ -12,6 +12,8 @@ import { FloatingChatbot } from "./components/FloatingChatbot";
 import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import { Agent } from "./components/Agent";
 import { useAgent } from "./hooks/useAgent";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { TIERS } from "./config/subscriptions";
 import Home from "./pages/Home";
 import Videos from "./pages/Videos";
 import VideoManager from "./pages/VideoManager";
@@ -115,22 +117,22 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<ProtectedRoute requireAuth><Profile /></ProtectedRoute>} />
           <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/videos" element={<Videos />} />
-          <Route path="/videos/manage" element={<VideoManager />} />
+          <Route path="/videos/manage" element={<ProtectedRoute requireAdmin><VideoManager /></ProtectedRoute>} />
           <Route path="/music" element={<Music />} />
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
           <Route path="/song-credits" element={<SongCredits />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
-          <Route path="/shows" element={<Shows />} />
-          <Route path="/shows/gallery" element={<Gallery />} />
+          <Route path="/shows" element={<ProtectedRoute requiredTier={TIERS.REBELS}><Shows /></ProtectedRoute>} />
+          <Route path="/shows/gallery" element={<ProtectedRoute requiredTier={TIERS.OUTLAWS}><Gallery /></ProtectedRoute>} />
           <Route path="/community" element={<CommunityHub />} />
           <Route path="/merch" element={<Merch />} />
-          <Route path="/merchant" element={<Merchant />} />
-          <Route path="/live" element={<LiveStudio />} />
+          <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
+          <Route path="/live" element={<ProtectedRoute requiredTier={TIERS.OUTLAWS}><LiveStudio /></ProtectedRoute>} />
           <Route path="/community-hub" element={<CommunityHub />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
           <Route path="/free-ep" element={<FreeEP />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />

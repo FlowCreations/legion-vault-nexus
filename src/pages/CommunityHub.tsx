@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
   Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X, MapPin, Clock
@@ -72,6 +74,7 @@ export default function CommunityHub() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("announcements");
   const { enabled: cameosEnabled } = useFeatureFlag('enable_cameo_booking');
+  const { hasAccess } = useSubscription();
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
   const [postMediaUrl, setPostMediaUrl] = useState("");
@@ -389,6 +392,17 @@ export default function CommunityHub() {
   const createPost = async () => {
     if (!newPostContent.trim()) {
       toast({ title: "Please write something first!", variant: "destructive" });
+      return;
+    }
+    
+    // Check subscription access for posting
+    if (!hasAccess('community_post')) {
+      toast({ 
+        title: "Upgrade Required", 
+        description: "Posting requires a Rebels membership or higher", 
+        variant: "destructive" 
+      });
+      navigate('/subscribe');
       return;
     }
 
