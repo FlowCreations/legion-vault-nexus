@@ -1,5 +1,5 @@
 const SHOPIFY_API_VERSION = '2025-07';
-const SHOPIFY_STORE_PERMANENT_DOMAIN = 'legion-vault-nexus-o4d8h.myshopify.com';
+const SHOPIFY_STORE_PERMANENT_DOMAIN = 'sons-of-legion-official-merchandise.myshopify.com';
 const SHOPIFY_STOREFRONT_URL = `https://${SHOPIFY_STORE_PERMANENT_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`;
 const SHOPIFY_STOREFRONT_TOKEN = 'e6f94dab73c933c353518660d89ad8bb';
 
