@@ -212,23 +212,32 @@ export const EmailMarketing = () => {
     setAutoEngageEnabled(checked);
     
     try {
-      // Update feature flag in database
-      const { error } = await supabase
+      // Update both feature flags - they work together
+      const { error: autoEngageError } = await supabase
         .from("feature_flags")
         .upsert({
           flag_name: "auto_engage_fans",
           enabled: checked,
         });
 
-      if (error) throw error;
+      if (autoEngageError) throw autoEngageError;
+
+      const { error: flowLeaderError } = await supabase
+        .from("feature_flags")
+        .upsert({
+          flag_name: "flow_leader_active",
+          enabled: checked,
+        });
+
+      if (flowLeaderError) throw flowLeaderError;
 
       if (checked) {
         toast.success("Auto-Engage Fans activated", {
-          description: "JRNY is now analyzing fan behavior and will auto-send smart campaigns"
+          description: "🎯 Flow Leader AI is now watching fan behavior with love"
         });
       } else {
         toast("Auto-Engage Fans disabled", {
-          description: "Automatic fan engagement paused"
+          description: "Flow Leader AI is now resting"
         });
       }
     } catch (error) {
