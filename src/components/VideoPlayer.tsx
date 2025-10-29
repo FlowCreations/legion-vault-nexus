@@ -70,29 +70,41 @@ export function VideoPlayer({
 
     const updateProgress = () => {
       if (!isSeeking && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-        setProgress((video.currentTime / video.duration) * 100 || 0);
+        const currentProgress = (video.currentTime / video.duration) * 100;
+        setProgress(currentProgress || 0);
       }
     };
 
     const updateDuration = () => {
       if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+        console.log('Duration updated:', video.duration);
         setDuration(video.duration);
       }
     };
 
     const handleLoadedMetadata = () => {
+      console.log('Metadata loaded, duration:', video.duration);
       updateDuration();
     };
 
     const handleDurationChange = () => {
+      console.log('Duration changed:', video.duration);
+      updateDuration();
+    };
+
+    const handleCanPlay = () => {
+      console.log('Video can play, duration:', video.duration);
       updateDuration();
     };
 
     video.addEventListener("timeupdate", updateProgress);
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("durationchange", handleDurationChange);
+    video.addEventListener("canplay", handleCanPlay);
 
+    // Try to get duration immediately if available
     if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+      console.log('Duration available immediately:', video.duration);
       setDuration(video.duration);
     }
 
@@ -100,8 +112,9 @@ export function VideoPlayer({
       video.removeEventListener("timeupdate", updateProgress);
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("durationchange", handleDurationChange);
+      video.removeEventListener("canplay", handleCanPlay);
     };
-  }, [videoRef, isSeeking]);
+  }, [isSeeking]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -212,6 +225,7 @@ export function VideoPlayer({
               poster={thumbnailUrl}
               className={shouldBeFullscreen ? "w-full h-full object-contain" : "w-full h-full"}
               onClick={togglePlayPause}
+              preload="metadata"
             />
           </div>
 
