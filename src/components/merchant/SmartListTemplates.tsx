@@ -75,12 +75,20 @@ export const SMART_LIST_TEMPLATES = [
 
 export const createSmartLists = async () => {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("You must be logged in to create lists");
+      return false;
+    }
+
     const { error } = await supabase
       .from('email_lists')
       .insert(
         SMART_LIST_TEMPLATES.map(template => ({
           ...template,
-          member_count: 0
+          member_count: 0,
+          user_id: user.id
         }))
       );
 

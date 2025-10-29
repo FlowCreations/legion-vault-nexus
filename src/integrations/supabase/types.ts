@@ -988,6 +988,7 @@ export type Database = {
           member_count: number | null
           name: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -997,6 +998,7 @@ export type Database = {
           member_count?: number | null
           name: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1006,6 +1008,7 @@ export type Database = {
           member_count?: number | null
           name?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

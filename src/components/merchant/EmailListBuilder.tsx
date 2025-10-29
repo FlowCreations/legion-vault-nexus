@@ -114,11 +114,20 @@ export const EmailListBuilder = ({ open, onOpenChange, onListCreated, editingLis
 
     setLoading(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create lists");
+        setLoading(false);
+        return;
+      }
+
       const listData = {
         name,
         description,
         filter_rules: { operator: filterGroup.operator, conditions: filterGroup.conditions } as any,
-        member_count: memberCount || 0
+        member_count: memberCount || 0,
+        user_id: user.id
       };
 
       if (editingList) {
