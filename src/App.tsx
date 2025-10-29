@@ -10,6 +10,8 @@ import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
 import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
+import { FlowLeaderAgent } from "./components/FlowLeaderAgent";
+import { useFlowLeader } from "./hooks/useFlowLeader";
 import Home from "./pages/Home";
 import Videos from "./pages/Videos";
 import VideoManager from "./pages/VideoManager";
@@ -39,6 +41,9 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const pixelInitialized = useRef(false);
+  
+  // Initialize Flow Leader agent
+  useFlowLeader({ enabled: true, checkInterval: 5 });
 
   useEffect(() => {
     // Skip if already initialized in this session
@@ -136,6 +141,7 @@ const App = () => {
         <Footer />
         <FloatingChatbot />
         <GlobalMusicPlayer />
+        <FlowLeaderAgent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

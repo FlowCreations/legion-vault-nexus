@@ -5,6 +5,31 @@ import * as MetaPixel from '@/lib/metaPixel';
 
 const SESSION_KEY = 'sol_session_id';
 
+// Helper function to detect emotional context from event patterns
+const detectEmotionalContext = (eventType: string, eventData?: any): string => {
+  // Music engagement
+  if (eventType.includes('track_') || eventType.includes('song_') || eventType.includes('stream')) {
+    return 'connected_through_music';
+  }
+  
+  // Product interest
+  if (eventType.includes('product_view') || eventType.includes('add_to_cart') || eventType.includes('merch')) {
+    return 'exploring_offerings';
+  }
+  
+  // Community engagement
+  if (eventType.includes('post_') || eventType.includes('comment_') || eventType.includes('community')) {
+    return 'community_engaged';
+  }
+  
+  // High engagement indicators
+  if (eventType.includes('purchase') || eventType.includes('subscribe')) {
+    return 'committed_and_invested';
+  }
+  
+  return 'present_and_browsing';
+};
+
 const getSessionId = () => {
   let sessionId = sessionStorage.getItem(SESSION_KEY);
   if (!sessionId) {
@@ -20,11 +45,17 @@ export const useEventTracking = () => {
       const sessionId = getSessionId();
       const { data: { session } } = await supabase.auth.getSession();
       
+      // Detect emotional metadata based on event patterns
+      const emotionalContext = detectEmotionalContext(eventType, eventData);
+      
       // Track in our backend
       await supabase.functions.invoke('track-event', {
         body: {
           eventType,
-          eventData,
+          eventData: {
+            ...eventData,
+            emotional_context: emotionalContext,
+          },
           pageUrl: window.location.pathname,
           sessionId,
         },
