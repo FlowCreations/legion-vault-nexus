@@ -47,6 +47,23 @@ export const EmailMarketing = () => {
   const [editingAutomationId, setEditingAutomationId] = useState<string | null>(null);
   const [autoEngageEnabled, setAutoEngageEnabled] = useState(false);
 
+  // Load auto-engage status on mount
+  useEffect(() => {
+    const loadAutoEngageStatus = async () => {
+      const { data } = await supabase
+        .from("feature_flags")
+        .select("enabled")
+        .eq("flag_name", "auto_engage_fans")
+        .single();
+      
+      if (data) {
+        setAutoEngageEnabled(data.enabled);
+      }
+    };
+    
+    loadAutoEngageStatus();
+  }, []);
+
   useEffect(() => {
     if (activeTab === "lists") {
       loadLists();
@@ -191,16 +208,33 @@ export const EmailMarketing = () => {
     }
   };
 
-  const handleAutoEngageToggle = (checked: boolean) => {
+  const handleAutoEngageToggle = async (checked: boolean) => {
     setAutoEngageEnabled(checked);
-    if (checked) {
-      toast.success("Auto-Engage Fans activated", {
-        description: "Smart campaigns will now auto-engage your top fans"
-      });
-    } else {
-      toast("Auto-Engage Fans disabled", {
-        description: "Automatic fan engagement paused"
-      });
+    
+    try {
+      // Update feature flag in database
+      const { error } = await supabase
+        .from("feature_flags")
+        .upsert({
+          flag_name: "auto_engage_fans",
+          enabled: checked,
+        });
+
+      if (error) throw error;
+
+      if (checked) {
+        toast.success("Auto-Engage Fans activated", {
+          description: "JRNY is now analyzing fan behavior and will auto-send smart campaigns"
+        });
+      } else {
+        toast("Auto-Engage Fans disabled", {
+          description: "Automatic fan engagement paused"
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling auto-engage:", error);
+      setAutoEngageEnabled(!checked); // Revert on error
+      toast.error("Failed to update Auto-Engage setting");
     }
   };
 
@@ -471,8 +505,9 @@ export const EmailMarketing = () => {
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
                           <p>
-                            When ON, JRNY tracks fan activity and auto-sends smart campaigns 
-                            to re-engage top fans and boost sales, streams, and attendance.
+                            When ON, JRNY analyzes fan activity across your portal — merch views, music plays, 
+                            event interest, and more — to identify who's prime to purchase. It automatically sends 
+                            thoughtful touchpoints that match each fan's intent — boosting sales without over-messaging.
                           </p>
                         </TooltipContent>
                       </Tooltip>
