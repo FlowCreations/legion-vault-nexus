@@ -2575,6 +2575,7 @@ export type Database = {
         | "add_to_cart"
         | "purchase"
         | "reward_claim"
+        | "agent_interaction"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2715,6 +2716,7 @@ export const Constants = {
         "add_to_cart",
         "purchase",
         "reward_claim",
+        "agent_interaction",
       ],
     },
   },
