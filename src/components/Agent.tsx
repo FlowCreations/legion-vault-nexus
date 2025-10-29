@@ -7,34 +7,34 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-interface FlowLeaderMessage {
+interface AgentMessage {
   id: string;
   message: string;
   emotionalState: string;
   timestamp: string;
 }
 
-export const FlowLeaderAgent = () => {
+export const Agent = () => {
   const [isActive, setIsActive] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [messages, setMessages] = useState<FlowLeaderMessage[]>([]);
+  const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Check if Flow Leader is enabled
+  // Check if Agent is enabled
   useEffect(() => {
-    checkFlowLeaderStatus();
+    checkAgentStatus();
     
-    // Subscribe to Flow Leader messages
+    // Subscribe to Agent messages
     const channel = supabase
-      .channel('flow-leader-messages')
+      .channel('agent-messages')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'events',
-          filter: `type=eq.flow_leader_interaction`
+          filter: `type=eq.agent_interaction`
         },
         (payload) => {
           handleNewMessage(payload.new);
@@ -47,17 +47,17 @@ export const FlowLeaderAgent = () => {
     };
   }, []);
 
-  const checkFlowLeaderStatus = async () => {
+  const checkAgentStatus = async () => {
     try {
       const { data } = await supabase
         .from("feature_flags")
         .select("enabled")
-        .eq("flag_name", "flow_leader_active")
+        .eq("flag_name", "agent_active")
         .single();
 
       setIsActive(data?.enabled || false);
     } catch (error) {
-      console.error("Error checking Flow Leader status:", error);
+      console.error("Error checking Agent status:", error);
     }
   };
 
@@ -66,7 +66,7 @@ export const FlowLeaderAgent = () => {
     const emotionalState = event.meta?.emotional_state;
     
     if (message) {
-      const newMessage: FlowLeaderMessage = {
+      const newMessage: AgentMessage = {
         id: event.id,
         message,
         emotionalState,
@@ -168,7 +168,7 @@ export const FlowLeaderAgent = () => {
           transition={{ delay: 0.3 }}
         >
           <span className="text-xs font-medium text-muted-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full border">
-            Flow Leader Active
+            Agent Active
           </span>
         </motion.div>
       </motion.div>
@@ -190,7 +190,7 @@ export const FlowLeaderAgent = () => {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
                     <Heart className="h-4 w-4 fill-white text-white" />
                   </div>
-                  <span className="font-semibold text-sm">Flow Leader</span>
+                  <span className="font-semibold text-sm">Agent</span>
                 </div>
                 <Button
                   variant="ghost"

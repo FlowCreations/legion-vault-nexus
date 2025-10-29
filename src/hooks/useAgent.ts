@@ -2,16 +2,16 @@ import { useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface UseFlowLeaderOptions {
+interface UseAgentOptions {
   enabled?: boolean;
   checkInterval?: number; // minutes
 }
 
-export const useFlowLeader = (options: UseFlowLeaderOptions = {}) => {
+export const useAgent = (options: UseAgentOptions = {}) => {
   const { enabled = true, checkInterval = 5 } = options;
   const { toast } = useToast();
 
-  const triggerFlowLeader = useCallback(async (
+  const triggerAgent = useCallback(async (
     triggerType: string,
     eventData?: any
   ) => {
@@ -19,11 +19,11 @@ export const useFlowLeader = (options: UseFlowLeaderOptions = {}) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check if Flow Leader is active
+      // Check if Agent is active
       const { data: flagData } = await supabase
         .from("feature_flags")
         .select("enabled")
-        .eq("flag_name", "flow_leader_active")
+        .eq("flag_name", "agent_active")
         .single();
 
       if (!flagData?.enabled) return;
@@ -38,8 +38,8 @@ export const useFlowLeader = (options: UseFlowLeaderOptions = {}) => {
         .order("ts", { ascending: false })
         .limit(20);
 
-      // Call Flow Leader agent
-      const { data, error } = await supabase.functions.invoke("flow-leader-agent", {
+      // Call Agent edge function
+      const { data, error } = await supabase.functions.invoke("agent", {
         body: {
           userId: user.id,
           triggerType,
@@ -49,13 +49,13 @@ export const useFlowLeader = (options: UseFlowLeaderOptions = {}) => {
       });
 
       if (error) {
-        console.error("Flow Leader error:", error);
+        console.error("Agent error:", error);
         return;
       }
 
-      console.log("Flow Leader response:", data);
+      console.log("Agent response:", data);
     } catch (error) {
-      console.error("Error triggering Flow Leader:", error);
+      console.error("Error triggering Agent:", error);
     }
   }, []);
 
@@ -93,13 +93,13 @@ export const useFlowLeader = (options: UseFlowLeaderOptions = {}) => {
 
         // Trigger if strong engagement detected
         if (musicEvents.length >= 2 || productEvents.length >= 3) {
-          await triggerFlowLeader("high_engagement_detected", {
+          await triggerAgent("high_engagement_detected", {
             musicEvents: musicEvents.length,
             productEvents: productEvents.length
           });
         }
       } catch (error) {
-        console.error("Error in Flow Leader behavior check:", error);
+        console.error("Error in Agent behavior check:", error);
       }
     };
 
@@ -110,9 +110,9 @@ export const useFlowLeader = (options: UseFlowLeaderOptions = {}) => {
     const interval = setInterval(checkBehavior, checkInterval * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [enabled, checkInterval, triggerFlowLeader]);
+  }, [enabled, checkInterval, triggerAgent]);
 
   return {
-    triggerFlowLeader
+    triggerAgent
   };
 };

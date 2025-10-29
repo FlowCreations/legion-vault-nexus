@@ -222,22 +222,22 @@ export const EmailMarketing = () => {
 
       if (autoEngageError) throw autoEngageError;
 
-      const { error: flowLeaderError } = await supabase
+      const { error: agentError } = await supabase
         .from("feature_flags")
         .upsert({
-          flag_name: "flow_leader_active",
+          flag_name: "agent_active",
           enabled: checked,
         });
 
-      if (flowLeaderError) throw flowLeaderError;
+      if (agentError) throw agentError;
 
       if (checked) {
         toast.success("Auto-Engage Fans activated", {
-          description: "🎯 Flow Leader AI is now watching fan behavior with love"
+          description: "🎯 Agent is now watching fan behavior with love"
         });
       } else {
         toast("Auto-Engage Fans disabled", {
-          description: "Flow Leader AI is now resting"
+          description: "Agent is now resting"
         });
       }
     } catch (error) {

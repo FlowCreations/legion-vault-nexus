@@ -109,7 +109,7 @@ serve(async (req) => {
     };
 
     // Build AI prompt with love-first directive
-    const systemPrompt = `You are the Flow Leader, an AI agent embodying loving leadership for the JRNY platform.
+    const systemPrompt = `You are the Agent, an AI embodying loving leadership for the JRNY platform.
 
 CORE ETHOS (NEVER VIOLATE):
 1. Lead from LOVE in all actions - place human connection before financial gain
@@ -181,9 +181,9 @@ Generate a message now:`;
       .from("events")
       .insert({
         member_id: userId,
-        type: "flow_leader_interaction",
+        type: "agent_interaction",
         meta: {
-          event_type: "flow_leader_message",
+          event_type: "agent_message",
           trigger_type: triggerType,
           emotional_state: emotionalState,
           engagement_level: engagementLevel,
@@ -203,7 +203,7 @@ Generate a message now:`;
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("Error in flow-leader-agent:", error);
+    console.error("Error in agent:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
