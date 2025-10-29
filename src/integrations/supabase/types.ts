@@ -258,41 +258,70 @@ export type Database = {
       agent_interactions: {
         Row: {
           agent_response: string
+          behavior_context: Json | null
+          conversion_event_id: string | null
+          conversion_resulted: boolean | null
+          conversion_value: number | null
           created_at: string | null
           emotional_state: string | null
           engagement_level: string | null
           id: string
+          interaction_outcome: string | null
           response_delay_minutes: number | null
           sent_at: string | null
           trigger_type: string
+          user_clicked_cta: boolean | null
+          user_dismissed: boolean | null
           user_id: string | null
           user_message: string | null
         }
         Insert: {
           agent_response: string
+          behavior_context?: Json | null
+          conversion_event_id?: string | null
+          conversion_resulted?: boolean | null
+          conversion_value?: number | null
           created_at?: string | null
           emotional_state?: string | null
           engagement_level?: string | null
           id?: string
+          interaction_outcome?: string | null
           response_delay_minutes?: number | null
           sent_at?: string | null
           trigger_type: string
+          user_clicked_cta?: boolean | null
+          user_dismissed?: boolean | null
           user_id?: string | null
           user_message?: string | null
         }
         Update: {
           agent_response?: string
+          behavior_context?: Json | null
+          conversion_event_id?: string | null
+          conversion_resulted?: boolean | null
+          conversion_value?: number | null
           created_at?: string | null
           emotional_state?: string | null
           engagement_level?: string | null
           id?: string
+          interaction_outcome?: string | null
           response_delay_minutes?: number | null
           sent_at?: string | null
           trigger_type?: string
+          user_clicked_cta?: boolean | null
+          user_dismissed?: boolean | null
           user_id?: string | null
           user_message?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agent_interactions_conversion_event_id_fkey"
+            columns: ["conversion_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_email_insights: {
         Row: {
@@ -2258,6 +2287,68 @@ export type Database = {
         }
         Relationships: []
       }
+      user_behavior_profiles: {
+        Row: {
+          behavioral_segments: string[] | null
+          created_at: string | null
+          engagement_score: number | null
+          favorite_content_types: Json | null
+          favorite_products: string[] | null
+          favorite_tracks: string[] | null
+          id: string
+          last_visit_at: string | null
+          music_taste_profile: Json | null
+          purchase_history_summary: Json | null
+          total_session_time_seconds: number | null
+          total_visits: number | null
+          updated_at: string | null
+          user_id: string
+          visit_frequency: string | null
+        }
+        Insert: {
+          behavioral_segments?: string[] | null
+          created_at?: string | null
+          engagement_score?: number | null
+          favorite_content_types?: Json | null
+          favorite_products?: string[] | null
+          favorite_tracks?: string[] | null
+          id?: string
+          last_visit_at?: string | null
+          music_taste_profile?: Json | null
+          purchase_history_summary?: Json | null
+          total_session_time_seconds?: number | null
+          total_visits?: number | null
+          updated_at?: string | null
+          user_id: string
+          visit_frequency?: string | null
+        }
+        Update: {
+          behavioral_segments?: string[] | null
+          created_at?: string | null
+          engagement_score?: number | null
+          favorite_content_types?: Json | null
+          favorite_products?: string[] | null
+          favorite_tracks?: string[] | null
+          id?: string
+          last_visit_at?: string | null
+          music_taste_profile?: Json | null
+          purchase_history_summary?: Json | null
+          total_session_time_seconds?: number | null
+          total_visits?: number | null
+          updated_at?: string | null
+          user_id?: string
+          visit_frequency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_behavior_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_events: {
         Row: {
           created_at: string | null
@@ -2296,6 +2387,91 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      user_insights: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          insight_data: Json
+          insight_type: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          insight_data: Json
+          insight_type: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          insight_data?: Json
+          insight_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          agent_enabled: boolean | null
+          agent_message_count: number | null
+          agent_messages_dismissed_count: number | null
+          created_at: string | null
+          do_not_disturb_until: string | null
+          id: string
+          last_agent_message_at: string | null
+          preferred_communication_style: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_enabled?: boolean | null
+          agent_message_count?: number | null
+          agent_messages_dismissed_count?: number | null
+          created_at?: string | null
+          do_not_disturb_until?: string | null
+          id?: string
+          last_agent_message_at?: string | null
+          preferred_communication_style?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_enabled?: boolean | null
+          agent_message_count?: number | null
+          agent_messages_dismissed_count?: number | null
+          created_at?: string | null
+          do_not_disturb_until?: string | null
+          id?: string
+          last_agent_message_at?: string | null
+          preferred_communication_style?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_profiles: {
         Row: {
