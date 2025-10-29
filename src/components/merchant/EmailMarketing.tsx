@@ -16,6 +16,7 @@ import { AUTOMATION_TEMPLATES } from "./AutomationTemplates";
 import { Switch } from "@/components/ui/switch";
 import { TunepipeSyncButton } from "./TunepipeSyncButton";
 import { AIEmailIntelligence } from "./AIEmailIntelligence";
+import { Heart } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,22 +47,33 @@ export const EmailMarketing = () => {
   const [showAutomationBuilder, setShowAutomationBuilder] = useState(false);
   const [editingAutomationId, setEditingAutomationId] = useState<string | null>(null);
   const [autoEngageEnabled, setAutoEngageEnabled] = useState(false);
+  const [agentEnabled, setAgentEnabled] = useState(false);
 
-  // Load auto-engage status on mount
+  // Load feature flag status on mount
   useEffect(() => {
-    const loadAutoEngageStatus = async () => {
-      const { data } = await supabase
+    const loadFeatureFlags = async () => {
+      const { data: autoEngageData } = await supabase
         .from("feature_flags")
         .select("enabled")
         .eq("flag_name", "auto_engage_fans")
         .single();
       
-      if (data) {
-        setAutoEngageEnabled(data.enabled);
+      if (autoEngageData) {
+        setAutoEngageEnabled(autoEngageData.enabled);
+      }
+
+      const { data: agentData } = await supabase
+        .from("feature_flags")
+        .select("enabled")
+        .eq("flag_name", "agent_active")
+        .single();
+      
+      if (agentData) {
+        setAgentEnabled(agentData.enabled);
       }
     };
     
-    loadAutoEngageStatus();
+    loadFeatureFlags();
   }, []);
 
   useEffect(() => {
@@ -212,38 +224,57 @@ export const EmailMarketing = () => {
     setAutoEngageEnabled(checked);
     
     try {
-      // Update both feature flags - they work together
-      const { error: autoEngageError } = await supabase
+      const { error } = await supabase
         .from("feature_flags")
         .upsert({
           flag_name: "auto_engage_fans",
           enabled: checked,
         });
 
-      if (autoEngageError) throw autoEngageError;
+      if (error) throw error;
 
-      const { error: agentError } = await supabase
+      if (checked) {
+        toast.success("Auto-Engage Fans activated", {
+          description: "📧 Automatically triggers email campaigns based on fan behavior"
+        });
+      } else {
+        toast("Auto-Engage Fans disabled", {
+          description: "Email automation paused"
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling auto-engage:", error);
+      setAutoEngageEnabled(!checked);
+      toast.error("Failed to update Auto-Engage setting");
+    }
+  };
+
+  const handleAgentToggle = async (checked: boolean) => {
+    setAgentEnabled(checked);
+    
+    try {
+      const { error } = await supabase
         .from("feature_flags")
         .upsert({
           flag_name: "agent_active",
           enabled: checked,
         });
 
-      if (agentError) throw agentError;
+      if (error) throw error;
 
       if (checked) {
-        toast.success("Auto-Engage Fans activated", {
-          description: "🎯 Agent is now watching fan behavior with love"
+        toast.success("Agent activated", {
+          description: "💖 AI Assistant is now watching and engaging with fans in-app"
         });
       } else {
-        toast("Auto-Engage Fans disabled", {
-          description: "Agent is now resting"
+        toast("Agent disabled", {
+          description: "In-app AI interactions paused"
         });
       }
     } catch (error) {
-      console.error("Error toggling auto-engage:", error);
-      setAutoEngageEnabled(!checked); // Revert on error
-      toast.error("Failed to update Auto-Engage setting");
+      console.error("Error toggling agent:", error);
+      setAgentEnabled(!checked);
+      toast.error("Failed to update Agent setting");
     }
   };
 
@@ -290,6 +321,77 @@ export const EmailMarketing = () => {
             }} />
           </div>
           
+          {/* AI Features Section */}
+          <div className="grid gap-4 md:grid-cols-2 mb-4">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MailIcon className="h-5 w-5 text-blue-500" />
+                  Auto-Engage Fans (Email)
+                </CardTitle>
+                <CardDescription>
+                  Automatically trigger email campaigns based on fan behavior patterns
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="auto-engage-email"
+                    checked={autoEngageEnabled}
+                    onCheckedChange={handleAutoEngageToggle}
+                    className={cn(
+                      "data-[state=checked]:bg-blue-600",
+                      autoEngageEnabled && "shadow-lg shadow-blue-600/30"
+                    )}
+                  />
+                  <label 
+                    htmlFor="auto-engage-email" 
+                    className={cn(
+                      "text-sm font-medium cursor-pointer transition-colors",
+                      autoEngageEnabled ? "text-blue-600" : "text-muted-foreground"
+                    )}
+                  >
+                    {autoEngageEnabled ? "Active" : "Inactive"}
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Heart className="h-5 w-5 text-pink-500" />
+                  Agent (In-App)
+                </CardTitle>
+                <CardDescription>
+                  AI assistant that interacts with fans inside the platform with loving, contextual messages
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="agent-active"
+                    checked={agentEnabled}
+                    onCheckedChange={handleAgentToggle}
+                    className={cn(
+                      "data-[state=checked]:bg-pink-600",
+                      agentEnabled && "shadow-lg shadow-pink-600/30"
+                    )}
+                  />
+                  <label 
+                    htmlFor="agent-active" 
+                    className={cn(
+                      "text-sm font-medium cursor-pointer transition-colors",
+                      agentEnabled ? "text-pink-600" : "text-muted-foreground"
+                    )}
+                  >
+                    {agentEnabled ? "Active" : "Inactive"}
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
