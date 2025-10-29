@@ -64,9 +64,16 @@ export function VideoPlayer({
     }
   };
 
+  // Reset state when video changes
+  useEffect(() => {
+    setProgress(0);
+    setDuration(0);
+    setIsPlaying(false);
+  }, [videoUrl]);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !isOpen) return;
 
     const updateProgress = () => {
       if (!isSeeking && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
@@ -77,23 +84,25 @@ export function VideoPlayer({
 
     const updateDuration = () => {
       if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-        console.log('Duration updated:', video.duration);
+        console.log('✅ Duration updated:', video.duration);
         setDuration(video.duration);
+        return true;
       }
+      return false;
     };
 
     const handleLoadedMetadata = () => {
-      console.log('Metadata loaded, duration:', video.duration);
+      console.log('📹 Metadata loaded, readyState:', video.readyState, 'duration:', video.duration);
       updateDuration();
     };
 
     const handleDurationChange = () => {
-      console.log('Duration changed:', video.duration);
+      console.log('⏱️ Duration changed:', video.duration);
       updateDuration();
     };
 
     const handleCanPlay = () => {
-      console.log('Video can play, duration:', video.duration);
+      console.log('▶️ Video can play, duration:', video.duration);
       updateDuration();
     };
 
@@ -103,9 +112,30 @@ export function VideoPlayer({
     video.addEventListener("canplay", handleCanPlay);
 
     // Try to get duration immediately if available
-    if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-      console.log('Duration available immediately:', video.duration);
-      setDuration(video.duration);
+    if (video.readyState >= 1) {
+      console.log('🚀 Video ready immediately, readyState:', video.readyState, 'duration:', video.duration);
+      if (!updateDuration()) {
+        // Fallback: poll for duration if not available yet
+        let attempts = 0;
+        const pollDuration = setInterval(() => {
+          attempts++;
+          console.log(`🔄 Polling for duration (attempt ${attempts})...`);
+          if (updateDuration() || attempts >= 10) {
+            clearInterval(pollDuration);
+            if (attempts >= 10 && !video.duration) {
+              console.error('❌ Failed to get video duration after 10 attempts');
+            }
+          }
+        }, 500);
+
+        return () => {
+          clearInterval(pollDuration);
+          video.removeEventListener("timeupdate", updateProgress);
+          video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+          video.removeEventListener("durationchange", handleDurationChange);
+          video.removeEventListener("canplay", handleCanPlay);
+        };
+      }
     }
 
     return () => {
@@ -114,7 +144,7 @@ export function VideoPlayer({
       video.removeEventListener("durationchange", handleDurationChange);
       video.removeEventListener("canplay", handleCanPlay);
     };
-  }, [isSeeking]);
+  }, [isSeeking, videoUrl, isOpen]);
 
   useEffect(() => {
     if (videoRef.current) {
