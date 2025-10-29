@@ -229,7 +229,7 @@ export const EmailMarketing = () => {
         .upsert({
           flag_name: "auto_engage_fans",
           enabled: checked,
-        });
+        }, { onConflict: 'flag_name' });
 
       if (error) throw error;
 
@@ -258,7 +258,7 @@ export const EmailMarketing = () => {
         .upsert({
           flag_name: "agent_active",
           enabled: checked,
-        });
+        }, { onConflict: 'flag_name' });
 
       if (error) throw error;
 

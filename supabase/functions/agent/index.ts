@@ -48,6 +48,70 @@ function calculateEngagementLevel(events: any[]): 'low' | 'medium' | 'high' {
   return 'low';
 }
 
+// Classify message category and urgency
+function classifyMessage(events: any[], emotionalState: string): { category: string; priority: string } {
+  const recentActivity = events.slice(0, 10);
+  
+  // Check for technical issues (urgent)
+  const hasTechnicalIssue = recentActivity.some(e => 
+    e.meta?.event_type?.includes('error') || e.meta?.event_type?.includes('issue')
+  );
+  if (hasTechnicalIssue) {
+    return { category: 'technical', priority: 'urgent' };
+  }
+  
+  // Check for questions
+  const hasQuestionIndicators = recentActivity.some(e => 
+    e.meta?.event_type?.includes('help') || e.meta?.event_type?.includes('question')
+  );
+  if (hasQuestionIndicators) {
+    return { category: 'question', priority: 'high' };
+  }
+  
+  // Emotional messages
+  if (emotionalState === 'connected_through_music' || emotionalState === 'inspired_and_curious') {
+    return { category: 'emotional', priority: 'medium' };
+  }
+  
+  // Gratitude/engagement
+  if (emotionalState === 'highly_engaged') {
+    return { category: 'gratitude', priority: 'medium' };
+  }
+  
+  return { category: 'general', priority: 'low' };
+}
+
+// Calculate human-latency delay in minutes based on category and priority
+function calculateDelay(category: string, priority: string, engagementLevel: string): number {
+  // Base delays by category (in minutes)
+  const baseDelays: Record<string, { min: number; max: number }> = {
+    technical: { min: 15, max: 45 },
+    question: { min: 60, max: 120 },
+    emotional: { min: 120, max: 360 },
+    gratitude: { min: 60, max: 180 },
+    general: { min: 180, max: 480 }
+  };
+  
+  const delay = baseDelays[category] || baseDelays.general;
+  
+  // Adjust based on engagement level
+  let multiplier = 1;
+  if (engagementLevel === 'high') multiplier = 0.7; // Respond faster to highly engaged fans
+  if (engagementLevel === 'low') multiplier = 1.3; // Slower for less engaged
+  
+  // Adjust based on priority
+  if (priority === 'urgent') multiplier *= 0.5;
+  if (priority === 'high') multiplier *= 0.8;
+  
+  // Random delay within range
+  const minDelay = Math.round(delay.min * multiplier);
+  const maxDelay = Math.round(delay.max * multiplier);
+  const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+  
+  console.log(`Calculated delay: ${randomDelay} min (category: ${category}, priority: ${priority}, engagement: ${engagementLevel})`);
+  return randomDelay;
+}
+
 // Love-first filter - ensures all messages lead with love
 function applyLoveFilter(message: string): boolean {
   const loveKeywords = [
@@ -100,6 +164,8 @@ serve(async (req) => {
     // Analyze behavior context
     const emotionalState = detectEmotionalState(events);
     const engagementLevel = calculateEngagementLevel(events);
+    const { category, priority } = classifyMessage(events, emotionalState);
+    const delayMinutes = calculateDelay(category, priority, engagementLevel);
     
     const context: BehaviorContext = {
       recentEvents: events,
@@ -176,29 +242,42 @@ Generate a message now:`;
       message = "We're grateful you're here exploring JRNY. Your presence and energy matter to us. 💜";
     }
 
-    // Log the interaction with emotional metadata
-    await supabase
-      .from("events")
+    // Calculate scheduled send time (human-latency)
+    const scheduledSendTime = new Date(Date.now() + delayMinutes * 60 * 1000);
+    
+    console.log(`Queuing message for ${delayMinutes} minutes from now (${scheduledSendTime.toISOString()})`);
+
+    // Queue the response instead of sending immediately
+    const { data: queuedMessage, error: queueError } = await supabase
+      .from("response_queue")
       .insert({
-        member_id: userId,
-        type: "agent_interaction",
-        meta: {
-          event_type: "agent_message",
-          trigger_type: triggerType,
-          emotional_state: emotionalState,
-          engagement_level: engagementLevel,
-          message: message,
-          timestamp: new Date().toISOString()
-        }
-      });
+        user_id: userId,
+        message_content: message,
+        scheduled_send_time: scheduledSendTime.toISOString(),
+        status: 'queued',
+        priority: priority,
+        response_category: category
+      })
+      .select()
+      .single();
+
+    if (queueError) {
+      console.error("Error queuing message:", queueError);
+      throw queueError;
+    }
+
+    console.log("Message queued successfully:", queuedMessage.id);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message,
+        queued: true,
+        scheduled_for: scheduledSendTime.toISOString(),
+        delay_minutes: delayMinutes,
+        category,
+        priority,
         emotionalState,
-        engagementLevel,
-        context
+        engagementLevel
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -255,6 +255,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_interactions: {
+        Row: {
+          agent_response: string
+          created_at: string | null
+          emotional_state: string | null
+          engagement_level: string | null
+          id: string
+          response_delay_minutes: number | null
+          sent_at: string | null
+          trigger_type: string
+          user_id: string | null
+          user_message: string | null
+        }
+        Insert: {
+          agent_response: string
+          created_at?: string | null
+          emotional_state?: string | null
+          engagement_level?: string | null
+          id?: string
+          response_delay_minutes?: number | null
+          sent_at?: string | null
+          trigger_type: string
+          user_id?: string | null
+          user_message?: string | null
+        }
+        Update: {
+          agent_response?: string
+          created_at?: string | null
+          emotional_state?: string | null
+          engagement_level?: string | null
+          id?: string
+          response_delay_minutes?: number | null
+          sent_at?: string | null
+          trigger_type?: string
+          user_id?: string | null
+          user_message?: string | null
+        }
+        Relationships: []
+      }
       ai_email_insights: {
         Row: {
           actionable_steps: Json | null
@@ -354,6 +393,48 @@ export type Database = {
           partner_artist_id?: string
           partnership_type?: string | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      artist_personality: {
+        Row: {
+          artist_id: string
+          avoid_topics: string[] | null
+          created_at: string | null
+          emoji_patterns: Json | null
+          emotional_triggers: Json | null
+          greeting_style: string | null
+          id: string
+          sentence_style: string | null
+          signoff_style: string | null
+          tone_style: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          avoid_topics?: string[] | null
+          created_at?: string | null
+          emoji_patterns?: Json | null
+          emotional_triggers?: Json | null
+          greeting_style?: string | null
+          id?: string
+          sentence_style?: string | null
+          signoff_style?: string | null
+          tone_style?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          avoid_topics?: string[] | null
+          created_at?: string | null
+          emoji_patterns?: Json | null
+          emotional_triggers?: Json | null
+          greeting_style?: string | null
+          id?: string
+          sentence_style?: string | null
+          signoff_style?: string | null
+          tone_style?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1702,6 +1783,81 @@ export type Database = {
           image_url?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      response_queue: {
+        Row: {
+          actual_send_time: string | null
+          created_at: string | null
+          id: string
+          message_content: string
+          priority: string | null
+          response_category: string | null
+          scheduled_send_time: string
+          status: string | null
+          trigger_event_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_send_time?: string | null
+          created_at?: string | null
+          id?: string
+          message_content: string
+          priority?: string | null
+          response_category?: string | null
+          scheduled_send_time: string
+          status?: string | null
+          trigger_event_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_send_time?: string | null
+          created_at?: string | null
+          id?: string
+          message_content?: string
+          priority?: string | null
+          response_category?: string | null
+          scheduled_send_time?: string
+          status?: string | null
+          trigger_event_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      response_templates: {
+        Row: {
+          artist_id: string
+          category: string
+          created_at: string | null
+          id: string
+          is_approved: boolean | null
+          max_delay_minutes: number | null
+          min_delay_minutes: number | null
+          template_text: string
+          use_count: number | null
+        }
+        Insert: {
+          artist_id: string
+          category: string
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          max_delay_minutes?: number | null
+          min_delay_minutes?: number | null
+          template_text: string
+          use_count?: number | null
+        }
+        Update: {
+          artist_id?: string
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          max_delay_minutes?: number | null
+          min_delay_minutes?: number | null
+          template_text?: string
+          use_count?: number | null
         }
         Relationships: []
       }

@@ -44,3 +44,9 @@ verify_jwt = true
 
 [functions.generate-email-insights]
 verify_jwt = true
+
+[functions.agent]
+verify_jwt = false
+
+[functions.process-response-queue]
+verify_jwt = false
