@@ -26,6 +26,7 @@ import { PTPChip } from "@/components/merchant/PTPChip";
 import { PatternDialog } from "@/components/merchant/PatternDialog";
 import { getTierColor } from "@/lib/tierColors";
 import { Switch } from "@/components/ui/switch";
+import { HeartbeatSyncButton } from "@/components/merchant/HeartbeatSyncButton";
 
 interface Member {
   id: string;
@@ -366,9 +367,12 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
           <h2 className="text-3xl font-bold mb-2">Community Management</h2>
           <p className="text-muted-foreground">Manage your community members and settings</p>
         </div>
-        <Badge variant="outline" className="text-sm px-4 py-2">
-          Powered by <span className="font-bold ml-1">JRNY</span>
-        </Badge>
+        <div className="flex items-center gap-3">
+          <HeartbeatSyncButton />
+          <Badge variant="outline" className="text-sm px-4 py-2">
+            Powered by <span className="font-bold ml-1">JRNY</span>
+          </Badge>
+        </div>
       </div>
 
       {/* Stats Overview */}
