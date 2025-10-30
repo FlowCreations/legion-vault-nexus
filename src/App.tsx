@@ -134,12 +134,12 @@ const App = () => {
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
           <Route path="/song-credits" element={<SongCredits />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
-          <Route path="/shows" element={<ProtectedRoute requiredTier={TIERS.REBELS}><Shows /></ProtectedRoute>} />
+          <Route path="/shows" element={<Shows />} />
           <Route path="/shows/gallery" element={<ProtectedRoute requiredTier={TIERS.OUTLAWS}><Gallery /></ProtectedRoute>} />
           <Route path="/community" element={<CommunityHub />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
-          <Route path="/live" element={<ProtectedRoute requiredTier={TIERS.OUTLAWS}><LiveStudio /></ProtectedRoute>} />
+          <Route path="/live" element={<LiveStudio />} />
           <Route path="/community-hub" element={<CommunityHub />} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
           <Route path="/free-ep" element={<FreeEP />} />

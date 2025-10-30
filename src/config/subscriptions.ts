@@ -12,7 +12,9 @@ export const TIER_FEATURES: Record<TierType, string[]> = {
   [TIERS.FREE]: [
     'power_album',
     'music_library',
-    'music_videos'
+    'music_videos',
+    'shows',
+    'live_studio'
   ],
   [TIERS.REBELS]: [
     'power_album',
@@ -61,13 +63,13 @@ export const STRIPE_CONFIG = {
     priceId: 'price_rebels_monthly',
     price: 10,
     interval: 'month' as const,
-    description: 'Behind-the-scenes access, community features, and show listings'
+    description: 'Behind-the-scenes videos, community features, and premium albums'
   },
   [TIERS.OUTLAWS]: {
     priceId: 'price_outlaws_monthly',
     price: 25,
     interval: 'month' as const,
-    description: 'Live Studio, Gallery access, and advanced community features'
+    description: 'Gallery access, documentary content, and advanced community features'
   },
   [TIERS.LEGIONNAIRES]: {
     priceId: 'price_legionnaires_monthly',
