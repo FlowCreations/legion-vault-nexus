@@ -9,6 +9,7 @@ interface ProtectedRouteProps {
   children: ReactNode;
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requireMerchant?: boolean;
   requiredTier?: TierType;
   redirectTo?: string;
 }
@@ -17,12 +18,13 @@ export function ProtectedRoute({
   children,
   requireAuth = false,
   requireAdmin = false,
+  requireMerchant = false,
   requiredTier,
   redirectTo = '/auth',
 }: ProtectedRouteProps) {
   const [authLoading, setAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { isAdmin, requiresMinimumTier, loading: subLoading } = useSubscription();
+  const { isAdmin, isMerchant, requiresMinimumTier, loading: subLoading } = useSubscription();
 
   useEffect(() => {
     checkAuth();
@@ -56,6 +58,11 @@ export function ProtectedRoute({
 
   // Check admin requirement
   if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Check merchant requirement
+  if (requireMerchant && !isMerchant) {
     return <Navigate to="/" replace />;
   }
 

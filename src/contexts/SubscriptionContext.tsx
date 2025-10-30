@@ -6,6 +6,7 @@ interface SubscriptionContextType {
   isSubscribed: boolean;
   tier: TierType;
   isAdmin: boolean;
+  isMerchant: boolean;
   loading: boolean;
   hasAccess: (feature: string) => boolean;
   requiresMinimumTier: (requiredTier: TierType) => boolean;
@@ -18,6 +19,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [tier, setTier] = useState<TierType>(TIERS.FREE);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMerchant, setIsMerchant] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const checkSubscription = async () => {
@@ -32,19 +34,30 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         setIsSubscribed(false);
         setTier(TIERS.FREE);
         setIsAdmin(false);
+        setIsMerchant(false);
         return;
       }
 
       // Check admin status
-      const { data: roleData } = await supabase
+      const { data: adminRoleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'admin')
         .single();
 
-      const adminStatus = !!roleData;
+      const adminStatus = !!adminRoleData;
       setIsAdmin(adminStatus);
+
+      // Check merchant status (merchant or admin)
+      const { data: merchantRoleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['merchant', 'admin']);
+
+      const merchantStatus = merchantRoleData && merchantRoleData.length > 0;
+      setIsMerchant(merchantStatus);
 
       // Check subscription via edge function
       const { data: subData, error } = await supabase.functions.invoke('check-subscription');
@@ -78,6 +91,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       setIsSubscribed(false);
       setTier(TIERS.FREE);
       setIsAdmin(false);
+      setIsMerchant(false);
     } finally {
       setLoading(false);
     }
@@ -124,6 +138,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isSubscribed,
         tier,
         isAdmin,
+        isMerchant,
         loading,
         hasAccess,
         requiresMinimumTier,
