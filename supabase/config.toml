@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.process-response-queue]
 verify_jwt = false
+
+[functions.sync-viberate]
+verify_jwt = false
+
+[functions.get-viberate-metrics]
+verify_jwt = false

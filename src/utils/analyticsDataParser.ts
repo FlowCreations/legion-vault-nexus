@@ -45,7 +45,8 @@ export interface AudienceDemographicsData {
   tiktok: { total: number; male: number; female: number };
 }
 
-export const parseViberateProfile = async (): Promise<ViberateMetrics | null> => {
+// Fallback CSV parser (kept for backup)
+const parseViberateProfileFromCSV = async (): Promise<ViberateMetrics | null> => {
   try {
     const response = await fetch('/data/analytics/viberate-profile.csv');
     if (!response.ok) {
@@ -174,6 +175,33 @@ export const parseViberateProfile = async (): Promise<ViberateMetrics | null> =>
   } catch (error) {
     console.error('Error parsing Viberate profile:', error);
     return null;
+  }
+};
+
+export const parseViberateProfile = async (): Promise<ViberateMetrics | null> => {
+  try {
+    // Import supabase client dynamically to avoid circular dependencies
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    // Fetch from live API via edge function
+    const { data, error } = await supabase.functions.invoke('get-viberate-metrics', {
+      body: { artist_id: 'sons-of-legion' }
+    });
+
+    if (error) {
+      console.warn('Live API fetch failed, falling back to CSV:', error);
+      return parseViberateProfileFromCSV();
+    }
+
+    if (!data?.metrics) {
+      console.warn('No metrics in API response, falling back to CSV');
+      return parseViberateProfileFromCSV();
+    }
+
+    return data.metrics as ViberateMetrics;
+  } catch (error) {
+    console.error('Error fetching Viberate profile:', error);
+    return parseViberateProfileFromCSV();
   }
 };
 

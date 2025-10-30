@@ -29,6 +29,7 @@ import AdminDashboard from "./AdminDashboard";
 import VideoManager from "./VideoManager";
 import { HeartbeatSyncButton } from "@/components/merchant/HeartbeatSyncButton";
 import { SeedCoordinatesButton } from "@/components/merchant/SeedCoordinatesButton";
+import { ViberateSyncButton } from "@/components/merchant/ViberateSyncButton";
 
 interface AnalyticsData {
   events: number;
@@ -156,6 +157,7 @@ const Merchant = () => {
 
           <TabsContent value="analytics" className="space-y-6">
             <div className="flex justify-end gap-3">
+              <ViberateSyncButton />
               <HeartbeatSyncButton />
               <SeedCoordinatesButton />
               <Button 

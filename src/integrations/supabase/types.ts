@@ -2858,6 +2858,33 @@ export type Database = {
           },
         ]
       }
+      viberate_metrics: {
+        Row: {
+          artist_id: string
+          artist_name: string
+          created_at: string | null
+          data: Json
+          id: string
+          synced_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          artist_name: string
+          created_at?: string | null
+          data: Json
+          id?: string
+          synced_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          artist_name?: string
+          created_at?: string | null
+          data?: Json
+          id?: string
+          synced_at?: string | null
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           category: string
