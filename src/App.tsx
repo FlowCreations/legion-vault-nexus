@@ -138,7 +138,7 @@ const App = () => {
           <Route path="/shows/gallery" element={<ProtectedRoute requiredTier={TIERS.OUTLAWS}><Gallery /></ProtectedRoute>} />
           <Route path="/community" element={<CommunityHub />} />
           <Route path="/merch" element={<Merch />} />
-          <Route path="/merchant" element={<ProtectedRoute requireMerchant><Merchant /></ProtectedRoute>} />
+          <Route path="/merchant" element={<Merchant />} />
           <Route path="/live" element={<LiveStudio />} />
           <Route path="/community-hub" element={<CommunityHub />} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
