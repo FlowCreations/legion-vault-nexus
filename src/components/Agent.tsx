@@ -206,7 +206,7 @@ export const Agent = () => {
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {messages.length === 0 ? (
                   <p className="text-sm text-muted-foreground italic">
-                    Watching your flow with love...
+                    Analyzing patterns...
                   </p>
                 ) : (
                   messages.map((msg) => (
