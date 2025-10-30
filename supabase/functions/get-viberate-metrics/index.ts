@@ -32,9 +32,14 @@ Deno.serve(async (req) => {
 
     if (!data) {
       return new Response(
-        JSON.stringify({ error: 'No data found. Please sync first.' }),
+        JSON.stringify({ 
+          metrics: null,
+          synced_at: null,
+          is_stale: true,
+          message: 'No data found. Please sync first.'
+        }),
         { 
-          status: 404,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
@@ -71,7 +76,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Get metrics error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
