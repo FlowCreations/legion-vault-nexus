@@ -263,11 +263,6 @@ export const useEventTracking = () => {
       referrer: document.referrer,
       userAgent: navigator.userAgent
     });
-
-    // Track page exit
-    return () => {
-      trackEvent('page_exit');
-    };
   }, []);
 
   return { trackEvent };

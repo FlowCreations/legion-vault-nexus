@@ -10,16 +10,6 @@ interface FunnelLayoutProps {
 export default function FunnelLayout({ children, step }: FunnelLayoutProps) {
   const { loading, trackFunnelEvent, variant, pageData } = useFunnelTracking(step);
 
-  useEffect(() => {
-    // Track time on page
-    const startTime = Date.now();
-    
-    return () => {
-      const timeOnPage = (Date.now() - startTime) / 1000;
-      trackFunnelEvent('page_exit', { seconds: timeOnPage });
-    };
-  }, [trackFunnelEvent]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
