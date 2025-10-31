@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { supabase } from "@/integrations/supabase/client";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -42,6 +43,131 @@ export default function Music() {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const { toast } = useToast();
+  const [uploadedTracks, setUploadedTracks] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchUploadedTracks();
+  }, []);
+
+  const fetchUploadedTracks = async () => {
+    const { data, error } = await supabase
+      .from('music_tracks')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (data && !error) {
+      setUploadedTracks(data);
+    }
+  };
+
+  // Map uploaded tracks to the expected format
+  const getImageForTrack = (album: string) => {
+    if (album.toLowerCase().includes('power')) return powerAlbum;
+    if (album.toLowerCase().includes('outlaw')) return outlawAlbum;
+    if (album.toLowerCase().includes('acoustic')) return acousticAlbum;
+    if (album.toLowerCase().includes('stripped')) return strippedAlbum;
+    return outlawAlbum; // default
+  };
+
+  const topTracks = uploadedTracks.map((track) => ({
+    id: track.id,
+    title: track.title.trim(),
+    artist: track.artist,
+    album: track.album,
+    time: track.duration,
+    url: track.public_url,
+    image: getImageForTrack(track.album)
+  }));
+
+  // Map singles from uploaded tracks
+  const albums = uploadedTracks
+    .filter(track => track.category === 'single')
+    .map(track => ({
+      id: track.id,
+      title: track.title.trim(),
+      artist: track.artist,
+      album: track.album,
+      year: track.year || "2024",
+      time: track.duration,
+      url: track.public_url,
+      image: getImageForTrack(track.album)
+    }));
+
+  // Build album track lists from uploaded tracks
+  const powerTracks = uploadedTracks
+    .filter(t => t.album.toLowerCase().includes('power'))
+    .map(t => ({ title: t.title.trim(), time: t.duration, url: t.public_url }));
+
+  const outlawTracks = uploadedTracks
+    .filter(t => t.album.toLowerCase().includes('outlaw'))
+    .map(t => ({ title: t.title.trim(), time: t.duration, url: t.public_url }));
+
+  const moreAlbums = [
+    { 
+      id: "a1", 
+      title: "Power", 
+      year: "2024", 
+      tracks: powerTracks.length, 
+      image: powerAlbum,
+      price: 12,
+      forSale: true,
+      discoUrl: "https://s.disco.ac/docvmkfmfdlv",
+      trackList: powerTracks
+    },
+    { 
+      id: "a2", 
+      title: "Outlaw", 
+      year: "2024", 
+      tracks: outlawTracks.length, 
+      image: outlawAlbum,
+      price: 12,
+      forSale: true,
+      discoUrl: "https://s.disco.ac/oqixhqdabaqb",
+      trackList: outlawTracks
+    },
+    { 
+      id: "a3", 
+      title: "Live from the Barn", 
+      subtitle: "Acoustic Sessions - Nashville, TN", 
+      year: "2023", 
+      tracks: 8, 
+      image: acousticAlbum,
+      price: 15,
+      forSale: true,
+      discoUrl: "https://s.disco.ac/ksoaykgawuro",
+      trackList: [
+        { title: "Outlaw", time: "3:04", url: "https://adammac.disco.ac/play/162974091/alias_pv_id/67836113/download2/trackfiles/d6eefac5-ba37-4aac-b4a5-dd79c5d8d1fa.mp3?signature=wU5LzTKfYLyXuRco56rQWBxEGG8%3AXKvIltzO" },
+        { title: "Carolina", time: "4:27", url: "https://adammac.disco.ac/play/162974101/alias_pv_id/67836113/download2/trackfiles/53e37644-b0fb-4445-b2af-f42c4b406219.mp3?signature=vmoyFd9YkzBeH2wqGCENgmfl0P8%3AXKvIltzO" },
+        { title: "Angels", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO" },
+        { title: "In the Air Tonight", time: "3:24", url: "https://adammac.disco.ac/play/162974093/alias_pv_id/67836113/download2/trackfiles/accf855b-fe96-41d5-94ce-79fa334bf62c.mp3?signature=rRRDYsjavIeme7t3i97up5YbhB4%3AXKvIltzO" },
+        { title: "Wild Horse", time: "3:26", url: "https://adammac.disco.ac/play/162974095/alias_pv_id/67836113/download2/trackfiles/6035f37d-e196-4a5f-bdb0-3731f3ab8c31.mp3?signature=zpqtkrSiphf-TWgAjknKbo9JQH0%3AXKvIltzO" },
+        { title: "Strange", time: "3:10", url: "https://adammac.disco.ac/play/162974094/alias_pv_id/67836113/download2/trackfiles/27f33198-0b22-44c3-bdbd-7c9b6bff47b1.mp3?signature=uNVSpzimzWeEbn5JF2_9GVw6L8c%3AXKvIltzO" },
+        { title: "Sweet Dreams", time: "2:54", url: "https://adammac.disco.ac/play/162974092/alias_pv_id/67836113/download2/trackfiles/03147c2c-db9b-483e-9c45-b056549bb73e.mp3?signature=lAndjKEjKgYkHD_83U_D_ohkNt4%3AXKvIltzO" },
+        { title: "Brand New Day", time: "3:09", url: "https://adammac.disco.ac/play/162974096/alias_pv_id/67836113/download2/trackfiles/759560f4-44d6-4069-bb5d-1a2cdad48273.mp3?signature=KMRwkezM4fiXUuwyKiKaspWABy4%3AXKvIltzO" },
+      ]
+    },
+    { 
+      id: "a4", 
+      title: "Stripped", 
+      subtitle: "Intimate Performances", 
+      year: "2023", 
+      tracks: 8, 
+      image: strippedAlbum,
+      price: 12,
+      forSale: true,
+      discoUrl: "https://s.disco.ac/vmgbpqtmvdtu",
+      trackList: [
+        { title: "Carry Me Home (Stripped)", time: "2:25", url: "https://adammac.disco.ac/play/163224609/alias_pv_id/67836117/download2/trackfiles/730f5670-d9d3-413d-8fd7-64449f49953b.mp3?signature=EJ3P4dMKRSLg4v4QJeTZScCzndw%3A9rXnXUXm" },
+        { title: "Fall From Grace (Stripped)", time: "3:58", url: "https://adammac.disco.ac/play/163224610/alias_pv_id/67836117/download2/trackfiles/d000279c-4158-4e81-a41a-db14a4c880a4.mp3?signature=_Eb1bX4lViaXMT1oSeOsOYN-dkw%3A9rXnXUXm" },
+        { title: "Firestarter (Stripped)", time: "2:25", url: "https://adammac.disco.ac/play/163224607/alias_pv_id/67836117/download2/trackfiles/9cd2cc3c-b6ce-4148-bebc-7f3385aaa9ff.mp3?signature=pgkJbgC_1O8gxXL5zBKoNDmW4rQ%3A9rXnXUXm" },
+        { title: "Hallelujah (Stripped)", time: "4:04", url: "https://adammac.disco.ac/play/163224611/alias_pv_id/67836117/download2/trackfiles/2ea8fcf0-8eb6-4e9a-8f84-ab88bd7388de.mp3?signature=6r4VqVWW19xsHIrfaq1Ar4qx9wU%3A9rXnXUXm" },
+        { title: "Leave the Light On (Stripped)", time: "2:31", url: "https://adammac.disco.ac/play/163224613/alias_pv_id/67836117/download2/trackfiles/64f33bda-1143-42a5-b768-a96604baba58.mp3?signature=J6bAinkAHkBtKfyBZtZu0Qb49hM%3A9rXnXUXm" },
+        { title: "Power (Stripped)", time: "2:28", url: "https://adammac.disco.ac/play/163224612/alias_pv_id/67836117/download2/trackfiles/9f1378e1-2e14-4c13-b820-17d61c22f43b.mp3?signature=CjQxo10y1txSKZWhiGZ8COGn76o%3A9rXnXUXm" },
+        { title: "Remember My Name (Stripped)", time: "3:33", url: "https://adammac.disco.ac/play/163224614/alias_pv_id/67836117/download2/trackfiles/cf215367-c3f5-4cdb-a8f7-cecf09ca814e.mp3?signature=WIit85VDb1tlEc4CmG1wf769Ths%3A9rXnXUXm" },
+        { title: "Wishing Well (Stripped)", time: "2:40", url: "https://adammac.disco.ac/play/163224615/alias_pv_id/67836117/download2/trackfiles/c26802a7-8933-4a78-9aec-ff3e52668683.mp3?signature=DfQPcSP_BGeQDcq2tKQVvrAcLCo%3A9rXnXUXm" },
+      ]
+    },
+  ];
 
   const handleShuffle = () => {
     const allTracks = [...topTracks, ...albums.filter(a => a.url)];
@@ -481,109 +607,3 @@ export default function Music() {
     </div>
   );
 }
-
-// Top tracks based on Spotify popularity
-const topTracks = [
-  { id: "1", title: "In The Air Tonight", artist: "Sons of Legion", album: "Power", time: "3:42", url: "https://s.disco.ac/xpokdtzwgtpy", image: powerAlbum },
-  { id: "2", title: "Fire Starter", artist: "Sons of Legion", album: "Power", time: "2:28", url: "https://s.disco.ac/gihjknbnqoio", image: powerAlbum },
-  { id: "3", title: "Strange", artist: "Sons of Legion", album: "Outlaw", time: "3:51", url: "https://s.disco.ac/wkkrjkmhrlja", image: outlawAlbum },
-  { id: "4", title: "Power", artist: "Sons of Legion", album: "Power", time: "2:43", url: "https://s.disco.ac/ujlhdevhkqjd", image: powerAlbum },
-  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Outlaw", time: "4:31", url: "https://s.disco.ac/euvpwesrokvn", image: carolinaSingle },
-  { id: "6", title: "Walking On The Edge", artist: "Sons of Legion", album: "Singles", time: "4:27", url: "https://s.disco.ac/bmjenhxmtbkm", image: walkingOnTheEdge },
-  { id: "7", title: "Remember My Name", artist: "Sons of Legion", album: "Outlaw", time: "3:44", url: "https://s.disco.ac/dwwnvhlcprqx", image: outlawAlbum },
-  { id: "8", title: "Leave the Light On", artist: "Sons of Legion", album: "Outlaw", time: "2:52", url: "https://s.disco.ac/njbhbmqnaggo", image: outlawAlbum },
-];
-
-// EP & Singles
-const albums = [
-  { id: "1", title: "Walking On The Edge", artist: "Sons of Legion", album: "Walking On The Edge", year: "2024", time: "4:27", url: "https://s.disco.ac/bmjenhxmtbkm", image: walkingOnTheEdge, discoUrl: "https://adammac.disco.ac/playlist-new/23076836?date=20251016&user_id=106301&signature=nCPHIMkw2dpaw5jPYMEvngK_y_4%3AojJ1YOQp" },
-  { id: "2", title: "Angels", artist: "Sons of Legion", album: "Angels", year: "2024", time: "3:17", url: "https://s.disco.ac/lpdfkmyunhee", image: angelsSingle, discoUrl: "https://adammac.disco.ac/track-new/145967537?user_id=106301&signature=TNasBvrvRq-ZxCX0EnGbUOdKMEA%3AloK3GCDD" },
-  { id: "3", title: "Strange", artist: "Sons of Legion", album: "Strange", year: "2024", time: "3:51", url: "https://s.disco.ac/wkkrjkmhrlja", image: strangeSingle, discoUrl: "https://adammac.disco.ac/track-new/21205805?user_id=106301&signature=lZKqw6EG0PMI0yM9Q6NDNj6Ytr0%3AojJ1YOQp" },
-  { id: "4", title: "Wild Horse", artist: "Sons of Legion", album: "Wild Horse", year: "2024", time: "3:35", url: "https://s.disco.ac/hqmyxiorexxy", image: wildHorseSingle, discoUrl: "https://adammac.disco.ac/track-new/162200222?user_id=106301&signature=idXzBggi1hJutONL8y2TIebUVAE%3AlycuhXaN" },
-  { id: "5", title: "Carolina", artist: "Sons of Legion", album: "Carolina", year: "2024", time: "4:31", url: "https://s.disco.ac/euvpwesrokvn", image: carolinaSingle, discoUrl: "https://adammac.disco.ac/track-new/115244079?user_id=106301&signature=svrlD1mmWktva9FS8lUm4T19wQQ%3Acd2gyInx" },
-  { id: "6", title: "REAL THANG", artist: "Sons of Legion", album: "REAL THANG", year: "2024", time: "2:25", url: "https://s.disco.ac/dditjyzahhbp", image: realThangSingle, discoUrl: "https://adammac.disco.ac/track-new/26434311?user_id=106301&signature=e4SOiwX5toE7wVhyhO9KrmUhTjE%3A4bkLaONY" },
-  { id: "7", title: "Leave the Light On", artist: "Sons of Legion", album: "Leave the Light On", year: "2023", time: "2:52", url: "https://s.disco.ac/njbhbmqnaggo", image: outlawAlbum },
-  { id: "8", title: "In The Air Tonight", artist: "Sons of Legion", album: "In The Air Tonight", year: "2023", time: "3:39", url: "https://s.disco.ac/xpokdtzwgtpy", image: powerAlbum },
-];
-
-const moreAlbums = [
-  { 
-    id: "a1", 
-    title: "Power", 
-    year: "2024", 
-    tracks: 5, 
-    image: powerAlbum,
-    price: 12,
-    forSale: true,
-    discoUrl: "https://s.disco.ac/docvmkfmfdlv",
-    trackList: [
-      { title: "Power", time: "2:43", url: "https://s.disco.ac/ujlhdevhkqjd" },
-      { title: "Firestarter (Savage Remix)", time: "2:35", url: "https://s.disco.ac/gihjknbnqoio" },
-      { title: "Brand New Day", time: "3:03", url: "https://s.disco.ac/ysjsererpezj" },
-      { title: "Alive", time: "2:54", url: "https://s.disco.ac/xpawhmjtbqeu" },
-      { title: "In The Air Tonight", time: "3:39", url: "https://s.disco.ac/xpokdtzwgtpy" },
-    ]
-  },
-  { 
-    id: "a2", 
-    title: "Outlaw", 
-    year: "2024", 
-    tracks: 8, 
-    image: outlawAlbum,
-    price: 12,
-    forSale: true,
-    discoUrl: "https://s.disco.ac/oqixhqdabaqb",
-    trackList: [
-      { title: "Remember My Name", time: "3:44", url: "https://s.disco.ac/dwwnvhlcprqx" },
-      { title: "Carolina", time: "4:31", url: "https://s.disco.ac/euvpwesrokvn" },
-      { title: "Leave the Light On", time: "2:52", url: "https://s.disco.ac/njbhbmqnaggo" },
-      { title: "Real Thang", time: "2:25", url: "https://s.disco.ac/dditjyzahhbp" },
-      { title: "Strange", time: "3:51", url: "https://s.disco.ac/wkkrjkmhrlja" },
-      { title: "Wild Horse", time: "3:35", url: "https://s.disco.ac/hqmyxiorexxy" },
-      { title: "Outlaw", time: "3:23", url: "https://adammac.disco.ac/play/162200207/alias_pv_id/67836120/download2/trackfiles/b92d1ab5-205f-43df-95e4-b23f906929ce.mp3?signature=GS_ZLIC4t2qHvu7ILvH_VgRNt58%3AT4ae0JGC" },
-      { title: "Runnin'", time: "2:16", url: "https://adammac.disco.ac/play/162200211/alias_pv_id/67836120/download2/trackfiles/c90f4ef9-2618-4aa2-b03c-3af6b98083ad.mp3?signature=qNewXqY3byqmnjp-aQRkSsyFFwc%3AT4ae0JGC" },
-    ]
-  },
-  { 
-    id: "a3", 
-    title: "Live from the Barn", 
-    subtitle: "Acoustic Sessions - Nashville, TN", 
-    year: "2023", 
-    tracks: 8, 
-    image: acousticAlbum,
-    price: 15,
-    forSale: true,
-    discoUrl: "https://s.disco.ac/ksoaykgawuro",
-    trackList: [
-      { title: "Outlaw", time: "3:04", url: "https://adammac.disco.ac/play/162974091/alias_pv_id/67836113/download2/trackfiles/d6eefac5-ba37-4aac-b4a5-dd79c5d8d1fa.mp3?signature=wU5LzTKfYLyXuRco56rQWBxEGG8%3AXKvIltzO" },
-      { title: "Carolina", time: "4:27", url: "https://adammac.disco.ac/play/162974101/alias_pv_id/67836113/download2/trackfiles/53e37644-b0fb-4445-b2af-f42c4b406219.mp3?signature=vmoyFd9YkzBeH2wqGCENgmfl0P8%3AXKvIltzO" },
-      { title: "Angels", time: "3:17", url: "https://adammac.disco.ac/play/162974097/alias_pv_id/67836113/download2/trackfiles/80ac6ce5-0bdb-46ff-a0a5-f176d6ec9649.mp3?signature=6Zbu55JNBOALMsW09Nq3tmtgTLQ%3AXKvIltzO" },
-      { title: "In the Air Tonight", time: "3:24", url: "https://adammac.disco.ac/play/162974093/alias_pv_id/67836113/download2/trackfiles/accf855b-fe96-41d5-94ce-79fa334bf62c.mp3?signature=rRRDYsjavIeme7t3i97up5YbhB4%3AXKvIltzO" },
-      { title: "Wild Horse", time: "3:26", url: "https://adammac.disco.ac/play/162974095/alias_pv_id/67836113/download2/trackfiles/6035f37d-e196-4a5f-bdb0-3731f3ab8c31.mp3?signature=zpqtkrSiphf-TWgAjknKbo9JQH0%3AXKvIltzO" },
-      { title: "Strange", time: "3:10", url: "https://adammac.disco.ac/play/162974094/alias_pv_id/67836113/download2/trackfiles/27f33198-0b22-44c3-bdbd-7c9b6bff47b1.mp3?signature=uNVSpzimzWeEbn5JF2_9GVw6L8c%3AXKvIltzO" },
-      { title: "Sweet Dreams", time: "2:54", url: "https://adammac.disco.ac/play/162974092/alias_pv_id/67836113/download2/trackfiles/03147c2c-db9b-483e-9c45-b056549bb73e.mp3?signature=lAndjKEjKgYkHD_83U_D_ohkNt4%3AXKvIltzO" },
-      { title: "Brand New Day", time: "3:09", url: "https://adammac.disco.ac/play/162974096/alias_pv_id/67836113/download2/trackfiles/759560f4-44d6-4069-bb5d-1a2cdad48273.mp3?signature=KMRwkezM4fiXUuwyKiKaspWABy4%3AXKvIltzO" },
-    ]
-  },
-  { 
-    id: "a4", 
-    title: "Stripped", 
-    subtitle: "Intimate Performances", 
-    year: "2023", 
-    tracks: 8, 
-    image: strippedAlbum,
-    price: 12,
-    forSale: true,
-    discoUrl: "https://s.disco.ac/vmgbpqtmvdtu",
-    trackList: [
-      { title: "Carry Me Home (Stripped)", time: "2:25", url: "https://adammac.disco.ac/play/163224609/alias_pv_id/67836117/download2/trackfiles/730f5670-d9d3-413d-8fd7-64449f49953b.mp3?signature=EJ3P4dMKRSLg4v4QJeTZScCzndw%3A9rXnXUXm" },
-      { title: "Fall From Grace (Stripped)", time: "3:58", url: "https://adammac.disco.ac/play/163224610/alias_pv_id/67836117/download2/trackfiles/d000279c-4158-4e81-a41a-db14a4c880a4.mp3?signature=_Eb1bX4lViaXMT1oSeOsOYN-dkw%3A9rXnXUXm" },
-      { title: "Firestarter (Stripped)", time: "2:25", url: "https://adammac.disco.ac/play/163224607/alias_pv_id/67836117/download2/trackfiles/9cd2cc3c-b6ce-4148-bebc-7f3385aaa9ff.mp3?signature=pgkJbgC_1O8gxXL5zBKoNDmW4rQ%3A9rXnXUXm" },
-      { title: "Hallelujah (Stripped)", time: "4:04", url: "https://adammac.disco.ac/play/163224611/alias_pv_id/67836117/download2/trackfiles/2ea8fcf0-8eb6-4e9a-8f84-ab88bd7388de.mp3?signature=6r4VqVWW19xsHIrfaq1Ar4qx9wU%3A9rXnXUXm" },
-      { title: "Leave the Light On (Stripped)", time: "2:31", url: "https://adammac.disco.ac/play/163224613/alias_pv_id/67836117/download2/trackfiles/64f33bda-1143-42a5-b768-a96604baba58.mp3?signature=J6bAinkAHkBtKfyBZtZu0Qb49hM%3A9rXnXUXm" },
-      { title: "Power (Stripped)", time: "2:28", url: "https://adammac.disco.ac/play/163224612/alias_pv_id/67836117/download2/trackfiles/9f1378e1-2e14-4c13-b820-17d61c22f43b.mp3?signature=CjQxo10y1txSKZWhiGZ8COGn76o%3A9rXnXUXm" },
-      { title: "Remember My Name (Stripped)", time: "3:33", url: "https://adammac.disco.ac/play/163224614/alias_pv_id/67836117/download2/trackfiles/cf215367-c3f5-4cdb-a8f7-cecf09ca814e.mp3?signature=WIit85VDb1tlEc4CmG1wf769Ths%3A9rXnXUXm" },
-      { title: "Wishing Well (Stripped)", time: "2:40", url: "https://adammac.disco.ac/play/163224615/alias_pv_id/67836117/download2/trackfiles/c26802a7-8933-4a78-9aec-ff3e52668683.mp3?signature=DfQPcSP_BGeQDcq2tKQVvrAcLCo%3A9rXnXUXm" },
-    ]
-  },
-];
