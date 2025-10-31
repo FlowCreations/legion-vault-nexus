@@ -169,41 +169,40 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   }, [selectedUserId, members]);
 
   const loadMembers = async () => {
+    // Fetch real user profiles with ERA/PTP scores
     const { data, error } = await supabase
       .from("user_profiles")
       .select("*")
       .order("created_at", { ascending: false });
 
-    // Always combine real members with demo profiles
+    if (error) {
+      console.error('Error loading members:', error);
+      setMembers(mockMembers as Member[]); // Fallback to mock data
+      return;
+    }
+
     const realMembers = data || [];
     
-    // Add demo ERA/PTP scores to real members who don't have them
+    // Use REAL data - no more random demo scores for real users
     const realMembersWithScores = realMembers.map(member => {
-      if (!member.era_current || !member.ptp_current) {
-        const era = Math.floor(Math.random() * 10) + 1; // 1-10
-        const ptp = Math.floor(Math.random() * 100); // 0-100
-        
-        let eraLabel = 'Discover';
-        if (era > 3 && era <= 6) eraLabel = 'Engage';
-        else if (era > 6 && era <= 8) eraLabel = 'Invest';
-        else if (era > 8) eraLabel = 'Loyal';
-        
-        let ptpStatus = 'Stop';
-        if (ptp >= 40 && ptp < 70) ptpStatus = 'Wait';
-        else if (ptp >= 70) ptpStatus = 'Go';
-        
-        return {
-          ...member,
-          era_current: era,
-          ptp_current: ptp,
-          era_label: eraLabel,
-          ptp_status: ptpStatus
-        };
+      // If they have real ERA/PTP scores, use them
+      if (member.era_current && member.ptp_current && member.era_label && member.ptp_status) {
+        return member;
       }
-      return member;
+      
+      // If no scores yet, set defaults indicating they need to engage more
+      return {
+        ...member,
+        era_current: 1, // Start at Discover
+        ptp_current: 0, // Cold lead
+        era_label: 'Discover',
+        ptp_status: 'Stop',
+        watch_time: member.watch_time || 0,
+        listen_time: member.listen_time || 0
+      };
     });
     
-    // Add demo scores to mock members
+    // Keep mock members for demo purposes
     const mockWithScores = mockMembers.map(member => {
       const era = Math.floor(Math.random() * 10) + 1;
       const ptp = Math.floor(Math.random() * 100);
@@ -226,7 +225,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       };
     });
     
-    // Always combine real members with demo members
+    // Combine real members with demo members
     setMembers([...realMembersWithScores, ...mockWithScores] as Member[]);
   };
 

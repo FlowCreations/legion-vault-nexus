@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useEventTracking } from "@/hooks/useEventTracking";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +44,8 @@ export function VideoPlayer({
   const [isFavorited, setIsFavorited] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { trackEvent } = useEventTracking();
+  const watchStartTime = useRef<number>(0);
 
   // Determine if video should be portrait (vertical) based on category
   const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
@@ -115,6 +118,14 @@ export function VideoPlayer({
       setIsPlaying(true);
       setMinimized(false);
       kickIdleTimer();
+      
+      // Track video start
+      watchStartTime.current = Date.now();
+      trackEvent('video_view', { 
+        video_id: videoId,
+        title: title,
+        category: category
+      });
     }
   }, [isOpen]);
 
@@ -194,6 +205,18 @@ export function VideoPlayer({
   }, []);
 
   const handleClose = () => {
+    // Track watch duration before closing
+    if (watchStartTime.current > 0) {
+      const watchDuration = Math.floor((Date.now() - watchStartTime.current) / 1000);
+      trackEvent('video_watch', {
+        video_id: videoId,
+        title: title,
+        duration: watchDuration,
+        completed: progress >= duration * 0.9 // 90% completion
+      });
+      watchStartTime.current = 0;
+    }
+
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;

@@ -10,11 +10,13 @@ const corsHeaders = {
 const ALLOWED_EVENT_TYPES = [
   'page_view',
   'music_play',
+  'music_listen',
   'music_pause',
   'album_view',
   'purchase_started',
   'purchase_completed',
   'video_view',
+  'video_watch',
   'merch_view',
   'show_view',
   'chat_interaction'
@@ -106,9 +108,39 @@ serve(async (req) => {
 
     if (error) throw error;
 
-    // Update analytics if user is logged in
+    // Update user_profiles with real-time analytics if user is logged in
     if (userId) {
-      // Try to upsert analytics data
+      // Calculate duration for watch/listen events
+      const duration = eventData?.duration || 0;
+      
+      // Update user_profiles based on event type using database functions
+      if (eventType === 'video_watch' || eventType === 'video_view') {
+        try {
+          await supabaseClient.rpc('increment_watch_time', {
+            p_user_id: userId,
+            p_duration: duration
+          });
+        } catch (err) {
+          console.error('Error incrementing watch time:', err);
+        }
+      } else if (eventType === 'music_listen' || eventType === 'music_play') {
+        try {
+          await supabaseClient.rpc('increment_listen_time', {
+            p_user_id: userId,
+            p_duration: duration
+          });
+        } catch (err) {
+          console.error('Error incrementing listen time:', err);
+        }
+      } else {
+        // For other events, just update last_login
+        await supabaseClient
+          .from('user_profiles')
+          .update({ last_login: new Date().toISOString() })
+          .eq('user_id', userId);
+      }
+
+      // Update user_analytics table
       await supabaseClient
         .from('user_analytics')
         .upsert({

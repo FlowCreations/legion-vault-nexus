@@ -2,10 +2,13 @@ import { useEffect, useRef } from "react";
 import { MusicPlayer } from "./MusicPlayer";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { toast } from "@/hooks/use-toast";
+import { useEventTracking } from "@/hooks/useEventTracking";
 
 export function GlobalMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { currentTrack, isPlaying, setIsPlaying, playNext, isMinimized } = useMusicPlayer();
+  const { trackEvent } = useEventTracking();
+  const listenStartTime = useRef<number>(0);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -43,6 +46,14 @@ export function GlobalMusicPlayer() {
         .then(() => {
           console.log('Playback started successfully');
           setIsPlaying(true);
+          
+          // Track music start
+          listenStartTime.current = Date.now();
+          trackEvent('music_play', {
+            track_id: currentTrack?.id,
+            title: currentTrack?.title,
+            artist: currentTrack?.artist
+          });
         })
         .catch(err => {
           console.error('Play error:', err);
@@ -85,11 +96,40 @@ export function GlobalMusicPlayer() {
     if (!audio) return;
 
     const handleEnded = () => {
+      // Track listen duration when track ends
+      if (listenStartTime.current > 0 && currentTrack) {
+        const listenDuration = Math.floor((Date.now() - listenStartTime.current) / 1000);
+        trackEvent('music_listen', {
+          track_id: currentTrack.id,
+          title: currentTrack.title,
+          duration: listenDuration,
+          completed: true
+        });
+        listenStartTime.current = 0;
+      }
       setIsPlaying(false);
       playNext();
     };
-    const handlePause = () => setIsPlaying(false);
-    const handlePlay = () => setIsPlaying(true);
+    
+    const handlePause = () => {
+      // Track partial listen on pause
+      if (listenStartTime.current > 0 && currentTrack) {
+        const listenDuration = Math.floor((Date.now() - listenStartTime.current) / 1000);
+        trackEvent('music_listen', {
+          track_id: currentTrack.id,
+          title: currentTrack.title,
+          duration: listenDuration,
+          completed: false
+        });
+        listenStartTime.current = 0;
+      }
+      setIsPlaying(false);
+    };
+    
+    const handlePlay = () => {
+      listenStartTime.current = Date.now();
+      setIsPlaying(true);
+    };
 
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('pause', handlePause);

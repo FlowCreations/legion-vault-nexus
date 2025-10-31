@@ -3071,6 +3071,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_listen_time: {
+        Args: { p_duration: number; p_user_id: string }
+        Returns: undefined
+      }
+      increment_watch_time: {
+        Args: { p_duration: number; p_user_id: string }
+        Returns: undefined
+      }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tenant_admin: {
         Args: { _tenant_id: string; _user_id: string }
