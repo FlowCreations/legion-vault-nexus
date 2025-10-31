@@ -1,4 +1,4 @@
-import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download, Link, Facebook, Twitter } from "lucide-react";
+import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download, Link, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
@@ -65,15 +65,9 @@ export default function Music() {
     }
   };
 
-  const handleShareFacebook = () => {
-    const url = encodeURIComponent(window.location.href);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
-  };
-
-  const handleShareTwitter = () => {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent('Check out Sons of Legion music!');
-    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+  const handleShareSMS = () => {
+    const text = encodeURIComponent(`Check out Sons of Legion music! ${window.location.href}`);
+    window.location.href = `sms:?&body=${text}`;
   };
 
 
@@ -141,6 +135,14 @@ export default function Music() {
               <Shuffle className="w-5 h-5 mr-2" />
               Shuffle
             </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/music/favorites')}
+              className="rounded-full"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Favorites ({likedTracks.size})
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -157,13 +159,9 @@ export default function Music() {
                   <Link className="h-4 w-4 mr-2" />
                   Copy Link
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleShareFacebook}>
-                  <Facebook className="h-4 w-4 mr-2" />
-                  Share on Facebook
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleShareTwitter}>
-                  <Twitter className="h-4 w-4 mr-2" />
-                  Share on Twitter
+                <DropdownMenuItem onClick={handleShareSMS}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Send via Messages
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -173,61 +171,6 @@ export default function Music() {
 
       {/* Main Content */}
       <div className="px-4 sm:px-8 lg:px-12 pb-16">
-        {/* Quick Links */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/music/favorites')}
-            className="rounded-full"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            Favorites ({likedTracks.size})
-          </Button>
-        </div>
-
-        {/* Purchased Albums */}
-        {purchasedAlbums.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold mb-6">My Albums</h2>
-            <Carousel className="w-full">
-              <CarouselContent>
-                {moreAlbums
-                  .filter(album => purchasedAlbums.includes(album.id))
-                  .map((album) => (
-                    <CarouselItem key={album.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                      <div
-                        className="relative group rounded-lg overflow-hidden shadow-glow cursor-pointer transition-all duration-300 hover:scale-105"
-                        onClick={() => navigate(`/music/album/${album.id}`)}
-                      >
-                        <div className="aspect-square">
-                          <img 
-                            src={album.image} 
-                            alt={album.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
-                          <div className="bg-primary/20 backdrop-blur-sm rounded px-2 py-1 text-xs font-medium w-fit mb-2">
-                            PURCHASED
-                          </div>
-                          <h3 className="font-bold text-lg mb-1">{album.title}</h3>
-                          <p className="text-sm text-muted-foreground">{album.year} • {album.tracks} tracks</p>
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                            <Play className="w-8 h-8 text-black fill-black ml-1" />
-                          </div>
-                        </div>
-                      </div>
-                    </CarouselItem>
-                  ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-2" />
-              <CarouselNext className="right-2" />
-            </Carousel>
-          </div>
-        )}
-
         {/* Top Tracks */}
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6">
@@ -295,14 +238,22 @@ export default function Music() {
                 <div className="hidden md:block text-muted-foreground truncate">{track.album}</div>
                 <div className="text-muted-foreground text-sm flex items-center">{track.time}</div>
                 <div className="w-10 flex items-center justify-center">
-                  <a 
-                    href={track.url} 
-                    download={`${track.title} - ${track.artist}.mp3`}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Create invisible anchor for download without navigation
+                      const link = document.createElement('a');
+                      link.href = track.url;
+                      link.download = `${track.title} - ${track.artist}.mp3`;
+                      link.style.display = 'none';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Download className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-                  </a>
+                  </button>
                 </div>
                 <div className="w-10 flex items-center justify-center">
                   <button
@@ -441,6 +392,13 @@ export default function Music() {
                               <span className="font-sans text-2xl">{album.title[0]}</span>
                             </div>
                           </div>
+                        </div>
+                      )}
+                      
+                      {/* Purchased badge */}
+                      {albumPurchased && (
+                        <div className="absolute top-2 right-2 bg-primary/90 backdrop-blur-sm rounded px-2 py-1 text-xs font-medium">
+                          UNLOCKED
                         </div>
                       )}
                       
