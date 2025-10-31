@@ -1,7 +1,8 @@
-import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown, X } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown, X, Share2, Link, Facebook, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import {
@@ -16,8 +17,9 @@ interface MusicPlayerProps {
 }
 
 export function MusicPlayer({ audioRef }: MusicPlayerProps) {
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized, isMinimized, reset } = useMusicPlayer();
+  const { currentTrack, isPlaying, togglePlayPause, playNext, playPrevious, setMinimized, isMinimized, reset, toggleLike, isLiked } = useMusicPlayer();
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
@@ -93,6 +95,17 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
+
+  const handleCopyLink = () => {
+    const url = window.location.origin + `/music?track=${currentTrack?.id}`;
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "Link copied!",
+      description: "Track link copied to clipboard",
+    });
+  };
+
+  const trackLiked = currentTrack ? isLiked(currentTrack.id) : false;
 
   if (!currentTrack) return null;
 
@@ -247,9 +260,42 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
+                onClick={() => currentTrack && toggleLike(currentTrack.id)}
               >
-                <Heart className="h-4 w-4" />
+                <Heart className={`h-4 w-4 ${trackLiked ? 'fill-red-500 text-red-500' : ''}`} />
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    <Link className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const url = encodeURIComponent(window.location.origin + `/music?track=${currentTrack?.id}`);
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+                  }}>
+                    <Facebook className="h-4 w-4 mr-2" />
+                    Share on Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const url = encodeURIComponent(window.location.origin + `/music?track=${currentTrack?.id}`);
+                    const text = encodeURIComponent(`Check out ${currentTrack?.title} by ${currentTrack?.artist}`);
+                    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+                  }}>
+                    <Twitter className="h-4 w-4 mr-2" />
+                    Share on Twitter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

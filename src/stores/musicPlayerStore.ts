@@ -16,6 +16,7 @@ interface MusicPlayerState {
   playlist: Track[];
   currentIndex: number;
   isMinimized: boolean;
+  likedTracks: Set<string>;
   setCurrentTrack: (track: Track) => void;
   setIsPlaying: (isPlaying: boolean) => void;
   setPlaylist: (playlist: Track[], startIndex?: number) => void;
@@ -23,6 +24,8 @@ interface MusicPlayerState {
   playPrevious: () => void;
   togglePlayPause: () => void;
   setMinimized: (isMinimized: boolean) => void;
+  toggleLike: (trackId: string) => void;
+  isLiked: (trackId: string) => boolean;
   reset: () => void;
 }
 
@@ -32,6 +35,7 @@ export const useMusicPlayer = create<MusicPlayerState>((set, get) => ({
   playlist: [],
   currentIndex: 0,
   isMinimized: false,
+  likedTracks: new Set<string>(),
   
   setCurrentTrack: (track) => set({ currentTrack: track }),
   
@@ -71,6 +75,18 @@ export const useMusicPlayer = create<MusicPlayerState>((set, get) => ({
   togglePlayPause: () => set((state) => ({ isPlaying: !state.isPlaying })),
   
   setMinimized: (isMinimized) => set({ isMinimized }),
+  
+  toggleLike: (trackId: string) => set((state) => {
+    const newLikedTracks = new Set(state.likedTracks);
+    if (newLikedTracks.has(trackId)) {
+      newLikedTracks.delete(trackId);
+    } else {
+      newLikedTracks.add(trackId);
+    }
+    return { likedTracks: newLikedTracks };
+  }),
+  
+  isLiked: (trackId: string) => get().likedTracks.has(trackId),
   
   reset: () => set({ 
     currentTrack: null, 
