@@ -134,19 +134,32 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
       if (offerSignal) {
         console.log('[ExpandableLiveViewer] Creating peer connection...');
         const pc = createPeerConnection((stream) => {
-        console.log('[ExpandableLiveViewer] Received remote stream, tracks:', stream.getTracks().length);
-        stream.getTracks().forEach(track => {
-          console.log('[ExpandableLiveViewer] Track:', track.kind, 'enabled:', track.enabled, 'readyState:', track.readyState);
-        });
-        
-        if (videoRef.current) {
-          console.log('[ExpandableLiveViewer] Setting video srcObject');
-          videoRef.current.srcObject = stream;
-          videoRef.current.muted = isMuted;
-          videoRef.current.playsInline = true;
-          videoRef.current.autoplay = true;
-          videoRef.current.play().catch(e => console.error('Video play error:', e));
-        }
+          console.log('[ExpandableLiveViewer] ⭐ RECEIVED REMOTE STREAM ⭐');
+          console.log('[ExpandableLiveViewer] Stream tracks:', stream.getTracks().length);
+          stream.getTracks().forEach((track, idx) => {
+            console.log(`[ExpandableLiveViewer] Track ${idx}:`, {
+              kind: track.kind,
+              id: track.id,
+              enabled: track.enabled,
+              readyState: track.readyState,
+              muted: track.muted
+            });
+          });
+          
+          if (videoRef.current) {
+            console.log('[ExpandableLiveViewer] Attaching stream to video element');
+            videoRef.current.srcObject = stream;
+            videoRef.current.muted = false; // Don't mute remote video
+            videoRef.current.playsInline = true;
+            videoRef.current.autoplay = true;
+            
+            // Force play
+            videoRef.current.play()
+              .then(() => console.log('[ExpandableLiveViewer] ✅ Video playing successfully'))
+              .catch(e => console.error('[ExpandableLiveViewer] ❌ Video play error:', e));
+          } else {
+            console.error('[ExpandableLiveViewer] ❌ videoRef.current is null!');
+          }
         });
 
         peerConnectionRef.current = pc;
@@ -164,13 +177,23 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
           }
         };
         
-        // Monitor connection state
+        // Monitor connection state changes
         pc.onconnectionstatechange = () => {
-          console.log('[ExpandableLiveViewer] Connection state:', pc.connectionState);
+          console.log('[ExpandableLiveViewer] 🔌 Connection state:', pc.connectionState);
+          if (pc.connectionState === 'failed') {
+            console.error('[ExpandableLiveViewer] ❌ Connection failed!');
+          } else if (pc.connectionState === 'connected') {
+            console.log('[ExpandableLiveViewer] ✅ Successfully connected!');
+          }
         };
         
         pc.oniceconnectionstatechange = () => {
-          console.log('[ExpandableLiveViewer] ICE connection state:', pc.iceConnectionState);
+          console.log('[ExpandableLiveViewer] 🧊 ICE connection state:', pc.iceConnectionState);
+          if (pc.iceConnectionState === 'failed') {
+            console.error('[ExpandableLiveViewer] ❌ ICE connection failed!');
+          } else if (pc.iceConnectionState === 'connected') {
+            console.log('[ExpandableLiveViewer] ✅ ICE connected!');
+          }
         };
 
         console.log('[ExpandableLiveViewer] Setting remote description...');
@@ -353,13 +376,23 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                   <p>Stream will start soon...</p>
                 </div>
               ) : (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted={isMuted}
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted={isMuted}
+                    className="w-full h-full object-cover"
+                    onLoadedMetadata={() => console.log('[ExpandableLiveViewer] Video metadata loaded')}
+                    onPlay={() => console.log('[ExpandableLiveViewer] Video started playing')}
+                    onError={(e) => console.error('[ExpandableLiveViewer] Video error:', e)}
+                  />
+                  {!videoRef.current?.srcObject && (
+                    <div className="absolute inset-0 flex items-center justify-center text-white bg-black/50">
+                      <p>Connecting to stream...</p>
+                    </div>
+                  )}
+                </>
               )}
               {isLive && (
                 <div className="absolute top-3 left-3 flex items-center gap-2">
