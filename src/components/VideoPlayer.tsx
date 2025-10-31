@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize } from "lucide-react";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -30,6 +30,8 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [minimized, setMinimized] = useState(false);
   const [showUI, setShowUI] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Check if this category should open fullscreen
   const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
@@ -116,6 +118,33 @@ export function VideoPlayer({
     return `${m}:${s}`;
   };
 
+  const toggleFullscreen = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (!isFullscreen) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const handleClose = () => {
     if (videoRef.current) {
       videoRef.current.pause();
@@ -159,6 +188,7 @@ export function VideoPlayer({
         {!minimized && (
           <motion.div
             key="card"
+            ref={containerRef}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
@@ -248,6 +278,16 @@ export function VideoPlayer({
                         </div>
 
                         <div className="flex items-center gap-2">
+                          {/* Fullscreen toggle */}
+                          <button
+                            onClick={toggleFullscreen}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                          >
+                            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                          </button>
+
                           {/* Hide/minimize */}
                           <button
                             onClick={() => setMinimized(true)}
