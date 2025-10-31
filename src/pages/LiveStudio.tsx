@@ -40,9 +40,6 @@ export default function LiveStudio() {
     minutes: "27",
     seconds: "60"
   });
-  const [showCountdown, setShowCountdown] = useState(false);
-  const [showIntro, setShowIntro] = useState(false);
-  const [streamStarted, setStreamStarted] = useState(false);
   const [liveEventId, setLiveEventId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,7 +67,27 @@ export default function LiveStudio() {
     // Update every second
     const interval = setInterval(updateCountdown, 1000);
     
-    return () => clearInterval(interval);
+    // Subscribe to real-time livestream events
+    const channel = supabase
+      .channel('livestream-events')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'livestream_events',
+        filter: 'status=eq.live'
+      }, (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          setLiveEventId(payload.new.id);
+        } else if (payload.eventType === 'DELETE') {
+          setLiveEventId(null);
+        }
+      })
+      .subscribe();
+    
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const checkLiveStream = async () => {
@@ -85,19 +102,6 @@ export default function LiveStudio() {
     }
   };
 
-  const startWatchingStream = () => {
-    setShowCountdown(true);
-  };
-
-  const handleCountdownComplete = () => {
-    setShowCountdown(false);
-    setShowIntro(true);
-  };
-
-  const handleIntroComplete = () => {
-    setShowIntro(false);
-    setStreamStarted(true);
-  };
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -286,10 +290,7 @@ export default function LiveStudio() {
 
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
-      {showCountdown && <StreamCountdown onComplete={handleCountdownComplete} />}
-      {showIntro && <StreamIntro onComplete={handleIntroComplete} />}
-
-      {(streamStarted || liveEventId) && liveEventId ? (
+      {liveEventId ? (
         <div className="max-w-7xl mx-auto">
           <ExpandableLiveViewer eventId={liveEventId} />
         </div>
