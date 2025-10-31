@@ -11,64 +11,56 @@ export function GlobalMusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.url) return;
 
-    // Clear any existing source
-    audio.pause();
-    audio.src = '';
+    console.log('Loading track:', currentTrack.title, currentTrack.url);
+
+    // Set new source
+    audio.src = currentTrack.url;
+    
+    const handleError = (e: any) => {
+      console.error("Audio error:", {
+        error: e,
+        code: audio.error?.code,
+        message: audio.error?.message,
+        url: currentTrack.url,
+        networkState: audio.networkState,
+        readyState: audio.readyState
+      });
+      setIsPlaying(false);
+      toast({
+        title: "Unable to play track",
+        description: `"${currentTrack.title}" could not be loaded.`,
+        variant: "destructive",
+      });
+    };
+
+    const handleLoadedMetadata = () => {
+      console.log('Metadata loaded, duration:', audio.duration);
+    };
+
+    const handleCanPlay = () => {
+      console.log('Audio can play, attempting playback');
+      audio.play()
+        .then(() => {
+          console.log('Playback started successfully');
+          setIsPlaying(true);
+        })
+        .catch(err => {
+          console.error('Play error:', err);
+          setIsPlaying(false);
+        });
+    };
+    
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('canplay', handleCanPlay, { once: true });
+    
     audio.load();
 
-    // Small delay to ensure cleanup
-    setTimeout(() => {
-      audio.src = currentTrack.url!;
-      
-      const handleError = (e: any) => {
-        console.error("Audio error:", {
-          error: e,
-          code: audio.error?.code,
-          message: audio.error?.message,
-          url: currentTrack.url,
-          networkState: audio.networkState,
-          readyState: audio.readyState
-        });
-        setIsPlaying(false);
-        toast({
-          title: "Unable to play track",
-          description: `"${currentTrack.title}" could not be loaded. Skipping to next track.`,
-          variant: "destructive",
-        });
-        // Auto-skip to next track after a short delay
-        setTimeout(() => playNext(), 1000);
-      };
-
-      const handleLoadedMetadata = () => {
-        console.log('Metadata loaded:', {
-          duration: audio.duration,
-          src: audio.src
-        });
-      };
-      
-      audio.onerror = handleError;
-      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.load();
-      
-      const handleCanPlay = () => {
-        console.log('Audio can play, attempting playback');
-        audio.play()
-          .then(() => {
-            console.log('Playback started successfully');
-            setIsPlaying(true);
-          })
-          .catch(err => {
-            console.error('Play error:', err);
-            setIsPlaying(false);
-          });
-      };
-      
-      audio.addEventListener('canplay', handleCanPlay, { once: true });
-
-      return () => {
-        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      };
-    }, 100);
+    return () => {
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('canplay', handleCanPlay);
+    };
   }, [currentTrack?.id]);
 
   useEffect(() => {
