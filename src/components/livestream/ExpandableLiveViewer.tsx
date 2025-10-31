@@ -329,173 +329,21 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   };
 
   return (
-    <div className={`relative ${isExpanded ? "fixed inset-0 z-50 bg-background/95 backdrop-blur-sm p-4" : ""}`}>
-      <AnimatePresence mode="wait">
-        {isExpanded ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="h-full flex flex-col lg:flex-row gap-4"
-          >
-            <div className="flex-1 flex flex-col">
-              <Card className="flex-1 bg-black border-primary/20">
-                <CardContent className="p-0 h-full flex flex-col">
-                  <div className="relative flex-1 bg-black group">
-                    {!isLive ? (
-                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                        <p className="text-lg">Stream will start soon...</p>
-                      </div>
-                    ) : (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted={isMuted}
-                        className="w-full h-full object-contain cursor-pointer"
-                        onClick={() => setIsExpanded(false)}
-                      />
-                    )}
-                    {isLive && (
-                      <div className="absolute top-4 left-4 flex items-center gap-3">
-                        <Badge className="bg-red-600 text-white animate-pulse">
-                          🔴 LIVE
-                        </Badge>
-                        <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                          <Eye className="w-3 h-3 mr-1" />
-                          {viewerCount}
-                        </Badge>
-                      </div>
-                    )}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                      onClick={() => setIsExpanded(false)}
-                    >
-                      <Minimize2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <div className="p-4 bg-card flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setIsMuted(!isMuted)}
-                          onMouseEnter={() => setShowVolumeSlider(true)}
-                          onMouseLeave={() => setShowVolumeSlider(false)}
-                        >
-                          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        </Button>
-                        {showVolumeSlider && !isMuted && (
-                          <div
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-popover border rounded-lg shadow-lg"
-                            onMouseEnter={() => setShowVolumeSlider(true)}
-                            onMouseLeave={() => setShowVolumeSlider(false)}
-                          >
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={volume}
-                              onChange={(e) => setVolume(parseInt(e.target.value))}
-                              className="h-24 w-2 appearance-none bg-muted rounded-full [writing-mode:vertical-lr] [direction:rtl] cursor-pointer"
-                              style={{
-                                background: `linear-gradient(to top, hsl(var(--primary)) 0%, hsl(var(--primary)) ${volume}%, hsl(var(--muted)) ${volume}%, hsl(var(--muted)) 100%)`,
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline" onClick={handleShare}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share
-                      </Button>
-
-                      <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
-                        <DialogTrigger asChild>
-                          <Button size="sm">
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Tip
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Send a Tip</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="flex gap-2">
-                              {[5, 10, 25].map((amount) => (
-                                <Button
-                                  key={amount}
-                                  variant={tipAmount === amount.toString() ? "default" : "outline"}
-                                  onClick={() => setTipAmount(amount.toString())}
-                                >
-                                  ${amount}
-                                </Button>
-                              ))}
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Custom Amount ($)</label>
-                              <Input
-                                type="number"
-                                min="1"
-                                step="0.01"
-                                value={tipAmount}
-                                onChange={(e) => setTipAmount(e.target.value)}
-                                placeholder="Enter amount"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Your Name (Optional)</label>
-                              <Input
-                                value={tipperName}
-                                onChange={(e) => setTipperName(e.target.value)}
-                                placeholder="Anonymous"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Message (Optional)</label>
-                              <Textarea
-                                value={tipMessage}
-                                onChange={(e) => setTipMessage(e.target.value)}
-                                placeholder="Say something nice..."
-                                rows={3}
-                              />
-                            </div>
-                            <Button onClick={handleTip} className="w-full">
-                              Send ${parseFloat(tipAmount || "0").toFixed(2)} Tip
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="lg:w-96 flex flex-col">
-              <LiveChat eventId={eventId} />
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Card className="bg-black border-primary/20 overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative aspect-video bg-black group cursor-pointer" onClick={() => setIsExpanded(true)}>
+    <>
+      {isExpanded ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="fixed inset-0 z-50 bg-background flex flex-col lg:flex-row gap-4 p-4"
+        >
+          <div className="flex-1 flex flex-col min-h-0">
+            <Card className="flex-1 bg-black border-primary/20 flex flex-col min-h-0">
+              <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+                <div className="relative flex-1 bg-black group min-h-0">
                   {!isLive ? (
                     <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                      <p>Stream will start soon...</p>
+                      <p className="text-lg">Stream will start soon...</p>
                     </div>
                   ) : (
                     <video
@@ -503,11 +351,11 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                       autoPlay
                       playsInline
                       muted={isMuted}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   )}
                   {isLive && (
-                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                    <div className="absolute top-4 left-4 flex items-center gap-3">
                       <Badge className="bg-red-600 text-white animate-pulse">
                         🔴 LIVE
                       </Badge>
@@ -517,26 +365,61 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                       </Badge>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <Maximize2 className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-                <div className="p-3 bg-card flex items-center justify-between">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => setIsMuted(!isMuted)}
+                    className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                    onClick={() => setIsExpanded(false)}
                   >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    <Minimize2 className="w-4 h-4" />
                   </Button>
-                  <div className="flex gap-2">
+                </div>
+
+                <div className="p-4 bg-card flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setIsMuted(!isMuted)}
+                        onMouseEnter={() => setShowVolumeSlider(true)}
+                        onMouseLeave={() => setShowVolumeSlider(false)}
+                      >
+                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      </Button>
+                      {showVolumeSlider && !isMuted && (
+                        <div
+                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-popover border rounded-lg shadow-lg"
+                          onMouseEnter={() => setShowVolumeSlider(true)}
+                          onMouseLeave={() => setShowVolumeSlider(false)}
+                        >
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={volume}
+                            onChange={(e) => setVolume(parseInt(e.target.value))}
+                            className="h-24 w-2 appearance-none bg-muted rounded-full [writing-mode:vertical-lr] [direction:rtl] cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to top, hsl(var(--primary)) 0%, hsl(var(--primary)) ${volume}%, hsl(var(--muted)) ${volume}%, hsl(var(--muted)) 100%)`,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" onClick={handleShare}>
-                      <Share2 className="w-4 h-4" />
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share
                     </Button>
+
                     <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
                       <DialogTrigger asChild>
                         <Button size="sm">
-                          <DollarSign className="w-4 h-4" />
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Tip
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -589,16 +472,137 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                         </div>
                       </DialogContent>
                     </Dialog>
-                    <Button size="sm" onClick={() => setIsExpanded(true)}>
-                      Enter
-                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+
+          <div className="w-full lg:w-96 flex flex-col min-h-0">
+            <LiveChat eventId={eventId} />
+          </div>
+        </motion.div>
+      ) : (
+        <Card className="bg-black border-primary/20 overflow-hidden">
+          <CardContent className="p-0">
+            <div className="relative aspect-video bg-black group cursor-pointer" onClick={() => setIsExpanded(true)}>
+              {!isLive ? (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                  <p>Stream will start soon...</p>
+                </div>
+              ) : (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted={isMuted}
+                  className="w-full h-full object-cover"
+                />
+              )}
+              {isLive && (
+                <div className="absolute top-3 left-3 flex items-center gap-2">
+                  <Badge className="bg-red-600 text-white animate-pulse">
+                    🔴 LIVE
+                  </Badge>
+                  <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                    <Eye className="w-3 h-3 mr-1" />
+                    {viewerCount}
+                  </Badge>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <Maximize2 className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+            <div className="p-3 bg-card flex items-center justify-between">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted(!isMuted);
+                }}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShare();
+                  }}
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+                <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DollarSign className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Send a Tip</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        {[5, 10, 25].map((amount) => (
+                          <Button
+                            key={amount}
+                            variant={tipAmount === amount.toString() ? "default" : "outline"}
+                            onClick={() => setTipAmount(amount.toString())}
+                          >
+                            ${amount}
+                          </Button>
+                        ))}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Custom Amount ($)</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          step="0.01"
+                          value={tipAmount}
+                          onChange={(e) => setTipAmount(e.target.value)}
+                          placeholder="Enter amount"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Your Name (Optional)</label>
+                        <Input
+                          value={tipperName}
+                          onChange={(e) => setTipperName(e.target.value)}
+                          placeholder="Anonymous"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Message (Optional)</label>
+                        <Textarea
+                          value={tipMessage}
+                          onChange={(e) => setTipMessage(e.target.value)}
+                          placeholder="Say something nice..."
+                          rows={3}
+                        />
+                      </div>
+                      <Button onClick={handleTip} className="w-full">
+                        Send ${parseFloat(tipAmount || "0").toFixed(2)} Tip
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button size="sm" onClick={() => setIsExpanded(true)}>
+                  Enter
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }
