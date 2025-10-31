@@ -440,7 +440,15 @@ export default function Music() {
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div 
                     className="group cursor-pointer"
-                    onClick={() => album.url && handlePlayTrack(album, albums.filter(a => a.url))}
+                    onClick={() => {
+                      if (!album.url) return;
+                      const isCurrentTrack = currentTrack?.id === album.id;
+                      if (isCurrentTrack && isPlaying) {
+                        togglePlayPause();
+                      } else {
+                        handlePlayTrack(album, albums.filter(a => a.url));
+                      }
+                    }}
                   >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 relative">
                       {album.image ? (
