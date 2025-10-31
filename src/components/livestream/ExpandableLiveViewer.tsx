@@ -32,8 +32,7 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   const [tipperName, setTipperName] = useState("");
   const [showTipDialog, setShowTipDialog] = useState(false);
 
-  const collapsedVideoRef = useRef<HTMLVideoElement>(null);
-  const expandedVideoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const sessionIdRef = useRef(crypto.randomUUID());
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
@@ -58,12 +57,10 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   }, [isLive]);
 
   useEffect(() => {
-    [collapsedVideoRef, expandedVideoRef].forEach(ref => {
-      if (ref.current) {
-        ref.current.volume = isMuted ? 0 : volume / 100;
-        ref.current.muted = isMuted;
-      }
-    });
+    if (videoRef.current) {
+      videoRef.current.volume = isMuted ? 0 : volume / 100;
+      videoRef.current.muted = isMuted;
+    }
   }, [volume, isMuted]);
 
   useEffect(() => {
@@ -137,23 +134,19 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
       if (offerSignal) {
         console.log('[ExpandableLiveViewer] Creating peer connection...');
         const pc = createPeerConnection((stream) => {
-          console.log('[ExpandableLiveViewer] Received remote stream, tracks:', stream.getTracks().length);
-          stream.getTracks().forEach(track => {
-            console.log('[ExpandableLiveViewer] Track:', track.kind, 'enabled:', track.enabled, 'readyState:', track.readyState);
-          });
-          
-          // Attach stream to BOTH video elements
-          if (collapsedVideoRef.current) {
-            console.log('[ExpandableLiveViewer] Setting collapsed video srcObject');
-            collapsedVideoRef.current.srcObject = stream;
-            collapsedVideoRef.current.play().catch(e => console.error('Collapsed video play error:', e));
-          }
-          
-          if (expandedVideoRef.current) {
-            console.log('[ExpandableLiveViewer] Setting expanded video srcObject');
-            expandedVideoRef.current.srcObject = stream;
-            expandedVideoRef.current.play().catch(e => console.error('Expanded video play error:', e));
-          }
+        console.log('[ExpandableLiveViewer] Received remote stream, tracks:', stream.getTracks().length);
+        stream.getTracks().forEach(track => {
+          console.log('[ExpandableLiveViewer] Track:', track.kind, 'enabled:', track.enabled, 'readyState:', track.readyState);
+        });
+        
+        if (videoRef.current) {
+          console.log('[ExpandableLiveViewer] Setting video srcObject');
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = isMuted;
+          videoRef.current.playsInline = true;
+          videoRef.current.autoplay = true;
+          videoRef.current.play().catch(e => console.error('Video play error:', e));
+        }
         });
 
         peerConnectionRef.current = pc;
@@ -230,13 +223,12 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
             }
 
             const pc = createPeerConnection((stream) => {
-              if (collapsedVideoRef.current) {
-                collapsedVideoRef.current.srcObject = stream;
-                collapsedVideoRef.current.play().catch(e => console.error('Collapsed video play error:', e));
-              }
-              if (expandedVideoRef.current) {
-                expandedVideoRef.current.srcObject = stream;
-                expandedVideoRef.current.play().catch(e => console.error('Expanded video play error:', e));
+              if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.muted = isMuted;
+                videoRef.current.playsInline = true;
+                videoRef.current.autoplay = true;
+                videoRef.current.play().catch(e => console.error('Video play error:', e));
               }
             });
 
@@ -362,7 +354,7 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                 </div>
               ) : (
                 <video
-                  ref={collapsedVideoRef}
+                  ref={videoRef}
                   autoPlay
                   playsInline
                   muted={isMuted}
