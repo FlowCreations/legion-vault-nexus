@@ -76,13 +76,18 @@ export default function LiveStudio() {
         table: 'livestream_events',
         filter: 'status=eq.live'
       }, (payload) => {
+        console.log('[LiveStudio] Realtime event received:', payload);
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          console.log('[LiveStudio] Setting live event ID:', payload.new.id);
           setLiveEventId(payload.new.id);
         } else if (payload.eventType === 'DELETE') {
+          console.log('[LiveStudio] Event deleted, clearing live event ID');
           setLiveEventId(null);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[LiveStudio] Realtime subscription status:', status);
+      });
     
     return () => {
       clearInterval(interval);
@@ -91,14 +96,20 @@ export default function LiveStudio() {
   }, []);
 
   const checkLiveStream = async () => {
-    const { data } = await supabase
+    console.log('[LiveStudio] Checking for live streams...');
+    const { data, error } = await supabase
       .from('livestream_events')
-      .select('id, status')
+      .select('id, status, title')
       .eq('status', 'live')
       .single();
     
+    console.log('[LiveStudio] Live stream check result:', { data, error });
+    
     if (data) {
+      console.log('[LiveStudio] Found live event:', data);
       setLiveEventId(data.id);
+    } else {
+      console.log('[LiveStudio] No live events found');
     }
   };
 

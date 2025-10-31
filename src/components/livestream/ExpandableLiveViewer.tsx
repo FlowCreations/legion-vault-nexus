@@ -85,14 +85,20 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   };
 
   const checkStreamStatus = async () => {
-    const { data } = await supabase
+    console.log('[ExpandableLiveViewer] Checking stream status for event:', eventId);
+    const { data, error } = await supabase
       .from("livestream_events")
       .select("status")
       .eq("id", eventId)
       .single();
 
+    console.log('[ExpandableLiveViewer] Stream status result:', { data, error });
+
     if (data?.status === "live") {
+      console.log('[ExpandableLiveViewer] Stream is LIVE, setting isLive to true');
       setIsLive(true);
+    } else {
+      console.log('[ExpandableLiveViewer] Stream is NOT live, status:', data?.status);
     }
   };
 
@@ -107,23 +113,31 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   };
 
   const setupWebRTCViewer = async () => {
+    console.log('[ExpandableLiveViewer] Setting up WebRTC viewer for event:', eventId);
     const viewerId = crypto.randomUUID();
 
-    const { data: existingSignals } = await supabase
+    const { data: existingSignals, error: signalsError } = await supabase
       .from("livestream_signals")
       .select("*")
       .eq("event_id", eventId)
       .eq("peer_type", "broadcaster")
       .order("created_at", { ascending: false });
 
+    console.log('[ExpandableLiveViewer] Existing signals:', { existingSignals, signalsError });
+
     if (existingSignals && existingSignals.length > 0) {
       const offerSignal = existingSignals.find((s) => s.signal_type === "offer");
       const iceSignals = existingSignals.filter((s) => s.signal_type === "ice");
 
+      console.log('[ExpandableLiveViewer] Found offer signal:', !!offerSignal, 'ICE signals:', iceSignals.length);
+
       if (offerSignal) {
+        console.log('[ExpandableLiveViewer] Creating peer connection...');
         const pc = createPeerConnection((stream) => {
+          console.log('[ExpandableLiveViewer] Received remote stream, tracks:', stream.getTracks().length);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            console.log('[ExpandableLiveViewer] Video element srcObject set');
           }
         });
 
@@ -131,6 +145,7 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
 
         pc.onicecandidate = async (event) => {
           if (event.candidate) {
+            console.log('[ExpandableLiveViewer] Sending ICE candidate');
             await supabase.from("livestream_signals").insert({
               event_id: eventId,
               peer_id: viewerId,
@@ -141,17 +156,21 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
           }
         };
 
+        console.log('[ExpandableLiveViewer] Setting remote description...');
         await pc.setRemoteDescription(new RTCSessionDescription(offerSignal.signal_data as any));
 
+        console.log('[ExpandableLiveViewer] Adding ICE candidates...');
         for (const iceSignal of iceSignals) {
           if (iceSignal.signal_data) {
             await pc.addIceCandidate(new RTCIceCandidate(iceSignal.signal_data as any));
           }
         }
 
+        console.log('[ExpandableLiveViewer] Creating answer...');
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
+        console.log('[ExpandableLiveViewer] Sending answer signal...');
         await supabase.from("livestream_signals").insert({
           event_id: eventId,
           peer_id: viewerId,
@@ -159,7 +178,13 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
           signal_type: "answer",
           signal_data: answer as any,
         });
+
+        console.log('[ExpandableLiveViewer] WebRTC setup complete!');
+      } else {
+        console.log('[ExpandableLiveViewer] No offer signal found from broadcaster');
       }
+    } else {
+      console.log('[ExpandableLiveViewer] No signals found from broadcaster yet');
     }
 
     const channel = supabase
