@@ -32,25 +32,47 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
 
   const loadDevices = async () => {
     try {
+      // Step 1: Request permission first to get device labels
+      const tempStream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
+      // Step 2: Now enumerate devices (labels will be populated)
       const devices = await navigator.mediaDevices.enumerateDevices();
       setDevices(devices);
       
+      // Step 3: Set default selections
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
       const audioDevices = devices.filter(d => d.kind === 'audioinput');
       
       if (videoDevices.length > 0) setSelectedVideo(videoDevices[0].deviceId);
       if (audioDevices.length > 0) setSelectedAudio(audioDevices[0].deviceId);
+      
+      // Step 4: Show preview in video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = tempStream;
+      }
+      streamRef.current = tempStream;
+      
+      toast.success('Camera and microphone access granted');
     } catch (error) {
       console.error('Error loading devices:', error);
-      toast.error('Failed to load camera/microphone devices');
+      toast.error('Please allow camera and microphone access to continue');
     }
   };
 
   const startStream = async () => {
     try {
+      // Stop existing preview stream if it exists
+      if (streamRef.current && !isStreaming) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      // Create new stream with selected devices
       const constraints: MediaStreamConstraints = {
-        video: selectedVideo ? { deviceId: selectedVideo, width: 1920, height: 1080 } : true,
-        audio: selectedAudio ? { deviceId: selectedAudio } : true,
+        video: selectedVideo ? { deviceId: { exact: selectedVideo }, width: 1920, height: 1080 } : true,
+        audio: selectedAudio ? { deviceId: { exact: selectedAudio } } : true,
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -134,9 +156,9 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
             playsInline
             className="w-full h-full object-cover"
           />
-          {!isStreaming && (
+          {!isStreaming && streamRef.current && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <p className="text-white text-lg">Preview - Stream Not Started</p>
+              <p className="text-white text-lg">Preview - Click "Start Stream" to go live</p>
             </div>
           )}
         </div>
