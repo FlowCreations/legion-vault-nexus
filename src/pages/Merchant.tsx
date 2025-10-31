@@ -18,6 +18,7 @@ import { EngagementTimeline } from "@/components/merchant/analytics/EngagementTi
 import { PlatformCards } from "@/components/merchant/analytics/PlatformCards";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
+import { LiveStreamManager } from "@/components/merchant/LiveStreamManager";
 import { PersonalityOverview } from "@/components/merchant/intelligence/PersonalityOverview";
 import { MemberPersonalityTable } from "@/components/merchant/intelligence/MemberPersonalityTable";
 import { NBAQueue } from "@/components/merchant/intelligence/NBAQueue";
@@ -164,6 +165,12 @@ const Merchant = () => {
             >
               Partnerships
             </TabsTrigger>
+            <TabsTrigger 
+              value="livestream"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Live Studio
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-6">
@@ -298,9 +305,13 @@ const Merchant = () => {
           <FunnelOverview />
         </TabsContent>
 
-        <TabsContent value="partnerships">
-          <Partnerships />
-        </TabsContent>
+          <TabsContent value="partnerships">
+            <Partnerships />
+          </TabsContent>
+
+          <TabsContent value="livestream">
+            <LiveStreamManager />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
