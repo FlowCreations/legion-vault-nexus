@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { Upload, X, Music } from "lucide-react";
+import { Upload, X, Music, Trash2, Play } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,19 @@ interface MusicUploadProps {
   onUploadComplete?: () => void;
 }
 
+interface MusicTrack {
+  id: string;
+  title: string;
+  artist: string;
+  album: string | null;
+  track_number: number | null;
+  duration: string;
+  year: string | null;
+  category: string;
+  public_url: string;
+  created_at: string;
+}
+
 export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -28,6 +42,29 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
   const [duration, setDuration] = useState("");
   const [year, setYear] = useState("");
   const [category, setCategory] = useState("single");
+  const [tracks, setTracks] = useState<MusicTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTracks();
+  }, []);
+
+  const fetchTracks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("music_tracks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTracks(data || []);
+    } catch (error: any) {
+      console.error("Error fetching tracks:", error);
+      toast.error("Failed to load tracks");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -123,6 +160,9 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
       setYear("");
       setCategory("single");
       
+      // Refresh track list
+      fetchTracks();
+      
       if (onUploadComplete) {
         onUploadComplete();
       }
@@ -134,14 +174,43 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
     }
   };
 
+  const handleDelete = async (trackId: string, storagePath: string) => {
+    if (!confirm("Are you sure you want to delete this track?")) return;
+
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from("music-tracks")
+        .remove([storagePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from("music_tracks")
+        .delete()
+        .eq("id", trackId);
+
+      if (dbError) throw dbError;
+
+      toast.success("Track deleted successfully");
+      fetchTracks();
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete track");
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Upload Music Track</h2>
-        <p className="text-muted-foreground">
-          Upload tracks to your music library. Supports MP3, WAV, FLAC, M4A, and OGG (max 50MB).
-        </p>
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Upload Form */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Upload Music Track</h2>
+          <p className="text-muted-foreground">
+            Upload tracks to your music library. Supports MP3, WAV, FLAC, M4A, and OGG (max 50MB).
+          </p>
+        </div>
 
       <Card className="p-6 space-y-6">
         <div className="space-y-4">
@@ -276,6 +345,79 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
           {uploading ? "Uploading..." : "Upload Track"}
         </Button>
       </Card>
+      </div>
+
+      {/* Uploaded Tracks List */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Uploaded Tracks</h2>
+          <p className="text-muted-foreground">
+            {tracks.length} {tracks.length === 1 ? "track" : "tracks"} in your library
+          </p>
+        </div>
+
+        <Card className="p-4">
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading tracks...
+            </div>
+          ) : tracks.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Music className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No tracks uploaded yet</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[600px] pr-4">
+              <div className="space-y-3">
+                {tracks.map((track) => (
+                  <Card key={track.id} className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Music className="w-4 h-4 text-primary flex-shrink-0" />
+                          <h3 className="font-semibold truncate">{track.title}</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {track.artist}
+                        </p>
+                        {track.album && (
+                          <p className="text-xs text-muted-foreground">
+                            {track.album}
+                            {track.track_number && ` • Track ${track.track_number}`}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span className="capitalize">{track.category}</span>
+                          {track.duration && <span>• {track.duration}</span>}
+                          {track.year && <span>• {track.year}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => window.open(track.public_url, "_blank")}
+                          title="Play track"
+                        >
+                          <Play className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(track.id, track.public_url.split('/').slice(-2).join('/'))}
+                          title="Delete track"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
