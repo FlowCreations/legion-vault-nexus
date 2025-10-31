@@ -35,6 +35,7 @@ interface MusicTrack {
 export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [coverArtFile, setCoverArtFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("Sons of Legion");
   const [album, setAlbum] = useState("");
@@ -130,6 +131,27 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
         .from("music-tracks")
         .getPublicUrl(filePath);
 
+      let coverArtUrl = null;
+
+      // Upload cover art if provided
+      if (coverArtFile) {
+        const coverExt = coverArtFile.name.split(".").pop();
+        const coverFileName = `cover-${Date.now()}.${coverExt}`;
+        const coverPath = `music-covers/${coverFileName}`;
+
+        const { error: coverUploadError } = await supabase.storage
+          .from("thumbnails")
+          .upload(coverPath, coverArtFile, { upsert: true });
+
+        if (coverUploadError) throw coverUploadError;
+
+        const { data: { publicUrl: coverPublicUrl } } = supabase.storage
+          .from("thumbnails")
+          .getPublicUrl(coverPath);
+
+        coverArtUrl = coverPublicUrl;
+      }
+
       // Insert track metadata into database
       const { error: dbError } = await supabase
         .from("music_tracks")
@@ -143,6 +165,7 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
           category,
           storage_path: filePath,
           public_url: publicUrl,
+          image_url: coverArtUrl,
           uploaded_by: user.id,
         });
 
@@ -152,6 +175,7 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
       
       // Reset form
       setSelectedFile(null);
+      setCoverArtFile(null);
       setTitle("");
       setArtist("Sons of Legion");
       setAlbum("");
@@ -246,6 +270,51 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     MP3, WAV, FLAC, M4A, or OGG (max 50MB)
+                  </p>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Cover Art Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="cover-art">Cover Art (Optional)</Label>
+            {coverArtFile ? (
+              <div className="space-y-2">
+                <img
+                  src={URL.createObjectURL(coverArtFile)}
+                  alt="Cover art preview"
+                  className="w-32 h-32 rounded object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCoverArtFile(null)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Remove Cover Art
+                </Button>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+                <input
+                  id="cover-art"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setCoverArtFile(file);
+                  }}
+                  className="hidden"
+                />
+                <label htmlFor="cover-art" className="cursor-pointer">
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Upload album/single cover art
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    JPG, PNG, or WEBP
                   </p>
                 </label>
               </div>
