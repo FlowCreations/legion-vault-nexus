@@ -28,7 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Calendar, MapPin, Download } from "lucide-react";
+import { Plus, Trash2, Calendar, MapPin, Download, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
 interface TourShow {
@@ -48,6 +48,7 @@ export function TourManager() {
   const [shows, setShows] = useState<TourShow[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingShow, setEditingShow] = useState<TourShow | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     city: "",
@@ -110,27 +111,53 @@ export function TourManager() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("tour_shows").insert([
-        {
-          date: formData.date,
-          city: formData.city,
-          state: formData.state || null,
-          country: formData.country,
-          venue: formData.venue,
-          ticket_link: formData.ticket_link || null,
-          status: formData.status,
-          special_guests: formData.special_guests || null,
-        },
-      ]);
+      if (editingShow) {
+        // Update existing show
+        const { error } = await supabase
+          .from("tour_shows")
+          .update({
+            date: formData.date,
+            city: formData.city,
+            state: formData.state || null,
+            country: formData.country,
+            venue: formData.venue,
+            ticket_link: formData.ticket_link || null,
+            status: formData.status,
+            special_guests: formData.special_guests || null,
+          })
+          .eq("id", editingShow.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Tour show added successfully",
-      });
+        toast({
+          title: "Success",
+          description: "Tour show updated successfully",
+        });
+      } else {
+        // Insert new show
+        const { error } = await supabase.from("tour_shows").insert([
+          {
+            date: formData.date,
+            city: formData.city,
+            state: formData.state || null,
+            country: formData.country,
+            venue: formData.venue,
+            ticket_link: formData.ticket_link || null,
+            status: formData.status,
+            special_guests: formData.special_guests || null,
+          },
+        ]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Tour show added successfully",
+        });
+      }
 
       setIsDialogOpen(false);
+      setEditingShow(null);
       setFormData({
         date: "",
         city: "",
@@ -151,6 +178,21 @@ export function TourManager() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (show: TourShow) => {
+    setEditingShow(show);
+    setFormData({
+      date: show.date,
+      city: show.city,
+      state: show.state || "",
+      country: show.country,
+      venue: show.venue,
+      ticket_link: show.ticket_link || "",
+      status: show.status,
+      special_guests: show.special_guests || "",
+    });
+    setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -199,16 +241,28 @@ export function TourManager() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => {
+                  setEditingShow(null);
+                  setFormData({
+                    date: "",
+                    city: "",
+                    state: "",
+                    country: "USA",
+                    venue: "",
+                    ticket_link: "",
+                    status: "on_sale",
+                    special_guests: "",
+                  });
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Show
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Add Tour Show</DialogTitle>
+                  <DialogTitle>{editingShow ? "Edit Tour Show" : "Add Tour Show"}</DialogTitle>
                   <DialogDescription>
-                    Enter the details for the new tour show
+                    {editingShow ? "Update the details for this tour show" : "Enter the details for the new tour show"}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -322,12 +376,15 @@ export function TourManager() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
+                      onClick={() => {
+                        setIsDialogOpen(false);
+                        setEditingShow(null);
+                      }}
                     >
                       Cancel
                     </Button>
                     <Button type="submit" disabled={loading}>
-                      {loading ? "Adding..." : "Add Show"}
+                      {loading ? (editingShow ? "Updating..." : "Adding...") : (editingShow ? "Update Show" : "Add Show")}
                     </Button>
                   </div>
                 </form>
@@ -355,6 +412,7 @@ export function TourManager() {
                 <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ticket Link</TableHead>
+                <TableHead>Edit</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -402,6 +460,15 @@ export function TourManager() {
                     ) : (
                       <span className="text-muted-foreground text-sm">-</span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(show)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
