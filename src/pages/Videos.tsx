@@ -288,8 +288,9 @@ export default function Videos() {
           onVideoClick={handleVideoClick}
         />
 
-        {/* Performances Row - REBELS */}
-        <SubscriptionGate feature="performances">
+        {/* Premium Content - Single Gate for REBELS tier */}
+        <SubscriptionGate requiredTier="Rebels" showUpgradePrompt={true}>
+          {/* Performances Row - REBELS */}
           <ContentRow
             title="Performances"
             items={performances}
@@ -298,10 +299,8 @@ export default function Videos() {
             setHoveredId={setHoveredId}
             onVideoClick={handleVideoClick}
           />
-        </SubscriptionGate>
 
-        {/* BTS Row - REBELS */}
-        <SubscriptionGate feature="bts_videos">
+          {/* BTS Row - REBELS */}
           <ContentRow
             title="Behind The Scenes"
             items={behindTheScenes}
@@ -310,19 +309,19 @@ export default function Videos() {
             setHoveredId={setHoveredId}
             onVideoClick={handleVideoClick}
           />
-        </SubscriptionGate>
 
-        {/* Documentary Row - OUTLAWS */}
-        <SubscriptionGate feature="documentary">
-          <ContentRow
-            title="Documentary"
-            items={documentary}
-            aspectRatio="landscape"
-            hoveredId={hoveredId}
-            setHoveredId={setHoveredId}
-            isPremium
-            onVideoClick={handleVideoClick}
-          />
+          {/* Documentary Row - OUTLAWS (nested gate without prompt) */}
+          <SubscriptionGate feature="documentary" showUpgradePrompt={false}>
+            <ContentRow
+              title="Documentary"
+              items={documentary}
+              aspectRatio="landscape"
+              hoveredId={hoveredId}
+              setHoveredId={setHoveredId}
+              isPremium
+              onVideoClick={handleVideoClick}
+            />
+          </SubscriptionGate>
         </SubscriptionGate>
 
         {/* You Might Also Like */}
