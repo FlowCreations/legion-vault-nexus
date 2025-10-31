@@ -56,3 +56,12 @@ verify_jwt = false
 
 [functions.get-viberate-metrics]
 verify_jwt = false
+
+[functions.compute-personality-features]
+verify_jwt = true
+
+[functions.predict-personality]
+verify_jwt = true
+
+[functions.generate-next-best-action]
+verify_jwt = true
