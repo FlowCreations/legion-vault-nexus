@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MusicPlayer } from "./MusicPlayer";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
+import { toast } from "@/hooks/use-toast";
 
 export function GlobalMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -29,6 +30,13 @@ export function GlobalMusicPlayer() {
           readyState: audio.readyState
         });
         setIsPlaying(false);
+        toast({
+          title: "Unable to play track",
+          description: `"${currentTrack.title}" could not be loaded. Skipping to next track.`,
+          variant: "destructive",
+        });
+        // Auto-skip to next track after a short delay
+        setTimeout(() => playNext(), 1000);
       };
 
       const handleLoadedMetadata = () => {

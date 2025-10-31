@@ -465,7 +465,7 @@ export default function Music() {
 
 // Top tracks based on Spotify popularity
 const topTracks = [
-  { id: "1", title: "In The Air Tonight", artist: "Sons of Legion", album: "Power", time: "3:42", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3", image: powerAlbum },
+  { id: "1", title: "In The Air Tonight", artist: "Sons of Legion", album: "Power", time: "3:42", url: "https://adammac.disco.ac/play/162365028/alias_pv_id/67836118/download2/trackfiles/85e09a10-70e4-44cd-8439-701ed352d97a.mp3?signature=qQuWgSRrvsTyT4ogVUhd-q7IZPY%3AG8sbnoKx", image: powerAlbum },
   { id: "2", title: "Fire Starter", artist: "Sons of Legion", album: "Power", time: "2:28", url: "https://adammac.disco.ac/play/162365031/alias_pv_id/67836118/download2/trackfiles/fad422fe-889a-4feb-a6ab-afa6c795c03d.mp3?signature=2jyR4puR2S8SE0M6T8RC0e2isT0%3AG8sbnoKx", image: powerAlbum },
   { id: "3", title: "Strange", artist: "Sons of Legion", album: "Outlaw", time: "3:51", url: "https://adammac.disco.ac/play/162200214/alias_pv_id/67836120/download2/trackfiles/25a79ca2-ca98-42dd-948a-871c54b319a8.mp3?signature=qHidiNzMZKSS5wI6mizbSYJzb94%3AT4ae0JGC", image: outlawAlbum },
   { id: "4", title: "Power", artist: "Sons of Legion", album: "Power", time: "2:43", url: "https://adammac.disco.ac/play/162365030/alias_pv_id/67836118/download2/trackfiles/592c1148-afa2-419c-af96-b5ffd94896d3.mp3?signature=bweI6I_Fd48JRK0HOVen47fAiRQ%3AG8sbnoKx", image: powerAlbum },
