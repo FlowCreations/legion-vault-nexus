@@ -2466,6 +2466,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tour_shows: {
+        Row: {
+          city: string
+          country: string | null
+          created_at: string | null
+          date: string
+          id: string
+          special_guests: string | null
+          state: string | null
+          status: string | null
+          ticket_link: string | null
+          updated_at: string | null
+          venue: string
+        }
+        Insert: {
+          city: string
+          country?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          special_guests?: string | null
+          state?: string | null
+          status?: string | null
+          ticket_link?: string | null
+          updated_at?: string | null
+          venue: string
+        }
+        Update: {
+          city?: string
+          country?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          special_guests?: string | null
+          state?: string | null
+          status?: string | null
+          ticket_link?: string | null
+          updated_at?: string | null
+          venue?: string
+        }
+        Relationships: []
+      }
       tracking_pixels: {
         Row: {
           created_at: string | null

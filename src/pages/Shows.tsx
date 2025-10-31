@@ -1,14 +1,64 @@
 import { MapPin, Calendar, ShoppingBag, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
 import heroImage from "@/assets/shows-hero.png";
+import { format } from "date-fns";
+
+interface TourShow {
+  id: string;
+  date: string;
+  city: string;
+  state: string | null;
+  country: string;
+  venue: string;
+  ticket_link: string | null;
+  status: string;
+  special_guests: string | null;
+}
 
 export default function Shows() {
   const navigate = useNavigate();
+  const [shows, setShows] = useState<TourShow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadShows();
+  }, []);
+
+  const loadShows = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tour_shows")
+        .select("*")
+        .order("date", { ascending: true });
+
+      if (error) throw error;
+      setShows(data || []);
+    } catch (error) {
+      console.error("Error loading shows:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "on_sale":
+        return "On Sale";
+      case "low_tickets":
+        return "Low Tickets";
+      case "sold_out":
+        return "Sold Out";
+      default:
+        return status;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,73 +129,100 @@ export default function Shows() {
       {/* Events List */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="space-y-3">
-            {upcomingShows.map((show) => (
-              <div
-                key={show.id}
-                className="bg-card hover:bg-card-hover border border-border hover:border-primary/30 rounded-lg p-6 transition-all duration-300 cursor-pointer group"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h3 className="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors">
-                        {show.venue}
-                      </h3>
-                      {show.status && (
-                        <Badge 
-                          className={
-                            show.status === "Sold Out" 
-                              ? "bg-destructive/20 text-destructive border-destructive/30"
-                              : show.status === "Low Tickets"
-                              ? "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
-                              : "bg-primary/20 text-primary border-primary/30"
-                          }
-                        >
-                          {show.status}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>{show.city}, {show.state}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{show.month} {show.day}, 2025</span>
-                      </div>
-                    </div>
-
-                    {show.specialGuests && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        with {show.specialGuests}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Button 
-                      className="bg-white text-black hover:bg-white/90 font-medium"
-                      disabled={show.status === "Sold Out"}
-                    >
-                      {show.status === "Sold Out" ? "Sold Out" : "Get Tickets"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* No Shows Message */}
-          {upcomingShows.length === 0 && (
+          {loading ? (
             <div className="text-center py-20">
-              <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-2">No Upcoming Shows</h3>
-              <p className="text-muted-foreground">
-                Check back soon for new tour dates
-              </p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading shows...</p>
             </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {shows.map((show) => {
+                  const showDate = new Date(show.date);
+                  const month = format(showDate, "MMM");
+                  const day = format(showDate, "d");
+                  
+                  return (
+                    <div
+                      key={show.id}
+                      className="bg-card hover:bg-card-hover border border-border hover:border-primary/30 rounded-lg p-6 transition-all duration-300 cursor-pointer group"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-3 mb-2">
+                            <h3 className="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors">
+                              {show.venue}
+                            </h3>
+                            <Badge 
+                              className={
+                                show.status === "sold_out" 
+                                  ? "bg-destructive/20 text-destructive border-destructive/30"
+                                  : show.status === "low_tickets"
+                                  ? "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+                                  : "bg-primary/20 text-primary border-primary/30"
+                              }
+                            >
+                              {getStatusLabel(show.status)}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>
+                                {show.city}
+                                {show.state && `, ${show.state}`}
+                                {show.country !== "USA" && `, ${show.country}`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              <span>{month} {day}, {format(showDate, "yyyy")}</span>
+                            </div>
+                          </div>
+
+                          {show.special_guests && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              with {show.special_guests}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {show.ticket_link ? (
+                            <Button 
+                              className="bg-white text-black hover:bg-white/90 font-medium"
+                              disabled={show.status === "sold_out"}
+                              onClick={() => window.open(show.ticket_link!, "_blank")}
+                            >
+                              {show.status === "sold_out" ? "Sold Out" : "Get Tickets"}
+                            </Button>
+                          ) : (
+                            <Button 
+                              className="bg-white text-black hover:bg-white/90 font-medium"
+                              disabled
+                            >
+                              Coming Soon
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* No Shows Message */}
+              {shows.length === 0 && (
+                <div className="text-center py-20">
+                  <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold mb-2">No Upcoming Shows</h3>
+                  <p className="text-muted-foreground">
+                    Check back soon for new tour dates
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
@@ -153,88 +230,3 @@ export default function Shows() {
   );
 }
 
-const upcomingShows = [
-  {
-    id: "1",
-    month: "Mar",
-    day: "15",
-    venue: "Madison Square Garden",
-    city: "New York",
-    state: "NY",
-    time: "8:00 PM",
-    status: "On Sale",
-    specialGuests: "The Midnight Collective",
-  },
-  {
-    id: "2",
-    month: "Mar",
-    day: "22",
-    venue: "The Forum",
-    city: "Los Angeles",
-    state: "CA",
-    time: "7:30 PM",
-    status: "Low Tickets",
-    specialGuests: "Echo Valley",
-  },
-  {
-    id: "3",
-    month: "Apr",
-    day: "05",
-    venue: "Red Rocks Amphitheatre",
-    city: "Morrison",
-    state: "CO",
-    time: "8:00 PM",
-    status: "Sold Out",
-  },
-  {
-    id: "4",
-    month: "Apr",
-    day: "12",
-    venue: "Bridgestone Arena",
-    city: "Nashville",
-    state: "TN",
-    time: "7:00 PM",
-    status: "On Sale",
-  },
-  {
-    id: "5",
-    month: "Apr",
-    day: "20",
-    venue: "United Center",
-    city: "Chicago",
-    state: "IL",
-    time: "8:00 PM",
-    status: "On Sale",
-    specialGuests: "The Resonance",
-  },
-  {
-    id: "6",
-    month: "May",
-    day: "03",
-    venue: "American Airlines Center",
-    city: "Dallas",
-    state: "TX",
-    time: "7:30 PM",
-    status: "On Sale",
-  },
-  {
-    id: "7",
-    month: "May",
-    day: "18",
-    venue: "Climate Pledge Arena",
-    city: "Seattle",
-    state: "WA",
-    time: "8:00 PM",
-    status: "Low Tickets",
-  },
-  {
-    id: "8",
-    month: "Jun",
-    day: "07",
-    venue: "TD Garden",
-    city: "Boston",
-    state: "MA",
-    time: "7:00 PM",
-    status: "On Sale",
-  },
-];

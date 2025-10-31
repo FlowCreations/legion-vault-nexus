@@ -31,6 +31,7 @@ import AdminDashboard from "./AdminDashboard";
 import VideoManager from "./VideoManager";
 import { SeedCoordinatesButton } from "@/components/merchant/SeedCoordinatesButton";
 import { ViberateSyncButton } from "@/components/merchant/ViberateSyncButton";
+import { TourManager } from "@/components/merchant/TourManager";
 
 interface AnalyticsData {
   events: number;
@@ -228,6 +229,7 @@ const Merchant = () => {
                 <TabsTrigger value="videos">Videos</TabsTrigger>
                 <TabsTrigger value="music">Music Upload</TabsTrigger>
                 <TabsTrigger value="music-manager">Music Manager</TabsTrigger>
+                <TabsTrigger value="tour">Tour Manager</TabsTrigger>
                 <TabsTrigger value="lab">Content Lab</TabsTrigger>
               </TabsList>
               
@@ -239,6 +241,9 @@ const Merchant = () => {
               </TabsContent>
               <TabsContent value="music-manager">
                 <MusicManager />
+              </TabsContent>
+              <TabsContent value="tour">
+                <TourManager />
               </TabsContent>
               <TabsContent value="lab">
                 <ContentLab />
