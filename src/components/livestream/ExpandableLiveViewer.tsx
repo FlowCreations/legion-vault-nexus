@@ -135,9 +135,22 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
         console.log('[ExpandableLiveViewer] Creating peer connection...');
         const pc = createPeerConnection((stream) => {
           console.log('[ExpandableLiveViewer] Received remote stream, tracks:', stream.getTracks().length);
+          stream.getTracks().forEach(track => {
+            console.log('[ExpandableLiveViewer] Track:', track.kind, 'enabled:', track.enabled, 'readyState:', track.readyState);
+          });
+          
           if (videoRef.current) {
+            console.log('[ExpandableLiveViewer] Setting video srcObject');
             videoRef.current.srcObject = stream;
-            console.log('[ExpandableLiveViewer] Video element srcObject set');
+            
+            // Force play the video
+            videoRef.current.play().then(() => {
+              console.log('[ExpandableLiveViewer] Video playback started successfully');
+            }).catch(error => {
+              console.error('[ExpandableLiveViewer] Video playback failed:', error);
+            });
+          } else {
+            console.error('[ExpandableLiveViewer] Video ref is null!');
           }
         });
 
@@ -154,6 +167,15 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
               signal_data: event.candidate.toJSON() as any,
             });
           }
+        };
+        
+        // Monitor connection state
+        pc.onconnectionstatechange = () => {
+          console.log('[ExpandableLiveViewer] Connection state:', pc.connectionState);
+        };
+        
+        pc.oniceconnectionstatechange = () => {
+          console.log('[ExpandableLiveViewer] ICE connection state:', pc.iceConnectionState);
         };
 
         console.log('[ExpandableLiveViewer] Setting remote description...');
@@ -329,6 +351,7 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                         ref={videoRef}
                         autoPlay
                         playsInline
+                        muted={isMuted}
                         className="w-full h-full object-contain cursor-pointer"
                         onClick={() => setIsExpanded(false)}
                       />
