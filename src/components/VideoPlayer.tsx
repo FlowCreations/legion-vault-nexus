@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2 } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -36,6 +42,7 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Determine if video should be portrait (vertical) based on category
   const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
@@ -187,7 +194,7 @@ export function VideoPlayer({
   const toggleFavorite = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast.error("Please sign in to favorite videos");
+      toast({ description: "Please sign in to favorite videos", variant: "destructive" });
       return;
     }
 
@@ -200,10 +207,10 @@ export function VideoPlayer({
         .eq('video_id', videoId);
 
       if (error) {
-        toast.error("Failed to remove favorite");
+        toast({ description: "Failed to remove favorite", variant: "destructive" });
       } else {
         setIsFavorited(false);
-        toast.success("Removed from favorites");
+        toast({ description: "Removed from favorites" });
       }
     } else {
       // Add to favorites
@@ -212,36 +219,37 @@ export function VideoPlayer({
         .insert({ user_id: user.id, video_id: videoId });
 
       if (error) {
-        toast.error("Failed to add favorite");
+        toast({ description: "Failed to add favorite", variant: "destructive" });
       } else {
         setIsFavorited(true);
-        toast.success("Added to favorites");
+        toast({ description: "Added to favorites" });
       }
     }
   };
 
-  const handleShare = async () => {
+  const copyToClipboard = async () => {
     const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: title,
-          text: description,
-          url: shareUrl,
-        });
-      } catch (err) {
-        // User cancelled or error occurred
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Link copied to clipboard");
-      } catch (err) {
-        toast.error("Failed to copy link");
-      }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ description: "Link copied to clipboard" });
+    } catch (err) {
+      toast({ description: "Failed to copy link", variant: "destructive" });
     }
+  };
+
+  const shareViaEmail = () => {
+    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out this video: ${shareUrl}`)}`;
+  };
+
+  const shareViaTwitter = () => {
+    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`, '_blank');
+  };
+
+  const shareViaFacebook = () => {
+    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
   };
 
   if (!isOpen) return null;
@@ -399,14 +407,35 @@ export function VideoPlayer({
                           </button>
 
                           {/* Share button */}
-                          <button
-                            onClick={handleShare}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label="Share video"
-                            title="Share video"
-                          >
-                            <Share2 className="w-4 h-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                                aria-label="Share video"
+                                title="Share video"
+                              >
+                                <Share2 className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10">
+                              <DropdownMenuItem onClick={copyToClipboard} className="text-white hover:bg-white/10 cursor-pointer">
+                                <Link className="w-4 h-4 mr-2" />
+                                Copy link
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={shareViaEmail} className="text-white hover:bg-white/10 cursor-pointer">
+                                <Mail className="w-4 h-4 mr-2" />
+                                Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={shareViaTwitter} className="text-white hover:bg-white/10 cursor-pointer">
+                                <Twitter className="w-4 h-4 mr-2" />
+                                Twitter
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={shareViaFacebook} className="text-white hover:bg-white/10 cursor-pointer">
+                                <Facebook className="w-4 h-4 mr-2" />
+                                Facebook
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
 
                           {/* Fullscreen toggle */}
                           <button
