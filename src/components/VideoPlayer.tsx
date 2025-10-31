@@ -72,6 +72,19 @@ export function VideoPlayer({
     };
   }, [isPlaying, minimized]);
 
+  // Keyboard controls (spacebar to pause/play)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && isOpen && !minimized) {
+        e.preventDefault();
+        togglePlay();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, minimized]);
+
   // Check if video is favorited
   useEffect(() => {
     const checkFavorite = async () => {
@@ -297,12 +310,15 @@ export function VideoPlayer({
             }
             onMouseMove={kickIdleTimer}
           >
-            <div className={isFullscreen 
-              ? "relative w-full h-full flex items-center justify-center bg-black" 
-              : isPortraitVideo
-                ? "relative w-full max-w-md mx-auto aspect-[9/16] bg-black"
-                : "relative w-full bg-black"
-            }>
+            <div 
+              className={isFullscreen 
+                ? "relative w-full h-full flex items-center justify-center bg-black" 
+                : isPortraitVideo
+                  ? "relative w-full max-w-md mx-auto aspect-[9/16] bg-black"
+                  : "relative w-full bg-black"
+              }
+              onClick={togglePlay}
+            >
               <video
                 ref={videoRef}
                 src={videoUrl}
