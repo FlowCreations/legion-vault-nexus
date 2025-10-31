@@ -1,4 +1,4 @@
-import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download } from "lucide-react";
+import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download, Link, Facebook, Twitter } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
@@ -27,6 +27,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Music() {
   const { trackEvent } = useEventTracking();
@@ -46,37 +52,28 @@ export default function Music() {
     }
   };
 
-  const handleShare = async () => {
-    const shareData = {
-      title: 'Sons of Legion - Music',
-      text: 'Check out Sons of Legion music!',
-      url: window.location.href,
-    };
-
+  const handleCopyLink = async () => {
     try {
-      if (navigator.share && navigator.canShare?.(shareData)) {
-        await navigator.share(shareData);
-        toast({ title: "Shared successfully!" });
-      } else {
-        // Fallback: copy to clipboard
-        await navigator.clipboard.writeText(window.location.href);
-        toast({ title: "Link copied to clipboard!" });
-      }
-    } catch (err: any) {
-      // If user cancels or share fails, try clipboard fallback
-      if (err.name !== 'AbortError') {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          toast({ title: "Link copied to clipboard!" });
-        } catch (clipboardErr) {
-          toast({ 
-            title: "Unable to share", 
-            description: "Please copy the link manually",
-            variant: "destructive" 
-          });
-        }
-      }
+      await navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link copied to clipboard!" });
+    } catch (err) {
+      toast({ 
+        title: "Unable to copy", 
+        description: "Please copy the link manually",
+        variant: "destructive" 
+      });
     }
+  };
+
+  const handleShareFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  };
+
+  const handleShareTwitter = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent('Check out Sons of Legion music!');
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
   };
 
 
@@ -144,18 +141,32 @@ export default function Music() {
               <Shuffle className="w-5 h-5 mr-2" />
               Shuffle
             </Button>
-            <Button 
-              size="lg" 
-              variant="ghost" 
-              className="rounded-full"
-              onClick={handleShare}
-            >
-              <Share2 className="w-5 h-5 mr-2" />
-              Share
-            </Button>
-            <Button size="lg" variant="ghost" className="rounded-full w-12 h-12 p-0">
-              <MoreHorizontal className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="lg" 
+                  variant="ghost" 
+                  className="rounded-full"
+                >
+                  <Share2 className="w-5 h-5 mr-2" />
+                  Share
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card border-border">
+                <DropdownMenuItem onClick={handleCopyLink}>
+                  <Link className="h-4 w-4 mr-2" />
+                  Copy Link
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleShareFacebook}>
+                  <Facebook className="h-4 w-4 mr-2" />
+                  Share on Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleShareTwitter}>
+                  <Twitter className="h-4 w-4 mr-2" />
+                  Share on Twitter
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
