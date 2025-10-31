@@ -53,7 +53,8 @@ export default function Music() {
     const { data, error } = await supabase
       .from('music_tracks')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('display_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: true });
 
     if (data && !error) {
       setUploadedTracks(data);

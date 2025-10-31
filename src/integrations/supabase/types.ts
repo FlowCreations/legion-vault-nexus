@@ -1714,6 +1714,7 @@ export type Database = {
           artist: string | null
           category: string
           created_at: string | null
+          display_order: number | null
           duration: string | null
           id: string
           image_url: string | null
@@ -1730,6 +1731,7 @@ export type Database = {
           artist?: string | null
           category: string
           created_at?: string | null
+          display_order?: number | null
           duration?: string | null
           id?: string
           image_url?: string | null
@@ -1746,6 +1748,7 @@ export type Database = {
           artist?: string | null
           category?: string
           created_at?: string | null
+          display_order?: number | null
           duration?: string | null
           id?: string
           image_url?: string | null
