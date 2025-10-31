@@ -18,6 +18,9 @@ import { EngagementTimeline } from "@/components/merchant/analytics/EngagementTi
 import { PlatformCards } from "@/components/merchant/analytics/PlatformCards";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
+import { PersonalityOverview } from "@/components/merchant/intelligence/PersonalityOverview";
+import { MemberPersonalityTable } from "@/components/merchant/intelligence/MemberPersonalityTable";
+import { NBAQueue } from "@/components/merchant/intelligence/NBAQueue";
 import FunnelOverview from "@/components/merchant/FunnelOverview";
 import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
 import { ContentLab } from "@/components/merchant/ContentLab";
@@ -150,6 +153,12 @@ const Merchant = () => {
               Community
             </TabsTrigger>
             <TabsTrigger 
+              value="intelligence"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Intelligence
+            </TabsTrigger>
+            <TabsTrigger 
               value="partnerships"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
@@ -277,6 +286,12 @@ const Merchant = () => {
 
           <TabsContent value="community">
             <AdminDashboard selectedUserId={selectedUserId} />
+          </TabsContent>
+
+          <TabsContent value="intelligence" className="space-y-6">
+            <PersonalityOverview />
+            <NBAQueue />
+            <MemberPersonalityTable />
           </TabsContent>
 
         <TabsContent value="funnels">
