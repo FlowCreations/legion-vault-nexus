@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GripVertical, Upload, Save, RefreshCw } from "lucide-react";
+import { GripVertical, Save, RefreshCw } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 
 interface MusicTrack {
@@ -23,7 +21,6 @@ export const MusicManager = () => {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTracks();
@@ -64,54 +61,6 @@ export const MusicManager = () => {
     }));
 
     setTracks(updatedItems);
-  };
-
-  const handleCoverArtUpload = async (trackId: string, file: File) => {
-    try {
-      setUploadingId(trackId);
-
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${trackId}-${Date.now()}.${fileExt}`;
-      const filePath = `music-covers/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('thumbnails')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('thumbnails')
-        .getPublicUrl(filePath);
-
-      // Update database
-      const { error: updateError } = await supabase
-        .from('music_tracks')
-        .update({ image_url: publicUrl })
-        .eq('id', trackId);
-
-      if (updateError) throw updateError;
-
-      // Update local state
-      setTracks(tracks.map(track => 
-        track.id === trackId ? { ...track, image_url: publicUrl } : track
-      ));
-
-      toast({
-        title: "Cover art updated",
-        description: "The track cover art has been successfully updated.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error uploading cover art",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingId(null);
-    }
   };
 
   const saveOrder = async () => {
@@ -170,7 +119,7 @@ export const MusicManager = () => {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-2">
-          Drag and drop tracks to reorder them. Upload new cover art for each track.
+          Drag and drop tracks to reorder how they appear on the Music page.
         </p>
       </CardHeader>
       <CardContent>
@@ -210,36 +159,6 @@ export const MusicManager = () => {
                             <p className="text-sm text-muted-foreground truncate">
                               {track.artist} • {track.album}
                             </p>
-                          </div>
-
-                          <div className="flex-shrink-0">
-                            <Label
-                              htmlFor={`cover-${track.id}`}
-                              className="cursor-pointer"
-                            >
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={uploadingId === track.id}
-                                asChild
-                              >
-                                <span>
-                                  <Upload className="mr-2 h-4 w-4" />
-                                  {uploadingId === track.id ? "Uploading..." : "Cover Art"}
-                                </span>
-                              </Button>
-                            </Label>
-                            <Input
-                              id={`cover-${track.id}`}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleCoverArtUpload(track.id, file);
-                              }}
-                            />
                           </div>
                         </div>
                       </div>

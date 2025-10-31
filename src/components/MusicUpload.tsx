@@ -45,6 +45,7 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
   const [category, setCategory] = useState("single");
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingCoverId, setUploadingCoverId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTracks();
@@ -195,6 +196,41 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
       toast.error(error.message || "Failed to upload track");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCoverArtUpload = async (trackId: string, file: File) => {
+    try {
+      setUploadingCoverId(trackId);
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${trackId}-${Date.now()}.${fileExt}`;
+      const filePath = `music-covers/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('thumbnails')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('thumbnails')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('music_tracks')
+        .update({ image_url: publicUrl })
+        .eq('id', trackId);
+
+      if (updateError) throw updateError;
+
+      toast.success("Cover art updated successfully!");
+      fetchTracks();
+    } catch (error: any) {
+      console.error("Cover art upload error:", error);
+      toast.error("Failed to upload cover art");
+    } finally {
+      setUploadingCoverId(null);
     }
   };
 
@@ -462,6 +498,32 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Label
+                          htmlFor={`cover-upload-${track.id}`}
+                          className="cursor-pointer"
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={uploadingCoverId === track.id}
+                            asChild
+                          >
+                            <span title="Upload cover art">
+                              <Upload className="w-4 h-4" />
+                            </span>
+                          </Button>
+                        </Label>
+                        <Input
+                          id={`cover-upload-${track.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleCoverArtUpload(track.id, file);
+                          }}
+                        />
                         <Button
                           variant="ghost"
                           size="icon"
