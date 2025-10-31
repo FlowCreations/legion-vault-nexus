@@ -13,6 +13,7 @@ import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import { Agent } from "./components/Agent";
 import { useAgent } from "./hooks/useAgent";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SubscriptionGate } from "./components/SubscriptionGate";
 import { TIERS } from "./config/subscriptions";
 import Home from "./pages/Home";
 import Videos from "./pages/Videos";
@@ -161,7 +162,9 @@ const App = () => {
         <Footer />
         <FloatingChatbot />
         <GlobalMusicPlayer />
-        <Agent />
+        <SubscriptionGate requiredTier="Rebels" showUpgradePrompt={false}>
+          <Agent />
+        </SubscriptionGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
