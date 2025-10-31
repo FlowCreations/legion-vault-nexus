@@ -30,8 +30,16 @@ export function GlobalMusicPlayer() {
         });
         setIsPlaying(false);
       };
+
+      const handleLoadedMetadata = () => {
+        console.log('Metadata loaded:', {
+          duration: audio.duration,
+          src: audio.src
+        });
+      };
       
       audio.onerror = handleError;
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
       audio.load();
       
       const handleCanPlay = () => {
@@ -48,6 +56,10 @@ export function GlobalMusicPlayer() {
       };
       
       audio.addEventListener('canplay', handleCanPlay, { once: true });
+
+      return () => {
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
     }, 100);
   }, [currentTrack?.id]);
 
@@ -92,7 +104,7 @@ export function GlobalMusicPlayer() {
 
   return (
     <>
-      <audio ref={audioRef} preload="metadata" />
+      <audio ref={audioRef} preload="metadata" crossOrigin="anonymous" />
       <MusicPlayer audioRef={audioRef} />
     </>
   );
