@@ -76,7 +76,7 @@ export default function Music() {
     album: track.album,
     time: track.duration,
     url: track.public_url,
-    image: getImageForTrack(track.album)
+    image: track.image_url || getImageForTrack(track.album)
   }));
 
   // Map singles from uploaded tracks
@@ -90,16 +90,16 @@ export default function Music() {
       year: track.year || "2024",
       time: track.duration,
       url: track.public_url,
-      image: getImageForTrack(track.album)
+      image: track.image_url || getImageForTrack(track.album)
     }));
 
   // Build album track lists from uploaded tracks
   const powerTracks = uploadedTracks
-    .filter(t => t.album.toLowerCase().includes('power'))
+    .filter(t => t.album && t.album.toLowerCase().includes('power'))
     .map(t => ({ title: t.title.trim(), time: t.duration, url: t.public_url }));
 
   const outlawTracks = uploadedTracks
-    .filter(t => t.album.toLowerCase().includes('outlaw'))
+    .filter(t => t.album && t.album.toLowerCase().includes('outlaw'))
     .map(t => ({ title: t.title.trim(), time: t.duration, url: t.public_url }));
 
   const moreAlbums = [
@@ -401,7 +401,7 @@ export default function Music() {
         {/* EP & Singles */}
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">EP & Singles</h2>
+            <h2 className="text-2xl font-bold">Singles</h2>
             <Button 
               variant="ghost" 
               className="text-muted-foreground hover:text-foreground"
