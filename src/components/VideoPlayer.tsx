@@ -351,6 +351,7 @@ export function VideoPlayer({
                       ? "absolute inset-x-0 bottom-0 p-4 md:p-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent" 
                       : "absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
                     }
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <div className="space-y-3">
                       {/* Title - hide in fullscreen when UI is hidden */}
@@ -437,6 +438,7 @@ export function VideoPlayer({
                               <DropdownMenuItem 
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  e.stopPropagation();
                                   copyToClipboard();
                                 }}
                                 className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
@@ -447,6 +449,7 @@ export function VideoPlayer({
                               <DropdownMenuItem 
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  e.stopPropagation();
                                   shareViaEmail();
                                 }}
                                 className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
@@ -457,6 +460,7 @@ export function VideoPlayer({
                               <DropdownMenuItem 
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  e.stopPropagation();
                                   shareViaTwitter();
                                 }}
                                 className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
@@ -467,6 +471,7 @@ export function VideoPlayer({
                               <DropdownMenuItem 
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  e.stopPropagation();
                                   shareViaFacebook();
                                 }}
                                 className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
