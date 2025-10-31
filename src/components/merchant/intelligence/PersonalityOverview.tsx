@@ -40,7 +40,7 @@ export const PersonalityOverview = () => {
     try {
       const { data: profiles } = await supabase
         .from('personality_profiles')
-        .select('*') as { data: PersonalityProfile[] | null };
+        .select('*');
 
       if (!profiles) {
         setStats(null);
