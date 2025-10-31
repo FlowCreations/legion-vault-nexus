@@ -324,8 +324,10 @@ export default function Videos() {
           </SubscriptionGate>
         </SubscriptionGate>
 
-        {/* You Might Also Like */}
-        <YouMightAlsoLike contentType="video" limit={5} />
+        {/* You Might Also Like - REBELS */}
+        <SubscriptionGate requiredTier="Rebels" showUpgradePrompt={false}>
+          <YouMightAlsoLike contentType="video" limit={5} />
+        </SubscriptionGate>
       </div>
     </div>
   );
