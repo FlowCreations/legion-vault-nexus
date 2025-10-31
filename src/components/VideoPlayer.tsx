@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -14,6 +16,7 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ 
+  videoId,
   videoUrl, 
   title, 
   description,
@@ -31,9 +34,11 @@ export function VideoPlayer({
   const [minimized, setMinimized] = useState(false);
   const [showUI, setShowUI] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Check if this category should open fullscreen
+  // Determine if video should be portrait (vertical) based on category
+  const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
   const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
   const bottomOffset = `calc(env(safe-area-inset-bottom, 0px) + 16px)`;
 
@@ -59,6 +64,29 @@ export function VideoPlayer({
       window.removeEventListener("touchstart", onMove);
     };
   }, [isPlaying, minimized]);
+
+  // Check if video is favorited
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (!videoId) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('video_favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('video_id', videoId)
+        .maybeSingle();
+
+      setIsFavorited(!!data);
+    };
+
+    if (isOpen) {
+      checkFavorite();
+    }
+  }, [isOpen, videoId]);
 
   // Auto-play when opened
   useEffect(() => {
@@ -156,6 +184,66 @@ export function VideoPlayer({
     onClose();
   };
 
+  const toggleFavorite = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Please sign in to favorite videos");
+      return;
+    }
+
+    if (isFavorited) {
+      // Remove from favorites
+      const { error } = await supabase
+        .from('video_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('video_id', videoId);
+
+      if (error) {
+        toast.error("Failed to remove favorite");
+      } else {
+        setIsFavorited(false);
+        toast.success("Removed from favorites");
+      }
+    } else {
+      // Add to favorites
+      const { error } = await supabase
+        .from('video_favorites')
+        .insert({ user_id: user.id, video_id: videoId });
+
+      if (error) {
+        toast.error("Failed to add favorite");
+      } else {
+        setIsFavorited(true);
+        toast.success("Added to favorites");
+      }
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: description,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or error occurred
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      } catch (err) {
+        toast.error("Failed to copy link");
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -201,7 +289,12 @@ export function VideoPlayer({
             }
             onMouseMove={kickIdleTimer}
           >
-            <div className="relative flex-1 flex items-center justify-center bg-black">
+            <div className={isFullscreen 
+              ? "relative w-full h-full flex items-center justify-center bg-black" 
+              : isPortraitVideo
+                ? "relative w-full max-w-md mx-auto aspect-[9/16] bg-black"
+                : "relative w-full bg-black"
+            }>
               <video
                 ref={videoRef}
                 src={videoUrl}
@@ -209,9 +302,11 @@ export function VideoPlayer({
                 playsInline
                 className={isFullscreen 
                   ? "w-full h-full object-contain" 
-                  : shouldBeFullscreen 
-                    ? "w-full h-[60vh] md:h-[70vh] object-contain bg-black" 
-                    : "w-full h-[42vh] md:h-[50vh] object-cover"
+                  : isPortraitVideo 
+                    ? "w-full h-full object-contain" 
+                    : shouldBeFullscreen
+                      ? "w-full h-[60vh] md:h-[70vh] object-contain bg-black"
+                      : "w-full h-[42vh] md:h-[50vh] object-cover"
                 }
                 onTimeUpdate={onTimeUpdate}
                 onPlay={() => { setIsPlaying(true); kickIdleTimer(); }}
@@ -293,6 +388,26 @@ export function VideoPlayer({
                         </div>
 
                         <div className="flex items-center gap-2">
+                          {/* Favorite button */}
+                          <button
+                            onClick={toggleFavorite}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                            title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Heart className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+                          </button>
+
+                          {/* Share button */}
+                          <button
+                            onClick={handleShare}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label="Share video"
+                            title="Share video"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+
                           {/* Fullscreen toggle */}
                           <button
                             onClick={toggleFullscreen}

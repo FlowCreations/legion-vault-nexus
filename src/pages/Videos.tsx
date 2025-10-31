@@ -42,6 +42,7 @@ export default function Videos() {
   const [behindTheScenes, setBehindTheScenes] = useState<VideoItem[]>([]);
   const [performances, setPerformances] = useState<VideoItem[]>([]);
   const [documentary, setDocumentary] = useState<VideoItem[]>([]);
+  const [favorites, setFavorites] = useState<VideoItem[]>([]);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
@@ -51,9 +52,10 @@ export default function Videos() {
   useEffect(() => {
     checkAuth();
     loadVideos();
+    loadFavorites();
 
     // Set up realtime subscription to reload videos when they're updated
-    const channel = supabase
+    const videosChannel = supabase
       .channel('videos-changes')
       .on(
         'postgres_changes',
@@ -70,8 +72,24 @@ export default function Videos() {
       )
       .subscribe();
 
+    const favoritesChannel = supabase
+      .channel('favorites-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'video_favorites'
+        },
+        () => {
+          loadFavorites();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(videosChannel);
+      supabase.removeChannel(favoritesChannel);
     };
   }, []);
 
@@ -154,6 +172,55 @@ export default function Videos() {
         is_premium: v.is_premium || false,
         storage_path: v.storage_path,
         category: v.category
+      })));
+    }
+  };
+
+  const loadFavorites = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setFavorites([]);
+      return;
+    }
+
+    // First get the favorite video IDs
+    const { data: favData, error: favError } = await supabase
+      .from('video_favorites')
+      .select('video_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (favError) {
+      console.error('Error loading favorites:', favError);
+      return;
+    }
+
+    if (!favData || favData.length === 0) {
+      setFavorites([]);
+      return;
+    }
+
+    // Then fetch the actual video data
+    const videoIds = favData.map(fav => fav.video_id);
+    const { data: videosData, error: videosError } = await supabase
+      .from('videos')
+      .select('id, title, description, category, thumbnail_url, is_premium, storage_path')
+      .in('id', videoIds);
+
+    if (videosError) {
+      console.error('Error loading favorite videos:', videosError);
+      return;
+    }
+
+    if (videosData) {
+      setFavorites(videosData.map(v => ({
+        id: v.id,
+        title: v.title,
+        description: v.description || '',
+        thumbnail_url: v.thumbnail_url || '',
+        is_premium: v.is_premium || false,
+        storage_path: v.storage_path,
+        category: v.category,
       })));
     }
   };
@@ -287,6 +354,18 @@ export default function Videos() {
           setHoveredId={setHoveredId}
           onVideoClick={handleVideoClick}
         />
+
+        {/* Favorites - Only show if user has favorites */}
+        {favorites.length > 0 && (
+          <ContentRow
+            title="Favorites"
+            items={favorites}
+            aspectRatio="landscape"
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+            onVideoClick={handleVideoClick}
+          />
+        )}
 
         {/* Premium Content - Single Gate for REBELS tier */}
         <SubscriptionGate requiredTier="Rebels" showUpgradePrompt={true}>
