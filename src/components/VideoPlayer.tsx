@@ -239,7 +239,10 @@ export function VideoPlayer({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
-        className={shouldBeFullscreen ? "max-w-none w-screen h-screen p-0 bg-black border-0 m-0" : "max-w-6xl p-0 bg-black border-border"}
+        className={shouldBeFullscreen 
+          ? "max-w-none w-screen h-screen p-0 bg-black border-0 !m-0 !inset-0 !translate-x-0 !translate-y-0 !left-0 !top-0" 
+          : "max-w-7xl p-0 bg-black border-border"
+        }
         onPointerMove={handleMouseMove}
       >
         <VisuallyHidden>
