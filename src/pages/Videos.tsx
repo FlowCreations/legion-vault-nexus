@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Play, Lock } from "lucide-react";
+import { Play, Lock, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,8 @@ export default function Videos() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
+  const [isShuffled, setIsShuffled] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -249,6 +252,37 @@ export default function Videos() {
     setSelectedVideoUrl(publicUrl);
   };
 
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const handleShuffleToggle = () => {
+    setIsShuffling(true);
+    
+    setTimeout(() => {
+      if (!isShuffled) {
+        setMusicVideos(prev => shuffleArray(prev));
+        setBehindTheScenes(prev => shuffleArray(prev));
+        setPerformances(prev => shuffleArray(prev));
+        setDocumentary(prev => shuffleArray(prev));
+        setFavorites(prev => shuffleArray(prev));
+      } else {
+        loadVideos();
+        loadFavorites();
+      }
+      setIsShuffled(!isShuffled);
+      
+      setTimeout(() => {
+        setIsShuffling(false);
+      }, 600);
+    }, 300);
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Trailer Section - Apple TV Style */}
@@ -345,6 +379,17 @@ export default function Videos() {
 
       {/* Content Rows */}
       <div className="px-4 sm:px-8 lg:px-12 pt-20 pb-16 space-y-12">
+        {/* Shuffle Toggle */}
+        <div className="flex items-center justify-end gap-3 pb-4">
+          <Shuffle className={`w-4 h-4 transition-all duration-300 ${isShuffled ? 'text-primary' : 'text-muted-foreground'}`} />
+          <span className="text-sm font-medium">Shuffle</span>
+          <Switch 
+            checked={isShuffled} 
+            onCheckedChange={handleShuffleToggle}
+            disabled={isShuffling}
+          />
+        </div>
+
         {/* Music Videos Row - FREE */}
         <ContentRow
           title="Music Videos"
@@ -423,6 +468,13 @@ interface ContentRowProps {
 }
 
 function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium, onVideoClick }: ContentRowProps) {
+  const [isShuffling, setIsShuffling] = useState(false);
+
+  useEffect(() => {
+    setIsShuffling(true);
+    const timer = setTimeout(() => setIsShuffling(false), 600);
+    return () => clearTimeout(timer);
+  }, [items]);
   return (
     <div>
       <h2 className="text-2xl sm:text-3xl font-bold mb-6">{title}</h2>
@@ -447,7 +499,9 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
               }`}
             >
               <div
-                className="group cursor-pointer"
+                className={`group cursor-pointer transition-all duration-500 ${
+                  isShuffling ? 'animate-[scale-in_0.6s_ease-out]' : ''
+                }`}
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => onVideoClick(item)}
