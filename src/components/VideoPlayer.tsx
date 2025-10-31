@@ -250,6 +250,18 @@ export function VideoPlayer({
           <DialogDescription>{description}</DialogDescription>
         </VisuallyHidden>
         <div ref={containerRef} className={shouldBeFullscreen ? "relative bg-black w-full h-full flex flex-col" : "relative bg-black"}>
+          {/* Close Button - Always visible at top */}
+          <div className={`absolute top-4 right-4 z-50 ${shouldBeFullscreen && !showControls ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+            >
+              <X className="h-5 w-5 text-white" />
+            </Button>
+          </div>
+
           {/* Video */}
           <div className={shouldBeFullscreen ? "relative bg-black flex-1 flex items-center justify-center" : "relative bg-black aspect-video"}>
             <video
