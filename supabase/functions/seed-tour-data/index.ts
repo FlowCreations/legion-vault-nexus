@@ -84,7 +84,13 @@ Deno.serve(async (req) => {
       { date: '2026-05-21', city: 'St Louis', state: 'MO', country: 'USA', venue: 'Pageant', status: 'on_sale' },
     ];
 
-    // Insert tour data
+    // Delete all existing tour shows first to ensure clean slate
+    await supabase
+      .from('tour_shows')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+
+    // Insert fresh tour data with correct links
     const { error } = await supabase
       .from('tour_shows')
       .insert(tourData);
