@@ -48,7 +48,7 @@ export const NBAQueue = () => {
         .from('next_best_actions')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(20) as { data: NextBestAction[] | null };
 
       if (data) {
         setNbas(data);

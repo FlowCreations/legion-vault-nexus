@@ -49,7 +49,7 @@ export const MemberPersonalityTable = () => {
           user_profiles!inner(email)
         `)
         .order('confidence_score', { ascending: false })
-        .limit(50);
+        .limit(50) as { data: any[] | null };
 
       if (profiles) {
         const formatted = profiles.map((p: any) => ({
