@@ -417,20 +417,44 @@ export function VideoPlayer({
                                 <Share2 className="w-4 h-4" />
                               </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10">
-                              <DropdownMenuItem onClick={copyToClipboard} className="text-white hover:bg-white/10 cursor-pointer">
+                            <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10 backdrop-blur-sm">
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  copyToClipboard();
+                                }}
+                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
+                              >
                                 <Link className="w-4 h-4 mr-2" />
                                 Copy link
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={shareViaEmail} className="text-white hover:bg-white/10 cursor-pointer">
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  shareViaEmail();
+                                }}
+                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
+                              >
                                 <Mail className="w-4 h-4 mr-2" />
                                 Email
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={shareViaTwitter} className="text-white hover:bg-white/10 cursor-pointer">
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  shareViaTwitter();
+                                }}
+                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
+                              >
                                 <Twitter className="w-4 h-4 mr-2" />
                                 Twitter
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={shareViaFacebook} className="text-white hover:bg-white/10 cursor-pointer">
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  shareViaFacebook();
+                                }}
+                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
+                              >
                                 <Facebook className="w-4 h-4 mr-2" />
                                 Facebook
                               </DropdownMenuItem>
