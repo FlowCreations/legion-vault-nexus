@@ -11,8 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import liveAcousticSession from "@/assets/live-acoustic-session.png";
 import { useCartStore } from "@/stores/cartStore";
 import { ShopifyProduct } from "@/lib/shopify";
-import { LiveViewer } from "@/components/livestream/LiveViewer";
-import { LiveChat } from "@/components/livestream/LiveChat";
+import ExpandableLiveViewer from "@/components/livestream/ExpandableLiveViewer";
 import { StreamCountdown } from "@/components/livestream/StreamCountdown";
 import { StreamIntro } from "@/components/livestream/StreamIntro";
 
@@ -290,16 +289,9 @@ export default function LiveStudio() {
       {showCountdown && <StreamCountdown onComplete={handleCountdownComplete} />}
       {showIntro && <StreamIntro onComplete={handleIntroComplete} />}
 
-      {streamStarted && liveEventId ? (
+      {(streamStarted || liveEventId) && liveEventId ? (
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <LiveViewer eventId={liveEventId} />
-            </div>
-            <div>
-              <LiveChat eventId={liveEventId} />
-            </div>
-          </div>
+          <ExpandableLiveViewer eventId={liveEventId} />
         </div>
       ) : (
       <div className="max-w-7xl mx-auto">

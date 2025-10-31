@@ -1766,6 +1766,50 @@ export type Database = {
           },
         ]
       }
+      livestream_tips: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          event_id: string | null
+          id: string
+          message: string | null
+          payment_intent_id: string | null
+          tipper_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          event_id?: string | null
+          id?: string
+          message?: string | null
+          payment_intent_id?: string | null
+          tipper_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          event_id?: string | null
+          id?: string
+          message?: string | null
+          payment_intent_id?: string | null
+          tipper_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestream_tips_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "livestream_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       livestream_viewers: {
         Row: {
           event_id: string | null
