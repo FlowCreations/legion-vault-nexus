@@ -37,8 +37,8 @@ import {
 export default function Music() {
   const { trackEvent } = useEventTracking();
   const navigate = useNavigate();
-  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause, toggleLike, isLiked } = useMusicPlayer();
-  const { isPurchased, purchaseAlbum } = usePurchases();
+  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause, toggleLike, isLiked, likedTracks } = useMusicPlayer();
+  const { isPurchased, purchaseAlbum, purchasedAlbums } = usePurchases();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const { toast } = useToast();
@@ -173,6 +173,61 @@ export default function Music() {
 
       {/* Main Content */}
       <div className="px-4 sm:px-8 lg:px-12 pb-16">
+        {/* Quick Links */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/music/favorites')}
+            className="rounded-full"
+          >
+            <Heart className="w-4 h-4 mr-2" />
+            Favorites ({likedTracks.size})
+          </Button>
+        </div>
+
+        {/* Purchased Albums */}
+        {purchasedAlbums.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold mb-6">My Albums</h2>
+            <Carousel className="w-full">
+              <CarouselContent>
+                {moreAlbums
+                  .filter(album => purchasedAlbums.includes(album.id))
+                  .map((album) => (
+                    <CarouselItem key={album.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                      <div
+                        className="relative group rounded-lg overflow-hidden shadow-glow cursor-pointer transition-all duration-300 hover:scale-105"
+                        onClick={() => navigate(`/music/album/${album.id}`)}
+                      >
+                        <div className="aspect-square">
+                          <img 
+                            src={album.image} 
+                            alt={album.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+                          <div className="bg-primary/20 backdrop-blur-sm rounded px-2 py-1 text-xs font-medium w-fit mb-2">
+                            PURCHASED
+                          </div>
+                          <h3 className="font-bold text-lg mb-1">{album.title}</h3>
+                          <p className="text-sm text-muted-foreground">{album.year} • {album.tracks} tracks</p>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                            <Play className="w-8 h-8 text-black fill-black ml-1" />
+                          </div>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-2" />
+              <CarouselNext className="right-2" />
+            </Carousel>
+          </div>
+        )}
+
         {/* Top Tracks */}
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6">

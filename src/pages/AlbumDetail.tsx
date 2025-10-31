@@ -1,4 +1,4 @@
-import { Play, Heart, Share2, MoreHorizontal, Pause, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
+import { Play, Heart, Share2, Pause, ArrowLeft, Lock, ShoppingCart, Link, Facebook, Twitter } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
@@ -8,6 +8,13 @@ import { StripeCheckout } from "@/components/StripeCheckout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "@/hooks/use-toast";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -16,10 +23,34 @@ import strippedAlbum from "@/assets/stripped-album.jpg";
 export default function AlbumDetail() {
   const { albumId } = useParams();
   const navigate = useNavigate();
-  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying } = useMusicPlayer();
+  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, toggleLike, isLiked } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
   const { hasAccess } = useSubscription();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link copied to clipboard!" });
+    } catch (err) {
+      toast({ 
+        title: "Unable to copy", 
+        description: "Please copy the link manually",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleShareFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  };
+
+  const handleShareTwitter = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Listen to ${album?.title} by Sons of Legion`);
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+  };
 
   // Album data
   const albumsData = [
@@ -138,24 +169,6 @@ export default function AlbumDetail() {
     }
   };
 
-  const handleShare = async () => {
-    const shareData = {
-      title: `${album?.title} - Sons of Legion`,
-      text: `Listen to ${album?.title} by Sons of Legion`,
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-      }
-    } catch (err) {
-      console.error('Error sharing:', err);
-    }
-  };
 
   if (!album) {
     return (
@@ -248,18 +261,32 @@ export default function AlbumDetail() {
               Play
             </Button>
           )}
-          <Button 
-            size="lg" 
-            variant="ghost" 
-            className="rounded-full"
-            onClick={handleShare}
-          >
-            <Share2 className="w-5 h-5 mr-2" />
-            Share
-          </Button>
-          <Button size="lg" variant="ghost" className="rounded-full w-12 h-12 p-0">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                size="lg" 
+                variant="ghost" 
+                className="rounded-full"
+              >
+                <Share2 className="w-5 h-5 mr-2" />
+                Share
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-card border-border">
+              <DropdownMenuItem onClick={handleCopyLink}>
+                <Link className="h-4 w-4 mr-2" />
+                Copy Link
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleShareFacebook}>
+                <Facebook className="h-4 w-4 mr-2" />
+                Share on Facebook
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleShareTwitter}>
+                <Twitter className="h-4 w-4 mr-2" />
+                Share on Twitter
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -338,7 +365,20 @@ export default function AlbumDetail() {
                 </div>
                 <div className="text-muted-foreground text-sm flex items-center">{track.time}</div>
                 <div className="w-10 flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
+                  <Heart 
+                    className={`w-5 h-5 transition-colors cursor-pointer ${
+                      isLiked(track.id) 
+                        ? 'fill-red-500 text-red-500' 
+                        : 'text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLike(track.id);
+                      toast({
+                        title: isLiked(track.id) ? "Removed from favorites" : "Added to favorites",
+                      });
+                    }}
+                  />
                 </div>
               </div>
             );

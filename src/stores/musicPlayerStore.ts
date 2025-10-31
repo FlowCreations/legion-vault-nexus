@@ -29,69 +29,85 @@ interface MusicPlayerState {
   reset: () => void;
 }
 
-export const useMusicPlayer = create<MusicPlayerState>((set, get) => ({
-  currentTrack: null,
-  isPlaying: false,
-  playlist: [],
-  currentIndex: 0,
-  isMinimized: false,
-  likedTracks: new Set<string>(),
-  
-  setCurrentTrack: (track) => set({ currentTrack: track }),
-  
-  setIsPlaying: (isPlaying) => set({ isPlaying }),
-  
-  setPlaylist: (playlist, startIndex = 0) => 
-    set({ 
-      playlist, 
-      currentIndex: startIndex,
-      currentTrack: playlist[startIndex] || null 
-    }),
-  
-  playNext: () => {
-    const { playlist, currentIndex } = get();
-    if (playlist.length === 0) return;
-    
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    set({ 
-      currentIndex: nextIndex, 
-      currentTrack: playlist[nextIndex],
-      isPlaying: true 
-    });
-  },
-  
-  playPrevious: () => {
-    const { playlist, currentIndex } = get();
-    if (playlist.length === 0) return;
-    
-    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-    set({ 
-      currentIndex: prevIndex, 
-      currentTrack: playlist[prevIndex],
-      isPlaying: true 
-    });
-  },
-  
-  togglePlayPause: () => set((state) => ({ isPlaying: !state.isPlaying })),
-  
-  setMinimized: (isMinimized) => set({ isMinimized }),
-  
-  toggleLike: (trackId: string) => set((state) => {
-    const newLikedTracks = new Set(state.likedTracks);
-    if (newLikedTracks.has(trackId)) {
-      newLikedTracks.delete(trackId);
-    } else {
-      newLikedTracks.add(trackId);
+export const useMusicPlayer = create<MusicPlayerState>((set, get) => {
+  // Load liked tracks from localStorage on initialization
+  const loadLikedTracks = () => {
+    try {
+      const saved = localStorage.getItem('likedTracks');
+      return saved ? new Set<string>(JSON.parse(saved)) : new Set<string>();
+    } catch {
+      return new Set<string>();
     }
-    return { likedTracks: newLikedTracks };
-  }),
-  
-  isLiked: (trackId: string) => get().likedTracks.has(trackId),
-  
-  reset: () => set({ 
-    currentTrack: null, 
-    isPlaying: false, 
-    playlist: [], 
-    currentIndex: 0 
-  }),
-}));
+  };
+
+  return {
+    currentTrack: null,
+    isPlaying: false,
+    playlist: [],
+    currentIndex: 0,
+    isMinimized: false,
+    likedTracks: loadLikedTracks(),
+    
+    setCurrentTrack: (track) => set({ currentTrack: track }),
+    
+    setIsPlaying: (isPlaying) => set({ isPlaying }),
+    
+    setPlaylist: (playlist, startIndex = 0) => 
+      set({ 
+        playlist, 
+        currentIndex: startIndex,
+        currentTrack: playlist[startIndex] || null 
+      }),
+    
+    playNext: () => {
+      const { playlist, currentIndex } = get();
+      if (playlist.length === 0) return;
+      
+      const nextIndex = (currentIndex + 1) % playlist.length;
+      set({ 
+        currentIndex: nextIndex, 
+        currentTrack: playlist[nextIndex],
+        isPlaying: true 
+      });
+    },
+    
+    playPrevious: () => {
+      const { playlist, currentIndex } = get();
+      if (playlist.length === 0) return;
+      
+      const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
+      set({ 
+        currentIndex: prevIndex, 
+        currentTrack: playlist[prevIndex],
+        isPlaying: true 
+      });
+    },
+    
+    togglePlayPause: () => set((state) => ({ isPlaying: !state.isPlaying })),
+    
+    setMinimized: (isMinimized) => set({ isMinimized }),
+    
+    toggleLike: (trackId: string) => {
+      set((state) => {
+        const newLikedTracks = new Set(state.likedTracks);
+        if (newLikedTracks.has(trackId)) {
+          newLikedTracks.delete(trackId);
+        } else {
+          newLikedTracks.add(trackId);
+        }
+        // Save to localStorage
+        localStorage.setItem('likedTracks', JSON.stringify(Array.from(newLikedTracks)));
+        return { likedTracks: newLikedTracks };
+      });
+    },
+    
+    isLiked: (trackId: string) => get().likedTracks.has(trackId),
+    
+    reset: () => set({ 
+      currentTrack: null, 
+      isPlaying: false, 
+      playlist: [], 
+      currentIndex: 0 
+    }),
+  };
+});
