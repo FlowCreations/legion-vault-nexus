@@ -434,8 +434,8 @@ export function VideoPlayer({
                                 <Share2 className="w-4 h-4" />
                               </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10 backdrop-blur-sm">
-                              <DropdownMenuItem 
+                            <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10 backdrop-blur-sm z-[70]">
+                              <DropdownMenuItem
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
