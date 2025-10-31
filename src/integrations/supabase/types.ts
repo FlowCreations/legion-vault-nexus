@@ -1728,6 +1728,44 @@ export type Database = {
         }
         Relationships: []
       }
+      livestream_signals: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          peer_id: string
+          peer_type: string
+          signal_data: Json
+          signal_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          peer_id: string
+          peer_type: string
+          signal_data: Json
+          signal_type: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          peer_id?: string
+          peer_type?: string
+          signal_data?: Json
+          signal_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestream_signals_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "livestream_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       livestream_viewers: {
         Row: {
           event_id: string | null

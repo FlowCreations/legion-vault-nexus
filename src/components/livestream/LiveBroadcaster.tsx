@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Video, VideoOff, Mic, MicOff, Square, Monitor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { createPeerConnection, addStreamToPeer } from "@/utils/webrtcHelper";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface LiveBroadcasterProps {
   eventId: string;
@@ -22,6 +24,9 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const signalChannelRef = useRef<RealtimeChannel | null>(null);
+  const broadcasterPeerIdRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
     loadDevices();
@@ -62,6 +67,86 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
     }
   };
 
+  const setupWebRTCBroadcast = async () => {
+    try {
+      const peerId = broadcasterPeerIdRef.current;
+      
+      // Subscribe to signaling channel for viewer connections
+      const channel = supabase
+        .channel(`livestream-${eventId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'livestream_signals',
+          filter: `event_id=eq.${eventId}`
+        }, async (payload) => {
+          const signal = payload.new as any;
+          
+          // Handle answer from viewer
+          if (signal.signal_type === 'answer' && 
+              signal.peer_type === 'viewer' && 
+              peerConnectionRef.current) {
+            await peerConnectionRef.current.setRemoteDescription(
+              new RTCSessionDescription(signal.signal_data)
+            );
+          }
+          
+          // Handle ICE candidates from viewer
+          if (signal.signal_type === 'ice' && 
+              signal.peer_type === 'viewer' && 
+              peerConnectionRef.current) {
+            await peerConnectionRef.current.addIceCandidate(
+              new RTCIceCandidate(signal.signal_data)
+            );
+          }
+        })
+        .subscribe();
+      
+      signalChannelRef.current = channel;
+      
+      // Create peer connection
+      const pc = createPeerConnection();
+      addStreamToPeer(pc, streamRef.current!);
+      peerConnectionRef.current = pc;
+      
+      // Handle ICE candidates
+      pc.onicecandidate = async (event) => {
+        if (event.candidate) {
+          const { error } = await supabase.from('livestream_signals').insert({
+            event_id: eventId,
+            peer_id: peerId,
+            peer_type: 'broadcaster',
+            signal_type: 'ice',
+            signal_data: event.candidate.toJSON() as any
+          });
+          if (error) console.error('Error sending ICE candidate:', error);
+        }
+      };
+      
+      // Create and send offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      const { error: offerError } = await supabase.from('livestream_signals').insert({
+        event_id: eventId,
+        peer_id: peerId,
+        peer_type: 'broadcaster',
+        signal_type: 'offer',
+        signal_data: offer as any
+      });
+      
+      if (offerError) {
+        console.error('Error sending offer:', offerError);
+        throw offerError;
+      }
+      
+      console.log('WebRTC broadcast setup complete');
+    } catch (error) {
+      console.error('Error setting up WebRTC broadcast:', error);
+      toast.error('Failed to setup live broadcast');
+    }
+  };
+
   const startStream = async () => {
     try {
       // Stop existing preview stream if it exists
@@ -91,8 +176,12 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
       if (error) throw error;
 
       setIsStreaming(true);
+      
+      // Setup WebRTC broadcasting
+      await setupWebRTCBroadcast();
+      
       onStreamStart?.();
-      toast.success('Live stream started!');
+      toast.success('Live stream started and broadcasting!');
     } catch (error) {
       console.error('Error starting stream:', error);
       toast.error('Failed to start stream. Please check camera permissions.');
@@ -100,6 +189,18 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
   };
 
   const stopStream = async () => {
+    // Close WebRTC connection
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    
+    // Unsubscribe from signaling channel
+    if (signalChannelRef.current) {
+      await supabase.removeChannel(signalChannelRef.current);
+      signalChannelRef.current = null;
+    }
+    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
