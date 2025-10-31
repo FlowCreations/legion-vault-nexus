@@ -161,7 +161,7 @@ export default function Videos() {
   const handleVideoClick = async (video: VideoItem) => {
     console.log('Video clicked, authenticated:', isAuthenticated);
     
-    trackEvent('view_video', {
+    trackEvent('video_view', {
       id: video.id,
       title: video.title,
       category: video.category,
