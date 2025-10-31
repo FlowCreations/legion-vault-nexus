@@ -277,7 +277,7 @@ export default function Videos() {
       )}
 
       {/* Content Rows */}
-      <div className="px-4 sm:px-8 lg:px-12 pb-16 space-y-12">
+      <div className="px-4 sm:px-8 lg:px-12 pt-20 pb-16 space-y-12">
         {/* Music Videos Row - FREE */}
         <ContentRow
           title="Music Videos"
