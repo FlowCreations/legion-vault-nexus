@@ -1,14 +1,6 @@
-import { Play, Pause, SkipBack, SkipForward, Volume2, X, Maximize, Minimize } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { useEffect, useState, useRef } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -22,7 +14,6 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ 
-  videoId, 
   videoUrl, 
   title, 
   description,
@@ -32,168 +23,84 @@ export function VideoPlayer({
   category 
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const idleTimeout = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(80);
-  const [isSeeking, setIsSeeking] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
+  const [minimized, setMinimized] = useState(false);
+  const [showUI, setShowUI] = useState(true);
 
   // Check if this category should open fullscreen
   const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
+  const bottomOffset = `calc(env(safe-area-inset-bottom, 0px) + 16px)`;
 
-  // Handle mouse movement to show/hide controls in fullscreen
-  const handleMouseMove = () => {
-    if (shouldBeFullscreen) {
-      setShowControls(true);
-      
-      // Clear existing timeout
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      
-      // Hide controls after 3 seconds of no movement
-      controlsTimeoutRef.current = setTimeout(() => {
-        if (isPlaying) {
-          setShowControls(false);
-        }
-      }, 3000);
+  // Auto-hide UI when playing and user is idle
+  const kickIdleTimer = () => {
+    if (idleTimeout.current) clearTimeout(idleTimeout.current);
+    if (isPlaying && !minimized) {
+      setShowUI(true);
+      idleTimeout.current = setTimeout(() => setShowUI(false), 2500);
+    } else {
+      setShowUI(true);
     }
   };
 
-  // Reset state when video changes
   useEffect(() => {
-    setProgress(0);
-    setDuration(0);
-    setIsPlaying(false);
-  }, [videoUrl]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !isOpen) return;
-
-    const updateProgress = () => {
-      if (!isSeeking && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-        const currentProgress = (video.currentTime / video.duration) * 100;
-        setProgress(currentProgress || 0);
-      }
-    };
-
-    const updateDuration = () => {
-      if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-        console.log('✅ Duration updated:', video.duration);
-        setDuration(video.duration);
-        return true;
-      }
-      return false;
-    };
-
-    const handleLoadedMetadata = () => {
-      console.log('📹 Metadata loaded, readyState:', video.readyState, 'duration:', video.duration);
-      updateDuration();
-    };
-
-    const handleDurationChange = () => {
-      console.log('⏱️ Duration changed:', video.duration);
-      updateDuration();
-    };
-
-    const handleCanPlay = () => {
-      console.log('▶️ Video can play, duration:', video.duration);
-      updateDuration();
-    };
-
-    video.addEventListener("timeupdate", updateProgress);
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
-    video.addEventListener("durationchange", handleDurationChange);
-    video.addEventListener("canplay", handleCanPlay);
-
-    // Try to get duration immediately if available
-    if (video.readyState >= 1) {
-      console.log('🚀 Video ready immediately, readyState:', video.readyState, 'duration:', video.duration);
-      if (!updateDuration()) {
-        // Fallback: poll for duration if not available yet
-        let attempts = 0;
-        const pollDuration = setInterval(() => {
-          attempts++;
-          console.log(`🔄 Polling for duration (attempt ${attempts})...`);
-          if (updateDuration() || attempts >= 10) {
-            clearInterval(pollDuration);
-            if (attempts >= 10 && !video.duration) {
-              console.error('❌ Failed to get video duration after 10 attempts');
-            }
-          }
-        }, 500);
-
-        return () => {
-          clearInterval(pollDuration);
-          video.removeEventListener("timeupdate", updateProgress);
-          video.removeEventListener("loadedmetadata", handleLoadedMetadata);
-          video.removeEventListener("durationchange", handleDurationChange);
-          video.removeEventListener("canplay", handleCanPlay);
-        };
-      }
-    }
-
+    const onMove = () => kickIdleTimer();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("keydown", onMove);
+    window.addEventListener("touchstart", onMove, { passive: true });
     return () => {
-      video.removeEventListener("timeupdate", updateProgress);
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      video.removeEventListener("durationchange", handleDurationChange);
-      video.removeEventListener("canplay", handleCanPlay);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("keydown", onMove);
+      window.removeEventListener("touchstart", onMove);
     };
-  }, [isSeeking, videoUrl, isOpen]);
+  }, [isPlaying, minimized]);
 
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.volume = volume / 100;
-    }
-  }, [volume]);
-
+  // Auto-play when opened
   useEffect(() => {
     if (isOpen && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
-      setShowControls(true);
+      setMinimized(false);
+      kickIdleTimer();
     }
-    
-    return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
   }, [isOpen]);
 
-  const togglePlayPause = () => {
-    const video = videoRef.current;
-    if (!video) return;
+  const onTimeUpdate = () => {
+    if (!videoRef.current) return;
+    const v = videoRef.current;
+    setProgress(v.currentTime);
+    setDuration(v.duration || 0);
+  };
 
-    if (isPlaying) {
-      video.pause();
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play();
+      setIsPlaying(true);
     } else {
-      video.play();
+      v.pause();
+      setIsPlaying(false);
+      setShowUI(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
-  const handleSeek = (value: number[]) => {
-    setProgress(value[0]);
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
   };
 
-  const handleSeekStart = () => {
-    setIsSeeking(true);
-  };
-
-  const handleSeekEnd = (value: number[]) => {
-    if (videoRef.current && duration && !isNaN(duration) && duration > 0) {
-      const newTime = (value[0] / 100) * duration;
-      if (isFinite(newTime) && newTime >= 0) {
-        videoRef.current.currentTime = newTime;
-      }
-    }
-    setIsSeeking(false);
+  const onSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = videoRef.current;
+    if (!v) return;
+    const value = Number(e.target.value);
+    v.currentTime = value;
+    setProgress(value);
   };
 
   const skip = (seconds: number) => {
@@ -202,28 +109,11 @@ export function VideoPlayer({
     }
   };
 
-  const toggleFullscreen = () => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    if (!isFullscreen) {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
-        setIsFullscreen(true);
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    if (!seconds || isNaN(seconds) || !isFinite(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  const fmt = (t: number) => {
+    if (!isFinite(t)) return "0:00";
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
   };
 
   const handleClose = () => {
@@ -233,156 +123,160 @@ export function VideoPlayer({
     }
     setIsPlaying(false);
     setProgress(0);
+    setMinimized(false);
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent 
-        className={shouldBeFullscreen 
-          ? "max-w-none w-screen h-screen p-0 bg-black border-0 !m-0 !inset-0 !translate-x-0 !translate-y-0 !left-0 !top-0" 
-          : "max-w-7xl p-0 bg-black border-border"
-        }
-        onPointerMove={handleMouseMove}
-      >
-        <VisuallyHidden>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </VisuallyHidden>
-        <div ref={containerRef} className={shouldBeFullscreen ? "relative bg-black w-full h-full flex flex-col" : "relative bg-black"}>
-          {/* Close Button - Always visible at top */}
-          <div className={`absolute top-4 right-4 z-50 ${shouldBeFullscreen && !showControls ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm"
-            >
-              <X className="h-5 w-5 text-white" />
-            </Button>
-          </div>
-
-          {/* Video */}
-          <div className={shouldBeFullscreen ? "relative bg-black flex-1 flex items-center justify-center" : "relative bg-black aspect-video"}>
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              poster={thumbnailUrl}
-              className={shouldBeFullscreen ? "w-full h-full object-contain" : "w-full h-full"}
-              onClick={togglePlayPause}
-              preload="metadata"
-            />
-          </div>
-
-          {/* Controls */}
-          <div className={`
-            ${shouldBeFullscreen ? "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10 shrink-0" : "bg-graphite/95 backdrop-blur-sm border-t border-border p-4 z-10"}
-            ${shouldBeFullscreen && !showControls ? "opacity-0 pointer-events-none" : "opacity-100"}
-            transition-opacity duration-300
-          `}>
-            <div className="space-y-3">
-              {/* Title */}
-              <div>
-                <h3 className="font-semibold text-lg text-white">{title}</h3>
-                <p className="text-sm text-white/70">{description}</p>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-white tabular-nums min-w-[40px]">
-                  {formatTime((progress / 100) * duration)}
-                </span>
-                <Slider
-                  value={[progress]}
-                  onValueChange={handleSeek}
-                  onValueCommit={handleSeekEnd}
-                  onPointerDown={handleSeekStart}
-                  max={100}
-                  step={0.1}
-                  className="flex-1 cursor-pointer"
-                  disabled={!duration || isNaN(duration) || duration === 0}
-                />
-                <span className="text-xs font-semibold text-white tabular-nums min-w-[40px]">
-                  {formatTime(duration)}
-                </span>
-              </div>
-
-              {/* Control Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => skip(-10)}
-                  >
-                    <SkipBack className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    className="h-10 w-10 rounded-full bg-white hover:bg-white/90 text-black"
-                    onClick={togglePlayPause}
-                  >
-                    {isPlaying ? (
-                      <Pause className="h-5 w-5 fill-black" />
-                    ) : (
-                      <Play className="h-5 w-5 fill-black ml-0.5" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => skip(10)}
-                  >
-                    <SkipForward className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {/* Volume Control */}
-                  <div className="flex items-center gap-2">
-                    <Volume2 className="h-4 w-4 text-muted-foreground" />
-                    <div className="flex items-center gap-0.5 h-4">
-                      {[...Array(10)].map((_, i) => {
-                        const barHeight = 8 + (i * 1.6);
-                        const isActive = (i + 1) * 10 <= volume;
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => setVolume((i + 1) * 10)}
-                            className="w-0.5 transition-all duration-150 hover:opacity-80"
-                            style={{
-                              height: `${barHeight}px`,
-                              backgroundColor: isActive ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-                              opacity: isActive ? 1 : 0.3
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Fullscreen Toggle */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={toggleFullscreen}
-                  >
-                    {isFullscreen ? (
-                      <Minimize className="h-4 w-4" />
-                    ) : (
-                      <Maximize className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+    <div
+      className="fixed left-1/2 -translate-x-1/2 z-[60] w-full max-w-5xl px-4"
+      style={{ bottom: bottomOffset }}
+    >
+      {/* Minimized pill */}
+      <AnimatePresence>
+        {minimized && (
+          <motion.button
+            key="pill"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            onClick={() => setMinimized(false)}
+            className="mx-auto block rounded-full shadow-lg backdrop-blur bg-black/40 text-white px-4 py-2 text-sm hover:bg-black/60"
+          >
+            <div className="flex items-center gap-2">
+              <ChevronDown className="w-4 h-4 rotate-180" />
+              <span>Show player</span>
+              {title && <span className="opacity-80">– {title}</span>}
             </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Main player card */}
+      <AnimatePresence>
+        {!minimized && (
+          <motion.div
+            key="card"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            className="rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/80 backdrop-blur border border-white/10"
+            onMouseMove={kickIdleTimer}
+          >
+            <div className="relative">
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                poster={thumbnailUrl}
+                playsInline
+                className={shouldBeFullscreen ? "w-full h-[60vh] md:h-[70vh] object-contain bg-black" : "w-full h-[42vh] md:h-[50vh] object-cover"}
+                onTimeUpdate={onTimeUpdate}
+                onPlay={() => { setIsPlaying(true); kickIdleTimer(); }}
+                onPause={() => { setIsPlaying(false); setShowUI(true); }}
+                onLoadedMetadata={onTimeUpdate}
+                controls={false}
+              />
+
+              {/* Auto-hide chrome */}
+              <AnimatePresence>
+                {showUI && (
+                  <motion.div
+                    key="chrome"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
+                  >
+                    {/* Title */}
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-white text-sm md:text-base">{title}</h3>
+                      <p className="text-xs text-white/70">{description}</p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {/* Progress bar */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-xs tabular-nums w-10 text-right">{fmt(progress)}</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={duration || 0}
+                          step={0.1}
+                          value={progress}
+                          onChange={onSeek}
+                          className="w-full accent-white"
+                        />
+                        <span className="text-white text-xs tabular-nums w-10">{fmt(duration)}</span>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => skip(-10)}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label="Skip back 10s"
+                          >
+                            <SkipBack className="w-4 h-4"/>
+                          </button>
+
+                          <button
+                            onClick={togglePlay}
+                            className="p-2 rounded-full bg-white hover:bg-white/90 text-black"
+                            aria-label={isPlaying ? "Pause" : "Play"}
+                          >
+                            {isPlaying ? <Pause className="w-5 h-5 fill-black"/> : <Play className="w-5 h-5 fill-black"/>}
+                          </button>
+
+                          <button
+                            onClick={() => skip(10)}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label="Skip forward 10s"
+                          >
+                            <SkipForward className="w-4 h-4"/>
+                          </button>
+
+                          <button
+                            onClick={toggleMute}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white ml-1"
+                            aria-label={muted ? "Unmute" : "Mute"}
+                          >
+                            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {/* Hide/minimize */}
+                          <button
+                            onClick={() => setMinimized(true)}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label="Minimize player"
+                            title="Minimize player"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+
+                          {/* Close */}
+                          <button
+                            onClick={handleClose}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label="Close player"
+                            title="Close player"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
