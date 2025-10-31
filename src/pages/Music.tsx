@@ -86,7 +86,7 @@ export default function Music() {
       return;
     }
     
-    trackEvent('play_music', {
+    trackEvent('music_play', {
       title: track.title,
       artist: track.artist,
       album: track.album
