@@ -90,9 +90,9 @@ export default function EPsSingles() {
           Back to Music
         </Button>
 
-        <h1 className="text-4xl font-bold mb-2">EPs & Singles</h1>
+        <h1 className="text-4xl font-bold mb-2">Singles</h1>
         <p className="text-muted-foreground mb-8">
-          All released EPs and singles
+          All released singles
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -134,7 +134,7 @@ export default function EPsSingles() {
 
         {tracks.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No EPs or singles found</p>
+            <p className="text-muted-foreground">No singles found</p>
           </div>
         )}
       </div>
