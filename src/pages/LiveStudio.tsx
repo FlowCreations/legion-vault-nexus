@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Radio, Calendar, Clock, Users, Ticket, Mail, Download } from "lucide-react";
+import { Radio, Calendar, Clock, Users, Ticket, Mail, Download, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -11,6 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import liveAcousticSession from "@/assets/live-acoustic-session.png";
 import { useCartStore } from "@/stores/cartStore";
 import { ShopifyProduct } from "@/lib/shopify";
+import { LiveViewer } from "@/components/livestream/LiveViewer";
+import { LiveChat } from "@/components/livestream/LiveChat";
+import { StreamCountdown } from "@/components/livestream/StreamCountdown";
+import { StreamIntro } from "@/components/livestream/StreamIntro";
 
 export default function LiveStudio() {
   const navigate = useNavigate();
@@ -37,9 +41,14 @@ export default function LiveStudio() {
     minutes: "27",
     seconds: "60"
   });
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
+  const [streamStarted, setStreamStarted] = useState(false);
+  const [liveEventId, setLiveEventId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
+    checkLiveStream();
     
     // Set up countdown timer for seconds only
     let currentSeconds = 60;
@@ -64,6 +73,32 @@ export default function LiveStudio() {
     
     return () => clearInterval(interval);
   }, []);
+
+  const checkLiveStream = async () => {
+    const { data } = await supabase
+      .from('livestream_events')
+      .select('id, status')
+      .eq('status', 'live')
+      .single();
+    
+    if (data) {
+      setLiveEventId(data.id);
+    }
+  };
+
+  const startWatchingStream = () => {
+    setShowCountdown(true);
+  };
+
+  const handleCountdownComplete = () => {
+    setShowCountdown(false);
+    setShowIntro(true);
+  };
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+    setStreamStarted(true);
+  };
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -252,6 +287,21 @@ export default function LiveStudio() {
 
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
+      {showCountdown && <StreamCountdown onComplete={handleCountdownComplete} />}
+      {showIntro && <StreamIntro onComplete={handleIntroComplete} />}
+
+      {streamStarted && liveEventId ? (
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <LiveViewer eventId={liveEventId} />
+            </div>
+            <div>
+              <LiveChat eventId={liveEventId} />
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
@@ -453,6 +503,7 @@ export default function LiveStudio() {
           </Button>
         </div>
       </div>
+      )}
 
       {/* Email Signup Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>

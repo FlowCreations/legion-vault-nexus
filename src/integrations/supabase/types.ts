@@ -851,6 +851,45 @@ export type Database = {
           },
         ]
       }
+      chatbot_templates: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          interval_minutes: number | null
+          link_text: string | null
+          link_url: string | null
+          message: string
+          slot_number: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interval_minutes?: number | null
+          link_text?: string | null
+          link_url?: string | null
+          message: string
+          slot_number?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interval_minutes?: number | null
+          link_text?: string | null
+          link_url?: string | null
+          message?: string
+          slot_number?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       cohort_members: {
         Row: {
           cohort_id: string
@@ -1587,6 +1626,145 @@ export type Database = {
           version?: string | null
         }
         Relationships: []
+      }
+      livestream_chat: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_bot: boolean | null
+          is_deleted: boolean | null
+          is_pinned: boolean | null
+          message: string
+          user_id: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_bot?: boolean | null
+          is_deleted?: boolean | null
+          is_pinned?: boolean | null
+          message: string
+          user_id?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_bot?: boolean | null
+          is_deleted?: boolean | null
+          is_pinned?: boolean | null
+          message?: string
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestream_chat_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "livestream_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      livestream_events: {
+        Row: {
+          access_type: string | null
+          actual_end: string | null
+          actual_start: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          recording_url: string | null
+          scheduled_end: string | null
+          scheduled_start: string
+          status: string | null
+          stream_key: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          access_type?: string | null
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          recording_url?: string | null
+          scheduled_end?: string | null
+          scheduled_start: string
+          status?: string | null
+          stream_key?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          access_type?: string | null
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          recording_url?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string
+          status?: string | null
+          stream_key?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
+      livestream_viewers: {
+        Row: {
+          event_id: string | null
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          session_id: string | null
+          total_watch_time: number | null
+          user_id: string | null
+        }
+        Insert: {
+          event_id?: string | null
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          session_id?: string | null
+          total_watch_time?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          event_id?: string | null
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          session_id?: string | null
+          total_watch_time?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestream_viewers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "livestream_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messenger_interactions: {
         Row: {
