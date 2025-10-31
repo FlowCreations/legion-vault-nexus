@@ -54,18 +54,31 @@ export const LiveStreamManager = () => {
   };
 
   const createEvent = async () => {
+    if (!newEvent.title || !newEvent.scheduled_start) {
+      toast.error('Please fill in title and scheduled time');
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error('You must be logged in to create events');
+      return;
+    }
 
     const { error } = await supabase
       .from('livestream_events')
       .insert({
-        ...newEvent,
+        title: newEvent.title,
+        description: newEvent.description,
+        scheduled_start: newEvent.scheduled_start,
+        access_type: newEvent.access_type,
+        status: 'scheduled',
         created_by: user.id,
       });
 
     if (error) {
-      toast.error('Failed to create event');
+      console.error('Create event error:', error);
+      toast.error(`Failed to create event: ${error.message}`);
     } else {
       toast.success('Event created successfully!');
       setShowCreateDialog(false);
