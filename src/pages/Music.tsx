@@ -366,16 +366,30 @@ export default function Music() {
                 <div className="text-muted-foreground text-sm flex items-center">{track.time}</div>
                 <div className="w-10 flex items-center justify-center">
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      // Create invisible anchor for download without navigation
-                      const link = document.createElement('a');
-                      link.href = track.url;
-                      link.download = `${track.title} - ${track.artist}.mp3`;
-                      link.style.display = 'none';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
+                      try {
+                        // Fetch the file as blob
+                        const response = await fetch(track.url);
+                        const blob = await response.blob();
+                        
+                        // Create download link
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `${track.title} - ${track.artist}.mp3`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } catch (error) {
+                        console.error('Download failed:', error);
+                        toast({
+                          title: "Download failed",
+                          description: "Unable to download the track. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
