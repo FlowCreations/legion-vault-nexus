@@ -304,26 +304,41 @@ export default function Videos() {
         {/* Hero Content - Bottom left like Apple TV */}
         <div className="absolute inset-0 flex items-end justify-start pl-4 sm:pl-6 lg:pl-8 pr-8 pb-8 sm:pb-10 lg:pb-12">
           <div className="max-w-xl">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
-              Enter the SØL Portal
-            </h1>
-            <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
-              Stream exclusive content and experience the{" "}
-              <br className="hidden sm:inline" />
-              music like never before.
-            </p>
-            <div className="flex flex-col items-start gap-3">
-              <Button 
-                size="lg" 
-                className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 text-sm rounded-lg shadow-lg transition-all"
-                onClick={() => navigate('/subscribe')}
-              >
-                Accept Free Trial
-              </Button>
-              <p className="text-xs text-gray-300">
-                7 days free, then pick your subscription
-              </p>
-            </div>
+            {isAuthenticated ? (
+              <>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
+                  Welcome to the SØL Portal
+                </h1>
+                <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
+                  Stream exclusive content and experience the{" "}
+                  <br className="hidden sm:inline" />
+                  music like never before.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
+                  Enter the SØL Portal
+                </h1>
+                <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
+                  Stream exclusive content and experience the{" "}
+                  <br className="hidden sm:inline" />
+                  music like never before.
+                </p>
+                <div className="flex flex-col items-start gap-3">
+                  <Button 
+                    size="lg" 
+                    className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 text-sm rounded-lg shadow-lg transition-all"
+                    onClick={() => navigate('/subscribe')}
+                  >
+                    Accept Free Trial
+                  </Button>
+                  <p className="text-xs text-gray-300">
+                    7 days free, then pick your subscription
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
