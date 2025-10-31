@@ -276,7 +276,11 @@ export default function Music() {
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">EP & Singles</h2>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/music/eps-singles")}
+            >
               View all
             </Button>
           </div>
@@ -337,6 +341,8 @@ export default function Music() {
               );
               })}
             </CarouselContent>
+            <CarouselPrevious className="left-0" />
+            <CarouselNext className="right-0" />
           </Carousel>
         </div>
 

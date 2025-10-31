@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Activity, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIChat } from "@/components/merchant/AIChat";
+import MusicUpload from "@/components/MusicUpload";
 import { TopTracks } from "@/components/merchant/TopTracks";
 import { Geography } from "@/components/merchant/Geography";
 import { Demographics } from "@/components/merchant/Demographics";
@@ -224,11 +225,15 @@ const Merchant = () => {
             <Tabs defaultValue="videos" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="videos">Videos</TabsTrigger>
+                <TabsTrigger value="music">Music</TabsTrigger>
                 <TabsTrigger value="lab">Content Lab</TabsTrigger>
               </TabsList>
               
               <TabsContent value="videos">
                 <VideoManager />
+              </TabsContent>
+              <TabsContent value="music">
+                <MusicUpload />
               </TabsContent>
               <TabsContent value="lab">
                 <ContentLab />

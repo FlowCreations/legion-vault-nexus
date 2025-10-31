@@ -1708,6 +1708,57 @@ export type Database = {
         }
         Relationships: []
       }
+      music_tracks: {
+        Row: {
+          album: string | null
+          artist: string | null
+          category: string
+          created_at: string | null
+          duration: string | null
+          id: string
+          image_url: string | null
+          public_url: string
+          storage_path: string
+          title: string
+          track_number: number | null
+          updated_at: string | null
+          uploaded_by: string | null
+          year: string | null
+        }
+        Insert: {
+          album?: string | null
+          artist?: string | null
+          category: string
+          created_at?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          public_url: string
+          storage_path: string
+          title: string
+          track_number?: number | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          year?: string | null
+        }
+        Update: {
+          album?: string | null
+          artist?: string | null
+          category?: string
+          created_at?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          public_url?: string
+          storage_path?: string
+          title?: string
+          track_number?: number | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null

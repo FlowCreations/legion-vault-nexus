@@ -23,6 +23,7 @@ import Profile from "./pages/Profile";
 import Music from "./pages/Music";
 import AlbumDetail from "./pages/AlbumDetail";
 import Favorites from "./pages/Favorites";
+import EPsSingles from "./pages/EPsSingles";
 import SongCredits from "./pages/SongCredits";
 import Shows from "./pages/Shows";
 import Gallery from "./pages/Gallery";
@@ -135,6 +136,7 @@ const App = () => {
           <Route path="/music" element={<Music />} />
           <Route path="/music/album/:albumId" element={<AlbumDetail />} />
           <Route path="/music/favorites" element={<Favorites />} />
+          <Route path="/music/eps-singles" element={<EPsSingles />} />
           <Route path="/song-credits" element={<SongCredits />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
           <Route path="/shows" element={<Shows />} />
