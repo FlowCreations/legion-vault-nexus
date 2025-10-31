@@ -148,7 +148,7 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
               <SelectTrigger>
                 <SelectValue placeholder="Select camera" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[100] bg-background" position="popper" sideOffset={5}>
                 {videoDevices.filter(d => d.deviceId && d.deviceId.length > 0).map(device => (
                   <SelectItem key={device.deviceId} value={device.deviceId}>
                     {device.label || `Camera ${device.deviceId.slice(0, 5)}`}
@@ -164,7 +164,7 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
               <SelectTrigger>
                 <SelectValue placeholder="Select microphone" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[100] bg-background" position="popper" sideOffset={5}>
                 {audioDevices.filter(d => d.deviceId && d.deviceId.length > 0).map(device => (
                   <SelectItem key={device.deviceId} value={device.deviceId}>
                     {device.label || `Microphone ${device.deviceId.slice(0, 5)}`}
