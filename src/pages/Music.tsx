@@ -31,7 +31,7 @@ import {
 export default function Music() {
   const { trackEvent } = useEventTracking();
   const navigate = useNavigate();
-  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause } = useMusicPlayer();
+  const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause, toggleLike, isLiked } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
@@ -187,6 +187,7 @@ export default function Music() {
             {/* Track Rows */}
             {topTracks.map((track, index) => {
               const isCurrentTrack = currentTrack?.id === track.id;
+              const trackLiked = isLiked(track.id);
               return (
               <div
                 key={track.id}
@@ -238,7 +239,15 @@ export default function Music() {
                   </a>
                 </div>
                 <div className="w-10 flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLike(track.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-5 h-5 transition-colors ${trackLiked ? 'fill-red-500 text-red-500 opacity-100' : 'text-muted-foreground hover:text-foreground'}`} />
+                  </button>
                 </div>
               </div>
             );
