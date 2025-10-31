@@ -160,12 +160,15 @@ export function VideoPlayer({
 
   return (
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-[60] w-full max-w-5xl px-4"
-      style={{ bottom: bottomOffset }}
+      className={isFullscreen 
+        ? "fixed inset-0 z-[60] bg-black" 
+        : "fixed left-1/2 -translate-x-1/2 z-[60] w-full max-w-5xl px-4"
+      }
+      style={isFullscreen ? undefined : { bottom: bottomOffset }}
     >
-      {/* Minimized pill */}
+      {/* Minimized pill - only show when not fullscreen */}
       <AnimatePresence>
-        {minimized && (
+        {minimized && !isFullscreen && (
           <motion.button
             key="pill"
             initial={{ opacity: 0, y: 16 }}
@@ -192,16 +195,24 @@ export function VideoPlayer({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            className="rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/80 backdrop-blur border border-white/10"
+            className={isFullscreen 
+              ? "w-full h-full bg-black flex flex-col" 
+              : "rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/80 backdrop-blur border border-white/10"
+            }
             onMouseMove={kickIdleTimer}
           >
-            <div className="relative">
+            <div className="relative flex-1 flex items-center justify-center bg-black">
               <video
                 ref={videoRef}
                 src={videoUrl}
                 poster={thumbnailUrl}
                 playsInline
-                className={shouldBeFullscreen ? "w-full h-[60vh] md:h-[70vh] object-contain bg-black" : "w-full h-[42vh] md:h-[50vh] object-cover"}
+                className={isFullscreen 
+                  ? "w-full h-full object-contain" 
+                  : shouldBeFullscreen 
+                    ? "w-full h-[60vh] md:h-[70vh] object-contain bg-black" 
+                    : "w-full h-[42vh] md:h-[50vh] object-cover"
+                }
                 onTimeUpdate={onTimeUpdate}
                 onPlay={() => { setIsPlaying(true); kickIdleTimer(); }}
                 onPause={() => { setIsPlaying(false); setShowUI(true); }}
@@ -217,15 +228,19 @@ export function VideoPlayer({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
+                    className={isFullscreen 
+                      ? "absolute inset-x-0 bottom-0 p-4 md:p-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent" 
+                      : "absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
+                    }
                   >
-                    {/* Title */}
-                    <div className="mb-3">
-                      <h3 className="font-semibold text-white text-sm md:text-base">{title}</h3>
-                      <p className="text-xs text-white/70">{description}</p>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
+                    <div className="space-y-3">
+                      {/* Title - hide in fullscreen when UI is hidden */}
+                      {(!isFullscreen || showUI) && (
+                        <div>
+                          <h3 className="font-semibold text-white text-sm md:text-base">{title}</h3>
+                          <p className="text-xs text-white/70">{description}</p>
+                        </div>
+                      )}
                       {/* Progress bar */}
                       <div className="flex items-center gap-2">
                         <span className="text-white text-xs tabular-nums w-10 text-right">{fmt(progress)}</span>
