@@ -28,7 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Calendar, MapPin } from "lucide-react";
+import { Plus, Trash2, Calendar, MapPin, Download } from "lucide-react";
 import { format } from "date-fns";
 
 interface TourShow {
@@ -73,6 +73,27 @@ export function TourManager() {
 
       if (error) throw error;
       setShows(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImportSchedule = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.functions.invoke('seed-tour-data');
+      if (error) throw error;
+      toast({
+        title: "Success",
+        description: "Tour dates imported from schedule",
+      });
+      loadShows();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -167,142 +188,152 @@ export function TourManager() {
               Manage upcoming tour dates and ticket links
             </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Show
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add Tour Show</DialogTitle>
-                <DialogDescription>
-                  Enter the details for the new tour show
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleImportSchedule}
+              disabled={loading}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Import Tour Schedule
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Show
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Tour Show</DialogTitle>
+                  <DialogDescription>
+                    Enter the details for the new tour show
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="date">Date *</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, date: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="venue">Venue *</Label>
+                      <Input
+                        id="venue"
+                        value={formData.venue}
+                        onChange={(e) =>
+                          setFormData({ ...formData, venue: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) =>
+                          setFormData({ ...formData, city: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State/Province</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) =>
+                          setFormData({ ...formData, state: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        value={formData.country}
+                        onChange={(e) =>
+                          setFormData({ ...formData, country: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="date">Date *</Label>
+                    <Label htmlFor="ticket_link">Ticket Link</Label>
                     <Input
-                      id="date"
-                      type="date"
-                      value={formData.date}
+                      id="ticket_link"
+                      type="url"
+                      placeholder="https://..."
+                      value={formData.ticket_link}
                       onChange={(e) =>
-                        setFormData({ ...formData, date: e.target.value })
+                        setFormData({ ...formData, ticket_link: e.target.value })
                       }
-                      required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="venue">Venue *</Label>
-                    <Input
-                      id="venue"
-                      value={formData.venue}
-                      onChange={(e) =>
-                        setFormData({ ...formData, venue: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="city">City *</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, status: value })
                       }
-                      required
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="on_sale">On Sale</SelectItem>
+                        <SelectItem value="low_tickets">Low Tickets</SelectItem>
+                        <SelectItem value="sold_out">Sold Out</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <div>
-                    <Label htmlFor="state">State/Province</Label>
+                    <Label htmlFor="special_guests">Special Guests</Label>
                     <Input
-                      id="state"
-                      value={formData.state}
+                      id="special_guests"
+                      value={formData.special_guests}
                       onChange={(e) =>
-                        setFormData({ ...formData, state: e.target.value })
+                        setFormData({
+                          ...formData,
+                          special_guests: e.target.value,
+                        })
                       }
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="country">Country</Label>
-                    <Input
-                      id="country"
-                      value={formData.country}
-                      onChange={(e) =>
-                        setFormData({ ...formData, country: e.target.value })
-                      }
-                    />
+
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={loading}>
+                      {loading ? "Adding..." : "Add Show"}
+                    </Button>
                   </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="ticket_link">Ticket Link</Label>
-                  <Input
-                    id="ticket_link"
-                    type="url"
-                    placeholder="https://..."
-                    value={formData.ticket_link}
-                    onChange={(e) =>
-                      setFormData({ ...formData, ticket_link: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="on_sale">On Sale</SelectItem>
-                      <SelectItem value="low_tickets">Low Tickets</SelectItem>
-                      <SelectItem value="sold_out">Sold Out</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="special_guests">Special Guests</Label>
-                  <Input
-                    id="special_guests"
-                    value={formData.special_guests}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        special_guests: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Adding..." : "Add Show"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -312,7 +343,8 @@ export function TourManager() {
           </div>
         ) : shows.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No tour shows yet. Add your first show to get started.
+            <p className="mb-4">No tour shows yet.</p>
+            <p className="text-sm">Click "Import Tour Schedule" to load the 2026 tour dates, or add shows individually.</p>
           </div>
         ) : (
           <Table>
