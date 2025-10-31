@@ -32,7 +32,8 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   const [tipperName, setTipperName] = useState("");
   const [showTipDialog, setShowTipDialog] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const collapsedVideoRef = useRef<HTMLVideoElement>(null);
+  const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const sessionIdRef = useRef(crypto.randomUUID());
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
@@ -57,10 +58,12 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
   }, [isLive]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.volume = isMuted ? 0 : volume / 100;
-      videoRef.current.muted = isMuted;
-    }
+    [collapsedVideoRef, expandedVideoRef].forEach(ref => {
+      if (ref.current) {
+        ref.current.volume = isMuted ? 0 : volume / 100;
+        ref.current.muted = isMuted;
+      }
+    });
   }, [volume, isMuted]);
 
   useEffect(() => {
@@ -139,18 +142,17 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
             console.log('[ExpandableLiveViewer] Track:', track.kind, 'enabled:', track.enabled, 'readyState:', track.readyState);
           });
           
-          if (videoRef.current) {
-            console.log('[ExpandableLiveViewer] Setting video srcObject');
-            videoRef.current.srcObject = stream;
-            
-            // Force play the video
-            videoRef.current.play().then(() => {
-              console.log('[ExpandableLiveViewer] Video playback started successfully');
-            }).catch(error => {
-              console.error('[ExpandableLiveViewer] Video playback failed:', error);
-            });
-          } else {
-            console.error('[ExpandableLiveViewer] Video ref is null!');
+          // Attach stream to BOTH video elements
+          if (collapsedVideoRef.current) {
+            console.log('[ExpandableLiveViewer] Setting collapsed video srcObject');
+            collapsedVideoRef.current.srcObject = stream;
+            collapsedVideoRef.current.play().catch(e => console.error('Collapsed video play error:', e));
+          }
+          
+          if (expandedVideoRef.current) {
+            console.log('[ExpandableLiveViewer] Setting expanded video srcObject');
+            expandedVideoRef.current.srcObject = stream;
+            expandedVideoRef.current.play().catch(e => console.error('Expanded video play error:', e));
           }
         });
 
@@ -228,8 +230,13 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
             }
 
             const pc = createPeerConnection((stream) => {
-              if (videoRef.current) {
-                videoRef.current.srcObject = stream;
+              if (collapsedVideoRef.current) {
+                collapsedVideoRef.current.srcObject = stream;
+                collapsedVideoRef.current.play().catch(e => console.error('Collapsed video play error:', e));
+              }
+              if (expandedVideoRef.current) {
+                expandedVideoRef.current.srcObject = stream;
+                expandedVideoRef.current.play().catch(e => console.error('Expanded video play error:', e));
               }
             });
 
@@ -340,146 +347,9 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
           <div className="flex-1 flex flex-col min-h-0">
             <Card className="flex-1 bg-black border-primary/20 flex flex-col min-h-0">
               <CardContent className="p-0 flex-1 flex flex-col min-h-0">
-                <div className="relative flex-1 bg-black group min-h-0">
-                  {!isLive ? (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                      <p className="text-lg">Stream will start soon...</p>
-                    </div>
-                  ) : (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted={isMuted}
-                      className="w-full h-full object-contain"
-                    />
-                  )}
-                  {isLive && (
-                    <div className="absolute top-4 left-4 flex items-center gap-3">
-                      <Badge className="bg-red-600 text-white animate-pulse">
-                        🔴 LIVE
-                      </Badge>
-                      <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                        <Eye className="w-3 h-3 mr-1" />
-                        {viewerCount}
-                      </Badge>
-                    </div>
-                  )}
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                    onClick={() => setIsExpanded(false)}
-                  >
-                    <Minimize2 className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="p-4 bg-card flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setIsMuted(!isMuted)}
-                        onMouseEnter={() => setShowVolumeSlider(true)}
-                        onMouseLeave={() => setShowVolumeSlider(false)}
-                      >
-                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      </Button>
-                      {showVolumeSlider && !isMuted && (
-                        <div
-                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-popover border rounded-lg shadow-lg"
-                          onMouseEnter={() => setShowVolumeSlider(true)}
-                          onMouseLeave={() => setShowVolumeSlider(false)}
-                        >
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={volume}
-                            onChange={(e) => setVolume(parseInt(e.target.value))}
-                            className="h-24 w-2 appearance-none bg-muted rounded-full [writing-mode:vertical-lr] [direction:rtl] cursor-pointer"
-                            style={{
-                              background: `linear-gradient(to top, hsl(var(--primary)) 0%, hsl(var(--primary)) ${volume}%, hsl(var(--muted)) ${volume}%, hsl(var(--muted)) 100%)`,
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={handleShare}>
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Share
-                    </Button>
-
-                    <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
-                      <DialogTrigger asChild>
-                        <Button size="sm">
-                          <DollarSign className="w-4 h-4 mr-2" />
-                          Tip
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Send a Tip</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="flex gap-2">
-                            {[5, 10, 25].map((amount) => (
-                              <Button
-                                key={amount}
-                                variant={tipAmount === amount.toString() ? "default" : "outline"}
-                                onClick={() => setTipAmount(amount.toString())}
-                              >
-                                ${amount}
-                              </Button>
-                            ))}
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Custom Amount ($)</label>
-                            <Input
-                              type="number"
-                              min="1"
-                              step="0.01"
-                              value={tipAmount}
-                              onChange={(e) => setTipAmount(e.target.value)}
-                              placeholder="Enter amount"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Your Name (Optional)</label>
-                            <Input
-                              value={tipperName}
-                              onChange={(e) => setTipperName(e.target.value)}
-                              placeholder="Anonymous"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Message (Optional)</label>
-                            <Textarea
-                              value={tipMessage}
-                              onChange={(e) => setTipMessage(e.target.value)}
-                              placeholder="Say something nice..."
-                              rows={3}
-                            />
-                          </div>
-                          <Button onClick={handleTip} className="w-full">
-                            Send ${parseFloat(tipAmount || "0").toFixed(2)} Tip
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
+                {/* This old expanded view is now replaced by the new full-screen layout above */}
               </CardContent>
             </Card>
-          </div>
-
-          <div className="w-full lg:w-96 flex flex-col min-h-0">
-            <LiveChat eventId={eventId} />
           </div>
         </motion.div>
       ) : (
@@ -492,7 +362,7 @@ export default function ExpandableLiveViewer({ eventId }: ExpandableLiveViewerPr
                 </div>
               ) : (
                 <video
-                  ref={videoRef}
+                  ref={collapsedVideoRef}
                   autoPlay
                   playsInline
                   muted={isMuted}
