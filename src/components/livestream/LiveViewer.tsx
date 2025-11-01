@@ -99,10 +99,12 @@ export const LiveViewer = ({ eventId, streamUrl }: LiveViewerProps) => {
         .maybeSingle();
       
       // Create peer connection
-      const pc = createPeerConnection((stream) => {
-        console.log('Received remote stream');
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+      const pc = createPeerConnection({
+        onTrack: (ev) => {
+          console.log('Received remote stream');
+          if (videoRef.current) {
+            videoRef.current.srcObject = ev.streams[0];
+          }
         }
       });
       
