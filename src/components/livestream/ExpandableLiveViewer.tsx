@@ -1,13 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Room, RoomEvent, Track } from 'livekit-client';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Maximize2, DollarSign, Share2 } from 'lucide-react';
+import { LiveChat } from './LiveChat';
+import { toast } from 'sonner';
 
-type Props = { eventId: string };
+type Props = { 
+  eventId: string;
+  onTip?: () => void;
+  onShare?: () => void;
+};
 
-export function ExpandableLiveViewer({ eventId }: Props) {
+export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [error, setError] = useState<string>();
+  const [isExpanded, setIsExpanded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
 
   const connect = async () => {
@@ -46,8 +57,13 @@ export function ExpandableLiveViewer({ eventId }: Props) {
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
         console.log('[Viewer] Track subscribed:', track.kind, 'from', participant.identity);
-        if (track.kind === Track.Kind.Video && videoRef.current) {
-          track.attach(videoRef.current);
+        if (track.kind === Track.Kind.Video) {
+          if (videoRef.current) {
+            track.attach(videoRef.current);
+          }
+          if (expandedVideoRef.current && isExpanded) {
+            track.attach(expandedVideoRef.current);
+          }
           console.log('[Viewer] Video track attached');
         }
       });
@@ -81,51 +97,127 @@ export function ExpandableLiveViewer({ eventId }: Props) {
     };
   }, []);
 
-  return (
-    <div className="space-y-3">
-      <video 
-        ref={videoRef} 
-        autoPlay 
-        playsInline 
-        controls 
-        className="w-full rounded-lg border bg-black" 
-      />
+  useEffect(() => {
+    if (status === 'idle' && eventId) {
+      connect();
+    }
+  }, [eventId]);
 
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <div className="flex items-center gap-2">
+  const handleTip = () => {
+    if (onTip) {
+      onTip();
+    } else {
+      toast.success('Tip feature coming soon!');
+    }
+  };
+
+  const handleShare = () => {
+    if (onShare) {
+      onShare();
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+  return (
+    <>
+      <div className="relative group">
+        <video 
+          ref={videoRef} 
+          autoPlay 
+          playsInline 
+          controls 
+          className="w-full rounded-lg border bg-black aspect-video" 
+        />
+        
+        {/* Player Controls Overlay */}
+        <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setIsExpanded(true)}
+          >
+            <Maximize2 className="w-4 h-4 mr-1" />
+            Expand
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleTip}
+          >
+            <DollarSign className="w-4 h-4 mr-1" />
+            Tip
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleShare}
+          >
+            <Share2 className="w-4 h-4 mr-1" />
+            Share
+          </Button>
+        </div>
+
+        {/* Status Indicator */}
+        <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
           <span className={`inline-block h-2 w-2 rounded-full ${
             status === 'connected' ? 'bg-green-500' : 
-            status === 'connecting' ? 'bg-yellow-500' : 
+            status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
             'bg-red-500'
           }`} />
-          <span>Status: {status}</span>
+          <span className="text-white text-xs font-medium uppercase">{status}</span>
         </div>
-        <span className="opacity-60 text-xs">Room: {eventId}</span>
       </div>
 
-      <div className="flex gap-2">
-        {status === 'idle' || status === 'error' ? (
-          <button 
-            onClick={connect} 
-            className="rounded-md border px-3 py-1.5 hover:bg-accent"
-          >
-            Enter Stream
-          </button>
-        ) : (
-          <button 
-            onClick={disconnect} 
-            className="rounded-md border px-3 py-1.5 hover:bg-accent"
-          >
-            Leave Stream
-          </button>
-        )}
-      </div>
+      {/* Expanded View Dialog */}
+      <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+        <DialogContent className="max-w-[95vw] h-[90vh] p-0">
+          <div className="grid grid-cols-[1fr_400px] h-full gap-0">
+            {/* Video Player */}
+            <div className="relative bg-black flex items-center justify-center">
+              <video 
+                ref={expandedVideoRef} 
+                autoPlay 
+                playsInline 
+                controls 
+                className="w-full h-full" 
+              />
+              
+              {/* Expanded Controls */}
+              <div className="absolute bottom-6 right-6 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleTip}
+                >
+                  <DollarSign className="w-4 h-4 mr-1" />
+                  Tip
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleShare}
+                >
+                  <Share2 className="w-4 h-4 mr-1" />
+                  Share
+                </Button>
+              </div>
+            </div>
+            
+            {/* Live Chat Sidebar */}
+            <div className="border-l bg-background">
+              <LiveChat eventId={eventId} />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">
+        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800 mt-2">
           {error}
         </div>
       )}
-    </div>
+    </>
   );
 }

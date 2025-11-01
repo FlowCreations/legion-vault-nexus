@@ -330,16 +330,18 @@ export default function LiveStudio() {
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Stream Preview or Live Video */}
-              <div className="aspect-video rounded-2xl overflow-hidden shadow-gold group hover:shadow-glow transition-all duration-500">
-                {liveEventId ? (
-                  <ExpandableLiveViewer eventId={liveEventId} />
-                ) : (
-                  <img 
-                    src={liveAcousticSession} 
-                    alt="Acoustic Sessions Live"
-                    className="w-full h-full object-cover"
-                  />
-                )}
+              <div className="relative">
+                <div className="aspect-video rounded-2xl overflow-hidden shadow-gold group hover:shadow-glow transition-all duration-500">
+                  {liveEventId ? (
+                    <ExpandableLiveViewer eventId={liveEventId} />
+                  ) : (
+                    <img 
+                      src={liveAcousticSession} 
+                      alt="Acoustic Sessions Live"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Event Info */}

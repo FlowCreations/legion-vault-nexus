@@ -135,7 +135,7 @@ export const LiveChat = ({ eventId, isModerator = false }: LiveChatProps) => {
   };
 
   return (
-    <Card className="flex flex-col h-[600px]">
+    <Card className="flex flex-col h-full border-0 rounded-none shadow-none">
       <div className="p-4 border-b">
         <h3 className="font-semibold">Live Chat</h3>
       </div>
