@@ -84,6 +84,8 @@ export function LiveBroadcaster({ eventId }: Props) {
         return;
       }
 
+      console.log('[Broadcaster] Setting up audio monitoring with track:', mediaStreamTrack.label);
+      
       const stream = new MediaStream([mediaStreamTrack]);
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
@@ -98,20 +100,33 @@ export function LiveBroadcaster({ eventId }: Props) {
       analyserRef.current = analyser;
       sourceNodeRef.current = source;
 
-      console.log('[Broadcaster] Audio monitoring setup complete');
+      console.log('[Broadcaster] Audio monitoring setup complete, starting level detection');
 
       // Start monitoring audio levels
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      let animationFrameId: number;
+      
       const updateLevel = () => {
         if (analyserRef.current && (status === 'preview' || status === 'live' || status === 'connecting')) {
           analyserRef.current.getByteFrequencyData(dataArray);
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           const normalizedLevel = Math.min(100, (average / 255) * 100);
+          
+          // Log occasionally to debug
+          if (Math.random() < 0.01) {
+            console.log('[Broadcaster] Audio level:', normalizedLevel, 'raw average:', average);
+          }
+          
           setAudioLevel(normalizedLevel);
-          requestAnimationFrame(updateLevel);
+          animationFrameId = requestAnimationFrame(updateLevel);
         }
       };
-      updateLevel();
+      
+      animationFrameId = requestAnimationFrame(updateLevel);
+      
+      // Store animation frame ID for cleanup
+      (audioContextRef.current as any).animationFrameId = animationFrameId;
+      
     } catch (err) {
       console.error('[Broadcaster] Audio monitoring setup failed:', err);
     }
@@ -178,6 +193,13 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const stopPreview = () => {
+    console.log('[Broadcaster] Stopping preview and cleaning up');
+    
+    // Cancel animation frame
+    if (audioContextRef.current && (audioContextRef.current as any).animationFrameId) {
+      cancelAnimationFrame((audioContextRef.current as any).animationFrameId);
+    }
+    
     if (videoTrackRef.current) {
       videoTrackRef.current.stop();
       videoTrackRef.current = null;
@@ -185,6 +207,10 @@ export function LiveBroadcaster({ eventId }: Props) {
     if (audioTrackRef.current) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
+    }
+    if (sourceNodeRef.current) {
+      sourceNodeRef.current.disconnect();
+      sourceNodeRef.current = null;
     }
     if (audioContextRef.current) {
       audioContextRef.current.close();
@@ -253,6 +279,12 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const stopBroadcast = async () => {
     console.log('[Broadcaster] Stopping broadcast');
+    
+    // Cancel animation frame
+    if (audioContextRef.current && (audioContextRef.current as any).animationFrameId) {
+      cancelAnimationFrame((audioContextRef.current as any).animationFrameId);
+    }
+    
     if (roomRef.current) {
       roomRef.current.disconnect();
       roomRef.current = null;
@@ -264,6 +296,10 @@ export function LiveBroadcaster({ eventId }: Props) {
     if (audioTrackRef.current) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
+    }
+    if (sourceNodeRef.current) {
+      sourceNodeRef.current.disconnect();
+      sourceNodeRef.current = null;
     }
     if (audioContextRef.current) {
       audioContextRef.current.close();
@@ -280,8 +316,10 @@ export function LiveBroadcaster({ eventId }: Props) {
     if (videoTrackRef.current) {
       if (isCameraOn) {
         await videoTrackRef.current.mute();
+        console.log('[Broadcaster] Camera muted');
       } else {
         await videoTrackRef.current.unmute();
+        console.log('[Broadcaster] Camera unmuted');
       }
       setIsCameraOn(!isCameraOn);
     }
@@ -291,8 +329,10 @@ export function LiveBroadcaster({ eventId }: Props) {
     if (audioTrackRef.current) {
       if (isMicOn) {
         await audioTrackRef.current.mute();
+        console.log('[Broadcaster] Microphone muted');
       } else {
         await audioTrackRef.current.unmute();
+        console.log('[Broadcaster] Microphone unmuted');
       }
       setIsMicOn(!isMicOn);
     }
@@ -308,8 +348,15 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   useEffect(() => {
     return () => {
+      // Cleanup on unmount
+      if (audioContextRef.current && (audioContextRef.current as any).animationFrameId) {
+        cancelAnimationFrame((audioContextRef.current as any).animationFrameId);
+      }
       if (roomRef.current) {
         roomRef.current.disconnect();
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
       }
     };
   }, []);
@@ -385,19 +432,25 @@ export function LiveBroadcaster({ eventId }: Props) {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm">Audio Input Level</Label>
-                  <span className="text-xs text-muted-foreground">{Math.round(audioLevel)}%</span>
+                  <Label className="text-sm font-medium">Audio Input Level</Label>
+                  <span className="text-xs text-muted-foreground font-mono">{Math.round(audioLevel)}%</span>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-3 bg-muted rounded-full overflow-hidden border border-border">
                   <div 
-                    className={`h-full transition-all duration-100 ${
+                    className={`h-full transition-all duration-75 ${
                       audioLevel > 80 ? 'bg-red-500' : 
                       audioLevel > 50 ? 'bg-yellow-500' : 
-                      'bg-green-500'
+                      audioLevel > 0 ? 'bg-green-500' :
+                      'bg-muted'
                     }`}
                     style={{ width: `${audioLevel}%` }}
                   />
                 </div>
+                {audioLevel === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Speak into your microphone to test audio input
+                  </p>
+                )}
               </div>
             </div>
           </Card>
@@ -427,6 +480,7 @@ export function LiveBroadcaster({ eventId }: Props) {
                   onClick={toggleCamera}
                   variant={isCameraOn ? "default" : "outline"}
                   size="icon"
+                  title={isCameraOn ? "Turn off camera" : "Turn on camera"}
                 >
                   {isCameraOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
                 </Button>
@@ -434,6 +488,7 @@ export function LiveBroadcaster({ eventId }: Props) {
                   onClick={toggleMic}
                   variant={isMicOn ? "default" : "outline"}
                   size="icon"
+                  title={isMicOn ? "Mute microphone" : "Unmute microphone"}
                 >
                   {isMicOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                 </Button>
