@@ -65,6 +65,14 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
             track.attach(expandedVideoRef.current);
           }
           console.log('[Viewer] Video track attached');
+        } else if (track.kind === Track.Kind.Audio) {
+          if (videoRef.current) {
+            track.attach(videoRef.current);
+          }
+          if (expandedVideoRef.current && isExpanded) {
+            track.attach(expandedVideoRef.current);
+          }
+          console.log('[Viewer] Audio track attached');
         }
       });
 
