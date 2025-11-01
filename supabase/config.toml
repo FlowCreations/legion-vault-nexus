@@ -1,6 +1,6 @@
 project_id = "dlwyndcvnunvomgkbkhn"
 
-[functions.livestream-signaling]
+[functions.livekit-token]
 verify_jwt = false
 
 [functions.create-album-checkout]

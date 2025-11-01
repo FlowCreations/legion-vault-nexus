@@ -1,141 +1,129 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { sig } from '@/utils/signaling';
+import React, { useEffect, useState, useRef } from 'react';
+import { Room, RoomEvent, Track } from 'livekit-client';
+import { supabase } from '@/integrations/supabase/client';
 
-type Props = { eventId: string; turn?: { urls: string | string[]; username?: string; credential?: string } };
+type Props = { eventId: string };
 
-export function ExpandableLiveViewer({ eventId, turn }: Props) {
-  const [connecting, setConnecting] = useState(false);
-  const [err, setErr] = useState<string>();
-  const [wsOpen, setWsOpen] = useState(sig.getState() === WebSocket.OPEN);
-
+export function ExpandableLiveViewer({ eventId }: Props) {
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+  const [error, setError] = useState<string>();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const offerRef = useRef<RTCSessionDescriptionInit | null>(null);
-  const retriesRef = useRef(0);
-
-  const rtcConfig = useMemo<RTCConfiguration>(() => ({
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      ...(turn ? [turn] : []),
-    ],
-  }), [turn]);
-
-  useEffect(() => {
-    const tick = setInterval(() => setWsOpen(sig.getState() === WebSocket.OPEN), 600);
-    return () => clearInterval(tick);
-  }, []);
+  const roomRef = useRef<Room | null>(null);
 
   const connect = async () => {
-    setConnecting(true); setErr(undefined);
-    console.log('[Viewer] Starting connection...');
-
-    sig.connect();
-    try {
-      await sig.waitForOpen(8000);
-      console.log('[Viewer] Signaling connected, joining as viewer');
-      sig.send({ type: 'join', role: 'viewer', roomId: eventId });
-    } catch (e: any) {
-      console.error('[Viewer] Signaling failed:', e);
-      setErr('Signaling failed: ' + (e?.message || e)); setConnecting(false); return;
-    }
-
-    // Wait for broadcaster presence (server should emit), fallback after 2s
-    console.log('[Viewer] Waiting for broadcaster presence...');
-    try {
-      await Promise.race([
-        sig.once('broadcaster-present', 2000),
-        (async () => { const s = await sig.once('room-state', 2000).catch(() => ({ broadcaster: true })); return s; })(),
-      ]);
-      console.log('[Viewer] Broadcaster present, creating offer');
-    } catch {
-      console.log('[Viewer] Broadcaster presence timeout, proceeding anyway');
-    }
+    setStatus('connecting');
+    setError(undefined);
+    console.log('[Viewer] Connecting to room:', eventId);
 
     try {
-      const pc = new RTCPeerConnection(rtcConfig);
-      pcRef.current = pc;
-      console.log('[Viewer] Created peer connection');
+      // Get token from edge function
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
+        body: { 
+          roomName: eventId, 
+          participantName: `Viewer-${Math.random().toString(36).substr(2, 9)}`,
+          role: 'viewer' 
+        },
+      });
 
-      pc.ontrack = async (ev) => {
-        console.log('[Viewer] Received track:', ev.track.kind);
-        const [stream] = ev.streams;
-        if (videoRef.current && stream) {
-          videoRef.current.srcObject = stream;
-          try { await videoRef.current.play(); console.log('[Viewer] Video playing'); } catch {} // user gesture existed (clicked Enter)
+      if (tokenError) throw tokenError;
+      console.log('[Viewer] Token received');
+
+      const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || 'wss://sonsoflegionlivestudio-lvof78tr.livekit.cloud';
+
+      // Create and connect room
+      const room = new Room();
+      roomRef.current = room;
+
+      room.on(RoomEvent.Connected, () => {
+        console.log('[Viewer] Connected to room');
+        setStatus('connected');
+      });
+
+      room.on(RoomEvent.Disconnected, () => {
+        console.log('[Viewer] Disconnected from room');
+        setStatus('idle');
+      });
+
+      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        console.log('[Viewer] Track subscribed:', track.kind, 'from', participant.identity);
+        if (track.kind === Track.Kind.Video && videoRef.current) {
+          track.attach(videoRef.current);
+          console.log('[Viewer] Video track attached');
         }
-      };
-      pc.onicecandidate = (ev) => {
-        if (ev.candidate) {
-          console.log('[Viewer] Sending ICE candidate');
-          try { sig.send({ type: 'ice-candidate', roomId: eventId, candidate: ev.candidate.toJSON(), from: 'viewer' }); } catch {}
-        }
-      };
-      pc.onconnectionstatechange = () => {
-        const s = pc.connectionState;
-        console.log('[Viewer] Connection state:', s);
-        if (s === 'connected') setConnecting(false);
-        if (s === 'failed' || s === 'disconnected') setErr('Peer connection ' + s);
-      };
+      });
 
-      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-      await pc.setLocalDescription(offer);
-      offerRef.current = offer;
-      console.log('[Viewer] Sending offer to broadcaster');
-      sig.send({ type: 'viewer-offer', roomId: eventId, sdp: offer });
-
-      // Retry offer if no answer within 5s (max 3)
-      const tryResend = async () => {
-        if (!connecting) return;
-        if (retriesRef.current >= 3) return;
-        retriesRef.current += 1;
-        console.log('[Viewer] Retrying offer, attempt', retriesRef.current);
-        try { sig.send({ type: 'viewer-offer', roomId: eventId, sdp: offerRef.current! }); } catch {}
-        setTimeout(tryResend, 5000);
-      };
-      setTimeout(tryResend, 5000);
+      await room.connect(livekitUrl, tokenData.token);
+      console.log('[Viewer] Viewing stream!');
     } catch (e: any) {
-      console.error('[Viewer] Offer flow failed:', e);
-      setErr('Offer failed: ' + (e?.message || e)); setConnecting(false);
+      console.error('[Viewer] Error:', e);
+      setError(e.message);
+      setStatus('error');
     }
   };
 
+  const disconnect = () => {
+    console.log('[Viewer] Disconnecting');
+    if (roomRef.current) {
+      roomRef.current.disconnect();
+      roomRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStatus('idle');
+  };
+
   useEffect(() => {
-    const onAnswer = async (msg: any) => {
-      console.log('[Viewer] Received broadcaster answer');
-      try { await pcRef.current?.setRemoteDescription(new RTCSessionDescription(msg.sdp)); console.log('[Viewer] Applied answer'); }
-      catch (e: any) { console.error('[Viewer] Apply answer failed:', e); setErr('Apply answer failed: ' + (e?.message || e)); }
-      finally { setConnecting(false); }
-    };
-    const onIceFromBroadcaster = async (msg: any) => {
-      console.log('[Viewer] Received ICE candidate from broadcaster');
-      try { await pcRef.current?.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch {}
-    };
-    sig.on('broadcaster-answer', onAnswer);
-    sig.on('ice-candidate', onIceFromBroadcaster);
     return () => {
-      sig.off('broadcaster-answer', onAnswer);
-      sig.off('ice-candidate', onIceFromBroadcaster);
-      try { pcRef.current?.close(); } catch {}
-      pcRef.current = null;
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+      }
     };
-  }, [eventId]);
+  }, []);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm">
-        <span className={`inline-block h-2 w-2 rounded-full ${wsOpen ? 'bg-green-500' : 'bg-red-500'}`} />
-        <span>Signaling: {wsOpen ? 'Connected' : 'Disconnected'}</span>
+        <span className={`inline-block h-2 w-2 rounded-full ${
+          status === 'connected' ? 'bg-green-500' : 
+          status === 'connecting' ? 'bg-yellow-500' : 
+          'bg-red-500'
+        }`} />
+        <span>Status: {status}</span>
         <span className="opacity-60">Room: {eventId}</span>
       </div>
 
       <div className="flex gap-2">
-        <button onClick={connect} disabled={connecting} className="rounded-md border px-3 py-1.5 disabled:opacity-60">
-          {connecting ? 'Connecting…' : 'Enter'}
-        </button>
+        {status === 'idle' || status === 'error' ? (
+          <button 
+            onClick={connect} 
+            className="rounded-md border px-3 py-1.5 hover:bg-gray-100"
+          >
+            Enter Stream
+          </button>
+        ) : (
+          <button 
+            onClick={disconnect} 
+            className="rounded-md border px-3 py-1.5 hover:bg-gray-100"
+          >
+            Leave Stream
+          </button>
+        )}
       </div>
 
-      <video ref={videoRef} playsInline controls className="w-full rounded-lg border" />
-      {err && <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">{err}</div>}
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        controls 
+        className="w-full rounded-lg border bg-black" 
+      />
+      
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,221 +1,144 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { sig } from '@/utils/signaling';
+import React, { useEffect, useState, useRef } from 'react';
+import { Room, RoomEvent, createLocalTracks, Track } from 'livekit-client';
+import { supabase } from '@/integrations/supabase/client';
 
-type DeviceInfo = { deviceId: string; label: string };
-type Props = { eventId: string; turn?: { urls: string | string[]; username?: string; credential?: string } };
+type Props = { eventId: string };
 
-export const LiveBroadcaster = ({ eventId, turn }: Props) => {
+export function LiveBroadcaster({ eventId }: Props) {
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'live' | 'error'>('idle');
+  const [error, setError] = useState<string>();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const roomRef = useRef<Room | null>(null);
 
-  const [cams, setCams] = useState<DeviceInfo[]>([]);
-  const [mics, setMics] = useState<DeviceInfo[]>([]);
-  const [camId, setCamId] = useState<string>('');
-  const [micId, setMicId] = useState<string>('');
-  const [state, setState] = useState<'idle' | 'preview' | 'waiting' | 'live' | 'error'>('idle');
-  const [err, setErr] = useState<string>();
-  const [wsOpen, setWsOpen] = useState(false);
+  const startBroadcast = async () => {
+    setStatus('connecting');
+    setError(undefined);
+    console.log('[Broadcaster] Starting broadcast for room:', eventId);
 
-  const rtcConfig = useMemo<RTCConfiguration>(() => ({
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      ...(turn ? [turn] : []),
-    ],
-  }), [turn]);
-
-  // --- Helpers -------------------------------------------------------
-  async function ensureLocalStream() {
-    if (streamRef.current) return streamRef.current;
     try {
-      // First permission to unlock labels (why: labels hidden pre-permission)
-      if (!camId || !micId) {
-        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        tmp.getTracks().forEach(t => t.stop());
-      }
-      const media = await navigator.mediaDevices.getUserMedia({
-        video: camId ? { deviceId: { exact: camId } } : true,
-        audio: micId ? { deviceId: { exact: micId } } : true,
+      // Get token from edge function
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
+        body: { 
+          roomName: eventId, 
+          participantName: 'Broadcaster',
+          role: 'broadcaster' 
+        },
       });
-      streamRef.current = media;
-      if (videoRef.current) { videoRef.current.srcObject = media; await videoRef.current.play().catch(() => {}); }
-      setState(prev => (prev === 'idle' ? 'preview' : prev));
-      setErr(undefined);
-      return media;
-    } catch (e: any) {
-      setErr(e?.message || 'Failed to access camera/mic');
-      setState('error');
-      throw e;
-    }
-  }
 
-  function stopLocal() {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-  }
+      if (tokenError) throw tokenError;
+      console.log('[Broadcaster] Token received');
 
-  // --- WS + Devices --------------------------------------------------
-  useEffect(() => {
-    let mounted = true;
-
-    sig.connect();
-    (async () => {
-      try {
-        await sig.waitForOpen(8000);
-        setWsOpen(true);
-        sig.send({ type: 'join', role: 'broadcaster', roomId: eventId });
-      } catch (e: any) {
-        setErr(`Signaling failed: ${e?.message || e}`); setState('error'); return;
-      }
-      // Enumerate devices after permission to get labels
-      try {
-        const perm = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        perm.getTracks().forEach(t => t.stop());
-      } catch {}
-      const list = await navigator.mediaDevices.enumerateDevices();
-      const cs = list.filter(d => d.kind === 'videoinput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Camera' }));
-      const ms = list.filter(d => d.kind === 'audioinput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Microphone' }));
-      if (!mounted) return;
-      setCams(cs); setMics(ms);
-      if (!camId && cs[0]) setCamId(cs[0].deviceId);
-      if (!micId && ms[0]) setMicId(ms[0].deviceId);
+      const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || 'wss://sonsoflegionlivestudio-lvof78tr.livekit.cloud';
       
-      // Auto-start preview and stream after devices loaded
-      if (!mounted) return;
-      console.log('[Broadcaster] Auto-starting stream...');
-      await ensureLocalStream();
-      if (!mounted) return;
-      setState('waiting');
-    })();
+      // Create and connect room
+      const room = new Room();
+      roomRef.current = room;
 
-    // handle viewer offer
-    const onViewerOffer = async (msg: any) => {
-      console.log('[Broadcaster] Received viewer-offer');
-      try {
-        // Ensure media exists BEFORE answering (why: avoid empty answer)
-        await ensureLocalStream();
-        console.log('[Broadcaster] Media stream ready, creating answer');
+      room.on(RoomEvent.Connected, () => {
+        console.log('[Broadcaster] Connected to room');
+        setStatus('live');
+      });
 
-        if (!pcRef.current) {
-          pcRef.current = new RTCPeerConnection(rtcConfig);
-          pcRef.current.onicecandidate = (ev) => {
-            if (ev.candidate) {
-              console.log('[Broadcaster] Sending ICE candidate to viewer');
-              try { sig.send({ type: 'ice-candidate', roomId: eventId, candidate: ev.candidate.toJSON(), from: 'broadcaster' }); } catch {}
-            }
-          };
-          // Attach tracks once
-          streamRef.current!.getTracks().forEach(t => pcRef.current!.addTrack(t, streamRef.current!));
-          console.log('[Broadcaster] Added', streamRef.current!.getTracks().length, 'tracks to peer connection');
-          pcRef.current.onconnectionstatechange = () => {
-            const s = pcRef.current?.connectionState;
-            console.log('[Broadcaster] Connection state:', s);
-            if (s === 'connected') setState('live');
-          };
+      room.on(RoomEvent.Disconnected, () => {
+        console.log('[Broadcaster] Disconnected from room');
+        setStatus('idle');
+      });
+
+      await room.connect(livekitUrl, tokenData.token);
+      console.log('[Broadcaster] Room connected, creating local tracks');
+
+      // Create and publish local tracks
+      const tracks = await createLocalTracks({
+        audio: true,
+        video: { facingMode: 'user' },
+      });
+
+      console.log('[Broadcaster] Local tracks created:', tracks.length);
+
+      for (const track of tracks) {
+        await room.localParticipant.publishTrack(track);
+        if (track.kind === Track.Kind.Video && videoRef.current) {
+          track.attach(videoRef.current);
+          console.log('[Broadcaster] Video track attached to preview');
         }
-        const pc = pcRef.current!;
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        console.log('[Broadcaster] Sending answer to viewer');
-        sig.send({ type: 'broadcaster-answer', roomId: eventId, sdp: answer });
-      } catch (e: any) {
-        console.error('[Broadcaster] Answer failed:', e);
-        setErr(`Answer failed: ${e?.message || e}`);
+      }
+
+      console.log('[Broadcaster] Broadcasting live!');
+    } catch (e: any) {
+      console.error('[Broadcaster] Error:', e);
+      setError(e.message);
+      setStatus('error');
+    }
+  };
+
+  const stopBroadcast = async () => {
+    console.log('[Broadcaster] Stopping broadcast');
+    if (roomRef.current) {
+      roomRef.current.disconnect();
+      roomRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStatus('idle');
+  };
+
+  useEffect(() => {
+    return () => {
+      if (roomRef.current) {
+        roomRef.current.disconnect();
       }
     };
-    const onIceFromViewer = async (msg: any) => {
-      try { await pcRef.current?.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch {}
-    };
-
-    sig.on('viewer-offer', onViewerOffer);
-    sig.on('ice-candidate', onIceFromViewer);
-
-    const wsTick = setInterval(() => setWsOpen(sig.getState() === WebSocket.OPEN), 600);
-
-    return () => {
-      mounted = false;
-      clearInterval(wsTick);
-      sig.off('viewer-offer', onViewerOffer);
-      sig.off('ice-candidate', onIceFromViewer);
-      try { pcRef.current?.close(); } catch {}
-      pcRef.current = null;
-      stopLocal();
-    };
-  }, [eventId, rtcConfig, camId, micId]);
-
-  // --- UI actions ----------------------------------------------------
-  async function startPreview() { await ensureLocalStream(); setState('preview'); }
-  async function startStream() { await ensureLocalStream(); setState('waiting'); }
-  function endStream() { setState('idle'); try { pcRef.current?.close(); } catch {}; pcRef.current = null; stopLocal(); }
-
-  // --- Render --------------------------------------------------------
-  const connected = wsOpen;
+  }, []);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm">
-        <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-        <span>Signaling: {connected ? 'Connected' : 'Disconnected'}</span>
-        <span className="opacity-60">Room: {eventId}</span>
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+          status === 'live' ? 'bg-red-500 text-white' :
+          status === 'connecting' ? 'bg-yellow-500 text-white' :
+          status === 'error' ? 'bg-red-500 text-white' :
+          'bg-gray-500 text-white'
+        }`}>
+          {status === 'live' ? '🔴 LIVE' :
+           status === 'connecting' ? '⏳ Connecting...' :
+           status === 'error' ? '⚠️ Error' :
+           '⚫ Offline'}
+        </div>
+        <span className="text-sm opacity-60">Room: {eventId}</span>
       </div>
 
-      <video ref={videoRef} muted playsInline className="w-full rounded-lg border" />
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        muted 
+        playsInline
+        className="w-full rounded-lg border bg-black"
+      />
 
-      {/* Device selectors */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-          <label className="text-sm font-medium text-foreground block mb-1">Camera</label>
-          <select 
-            className="mt-1 w-full rounded-md border border-border bg-background text-foreground p-2 focus:outline-none focus:ring-2 focus:ring-primary" 
-            value={camId} 
-            onChange={e => setCamId(e.target.value)}
+      <div className="flex gap-2">
+        {status === 'idle' || status === 'error' ? (
+          <button
+            onClick={startBroadcast}
+            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
           >
-            {cams.length === 0 ? <option value="">No cameras</option> :
-              cams.map(c => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-foreground block mb-1">Microphone</label>
-          <select 
-            className="mt-1 w-full rounded-md border border-border bg-background text-foreground p-2 focus:outline-none focus:ring-2 focus:ring-primary" 
-            value={micId} 
-            onChange={e => setMicId(e.target.value)}
+            Start Broadcast
+          </button>
+        ) : (
+          <button
+            onClick={stopBroadcast}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
           >
-            {mics.length === 0 ? <option value="">No microphones</option> :
-              mics.map(m => <option key={m.deviceId} value={m.deviceId}>{m.label}</option>)}
-          </select>
-        </div>
+            Stop Broadcast
+          </button>
+        )}
       </div>
 
-      {/* Controls */}
-      {state === 'idle' && (
-        <div className="flex gap-2">
-          <button onClick={startPreview} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Start Preview</button>
-          <button onClick={startStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Start Stream</button>
+      {error && (
+        <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
+          {error}
         </div>
       )}
-      {state === 'preview' && (
-        <div className="flex gap-2">
-          <button onClick={startStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Go Live (Waiting)</button>
-          <button onClick={endStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Stop</button>
-        </div>
-      )}
-      {state === 'waiting' && (
-        <div className="flex items-center justify-between rounded-md border border-border bg-background p-2">
-          <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" /> Waiting for viewers…</div>
-          <button onClick={endStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-1.5">End Stream</button>
-        </div>
-      )}
-      {state === 'live' && (
-        <div className="flex items-center justify-between rounded-md border border-border bg-background p-2">
-          <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" /> LIVE</div>
-          <button onClick={endStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-1.5">End Stream</button>
-        </div>
-      )}
-
-      {err && <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">{err}</div>}
     </div>
   );
-};
+}
