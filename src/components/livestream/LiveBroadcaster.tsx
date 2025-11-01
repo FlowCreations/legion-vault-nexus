@@ -1,378 +1,199 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Video, VideoOff, Mic, MicOff } from 'lucide-react';
 import { sig } from '@/utils/signaling';
 
-type Props = { eventId: string; iceServers?: RTCIceServer[] };
+type DeviceInfo = { deviceId: string; label: string };
+type Props = { eventId: string; turn?: { urls: string | string[]; username?: string; credential?: string } };
 
-export const LiveBroadcaster = ({ eventId, iceServers }: Props) => {
-  console.log('[LiveBroadcaster] render eventId=', eventId);
-
+export const LiveBroadcaster = ({ eventId, turn }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const [sigState, setSigState] = useState(sig.getState());
-  const [state, setState] = useState<'idle' | 'preview' | 'waiting' | 'live'>('idle');
-  const [error, setError] = useState<string>();
-  const [videoEnabled, setVideoEnabled] = useState(true);
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  
-  const [devices, setDevices] = useState<{ cameras: MediaDeviceInfo[]; microphones: MediaDeviceInfo[] }>({
-    cameras: [],
-    microphones: []
-  });
-  const [selectedCamera, setSelectedCamera] = useState<string>('');
-  const [selectedMicrophone, setSelectedMicrophone] = useState<string>('');
+  const [cams, setCams] = useState<DeviceInfo[]>([]);
+  const [mics, setMics] = useState<DeviceInfo[]>([]);
+  const [camId, setCamId] = useState<string>('');
+  const [micId, setMicId] = useState<string>('');
+  const [state, setState] = useState<'idle' | 'preview' | 'waiting' | 'live' | 'error'>('idle');
+  const [err, setErr] = useState<string>();
+  const [wsOpen, setWsOpen] = useState(false);
 
-  const rtcConfig = useMemo<RTCConfiguration>(
-    () => ({ iceServers: iceServers ?? [{ urls: 'stun:stun.l.google.com:19302' }] }),
-    [iceServers]
-  );
+  const rtcConfig = useMemo<RTCConfiguration>(() => ({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      ...(turn ? [turn] : []),
+    ],
+  }), [turn]);
 
-  useEffect(() => {
-    const id = setInterval(() => setSigState(sig.getState()), 500);
-    return () => clearInterval(id);
-  }, []);
+  // --- Helpers -------------------------------------------------------
+  async function ensureLocalStream() {
+    if (streamRef.current) return streamRef.current;
+    try {
+      // First permission to unlock labels (why: labels hidden pre-permission)
+      if (!camId || !micId) {
+        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        tmp.getTracks().forEach(t => t.stop());
+      }
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: camId ? { deviceId: { exact: camId } } : true,
+        audio: micId ? { deviceId: { exact: micId } } : true,
+      });
+      streamRef.current = media;
+      if (videoRef.current) { videoRef.current.srcObject = media; await videoRef.current.play().catch(() => {}); }
+      setState(prev => (prev === 'idle' ? 'preview' : prev));
+      setErr(undefined);
+      return media;
+    } catch (e: any) {
+      setErr(e?.message || 'Failed to access camera/mic');
+      setState('error');
+      throw e;
+    }
+  }
 
+  function stopLocal() {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }
+
+  // --- WS + Devices --------------------------------------------------
   useEffect(() => {
     let mounted = true;
 
-    const boot = async () => {
-      setError(undefined);
-      sig.connect();
-
+    sig.connect();
+    (async () => {
       try {
         await sig.waitForOpen(8000);
-      } catch (e: any) {
-        console.error('[LiveBroadcaster] signaling open failed', e);
-        const d = sig.getDiagnostics();
-        setError(`Signaling failed: ${e?.message || e}. url=${d.url} state=${d.state} close=${d.lastClose?.code || ''}:${d.lastClose?.reason || ''}`);
-        return;
-      }
-
-      try {
+        setWsOpen(true);
         sig.send({ type: 'join', role: 'broadcaster', roomId: eventId });
       } catch (e: any) {
-        setError(e.message ?? 'Failed to join room');
-        return;
+        setErr(`Signaling failed: ${e?.message || e}`); setState('error'); return;
       }
-
-      // Auto-start preview and stream
-      if (!mounted) return;
-      await loadDevices();
-      if (!mounted) return;
-      await startPreview();
-      if (!mounted) return;
-      startStream();
-    };
-
-    boot();
-
-    const onViewerOffer = async (msg: any) => {
-      console.log('[LiveBroadcaster] viewer-offer');
+      // Enumerate devices after permission to get labels
       try {
+        const perm = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        perm.getTracks().forEach(t => t.stop());
+      } catch {}
+      const list = await navigator.mediaDevices.enumerateDevices();
+      const cs = list.filter(d => d.kind === 'videoinput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Camera' }));
+      const ms = list.filter(d => d.kind === 'audioinput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Microphone' }));
+      if (!mounted) return;
+      setCams(cs); setMics(ms);
+      if (!camId && cs[0]) setCamId(cs[0].deviceId);
+      if (!micId && ms[0]) setMicId(ms[0].deviceId);
+    })();
+
+    // handle viewer offer
+    const onViewerOffer = async (msg: any) => {
+      try {
+        // Ensure media exists BEFORE answering (why: avoid empty answer)
+        await ensureLocalStream();
+
         if (!pcRef.current) {
           pcRef.current = new RTCPeerConnection(rtcConfig);
           pcRef.current.onicecandidate = (ev) => {
             if (ev.candidate) {
-              try {
-                sig.send({
-                  type: 'ice-candidate',
-                  roomId: eventId,
-                  candidate: ev.candidate.toJSON(),
-                  from: 'broadcaster',
-                });
-              } catch {}
+              try { sig.send({ type: 'ice-candidate', roomId: eventId, candidate: ev.candidate.toJSON(), from: 'broadcaster' }); } catch {}
             }
           };
+          // Attach tracks once
+          streamRef.current!.getTracks().forEach(t => pcRef.current!.addTrack(t, streamRef.current!));
           pcRef.current.onconnectionstatechange = () => {
-            if (pcRef.current?.connectionState === 'connected') {
-              setState('live');
-            }
+            const s = pcRef.current?.connectionState;
+            if (s === 'connected') setState('live');
           };
         }
-        const pc = pcRef.current;
-
-        if (streamRef.current && pc.getSenders().length === 0) {
-          streamRef.current.getTracks().forEach((t) => pc.addTrack(t, streamRef.current!));
-        }
-
+        const pc = pcRef.current!;
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         sig.send({ type: 'broadcaster-answer', roomId: eventId, sdp: answer });
-      } catch (e) {
-        console.error('[LiveBroadcaster] answer flow failed', e);
-        setError('Failed to answer viewer');
+      } catch (e: any) {
+        setErr(`Answer failed: ${e?.message || e}`);
       }
     };
-
     const onIceFromViewer = async (msg: any) => {
-      try {
-        if (!pcRef.current) return;
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(msg.candidate));
-      } catch (e) {
-        console.warn('[LiveBroadcaster] addIceCandidate viewer failed', e);
-      }
+      try { await pcRef.current?.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch {}
     };
 
     sig.on('viewer-offer', onViewerOffer);
     sig.on('ice-candidate', onIceFromViewer);
 
+    const wsTick = setInterval(() => setWsOpen(sig.getState() === WebSocket.OPEN), 600);
+
     return () => {
       mounted = false;
+      clearInterval(wsTick);
       sig.off('viewer-offer', onViewerOffer);
       sig.off('ice-candidate', onIceFromViewer);
-
-      try {
-        pcRef.current?.getSenders().forEach((s) => s.track?.stop());
-        pcRef.current?.close();
-      } catch {}
+      try { pcRef.current?.close(); } catch {}
       pcRef.current = null;
-
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
+      stopLocal();
     };
-  }, [eventId, rtcConfig]);
+  }, [eventId, rtcConfig, camId, micId]);
 
-  async function loadDevices() {
-    try {
-      const permissionStream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
-      
-      const deviceList = await navigator.mediaDevices.enumerateDevices();
-      const cameras = deviceList.filter(d => d.kind === 'videoinput');
-      const microphones = deviceList.filter(d => d.kind === 'audioinput');
-      
-      permissionStream.getTracks().forEach(track => track.stop());
-      
-      setDevices({ cameras, microphones });
-      if (cameras.length > 0) setSelectedCamera(cameras[0].deviceId);
-      if (microphones.length > 0) setSelectedMicrophone(microphones[0].deviceId);
-    } catch (e: any) {
-      console.error('Failed to enumerate devices:', e);
-      setError('Permission denied. Please allow camera and microphone access.');
-    }
-  }
+  // --- UI actions ----------------------------------------------------
+  async function startPreview() { await ensureLocalStream(); setState('preview'); }
+  async function startStream() { await ensureLocalStream(); setState('waiting'); }
+  function endStream() { setState('idle'); try { pcRef.current?.close(); } catch {}; pcRef.current = null; stopLocal(); }
 
-  async function startPreview() {
-    try {
-      if (!selectedCamera || !selectedMicrophone) {
-        throw new Error('Please select camera and microphone first');
-      }
-      
-      const media = await navigator.mediaDevices.getUserMedia({
-        video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
-        audio: selectedMicrophone ? { deviceId: { exact: selectedMicrophone } } : true
-      });
-      
-      streamRef.current = media;
-      if (videoRef.current) {
-        videoRef.current.srcObject = media;
-        await videoRef.current.play().catch(() => {});
-      }
-      setState('preview');
-      setError(undefined);
-    } catch (e: any) {
-      if (e.name === 'NotAllowedError') {
-        setError('Permission denied. Please allow camera and microphone access.');
-      } else if (e.name === 'NotFoundError') {
-        setError('Camera or microphone not found. Please check your devices.');
-      } else {
-        setError(e?.message || 'Failed to access camera/microphone');
-      }
-    }
-  }
-
-  function startStream() {
-    if (!streamRef.current) {
-      startPreview();
-    }
-    setState('waiting');
-  }
-
-  function toggleVideo() {
-    if (streamRef.current) {
-      const videoTrack = streamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setVideoEnabled(videoTrack.enabled);
-      }
-    }
-  }
-
-  function toggleAudio() {
-    if (streamRef.current) {
-      const audioTrack = streamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setAudioEnabled(audioTrack.enabled);
-      }
-    }
-  }
-
-  function endStream() {
-    pcRef.current?.getSenders().forEach(s => s.track?.stop());
-    pcRef.current?.close();
-    pcRef.current = null;
-    streamRef.current?.getTracks().forEach(track => track.stop());
-    streamRef.current = null;
-    setState('idle');
-    sig.send({ type: 'end', role: 'broadcaster', roomId: eventId });
-  }
-
-  const connected = sigState === WebSocket.OPEN;
-  const diag = sig.getDiagnostics();
+  // --- Render --------------------------------------------------------
+  const connected = wsOpen;
 
   return (
-    <Card className="p-4">
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <span>Signaling: {connected ? 'Connected' : 'Disconnected'}</span>
-          <span className="opacity-60">Room: {eventId}</span>
-          {!connected && (
-            <Button size="sm" variant="outline" onClick={() => sig.connect()} className="h-6 px-2 text-xs">
-              Reconnect
-            </Button>
-          )}
-        </div>
-
-        {!connected && (
-          <div className="rounded-md border p-2 text-xs space-y-1">
-            <div><span className="font-semibold">URL:</span> {diag.url}</div>
-            <div><span className="font-semibold">State:</span> {String(diag.state)} (0 CONNECTING, 1 OPEN, 2 CLOSING, 3 CLOSED)</div>
-            {diag.lastClose && <div><span className="font-semibold">Close:</span> {diag.lastClose.code} – {diag.lastClose.reason || '(no reason)'}</div>}
-            {diag.lastError && <div><span className="font-semibold">Error:</span> {diag.lastError}</div>}
-          </div>
-        )}
-
-        <div className="rounded-xl overflow-hidden bg-black aspect-video">
-          <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-        </div>
-
-        {state === 'idle' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Camera {devices.cameras.length > 0 && `(${devices.cameras.length})`}
-                </label>
-                <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select camera" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {devices.cameras.length === 0 ? (
-                      <SelectItem value="none" disabled>No cameras found</SelectItem>
-                    ) : (
-                      devices.cameras.map(device => (
-                        <SelectItem key={device.deviceId} value={device.deviceId}>
-                          {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Microphone {devices.microphones.length > 0 && `(${devices.microphones.length})`}
-                </label>
-                <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select microphone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {devices.microphones.length === 0 ? (
-                      <SelectItem value="none" disabled>No microphones found</SelectItem>
-                    ) : (
-                      devices.microphones.map(device => (
-                        <SelectItem key={device.deviceId} value={device.deviceId}>
-                          {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <Button 
-              onClick={startPreview} 
-              className="w-full"
-              disabled={devices.cameras.length === 0 || devices.microphones.length === 0}
-            >
-              Start Preview
-            </Button>
-          </div>
-        )}
-
-        {state === 'preview' && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button onClick={toggleVideo} variant={videoEnabled ? 'default' : 'destructive'} size="icon">
-                {videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-              </Button>
-              <Button onClick={toggleAudio} variant={audioEnabled ? 'default' : 'destructive'} size="icon">
-                {audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-              </Button>
-            </div>
-            <Button onClick={startStream} className="w-full">Start Stream</Button>
-          </div>
-        )}
-
-        {state === 'waiting' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-yellow-500 rounded-full animate-pulse" />
-                <span className="text-sm font-semibold">WAITING FOR VIEWERS</span>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={toggleVideo} variant={videoEnabled ? 'default' : 'destructive'} size="icon">
-                  {videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-                </Button>
-                <Button onClick={toggleAudio} variant={audioEnabled ? 'default' : 'destructive'} size="icon">
-                  {audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <Button onClick={endStream} variant="destructive" className="w-full">End Stream</Button>
-          </div>
-        )}
-
-        {state === 'live' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-sm font-semibold">LIVE</span>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={toggleVideo} variant={videoEnabled ? 'default' : 'destructive'} size="icon">
-                  {videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-                </Button>
-                <Button onClick={toggleAudio} variant={audioEnabled ? 'default' : 'destructive'} size="icon">
-                  {audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <Button onClick={endStream} variant="destructive" className="w-full">End Stream</Button>
-          </div>
-        )}
-
-        {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">
-            {error}
-          </div>
-        )}
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm">
+        <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
+        <span>Signaling: {connected ? 'Connected' : 'Disconnected'}</span>
+        <span className="opacity-60">Room: {eventId}</span>
       </div>
-    </Card>
+
+      <video ref={videoRef} muted playsInline className="w-full rounded-lg border" />
+
+      {/* Device selectors */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className="text-sm">Camera</label>
+          <select className="mt-1 w-full rounded-md border p-2" value={camId} onChange={e => setCamId(e.target.value)}>
+            {cams.length === 0 ? <option value="">No cameras</option> :
+              cams.map(c => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm">Microphone</label>
+          <select className="mt-1 w-full rounded-md border p-2" value={micId} onChange={e => setMicId(e.target.value)}>
+            {mics.length === 0 ? <option value="">No microphones</option> :
+              mics.map(m => <option key={m.deviceId} value={m.deviceId}>{m.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Controls */}
+      {state === 'idle' && (
+        <div className="flex gap-2">
+          <button onClick={startPreview} className="rounded-md border px-3 py-2">Start Preview</button>
+          <button onClick={startStream} className="rounded-md border px-3 py-2">Start Stream</button>
+        </div>
+      )}
+      {state === 'preview' && (
+        <div className="flex gap-2">
+          <button onClick={startStream} className="rounded-md border px-3 py-2">Go Live (Waiting)</button>
+          <button onClick={endStream} className="rounded-md border px-3 py-2">Stop</button>
+        </div>
+      )}
+      {state === 'waiting' && (
+        <div className="flex items-center justify-between rounded-md border p-2">
+          <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" /> Waiting for viewers…</div>
+          <button onClick={endStream} className="rounded-md border px-3 py-1.5">End Stream</button>
+        </div>
+      )}
+      {state === 'live' && (
+        <div className="flex items-center justify-between rounded-md border p-2">
+          <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" /> LIVE</div>
+          <button onClick={endStream} className="rounded-md border px-3 py-1.5">End Stream</button>
+        </div>
+      )}
+
+      {err && <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">{err}</div>}
+    </div>
   );
 };

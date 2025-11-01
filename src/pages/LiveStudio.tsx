@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import liveAcousticSession from "@/assets/live-acoustic-session.png";
 import { useCartStore } from "@/stores/cartStore";
 import { ShopifyProduct } from "@/lib/shopify";
-import ExpandableLiveViewer from "@/components/livestream/ExpandableLiveViewer";
+import { ExpandableLiveViewer } from "@/components/livestream/ExpandableLiveViewer";
 import { StreamCountdown } from "@/components/livestream/StreamCountdown";
 import { StreamIntro } from "@/components/livestream/StreamIntro";
 
