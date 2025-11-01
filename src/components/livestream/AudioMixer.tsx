@@ -253,23 +253,29 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         onProcessedStream(destination.stream);
       }
 
-      // Update spectrum visualization and audio levels
+      // Update spectrum visualization and audio levels with smoothing
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      let smoothedLevel = 0;
+      const smoothingFactor = 0.3; // Lower = smoother, higher = more responsive
+      
       const updateSpectrum = () => {
         analyser.getByteFrequencyData(dataArray);
         setSpectrumData(Array.from(dataArray));
         
         // Calculate overall audio level
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        const normalizedLevel = Math.min(100, (average / 255) * 100);
+        const rawLevel = Math.min(100, (average / 255) * 100);
+        
+        // Apply exponential smoothing to reduce jitter
+        smoothedLevel = smoothedLevel * (1 - smoothingFactor) + rawLevel * smoothingFactor;
         
         // Debug log occasionally
         if (Math.random() < 0.02) {
-          console.log('[AudioMixer] Audio level:', normalizedLevel, 'raw:', average, 'sample:', dataArray.slice(0, 5));
+          console.log('[AudioMixer] Audio level:', smoothedLevel.toFixed(1), 'raw:', rawLevel.toFixed(1));
         }
         
         if (onAudioLevel) {
-          onAudioLevel(normalizedLevel);
+          onAudioLevel(smoothedLevel);
         }
         
         animationFrameId = requestAnimationFrame(updateSpectrum);
@@ -308,8 +314,12 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
   return (
     <Card className="p-4">
-      <Tabs defaultValue="eq" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="mixing" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="mixing" className="gap-1">
+            <Volume2 className="w-3 h-3" />
+            Mixing
+          </TabsTrigger>
           <TabsTrigger value="eq" className="gap-1">
             <Sliders className="w-3 h-3" />
             EQ
@@ -327,6 +337,45 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
             Master
           </TabsTrigger>
         </TabsList>
+
+        {/* Mixing Tools Tab */}
+        <TabsContent value="mixing" className="space-y-4">
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Fine-tune your audio levels and balance
+            </p>
+            
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-sm">Microphone Gain</Label>
+                <span className="text-xs text-muted-foreground">{masterGain.toFixed(2)}x</span>
+              </div>
+              <Slider
+                value={[masterGain]}
+                onValueChange={(v) => setMasterGain(v[0])}
+                min={0}
+                max={2}
+                step={0.1}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-sm">Reverb Mix</Label>
+                <span className="text-xs text-muted-foreground">{reverbMix}%</span>
+              </div>
+              <Slider
+                value={[reverbMix]}
+                onValueChange={(v) => setReverbMix(v[0])}
+                min={0}
+                max={100}
+                step={1}
+              />
+            </div>
+          </div>
+        </TabsContent>
 
         {/* Spectrum Analyzer with EQ Response Curve */}
         <div className="mt-4 mb-4 relative">
