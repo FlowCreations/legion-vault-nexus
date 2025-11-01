@@ -59,10 +59,17 @@ export const LiveBroadcaster = ({ eventId, iceServers }: Props) => {
         setError(e.message ?? 'Failed to join room');
         return;
       }
+
+      // Auto-start preview and stream
+      if (!mounted) return;
+      await loadDevices();
+      if (!mounted) return;
+      await startPreview();
+      if (!mounted) return;
+      startStream();
     };
 
     boot();
-    loadDevices();
 
     const onViewerOffer = async (msg: any) => {
       console.log('[LiveBroadcaster] viewer-offer');
