@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Video, VideoOff, Mic, MicOff, Play, Volume2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { AudioMixer } from './AudioMixer';
 
 type Props = { eventId: string };
 
@@ -29,6 +30,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
   useEffect(() => {
     loadDevices();
@@ -66,17 +68,15 @@ export function LiveBroadcaster({ eventId }: Props) {
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
-      const gainNode = audioContext.createGain();
 
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
       
-      source.connect(gainNode);
-      gainNode.connect(analyser);
+      source.connect(analyser);
 
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
-      gainNodeRef.current = gainNode;
+      sourceNodeRef.current = source;
 
       console.log('[Broadcaster] Audio monitoring setup complete');
 
@@ -281,9 +281,6 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const handleMicGainChange = (value: number[]) => {
     setMicGain(value[0]);
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.value = value[0] / 100;
-    }
   };
 
   const handleMusicGainChange = (value: number[]) => {
@@ -383,47 +380,14 @@ export function LiveBroadcaster({ eventId }: Props) {
                   />
                 </div>
               </div>
-
-              {/* Mixer Controls */}
-              <div className="space-y-3 pt-2 border-t">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label className="text-sm flex items-center gap-2">
-                      <Mic className="w-4 h-4" />
-                      Microphone Gain
-                    </Label>
-                    <span className="text-xs text-muted-foreground">{micGain}%</span>
-                  </div>
-                  <Slider
-                    value={[micGain]}
-                    onValueChange={handleMicGainChange}
-                    max={200}
-                    min={0}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label className="text-sm flex items-center gap-2">
-                      <Volume2 className="w-4 h-4" />
-                      Music/Audio Gain
-                    </Label>
-                    <span className="text-xs text-muted-foreground">{musicGain}%</span>
-                  </div>
-                  <Slider
-                    value={[musicGain]}
-                    onValueChange={handleMusicGainChange}
-                    max={200}
-                    min={0}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-              </div>
             </div>
           </Card>
+
+          {/* Professional Audio Mixer */}
+          <AudioMixer 
+            audioContext={audioContextRef.current}
+            sourceNode={sourceNodeRef.current}
+          />
 
           <div className="flex gap-2">
             {status === 'preview' ? (
