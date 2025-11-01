@@ -301,11 +301,6 @@ export default function LiveStudio() {
 
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
-      {liveEventId ? (
-        <div className="max-w-7xl mx-auto">
-          <ExpandableLiveViewer eventId={liveEventId} />
-        </div>
-      ) : (
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
@@ -325,89 +320,98 @@ export default function LiveStudio() {
             {/* Live Indicator */}
             <div className="flex items-center space-x-3 mb-6">
               <div className="relative">
-                <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
-                <div className="absolute inset-0 w-4 h-4 bg-red-500 rounded-full animate-ping" />
+                <div className={`w-4 h-4 ${liveEventId ? 'bg-red-500' : 'bg-red-500'} rounded-full animate-pulse`} />
+                <div className={`absolute inset-0 w-4 h-4 ${liveEventId ? 'bg-red-500' : 'bg-red-500'} rounded-full animate-ping`} />
               </div>
-              <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                Next Live Event
+              <Badge className={liveEventId ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                {liveEventId ? 'LIVE NOW' : 'Next Live Event'}
               </Badge>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Stream Preview */}
+              {/* Stream Preview or Live Video */}
               <div className="aspect-video rounded-2xl overflow-hidden shadow-gold group hover:shadow-glow transition-all duration-500">
-                <img 
-                  src={liveAcousticSession} 
-                  alt="Acoustic Sessions Live"
-                  className="w-full h-full object-cover"
-                />
+                {liveEventId ? (
+                  <ExpandableLiveViewer eventId={liveEventId} />
+                ) : (
+                  <img 
+                    src={liveAcousticSession} 
+                    alt="Acoustic Sessions Live"
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
 
               {/* Event Info */}
               <div className="flex flex-col justify-center">
                 <h2 className="font-serif text-4xl font-bold mb-4">
-                  Acoustic Sessions Live
+                  {liveEventId ? 'Live Now' : 'Acoustic Sessions Live'}
                 </h2>
                 
                 <p className="text-muted-foreground mb-6 text-lg">
-                  Join us for an intimate acoustic performance featuring stripped down versions 
-                  of your favorite tracks and unreleased material.
+                  {liveEventId 
+                    ? 'Watch the live performance now!' 
+                    : 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.'}
                 </p>
 
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    <span>Tuesday, December 23, 2025</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <Clock className="w-5 h-5 text-primary" />
-                    <span>8:00 PM EST</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <Users className="w-5 h-5 text-primary" />
-                    <span>1,247 registered</span>
-                  </div>
-                </div>
-
-                {/* Countdown Timer */}
-                <div className="bg-card rounded-xl p-4 mb-6 border border-border">
-                  <p className="text-sm text-muted-foreground mb-2">Starting in:</p>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    {[
-                      { value: countdown.days, label: "Days" },
-                      { value: countdown.hours, label: "Hours" },
-                      { value: countdown.minutes, label: "Mins" },
-                      { value: countdown.seconds, label: "Secs" },
-                    ].map((item) => (
-                      <div key={item.label}>
-                        <div className="font-serif text-3xl font-bold text-primary">{item.value}</div>
-                        <div className="text-xs text-muted-foreground">{item.label}</div>
+                {!liveEventId && (
+                  <>
+                    <div className="space-y-3 mb-8">
+                      <div className="flex items-center space-x-3 text-sm">
+                        <Calendar className="w-5 h-5 text-primary" />
+                        <span>Tuesday, December 23, 2025</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="flex items-center space-x-3 text-sm">
+                        <Clock className="w-5 h-5 text-primary" />
+                        <span>8:00 PM EST</span>
+                      </div>
+                      <div className="flex items-center space-x-3 text-sm">
+                        <Users className="w-5 h-5 text-primary" />
+                        <span>1,247 registered</span>
+                      </div>
+                    </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {!isAuthenticated && (
-                    <Button 
-                      size="lg" 
-                      className="bg-gradient-gold hover:shadow-glow transition-all"
-                      onClick={handleGetAccess}
-                    >
-                      <Ticket className="w-5 h-5 mr-2" />
-                      Get Free Access
-                    </Button>
-                  )}
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="border-primary/30 hover:border-primary"
-                    onClick={handleSetReminder}
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    Set Reminder
-                  </Button>
-                </div>
+                    {/* Countdown Timer */}
+                    <div className="bg-card rounded-xl p-4 mb-6 border border-border">
+                      <p className="text-sm text-muted-foreground mb-2">Starting in:</p>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                          { value: countdown.days, label: "Days" },
+                          { value: countdown.hours, label: "Hours" },
+                          { value: countdown.minutes, label: "Mins" },
+                          { value: countdown.seconds, label: "Secs" },
+                        ].map((item) => (
+                          <div key={item.label}>
+                            <div className="font-serif text-3xl font-bold text-primary">{item.value}</div>
+                            <div className="text-xs text-muted-foreground">{item.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      {!isAuthenticated && (
+                        <Button 
+                          size="lg" 
+                          className="bg-gradient-gold hover:shadow-glow transition-all"
+                          onClick={handleGetAccess}
+                        >
+                          <Ticket className="w-5 h-5 mr-2" />
+                          Get Free Access
+                        </Button>
+                      )}
+                      <Button 
+                        size="lg" 
+                        variant="outline" 
+                        className="border-primary/30 hover:border-primary"
+                        onClick={handleSetReminder}
+                      >
+                        <Download className="w-5 h-5 mr-2" />
+                        Set Reminder
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -507,7 +511,7 @@ export default function LiveStudio() {
           </Button>
         </div>
       </div>
-      )}
+
 
       {/* Email Signup Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
