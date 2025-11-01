@@ -20,9 +20,10 @@ interface ChatMessage {
 interface LiveChatProps {
   eventId: string;
   isModerator?: boolean;
+  onTipRequest?: () => void;
 }
 
-export const LiveChat = ({ eventId, isModerator = false }: LiveChatProps) => {
+export const LiveChat = ({ eventId, isModerator = false, onTipRequest }: LiveChatProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [username, setUsername] = useState("");
@@ -187,6 +188,19 @@ export const LiveChat = ({ eventId, isModerator = false }: LiveChatProps) => {
         </div>
       </ScrollArea>
 
+      {onTipRequest && (
+        <div className="px-4 pb-2">
+          <Button 
+            onClick={onTipRequest} 
+            className="w-full"
+            variant="secondary"
+          >
+            <span className="mr-2">💰</span>
+            Send Tip
+          </Button>
+        </div>
+      )}
+      
       <form onSubmit={sendMessage} className="p-4 border-t flex gap-2">
         <Input
           value={newMessage}

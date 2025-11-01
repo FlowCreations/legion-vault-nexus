@@ -170,9 +170,22 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
           ref={videoRef} 
           autoPlay 
           playsInline 
-          controls 
           className="w-full rounded-lg border bg-black aspect-video" 
         />
+        
+        {/* Play button overlay */}
+        {status === 'connected' && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <button
+              onClick={() => videoRef.current?.play()}
+              className="pointer-events-auto w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-all"
+            >
+              <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          </div>
+        )}
         
         {/* Player Controls Overlay */}
         <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -230,9 +243,20 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
                 ref={expandedVideoRef} 
                 autoPlay 
                 playsInline 
-                controls 
                 className="w-full h-full" 
               />
+              
+              {/* Play button overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <button
+                  onClick={() => expandedVideoRef.current?.play()}
+                  className="pointer-events-auto w-20 h-20 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-all"
+                >
+                  <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </button>
+              </div>
               
               {/* Expanded Status & Viewer Count */}
               <div className="absolute top-4 left-4 flex items-center gap-3">
@@ -247,16 +271,8 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
                 )}
               </div>
               
-              {/* Expanded Controls */}
-              <div className="absolute bottom-6 right-6 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleTip}
-                >
-                  <DollarSign className="w-4 h-4 mr-1" />
-                  Tip
-                </Button>
+              {/* Share button in top right */}
+              <div className="absolute top-4 right-4">
                 <Button
                   size="sm"
                   variant="secondary"
@@ -269,8 +285,8 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
             </div>
             
             {/* Live Chat Sidebar */}
-            <div className="border-l bg-background">
-              <LiveChat eventId={eventId} />
+            <div className="border-l bg-background flex flex-col h-full">
+              <LiveChat eventId={eventId} onTipRequest={handleTip} />
             </div>
           </div>
         </DialogContent>
