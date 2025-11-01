@@ -20,6 +20,8 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
+  const videoTrackRef = useRef<Track | null>(null);
+  const audioTrackRef = useRef<Track | null>(null);
 
   const connect = async () => {
     setStatus('connecting');
@@ -58,6 +60,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
         console.log('[Viewer] Track subscribed:', track.kind, 'from', participant.identity);
         if (track.kind === Track.Kind.Video) {
+          videoTrackRef.current = track;
           if (videoRef.current) {
             track.attach(videoRef.current);
           }
@@ -66,6 +69,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
           }
           console.log('[Viewer] Video track attached');
         } else if (track.kind === Track.Kind.Audio) {
+          audioTrackRef.current = track;
           if (videoRef.current) {
             track.attach(videoRef.current);
           }
@@ -96,6 +100,20 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
     }
     setStatus('idle');
   };
+
+  // Attach tracks when expanded view opens
+  useEffect(() => {
+    if (isExpanded && expandedVideoRef.current) {
+      if (videoTrackRef.current) {
+        videoTrackRef.current.attach(expandedVideoRef.current);
+        console.log('[Viewer] Video track attached to expanded view');
+      }
+      if (audioTrackRef.current) {
+        audioTrackRef.current.attach(expandedVideoRef.current);
+        console.log('[Viewer] Audio track attached to expanded view');
+      }
+    }
+  }, [isExpanded]);
 
   useEffect(() => {
     return () => {

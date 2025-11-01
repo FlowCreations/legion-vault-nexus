@@ -4,7 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Video, VideoOff, Mic, MicOff, Play } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Video, VideoOff, Mic, MicOff, Play, Volume2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 type Props = { eventId: string };
 
@@ -17,10 +19,16 @@ export function LiveBroadcaster({ eventId }: Props) {
   const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [selectedMicrophone, setSelectedMicrophone] = useState<string>('');
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [micGain, setMicGain] = useState(100);
+  const [musicGain, setMusicGain] = useState(100);
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
   const videoTrackRef = useRef<LocalTrack | null>(null);
   const audioTrackRef = useRef<LocalTrack | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
 
   useEffect(() => {
     loadDevices();
@@ -44,6 +52,37 @@ export function LiveBroadcaster({ eventId }: Props) {
     } catch (err) {
       console.error('Failed to load devices:', err);
     }
+  };
+
+  const setupAudioMonitoring = (audioTrack: LocalTrack) => {
+    const mediaStreamTrack = audioTrack.mediaStreamTrack;
+    if (!mediaStreamTrack) return;
+
+    const stream = new MediaStream([mediaStreamTrack]);
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    const gainNode = audioContext.createGain();
+
+    analyser.fftSize = 256;
+    source.connect(gainNode);
+    gainNode.connect(analyser);
+
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    gainNodeRef.current = gainNode;
+
+    // Start monitoring audio levels
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    const updateLevel = () => {
+      if (analyserRef.current && (status === 'preview' || status === 'live' || status === 'connecting')) {
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        setAudioLevel(Math.min(100, (average / 255) * 100));
+        requestAnimationFrame(updateLevel);
+      }
+    };
+    updateLevel();
   };
 
   const startPreview = async () => {
@@ -71,6 +110,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
       if (audioTrack) {
         audioTrackRef.current = audioTrack;
+        setupAudioMonitoring(audioTrack);
       }
 
       console.log('[Broadcaster] Preview started');
@@ -90,9 +130,14 @@ export function LiveBroadcaster({ eventId }: Props) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
     }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setAudioLevel(0);
     setStatus('idle');
   };
 
@@ -107,7 +152,6 @@ export function LiveBroadcaster({ eventId }: Props) {
     console.log('[Broadcaster] Starting broadcast for room:', eventId);
 
     try {
-      // Get token from edge function
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
         body: { 
           roomName: eventId, 
@@ -121,7 +165,6 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || 'wss://sonsoflegionlivestudio-lvof78tr.livekit.cloud';
       
-      // Create and connect room
       const room = new Room();
       roomRef.current = room;
 
@@ -137,7 +180,6 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       await room.connect(livekitUrl, tokenData.token);
 
-      // Publish existing tracks from preview
       if (videoTrackRef.current) {
         await room.localParticipant.publishTrack(videoTrackRef.current);
       }
@@ -167,9 +209,14 @@ export function LiveBroadcaster({ eventId }: Props) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
     }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setAudioLevel(0);
     setStatus('idle');
   };
 
@@ -193,6 +240,17 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
       setIsMicOn(!isMicOn);
     }
+  };
+
+  const handleMicGainChange = (value: number[]) => {
+    setMicGain(value[0]);
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = value[0] / 100;
+    }
+  };
+
+  const handleMusicGainChange = (value: number[]) => {
+    setMusicGain(value[0]);
   };
 
   useEffect(() => {
@@ -268,6 +326,67 @@ export function LiveBroadcaster({ eventId }: Props) {
               <span className="text-white text-sm font-medium uppercase">{status}</span>
             </div>
           </div>
+
+          {/* Audio Level Meter */}
+          <Card className="p-4">
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm">Audio Input Level</Label>
+                  <span className="text-xs text-muted-foreground">{Math.round(audioLevel)}%</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-100 ${
+                      audioLevel > 80 ? 'bg-red-500' : 
+                      audioLevel > 50 ? 'bg-yellow-500' : 
+                      'bg-green-500'
+                    }`}
+                    style={{ width: `${audioLevel}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Mixer Controls */}
+              <div className="space-y-3 pt-2 border-t">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm flex items-center gap-2">
+                      <Mic className="w-4 h-4" />
+                      Microphone Gain
+                    </Label>
+                    <span className="text-xs text-muted-foreground">{micGain}%</span>
+                  </div>
+                  <Slider
+                    value={[micGain]}
+                    onValueChange={handleMicGainChange}
+                    max={200}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm flex items-center gap-2">
+                      <Volume2 className="w-4 h-4" />
+                      Music/Audio Gain
+                    </Label>
+                    <span className="text-xs text-muted-foreground">{musicGain}%</span>
+                  </div>
+                  <Slider
+                    value={[musicGain]}
+                    onValueChange={handleMusicGainChange}
+                    max={200}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
 
           <div className="flex gap-2">
             {status === 'preview' ? (
