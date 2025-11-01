@@ -3,6 +3,7 @@ import { MusicPlayer } from "./MusicPlayer";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { toast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { incrementSongListenCount } from "@/hooks/useSurveyTrigger";
 
 export function GlobalMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -106,6 +107,9 @@ export function GlobalMusicPlayer() {
           completed: true
         });
         listenStartTime.current = 0;
+        
+        // Increment song listen count for survey trigger
+        incrementSongListenCount();
       }
       setIsPlaying(false);
       playNext();

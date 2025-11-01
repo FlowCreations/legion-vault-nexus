@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, Loader2, Image as ImageIcon, X, Eye, SlidersHorizontal } from "lucide-react";
+import { PersonalitySurvey } from "@/components/PersonalitySurvey";
+import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import spinningRecord from "@/assets/spinning-record.mp4";
@@ -50,6 +52,7 @@ interface Product {
 
 export default function Merch() {
   const { trackEvent } = useEventTracking();
+  const { showSurvey, handleSurveyClose } = useSurveyTrigger('merch');
   const [activeCategory, setActiveCategory] = useState("apparel");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -565,6 +568,9 @@ export default function Merch() {
 
       {/* AI Shop Assistant */}
       <ShopAssistant />
+
+      {/* Personality Survey */}
+      <PersonalitySurvey isOpen={showSurvey} onClose={handleSurveyClose} />
     </div>
   );
 }
