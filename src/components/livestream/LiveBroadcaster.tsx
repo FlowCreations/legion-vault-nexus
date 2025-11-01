@@ -55,34 +55,46 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const setupAudioMonitoring = (audioTrack: LocalTrack) => {
-    const mediaStreamTrack = audioTrack.mediaStreamTrack;
-    if (!mediaStreamTrack) return;
-
-    const stream = new MediaStream([mediaStreamTrack]);
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const analyser = audioContext.createAnalyser();
-    const gainNode = audioContext.createGain();
-
-    analyser.fftSize = 256;
-    source.connect(gainNode);
-    gainNode.connect(analyser);
-
-    audioContextRef.current = audioContext;
-    analyserRef.current = analyser;
-    gainNodeRef.current = gainNode;
-
-    // Start monitoring audio levels
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    const updateLevel = () => {
-      if (analyserRef.current && (status === 'preview' || status === 'live' || status === 'connecting')) {
-        analyserRef.current.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        setAudioLevel(Math.min(100, (average / 255) * 100));
-        requestAnimationFrame(updateLevel);
+    try {
+      const mediaStreamTrack = audioTrack.mediaStreamTrack;
+      if (!mediaStreamTrack) {
+        console.error('[Broadcaster] No mediaStreamTrack available');
+        return;
       }
-    };
-    updateLevel();
+
+      const stream = new MediaStream([mediaStreamTrack]);
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      const gainNode = audioContext.createGain();
+
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      
+      source.connect(gainNode);
+      gainNode.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      gainNodeRef.current = gainNode;
+
+      console.log('[Broadcaster] Audio monitoring setup complete');
+
+      // Start monitoring audio levels
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const updateLevel = () => {
+        if (analyserRef.current && (status === 'preview' || status === 'live' || status === 'connecting')) {
+          analyserRef.current.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          const normalizedLevel = Math.min(100, (average / 255) * 100);
+          setAudioLevel(normalizedLevel);
+          requestAnimationFrame(updateLevel);
+        }
+      };
+      updateLevel();
+    } catch (err) {
+      console.error('[Broadcaster] Audio monitoring setup failed:', err);
+    }
   };
 
   const startPreview = async () => {
@@ -93,13 +105,32 @@ export function LiveBroadcaster({ eventId }: Props) {
 
     setStatus('preview');
     setError(undefined);
-    console.log('[Broadcaster] Starting preview');
+    console.log('[Broadcaster] Starting preview with devices:', {
+      camera: selectedCamera,
+      microphone: selectedMicrophone
+    });
 
     try {
-      const tracks = await createLocalTracks({
-        audio: { deviceId: selectedMicrophone },
-        video: { deviceId: selectedCamera },
+      // Request permissions first
+      await navigator.mediaDevices.getUserMedia({ 
+        audio: true, 
+        video: true 
       });
+      console.log('[Broadcaster] Permissions granted');
+
+      const tracks = await createLocalTracks({
+        audio: { 
+          deviceId: { exact: selectedMicrophone },
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        },
+        video: { 
+          deviceId: { exact: selectedCamera }
+        },
+      });
+
+      console.log('[Broadcaster] Created tracks:', tracks.length);
 
       const videoTrack = tracks.find(t => t.kind === Track.Kind.Video);
       const audioTrack = tracks.find(t => t.kind === Track.Kind.Audio);
@@ -107,16 +138,22 @@ export function LiveBroadcaster({ eventId }: Props) {
       if (videoTrack && videoRef.current) {
         videoTrack.attach(videoRef.current);
         videoTrackRef.current = videoTrack;
+        console.log('[Broadcaster] Video track attached');
       }
+      
       if (audioTrack) {
         audioTrackRef.current = audioTrack;
+        console.log('[Broadcaster] Audio track created, setting up monitoring');
         setupAudioMonitoring(audioTrack);
+      } else {
+        console.error('[Broadcaster] No audio track found!');
+        setError('Failed to create audio track');
       }
 
-      console.log('[Broadcaster] Preview started');
+      console.log('[Broadcaster] Preview started successfully');
     } catch (e: any) {
       console.error('[Broadcaster] Preview error:', e);
-      setError(e.message);
+      setError(e.message || 'Failed to start preview');
       setStatus('error');
     }
   };
