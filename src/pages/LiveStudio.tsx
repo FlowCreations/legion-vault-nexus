@@ -328,10 +328,12 @@ export default function LiveStudio() {
             {/* Live Indicator */}
             <div className="flex items-center space-x-3 mb-6">
               <div className="relative">
-                <div className={`w-4 h-4 ${liveEventId ? 'bg-red-500' : 'bg-red-500'} rounded-full animate-pulse`} />
-                <div className={`absolute inset-0 w-4 h-4 ${liveEventId ? 'bg-red-500' : 'bg-red-500'} rounded-full animate-ping`} />
+                <div className={`w-4 h-4 rounded-full ${liveEventId ? 'bg-red-500 animate-pulse' : 'bg-muted-foreground'}`} />
+                {liveEventId && (
+                  <div className="absolute inset-0 w-4 h-4 bg-red-500 rounded-full animate-ping" />
+                )}
               </div>
-              <Badge className={liveEventId ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+              <Badge className={liveEventId ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-muted/20 text-muted-foreground border-muted/30"}>
                 {liveEventId ? 'LIVE NOW' : 'Next Live Event'}
               </Badge>
             </div>
@@ -340,29 +342,7 @@ export default function LiveStudio() {
               {/* Stream Preview or Live Video */}
               <div className="relative">
                 <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
-                  {liveEventId && !isViewingLive ? (
-                    <div className="relative aspect-video cursor-pointer group" onClick={() => setIsViewingLive(true)}>
-                      <img 
-                        src={liveAcousticSession} 
-                        alt="Acoustic Sessions Live"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      
-                      {/* Live Now Button Overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Button
-                          size="lg"
-                          className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 text-2xl font-bold shadow-2xl group-hover:scale-105 transition-transform"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="inline-block h-3 w-3 rounded-full bg-white animate-pulse" />
-                            SOL IS LIVE NOW - JOIN STREAM
-                          </div>
-                        </Button>
-                      </div>
-                    </div>
-                  ) : liveEventId && isViewingLive ? (
+                  {liveEventId && isViewingLive ? (
                     <ExpandableLiveViewer eventId={liveEventId} showExternalControls />
                   ) : (
                     <div className="relative aspect-video">
@@ -385,9 +365,23 @@ export default function LiveStudio() {
                 
                 <p className="text-muted-foreground mb-6 text-lg">
                   {liveEventId 
-                    ? 'Watch the live performance now!' 
+                    ? 'Watch the live performance!' 
                     : 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.'}
                 </p>
+
+                {/* Join Stream Button - Only show when live and not viewing */}
+                {liveEventId && !isViewingLive && (
+                  <Button
+                    size="lg"
+                    onClick={() => setIsViewingLive(true)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-6 text-xl font-bold mb-6 shadow-xl"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-block h-3 w-3 rounded-full bg-white animate-pulse" />
+                      SOL IS LIVE NOW - JOIN STREAM
+                    </div>
+                  </Button>
+                )}
 
                 {!liveEventId && (
                   <>

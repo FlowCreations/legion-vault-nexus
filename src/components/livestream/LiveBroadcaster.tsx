@@ -218,6 +218,32 @@ export function LiveBroadcaster({ eventId }: Props) {
     console.log('[Broadcaster] Starting broadcast for room:', eventId);
 
     try {
+      // Check if there's already an active live stream
+      const { data: existingLive, error: checkError } = await supabase
+        .from('livestream_events')
+        .select('id, title')
+        .eq('status', 'live')
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('[Broadcaster] Error checking for existing live streams:', checkError);
+      }
+
+      if (existingLive && existingLive.id !== eventId) {
+        throw new Error('Another broadcaster is already live. Please wait for them to finish.');
+      }
+
+      // Update the event status to live
+      const { error: updateError } = await supabase
+        .from('livestream_events')
+        .update({ status: 'live' })
+        .eq('id', eventId);
+
+      if (updateError) {
+        console.error('[Broadcaster] Error updating event status:', updateError);
+        throw new Error('Failed to set stream as live');
+      }
+
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
         body: { 
           roomName: eventId, 
@@ -241,6 +267,14 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       room.on(RoomEvent.Disconnected, () => {
         console.log('[Broadcaster] Disconnected from room');
+        // Update event status back to scheduled when disconnected
+        supabase
+          .from('livestream_events')
+          .update({ status: 'scheduled' })
+          .eq('id', eventId)
+          .then(({ error }) => {
+            if (error) console.error('[Broadcaster] Error updating status on disconnect:', error);
+          });
         setStatus('idle');
       });
 
@@ -263,6 +297,16 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const stopBroadcast = async () => {
     console.log('[Broadcaster] Stopping broadcast');
+    
+    // Update event status back to scheduled
+    const { error: updateError } = await supabase
+      .from('livestream_events')
+      .update({ status: 'scheduled' })
+      .eq('id', eventId);
+
+    if (updateError) {
+      console.error('[Broadcaster] Error updating event status:', updateError);
+    }
     
     if (roomRef.current) {
       roomRef.current.disconnect();
