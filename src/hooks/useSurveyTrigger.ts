@@ -37,10 +37,10 @@ export const useSurveyTrigger = (pageType: 'merch' | 'other') => {
     // Get total songs listened from localStorage
     const songsListened = parseInt(localStorage.getItem(SONG_LISTEN_COUNT_KEY) || '0', 10);
 
-    // Trigger conditions:
-    // 1. Listened to 3+ songs
-    // 2. Spent 10+ seconds on merch page
-    if (songsListened >= 3 && timeOnPage >= 10 && pageType === 'merch') {
+    // Trigger conditions (TEST MODE - lowered for easy testing):
+    // 1. Listened to 1+ songs (changed from 3 for testing)
+    // 2. Spent 3+ seconds on merch page (changed from 10 for testing)
+    if (songsListened >= 1 && timeOnPage >= 3 && pageType === 'merch') {
       setShowSurvey(true);
     }
   }, [timeOnPage, pageType, playlist]);
