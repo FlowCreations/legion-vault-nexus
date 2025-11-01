@@ -4,12 +4,19 @@ import { useMusicPlayer } from '@/stores/musicPlayerStore';
 const SURVEY_SHOWN_KEY = 'personality_survey_shown';
 const SONG_LISTEN_COUNT_KEY = 'song_listen_count';
 
-export const useSurveyTrigger = (pageType: 'merch' | 'other') => {
+export const useSurveyTrigger = (pageType: 'merch' | 'other', options?: { testMode?: boolean }) => {
   const [showSurvey, setShowSurvey] = useState(false);
   const [timeOnPage, setTimeOnPage] = useState(0);
   const { playlist } = useMusicPlayer();
 
   useEffect(() => {
+    // TEST MODE: Clear the survey shown flag and show immediately
+    if (options?.testMode) {
+      localStorage.removeItem(SURVEY_SHOWN_KEY);
+      setShowSurvey(true);
+      return;
+    }
+
     // Check if survey was already shown
     const surveyShown = localStorage.getItem(SURVEY_SHOWN_KEY);
     if (surveyShown === 'true') return;

@@ -6,9 +6,12 @@ import solLogo from "@/assets/sol-logo-new.png";
 import LogoIntro from "@/components/LogoIntro";
 import { CameoDisplay } from "@/components/CameoDisplay";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { PersonalitySurvey } from "@/components/PersonalitySurvey";
+import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
 
 export default function Home() {
   const { trackEvent } = useEventTracking();
+  const { showSurvey, handleSurveyClose } = useSurveyTrigger('other', { testMode: true });
   const [showIntro, setShowIntro] = useState(() => {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
@@ -27,6 +30,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Personality Survey - TEST MODE */}
+      <PersonalitySurvey isOpen={showSurvey} onClose={handleSurveyClose} />
+      
       {/* Cameo Display - Shows at top if user has active cameos */}
       <div className="container mx-auto px-4 pt-24">
         <CameoDisplay />
