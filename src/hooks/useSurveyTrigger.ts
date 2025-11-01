@@ -6,7 +6,6 @@ const SONG_LISTEN_COUNT_KEY = 'song_listen_count';
 
 export const useSurveyTrigger = (pageType: 'merch' | 'other', options?: { testMode?: boolean }) => {
   const [showSurvey, setShowSurvey] = useState(false);
-  const [timeOnPage, setTimeOnPage] = useState(0);
   const { playlist } = useMusicPlayer();
 
   useEffect(() => {
@@ -21,36 +20,14 @@ export const useSurveyTrigger = (pageType: 'merch' | 'other', options?: { testMo
     const surveyShown = localStorage.getItem(SURVEY_SHOWN_KEY);
     if (surveyShown === 'true') return;
 
-    let startTime = Date.now();
-    let interval: NodeJS.Timeout;
-
-    if (pageType === 'merch') {
-      // Track time on merch page
-      interval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        setTimeOnPage(elapsed);
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [pageType]);
-
-  useEffect(() => {
-    const surveyShown = localStorage.getItem(SURVEY_SHOWN_KEY);
-    if (surveyShown === 'true') return;
-
     // Get total songs listened from localStorage
     const songsListened = parseInt(localStorage.getItem(SONG_LISTEN_COUNT_KEY) || '0', 10);
 
-    // Trigger conditions (TEST MODE - lowered for easy testing):
-    // 1. Listened to 1+ songs (changed from 3 for testing)
-    // 2. Spent 3+ seconds on merch page (changed from 10 for testing)
-    if (songsListened >= 1 && timeOnPage >= 3 && pageType === 'merch') {
+    // Trigger after 3 songs have been played
+    if (songsListened >= 3) {
       setShowSurvey(true);
     }
-  }, [timeOnPage, pageType, playlist]);
+  }, [playlist]);
 
   const handleSurveyClose = () => {
     setShowSurvey(false);
