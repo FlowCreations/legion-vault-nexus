@@ -167,12 +167,12 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
   return (
     <>
       <div className="space-y-3">
-        <div className="relative rounded-2xl overflow-hidden bg-black shadow-xl">
+        <div className="relative group">
           <video 
             ref={videoRef} 
             autoPlay 
             playsInline 
-            className="w-full h-full aspect-video object-contain" 
+            className="w-full rounded-2xl border bg-black aspect-video shadow-xl" 
           />
           
           {/* Play button overlay */}
@@ -190,7 +190,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
           )}
 
           {/* Status Indicator */}
-          <div className="absolute top-3 left-3 flex items-center gap-3">
+          <div className="absolute top-4 left-4 flex items-center gap-3">
             <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
               <span className={`inline-block h-2 w-2 rounded-full ${
                 status === 'connected' ? 'bg-green-500' : 
