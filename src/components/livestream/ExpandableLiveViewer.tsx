@@ -11,9 +11,10 @@ type Props = {
   eventId: string;
   onTip?: () => void;
   onShare?: () => void;
+  showExternalControls?: boolean;
 };
 
-export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
+export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalControls = false }: Props) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -165,72 +166,76 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
 
   return (
     <>
-      <div className="relative group">
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          className="w-full rounded-lg border bg-black aspect-video" 
-        />
-        
-        {/* Play button overlay */}
-        {status === 'connected' && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <button
-              onClick={() => videoRef.current?.play()}
-              className="pointer-events-auto w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-all"
-            >
-              <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </button>
-          </div>
-        )}
-        
-        {/* Player Controls Overlay */}
-        <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setIsExpanded(true)}
-          >
-            <Maximize2 className="w-4 h-4 mr-1" />
-            Expand
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleTip}
-          >
-            <DollarSign className="w-4 h-4 mr-1" />
-            Tip
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleShare}
-          >
-            <Share2 className="w-4 h-4 mr-1" />
-            Share
-          </Button>
-        </div>
-
-        {/* Status Indicator */}
-        <div className="absolute top-4 left-4 flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-            <span className={`inline-block h-2 w-2 rounded-full ${
-              status === 'connected' ? 'bg-green-500' : 
-              status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-              'bg-red-500'
-            }`} />
-            <span className="text-white text-xs font-medium uppercase">{status}</span>
-          </div>
-          {status === 'connected' && viewerCount > 0 && (
-            <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-              <span className="text-white text-xs font-medium">{viewerCount} watching</span>
+      <div className="space-y-3">
+        <div className="relative group">
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            className="w-full rounded-lg border bg-black aspect-video" 
+          />
+          
+          {/* Play button overlay */}
+          {status === 'connected' && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <button
+                onClick={() => videoRef.current?.play()}
+                className="pointer-events-auto w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-all"
+              >
+                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
             </div>
           )}
+
+          {/* Status Indicator */}
+          <div className="absolute top-4 left-4 flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+              <span className={`inline-block h-2 w-2 rounded-full ${
+                status === 'connected' ? 'bg-green-500' : 
+                status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+                'bg-red-500'
+              }`} />
+              <span className="text-white text-xs font-medium uppercase">{status}</span>
+            </div>
+            {status === 'connected' && viewerCount > 0 && (
+              <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                <span className="text-white text-xs font-medium">{viewerCount} watching</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* External Controls - Only show if enabled */}
+        {showExternalControls && (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsExpanded(true)}
+              className="flex-1"
+            >
+              <Maximize2 className="w-4 h-4 mr-2" />
+              Expand
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleTip}
+              className="flex-1"
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Tip
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleShare}
+              className="flex-1"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Expanded View Dialog */}
