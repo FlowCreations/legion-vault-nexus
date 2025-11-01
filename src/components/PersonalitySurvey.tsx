@@ -17,6 +17,7 @@ interface PersonalitySurveyProps {
 export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) => {
   const [step, setStep] = useState(0); // Start at 0 for intro screen
   const [loading, setLoading] = useState(false);
+  const [discountCode, setDiscountCode] = useState<string>("");
   const [formData, setFormData] = useState({
     birthdayMonth: "",
     birthdayDay: "",
@@ -81,12 +82,22 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
     return scores;
   };
 
+  const generateDiscountCode = () => {
+    const prefix = "SURVEY50";
+    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `${prefix}-${randomPart}`;
+  };
   const handleSubmit = async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       const scores = calculatePersonalityScores();
+      
+      // Generate unique discount code
+      const code = generateDiscountCode();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiry
       
       // Store birthday in user_profiles if user is logged in
       if (user?.id && formData.birthdayMonth && formData.birthdayDay && formData.birthdayYear) {
@@ -100,7 +111,7 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
       // Store survey event
       await supabase.from('user_events').insert({
         event_type: 'personality_survey_completed',
-        event_data: { ...formData, scores },
+        event_data: { ...formData, scores, discount_code: code },
         user_id: user?.id || null,
         session_id: sessionStorage.getItem('sol_session_id'),
         page_url: window.location.pathname,
@@ -126,14 +137,38 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
         await supabase.functions.invoke('predict-personality', {
           body: { userId: user.id }
         });
+        
+        // Store discount code
+        await supabase.from('survey_discount_codes').insert({
+          user_id: user.id,
+          discount_code: code,
+          discount_percentage: 50,
+          expires_at: expiresAt.toISOString(),
+        });
+
+        // Get user email for notification
+        const userEmail = user.email;
+
+        // Create merchant notification
+        await supabase.from('merchant_notifications').insert({
+          notification_type: 'survey_completed',
+          title: 'New Survey Completed',
+          message: `${userEmail || 'A user'} completed the personality survey`,
+          metadata: {
+            user_id: user.id,
+            email: userEmail,
+            discount_code: code,
+            mbti_type,
+            survey_responses: formData
+          }
+        });
       }
 
-      toast.success("🎁 Thanks! Enjoy 50% off digital items.");
-      onClose();
+      setDiscountCode(code);
+      setStep(8); // Move to success screen
     } catch (error) {
       console.error('Survey submission error:', error);
       toast.error("Failed to submit survey");
-    } finally {
       setLoading(false);
     }
   };
@@ -333,6 +368,42 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
           </div>
         );
 
+      case 8:
+        return (
+          <div className="space-y-6 text-center py-8">
+            <div className="text-6xl mb-4">🎉</div>
+            <h3 className="text-2xl font-bold">Thank You!</h3>
+            <p className="text-muted-foreground">
+              Your personality profile has been created and your discount is ready!
+            </p>
+            <div className="bg-primary/10 border-2 border-primary rounded-lg p-6 mt-6">
+              <p className="text-sm text-muted-foreground mb-2">Your Discount Code:</p>
+              <p className="text-3xl font-bold text-primary mb-4">{discountCode}</p>
+              <p className="text-sm text-muted-foreground">
+                50% off all digital items • Valid for 30 days
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => {
+                  navigator.clipboard.writeText(discountCode);
+                  toast.success("Code copied to clipboard!");
+                }}
+              >
+                Copy Code
+              </Button>
+            </div>
+            <Button 
+              size="lg"
+              onClick={onClose}
+              className="mt-6"
+            >
+              Start Shopping
+            </Button>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -356,6 +427,8 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
         return formData.purchaseDriver;
       case 7:
         return formData.experiencePreference;
+      case 8:
+        return true; // Success screen
       default:
         return false;
     }
@@ -391,7 +464,7 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
           {renderStep()}
         </div>
 
-        {step > 0 && (
+        {step > 0 && step < 8 && (
           <div className="flex justify-between gap-3">
             {step > 1 && (
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={loading}>

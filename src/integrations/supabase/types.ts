@@ -1904,6 +1904,39 @@ export type Database = {
           },
         ]
       }
+      merchant_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          notification_type: string
+          read_at: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          notification_type: string
+          read_at?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          notification_type?: string
+          read_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       messenger_interactions: {
         Row: {
           conversation_id: string | null
@@ -2700,6 +2733,39 @@ export type Database = {
           period_start?: string
           platform?: string
           streams?: number | null
+        }
+        Relationships: []
+      }
+      survey_discount_codes: {
+        Row: {
+          created_at: string
+          discount_code: string
+          discount_percentage: number
+          expires_at: string | null
+          id: string
+          is_used: boolean | null
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_code: string
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_code?: string
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean | null
+          used_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
