@@ -18,7 +18,7 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
   const videoRef = useRef<HTMLVideoElement>(null);
   const [sig] = useState(() => new SignalingClient());
   const [pc, setPc] = useState<RTCPeerConnection | null>(null);
-  const [state, setState] = useState<'idle' | 'preview' | 'live' | 'error'>('idle');
+  const [state, setState] = useState<'idle' | 'preview' | 'waiting' | 'live' | 'error'>('idle');
   const [err, setErr] = useState<string | undefined>();
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoEnabled, setVideoEnabled] = useState(true);
@@ -38,22 +38,39 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
 
   async function loadDevices() {
     try {
+      // Request permission first to unlock device labels
+      const permissionStream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
+      // Now enumerate devices (labels will be available)
       const deviceList = await navigator.mediaDevices.enumerateDevices();
       const cameras = deviceList.filter(d => d.kind === 'videoinput');
       const microphones = deviceList.filter(d => d.kind === 'audioinput');
+      
+      // Stop the permission stream (we only needed it for labels)
+      permissionStream.getTracks().forEach(track => track.stop());
+      
       setDevices({ cameras, microphones });
       if (cameras.length > 0) setSelectedCamera(cameras[0].deviceId);
       if (microphones.length > 0) setSelectedMicrophone(microphones[0].deviceId);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to enumerate devices:', e);
+      setErr('Permission denied. Please allow camera and microphone access.');
+      setState('error');
     }
   }
 
   async function startPreview() {
     try {
+      if (!selectedCamera || !selectedMicrophone) {
+        throw new Error('Please select camera and microphone first');
+      }
+      
       const media = await navigator.mediaDevices.getUserMedia({
-        video: selectedCamera ? { deviceId: selectedCamera } : true,
-        audio: selectedMicrophone ? { deviceId: selectedMicrophone } : true
+        video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
+        audio: selectedMicrophone ? { deviceId: { exact: selectedMicrophone } } : true
       });
       setMediaStream(media);
       if (videoRef.current) {
@@ -61,8 +78,17 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
         await safePlay(videoRef.current);
       }
       setState('preview');
+      setErr(undefined);
     } catch (e: any) {
-      setErr(e?.message || 'Camera/Mic error');
+      if (e.name === 'NotAllowedError') {
+        setErr('Permission denied. Please allow camera and microphone access.');
+      } else if (e.name === 'NotFoundError') {
+        setErr('Camera or microphone not found. Please check your devices.');
+      } else if (e.name === 'OverconstrainedError') {
+        setErr('Selected device is not available. Please choose another.');
+      } else {
+        setErr(e?.message || 'Failed to access camera/microphone');
+      }
       setState('error');
     }
   }
@@ -79,7 +105,10 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
             const newPc = createPeerConnection({
               onConnState: (s) => {
                 console.log('[LiveBroadcaster] Connection state:', s);
-                if (s === 'connected') setState('live');
+                if (s === 'connected') {
+                  setState('live');
+                  toast.success("Viewer connected! You're live!");
+                }
               }
             });
             media.getTracks().forEach(t => newPc.addTrack(t, media));
@@ -118,8 +147,10 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
     if (!mediaStream) {
       await startPreview();
     }
+    setState('waiting');
     await supabase.from('livestream_events').update({ status: 'live' }).eq('id', eventId);
     onStreamStart?.();
+    toast.info("Waiting for viewers to connect...");
   }
 
   function toggleVideo() {
@@ -161,43 +192,68 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
         <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
       </div>
 
-      {state === 'idle' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Camera</label>
-              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select camera" />
-                </SelectTrigger>
-                <SelectContent>
-                  {devices.cameras.map(device => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>
-                      {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {state === 'idle' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Camera {devices.cameras.length > 0 && `(${devices.cameras.length})`}
+                  </label>
+                  <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select camera" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {devices.cameras.length === 0 ? (
+                        <SelectItem value="none" disabled>No cameras found</SelectItem>
+                      ) : (
+                        devices.cameras.map(device => (
+                          <SelectItem key={device.deviceId} value={device.deviceId}>
+                            {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Microphone {devices.microphones.length > 0 && `(${devices.microphones.length})`}
+                  </label>
+                  <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select microphone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {devices.microphones.length === 0 ? (
+                        <SelectItem value="none" disabled>No microphones found</SelectItem>
+                      ) : (
+                        devices.microphones.map(device => (
+                          <SelectItem key={device.deviceId} value={device.deviceId}>
+                            {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {(devices.cameras.length === 0 || devices.microphones.length === 0) && (
+                <p className="text-sm text-yellow-600">
+                  ⚠️ Please grant camera and microphone permissions to see available devices.
+                </p>
+              )}
+              
+              <Button 
+                onClick={startPreview} 
+                className="w-full"
+                disabled={devices.cameras.length === 0 || devices.microphones.length === 0}
+              >
+                Start Preview
+              </Button>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Microphone</label>
-              <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select microphone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {devices.microphones.map(device => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>
-                      {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <Button onClick={startPreview} className="w-full">Start Preview</Button>
-        </div>
-      )}
+          )}
 
       {state === 'preview' && (
         <div className="space-y-4">
@@ -213,7 +269,30 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
         </div>
       )}
 
-      {(state === 'live' || (state === 'preview' && pc)) && (
+      {state === 'waiting' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 bg-yellow-500 rounded-full animate-pulse" />
+              <span className="text-sm font-semibold">WAITING FOR VIEWERS</span>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={toggleVideo} variant={videoEnabled ? 'default' : 'destructive'} size="icon">
+                {videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+              </Button>
+              <Button onClick={toggleAudio} variant={audioEnabled ? 'default' : 'destructive'} size="icon">
+                {audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            Your stream is ready. Viewers can now join.
+          </p>
+          <Button onClick={endStream} variant="destructive" className="w-full">End Stream</Button>
+        </div>
+      )}
+
+      {state === 'live' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
