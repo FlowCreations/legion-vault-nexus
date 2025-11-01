@@ -83,34 +83,6 @@ export function ExpandableLiveViewer({ eventId }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm">
-        <span className={`inline-block h-2 w-2 rounded-full ${
-          status === 'connected' ? 'bg-green-500' : 
-          status === 'connecting' ? 'bg-yellow-500' : 
-          'bg-red-500'
-        }`} />
-        <span>Status: {status}</span>
-        <span className="opacity-60">Room: {eventId}</span>
-      </div>
-
-      <div className="flex gap-2">
-        {status === 'idle' || status === 'error' ? (
-          <button 
-            onClick={connect} 
-            className="rounded-md border px-3 py-1.5 hover:bg-gray-100"
-          >
-            Enter Stream
-          </button>
-        ) : (
-          <button 
-            onClick={disconnect} 
-            className="rounded-md border px-3 py-1.5 hover:bg-gray-100"
-          >
-            Leave Stream
-          </button>
-        )}
-      </div>
-
       <video 
         ref={videoRef} 
         autoPlay 
@@ -118,6 +90,36 @@ export function ExpandableLiveViewer({ eventId }: Props) {
         controls 
         className="w-full rounded-lg border bg-black" 
       />
+
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <div className="flex items-center gap-2">
+          <span className={`inline-block h-2 w-2 rounded-full ${
+            status === 'connected' ? 'bg-green-500' : 
+            status === 'connecting' ? 'bg-yellow-500' : 
+            'bg-red-500'
+          }`} />
+          <span>Status: {status}</span>
+        </div>
+        <span className="opacity-60 text-xs">Room: {eventId}</span>
+      </div>
+
+      <div className="flex gap-2">
+        {status === 'idle' || status === 'error' ? (
+          <button 
+            onClick={connect} 
+            className="rounded-md border px-3 py-1.5 hover:bg-accent"
+          >
+            Enter Stream
+          </button>
+        ) : (
+          <button 
+            onClick={disconnect} 
+            className="rounded-md border px-3 py-1.5 hover:bg-accent"
+          >
+            Leave Stream
+          </button>
+        )}
+      </div>
       
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800">

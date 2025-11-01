@@ -1,14 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Room, RoomEvent, createLocalTracks, Track } from 'livekit-client';
+import { Room, RoomEvent, createLocalTracks, Track, LocalTrack } from 'livekit-client';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Video, VideoOff, Mic, MicOff } from 'lucide-react';
 
 type Props = { eventId: string };
 
 export function LiveBroadcaster({ eventId }: Props) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'live' | 'error'>('idle');
   const [error, setError] = useState<string>();
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
+  const videoTrackRef = useRef<LocalTrack | null>(null);
+  const audioTrackRef = useRef<LocalTrack | null>(null);
 
   const startBroadcast = async () => {
     setStatus('connecting');
@@ -57,9 +63,15 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       for (const track of tracks) {
         await room.localParticipant.publishTrack(track);
-        if (track.kind === Track.Kind.Video && videoRef.current) {
-          track.attach(videoRef.current);
-          console.log('[Broadcaster] Video track attached to preview');
+        if (track.kind === Track.Kind.Video) {
+          videoTrackRef.current = track;
+          if (videoRef.current) {
+            track.attach(videoRef.current);
+            console.log('[Broadcaster] Video track attached to preview');
+          }
+        } else if (track.kind === Track.Kind.Audio) {
+          audioTrackRef.current = track;
+          console.log('[Broadcaster] Audio track published');
         }
       }
 
@@ -80,7 +92,31 @@ export function LiveBroadcaster({ eventId }: Props) {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    videoTrackRef.current = null;
+    audioTrackRef.current = null;
     setStatus('idle');
+  };
+
+  const toggleCamera = async () => {
+    if (videoTrackRef.current) {
+      if (isCameraOn) {
+        await videoTrackRef.current.mute();
+      } else {
+        await videoTrackRef.current.unmute();
+      }
+      setIsCameraOn(!isCameraOn);
+    }
+  };
+
+  const toggleMic = async () => {
+    if (audioTrackRef.current) {
+      if (isMicOn) {
+        await audioTrackRef.current.mute();
+      } else {
+        await audioTrackRef.current.unmute();
+      }
+      setIsMicOn(!isMicOn);
+    }
   };
 
   useEffect(() => {
@@ -116,21 +152,37 @@ export function LiveBroadcaster({ eventId }: Props) {
         className="w-full rounded-lg border bg-black"
       />
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {status === 'idle' || status === 'error' ? (
-          <button
+          <Button
             onClick={startBroadcast}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            className="bg-red-500 hover:bg-red-600"
           >
             Start Broadcast
-          </button>
+          </Button>
         ) : (
-          <button
-            onClick={stopBroadcast}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-          >
-            Stop Broadcast
-          </button>
+          <>
+            <Button
+              onClick={stopBroadcast}
+              variant="secondary"
+            >
+              Stop Broadcast
+            </Button>
+            <Button
+              onClick={toggleCamera}
+              variant="outline"
+              size="icon"
+            >
+              {isCameraOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+            </Button>
+            <Button
+              onClick={toggleMic}
+              variant="outline"
+              size="icon"
+            >
+              {isMicOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+            </Button>
+          </>
         )}
       </div>
 
