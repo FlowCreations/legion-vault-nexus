@@ -80,25 +80,37 @@ export const LiveBroadcaster = ({ eventId, turn }: Props) => {
       setCams(cs); setMics(ms);
       if (!camId && cs[0]) setCamId(cs[0].deviceId);
       if (!micId && ms[0]) setMicId(ms[0].deviceId);
+      
+      // Auto-start preview and stream after devices loaded
+      if (!mounted) return;
+      console.log('[Broadcaster] Auto-starting stream...');
+      await ensureLocalStream();
+      if (!mounted) return;
+      setState('waiting');
     })();
 
     // handle viewer offer
     const onViewerOffer = async (msg: any) => {
+      console.log('[Broadcaster] Received viewer-offer');
       try {
         // Ensure media exists BEFORE answering (why: avoid empty answer)
         await ensureLocalStream();
+        console.log('[Broadcaster] Media stream ready, creating answer');
 
         if (!pcRef.current) {
           pcRef.current = new RTCPeerConnection(rtcConfig);
           pcRef.current.onicecandidate = (ev) => {
             if (ev.candidate) {
+              console.log('[Broadcaster] Sending ICE candidate to viewer');
               try { sig.send({ type: 'ice-candidate', roomId: eventId, candidate: ev.candidate.toJSON(), from: 'broadcaster' }); } catch {}
             }
           };
           // Attach tracks once
           streamRef.current!.getTracks().forEach(t => pcRef.current!.addTrack(t, streamRef.current!));
+          console.log('[Broadcaster] Added', streamRef.current!.getTracks().length, 'tracks to peer connection');
           pcRef.current.onconnectionstatechange = () => {
             const s = pcRef.current?.connectionState;
+            console.log('[Broadcaster] Connection state:', s);
             if (s === 'connected') setState('live');
           };
         }
@@ -106,8 +118,10 @@ export const LiveBroadcaster = ({ eventId, turn }: Props) => {
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        console.log('[Broadcaster] Sending answer to viewer');
         sig.send({ type: 'broadcaster-answer', roomId: eventId, sdp: answer });
       } catch (e: any) {
+        console.error('[Broadcaster] Answer failed:', e);
         setErr(`Answer failed: ${e?.message || e}`);
       }
     };
@@ -152,15 +166,23 @@ export const LiveBroadcaster = ({ eventId, turn }: Props) => {
       {/* Device selectors */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <label className="text-sm">Camera</label>
-          <select className="mt-1 w-full rounded-md border p-2" value={camId} onChange={e => setCamId(e.target.value)}>
+          <label className="text-sm font-medium text-foreground block mb-1">Camera</label>
+          <select 
+            className="mt-1 w-full rounded-md border border-border bg-background text-foreground p-2 focus:outline-none focus:ring-2 focus:ring-primary" 
+            value={camId} 
+            onChange={e => setCamId(e.target.value)}
+          >
             {cams.length === 0 ? <option value="">No cameras</option> :
               cams.map(c => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-sm">Microphone</label>
-          <select className="mt-1 w-full rounded-md border p-2" value={micId} onChange={e => setMicId(e.target.value)}>
+          <label className="text-sm font-medium text-foreground block mb-1">Microphone</label>
+          <select 
+            className="mt-1 w-full rounded-md border border-border bg-background text-foreground p-2 focus:outline-none focus:ring-2 focus:ring-primary" 
+            value={micId} 
+            onChange={e => setMicId(e.target.value)}
+          >
             {mics.length === 0 ? <option value="">No microphones</option> :
               mics.map(m => <option key={m.deviceId} value={m.deviceId}>{m.label}</option>)}
           </select>
@@ -170,26 +192,26 @@ export const LiveBroadcaster = ({ eventId, turn }: Props) => {
       {/* Controls */}
       {state === 'idle' && (
         <div className="flex gap-2">
-          <button onClick={startPreview} className="rounded-md border px-3 py-2">Start Preview</button>
-          <button onClick={startStream} className="rounded-md border px-3 py-2">Start Stream</button>
+          <button onClick={startPreview} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Start Preview</button>
+          <button onClick={startStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Start Stream</button>
         </div>
       )}
       {state === 'preview' && (
         <div className="flex gap-2">
-          <button onClick={startStream} className="rounded-md border px-3 py-2">Go Live (Waiting)</button>
-          <button onClick={endStream} className="rounded-md border px-3 py-2">Stop</button>
+          <button onClick={startStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Go Live (Waiting)</button>
+          <button onClick={endStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-2">Stop</button>
         </div>
       )}
       {state === 'waiting' && (
-        <div className="flex items-center justify-between rounded-md border p-2">
+        <div className="flex items-center justify-between rounded-md border border-border bg-background p-2">
           <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" /> Waiting for viewers…</div>
-          <button onClick={endStream} className="rounded-md border px-3 py-1.5">End Stream</button>
+          <button onClick={endStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-1.5">End Stream</button>
         </div>
       )}
       {state === 'live' && (
-        <div className="flex items-center justify-between rounded-md border p-2">
+        <div className="flex items-center justify-between rounded-md border border-border bg-background p-2">
           <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" /> LIVE</div>
-          <button onClick={endStream} className="rounded-md border px-3 py-1.5">End Stream</button>
+          <button onClick={endStream} className="rounded-md border border-border bg-background text-foreground hover:bg-muted px-3 py-1.5">End Stream</button>
         </div>
       )}
 
