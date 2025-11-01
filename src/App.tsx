@@ -26,6 +26,7 @@ import EPsSingles from "./pages/EPsSingles";
 import SongCredits from "./pages/SongCredits";
 import Shows from "./pages/Shows";
 import Gallery from "./pages/Gallery";
+import SalesSheets from "./pages/SalesSheets";
 import Community from "./pages/Community";
 import Merch from "./pages/Merch";
 import Merchant from "./pages/Merchant";
@@ -160,6 +161,7 @@ const App = () => {
           <Route path="/funnel/step-10" element={<Step10PortalOnboarding />} />
           <Route path="/funnel/step-11" element={<Step11MerchUpsell />} />
           <Route path="/funnel/step-12" element={<Step12RewardsLoop />} />
+          <Route path="/sales-sheets" element={<SalesSheets />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
