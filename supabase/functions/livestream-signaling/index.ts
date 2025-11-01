@@ -1,4 +1,4 @@
-// WebRTC Signaling Server for Live Streaming
+// WebRTC Signaling Server for Live Streaming with HTTP health check
 // Handles WebSocket connections and routes messages between broadcaster and viewers
 
 // deno-lint-ignore-file no-explicit-any
@@ -36,6 +36,18 @@ function cleanupSocket(ws: WebSocket) {
 }
 
 Deno.serve((req) => {
+  // Health check endpoint for HTTP requests
+  const upgradeHeader = (req.headers.get("upgrade") || "").toLowerCase();
+  if (upgradeHeader !== "websocket") {
+    return new Response(
+      JSON.stringify({ ok: true, name: "livestream-signaling" }), 
+      { 
+        status: 200, 
+        headers: { "content-type": "application/json" } 
+      }
+    );
+  }
+
   const { socket, response } = Deno.upgradeWebSocket(req);
 
   let role: "broadcaster" | "viewer" | undefined;
@@ -127,8 +139,8 @@ Deno.serve((req) => {
     cleanupSocket(socket);
   };
 
-  socket.onclose = () => {
-    console.log(`[Signaling] WebSocket closed: role=${role} room=${roomId}`);
+  socket.onclose = (ev) => {
+    console.log(`[Signaling] WebSocket closed: role=${role} room=${roomId} code=${ev.code} reason=${ev.reason || '(no reason)'}`);
     cleanupSocket(socket);
   };
 

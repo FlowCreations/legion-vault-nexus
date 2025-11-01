@@ -13,6 +13,8 @@ export class SignalingClient {
   private url: string;
   private ws?: WebSocket;
   private listeners = new Map<string, Set<Listener>>();
+  private lastClose?: { code: number; reason: string };
+  private lastError?: string;
   private log = (...args: any[]) => console.log('[SignalingClient]', ...args);
 
   constructor(url?: string) {
@@ -27,6 +29,15 @@ export class SignalingClient {
 
   getState(): number | undefined {
     return this.ws?.readyState;
+  }
+
+  getDiagnostics() {
+    return {
+      url: this.url,
+      state: this.ws?.readyState ?? -1,
+      lastClose: this.lastClose,
+      lastError: this.lastError,
+    };
   }
 
   on(type: string, cb: Listener) {
@@ -47,11 +58,14 @@ export class SignalingClient {
       this.log('connect() ignored; already', this.ws.readyState);
       return;
     }
+    this.lastClose = undefined;
+    this.lastError = undefined;
     this.log('Creating WebSocket →', this.url);
     try {
       this.ws = new WebSocket(this.url);
     } catch (e) {
       this.log('WebSocket ctor failed:', e);
+      this.lastError = String(e);
       throw e;
     }
 
@@ -68,6 +82,7 @@ export class SignalingClient {
       
       this.ws!.onclose = (ev) => {
         clearInterval(id);
+        this.lastClose = { code: ev.code, reason: ev.reason ?? '' };
         this.log('CLOSE', ev.code, ev.reason);
         this.emit('close', ev);
       };
@@ -87,12 +102,13 @@ export class SignalingClient {
     };
 
     this.ws.onerror = (ev) => {
+      this.lastError = String(ev);
       this.log('ERROR', ev);
       this.emit('error', ev);
     };
   }
 
-  async waitForOpen(timeoutMs = 5000): Promise<void> {
+  async waitForOpen(timeoutMs = 6000): Promise<void> {
     if (this.ws?.readyState === WebSocket.OPEN) return;
     return new Promise<void>((resolve, reject) => {
       const onOpen = () => {
@@ -101,11 +117,11 @@ export class SignalingClient {
       };
       const onClose = (ev: CloseEvent) => {
         cleanup();
-        reject(new Error(`WebSocket closed (${ev.code}) before open`));
+        reject(new Error(`WS closed (${ev.code}) ${ev.reason || ''}`));
       };
       const onErr = (err: Event) => {
         cleanup();
-        reject(new Error(`WebSocket error before open: ${String(err)}`));
+        reject(new Error(`WS error: ${String(err)}`));
       };
       const cleanup = () => {
         clearTimeout(timer);

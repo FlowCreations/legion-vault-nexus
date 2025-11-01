@@ -31,10 +31,11 @@ export default function ExpandableLiveViewer({ eventId, iceServers }: ViewerProp
 
     sig.connect();
     try {
-      await sig.waitForOpen(7000);
+      await sig.waitForOpen(8000);
     } catch (e: any) {
       console.error('[Viewer] signaling open failed', e);
-      setError('Failed to connect to signaling server');
+      const d = sig.getDiagnostics();
+      setError(`Signaling failed: ${e?.message || e}. url=${d.url} state=${d.state} close=${d.lastClose?.code || ''}:${d.lastClose?.reason || ''}`);
       setConnecting(false);
       return;
     }
@@ -118,6 +119,7 @@ export default function ExpandableLiveViewer({ eventId, iceServers }: ViewerProp
   }, [eventId, rtcConfig]);
 
   const connected = sigState === WebSocket.OPEN;
+  const diag = sig.getDiagnostics();
 
   return (
     <Card className="p-4">
@@ -126,7 +128,21 @@ export default function ExpandableLiveViewer({ eventId, iceServers }: ViewerProp
           <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
           <span>Signaling: {connected ? 'Connected' : 'Disconnected'}</span>
           <span className="opacity-60">Room: {eventId}</span>
+          {!connected && (
+            <Button size="sm" variant="outline" onClick={() => sig.connect()} className="h-6 px-2 text-xs">
+              Reconnect
+            </Button>
+          )}
         </div>
+
+        {!connected && (
+          <div className="rounded-md border p-2 text-xs space-y-1">
+            <div><span className="font-semibold">URL:</span> {diag.url}</div>
+            <div><span className="font-semibold">State:</span> {String(diag.state)} (0 CONNECTING, 1 OPEN, 2 CLOSING, 3 CLOSED)</div>
+            {diag.lastClose && <div><span className="font-semibold">Close:</span> {diag.lastClose.code} – {diag.lastClose.reason || '(no reason)'}</div>}
+            {diag.lastError && <div><span className="font-semibold">Error:</span> {diag.lastError}</div>}
+          </div>
+        )}
 
         <div className="flex gap-2">
           <Button
