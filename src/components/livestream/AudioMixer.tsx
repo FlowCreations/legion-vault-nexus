@@ -200,10 +200,12 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       const master = audioContext.createGain();
       master.gain.value = masterGain;
 
-      // Analyzer for visualization
+      // Analyzer for visualization - increased sensitivity
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 64;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.5;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
 
       // MediaStreamDestination for broadcasting processed audio
       const destination = audioContext.createMediaStreamDestination();
@@ -236,10 +238,14 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       }
 
       master.connect(analyser);
-      analyser.connect(destination); // CRITICAL: Analyser must be connected to destination to process audio
+      analyser.connect(destination); // Send processed audio to MediaStream for broadcast
       
-      // Also connect to audioContext.destination for monitoring (this is what makes the analyser work!)
-      analyser.connect(audioContext.destination);
+      console.log('[AudioMixer] Audio chain established:', {
+        hasAudioContext: !!audioContext,
+        hasSourceNode: !!sourceNode,
+        analyserFftSize: analyser.fftSize,
+        contextState: audioContext.state
+      });
       
       // Send processed stream back to broadcaster
       if (onProcessedStream) {

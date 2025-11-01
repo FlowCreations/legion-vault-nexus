@@ -27,10 +27,8 @@ export function LiveBroadcaster({ eventId }: Props) {
   const roomRef = useRef<Room | null>(null);
   const videoTrackRef = useRef<LocalTrack | null>(null);
   const audioTrackRef = useRef<LocalTrack | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [sourceNode, setSourceNode] = useState<MediaStreamAudioSourceNode | null>(null);
 
   useEffect(() => {
     requestPermissionsAndLoadDevices();
@@ -76,7 +74,7 @@ export function LiveBroadcaster({ eventId }: Props) {
     }
   };
 
-  const setupAudioProcessing = (audioTrack: LocalTrack) => {
+  const setupAudioProcessing = async (audioTrack: LocalTrack) => {
     try {
       const mediaStreamTrack = audioTrack.mediaStreamTrack;
       if (!mediaStreamTrack) {
@@ -87,19 +85,20 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Setting up audio processing with track:', mediaStreamTrack.label);
       
       const stream = new MediaStream([mediaStreamTrack]);
-      const audioContext = new AudioContext();
+      const ctx = new AudioContext();
       
       // Resume audio context if suspended (browser autoplay policy)
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
+      if (ctx.state === 'suspended') {
+        console.log('[Broadcaster] Resuming suspended AudioContext');
+        await ctx.resume();
       }
       
-      const source = audioContext.createMediaStreamSource(stream);
+      const source = ctx.createMediaStreamSource(stream);
 
-      audioContextRef.current = audioContext;
-      sourceNodeRef.current = source;
+      setAudioContext(ctx);
+      setSourceNode(source);
 
-      console.log('[Broadcaster] Audio processing setup complete');
+      console.log('[Broadcaster] Audio processing setup complete, AudioContext state:', ctx.state);
       
     } catch (err) {
       console.error('[Broadcaster] Audio processing setup failed:', err);
@@ -193,13 +192,13 @@ export function LiveBroadcaster({ eventId }: Props) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
     }
-    if (sourceNodeRef.current) {
-      sourceNodeRef.current.disconnect();
-      sourceNodeRef.current = null;
+    if (sourceNode) {
+      sourceNode.disconnect();
+      setSourceNode(null);
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    if (audioContext) {
+      audioContext.close();
+      setAudioContext(null);
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -277,13 +276,13 @@ export function LiveBroadcaster({ eventId }: Props) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
     }
-    if (sourceNodeRef.current) {
-      sourceNodeRef.current.disconnect();
-      sourceNodeRef.current = null;
+    if (sourceNode) {
+      sourceNode.disconnect();
+      setSourceNode(null);
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    if (audioContext) {
+      audioContext.close();
+      setAudioContext(null);
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -332,11 +331,11 @@ export function LiveBroadcaster({ eventId }: Props) {
       if (roomRef.current) {
         roomRef.current.disconnect();
       }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
+      if (audioContext) {
+        audioContext.close();
       }
     };
-  }, []);
+  }, [audioContext]);
 
   return (
     <div className="space-y-6">
@@ -434,8 +433,8 @@ export function LiveBroadcaster({ eventId }: Props) {
 
           {/* Professional Audio Mixer */}
           <AudioMixer 
-            audioContext={audioContextRef.current}
-            sourceNode={sourceNodeRef.current}
+            audioContext={audioContext}
+            sourceNode={sourceNode}
             onProcessedStream={handleProcessedStream}
             onAudioLevel={handleAudioLevel}
           />
