@@ -15,11 +15,12 @@ interface PersonalitySurveyProps {
 }
 
 export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at 0 for intro screen
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     birthdayMonth: "",
     birthdayDay: "",
+    birthdayYear: "",
     musicConnection: "",
     replayDriver: "",
     coreIdentity: "",
@@ -88,8 +89,8 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
       const scores = calculatePersonalityScores();
       
       // Store birthday in user_profiles if user is logged in
-      if (user?.id && formData.birthdayMonth && formData.birthdayDay) {
-        const birthdate = `2000-${formData.birthdayMonth.padStart(2, '0')}-${formData.birthdayDay.padStart(2, '0')}`;
+      if (user?.id && formData.birthdayMonth && formData.birthdayDay && formData.birthdayYear) {
+        const birthdate = `${formData.birthdayYear}-${formData.birthdayMonth.padStart(2, '0')}-${formData.birthdayDay.padStart(2, '0')}`;
         await supabase
           .from('user_profiles')
           .update({ birthdate })
@@ -139,6 +140,25 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
 
   const renderStep = () => {
     switch (step) {
+      case 0:
+        return (
+          <div className="space-y-6 text-center py-8">
+            <div className="space-y-2">
+              <h3 className="text-3xl font-bold text-primary">One Time 50% Off All Digital Items</h3>
+              <p className="text-lg text-muted-foreground">
+                Just fill out this quick survey to help us personalize your experience.
+              </p>
+            </div>
+            <Button 
+              size="lg" 
+              onClick={() => setStep(1)}
+              className="mt-6"
+            >
+              Click Here to Begin
+            </Button>
+          </div>
+        );
+
       case 1:
         return (
           <div className="space-y-4">
@@ -166,6 +186,16 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
                     placeholder="Day"
                     value={formData.birthdayDay}
                     onChange={(e) => setFormData({ ...formData, birthdayDay: e.target.value })}
+                  />
+                </div>
+                <div className="w-28">
+                  <Input
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                    placeholder="Year"
+                    value={formData.birthdayYear}
+                    onChange={(e) => setFormData({ ...formData, birthdayYear: e.target.value })}
                   />
                 </div>
               </div>
@@ -310,8 +340,10 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
 
   const canProceed = () => {
     switch (step) {
+      case 0:
+        return true; // Intro screen, no validation needed
       case 1:
-        return formData.birthdayMonth && formData.birthdayDay;
+        return formData.birthdayMonth && formData.birthdayDay && formData.birthdayYear;
       case 2:
         return formData.musicConnection;
       case 3:
@@ -332,60 +364,66 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">🎁 Unlock 50% Off Digital Items</DialogTitle>
-          <DialogDescription className="text-base">
-            Sons of Legion Personality + Fan Survey - Help us personalize your experience!
-          </DialogDescription>
-        </DialogHeader>
+        {step > 0 && (
+          <DialogHeader>
+            <DialogTitle className="text-2xl">🎁 Unlock 50% Off Digital Items</DialogTitle>
+            <DialogDescription className="text-base">
+              Sons of Legion Personality + Fan Survey - Help us personalize your experience!
+            </DialogDescription>
+          </DialogHeader>
+        )}
 
-        <div className="py-6">
-          {/* Progress indicator */}
-          <div className="flex gap-2 mb-6">
-            {[1, 2, 3, 4, 5, 6, 7].map((s) => (
-              <div
-                key={s}
-                className={`h-2 flex-1 rounded-full transition-colors ${
-                  s <= step ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-            ))}
-          </div>
+        <div className={step === 0 ? "py-4" : "py-6"}>
+          {/* Progress indicator - only show after intro */}
+          {step > 0 && (
+            <div className="flex gap-2 mb-6">
+              {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+                <div
+                  key={s}
+                  className={`h-2 flex-1 rounded-full transition-colors ${
+                    s <= step ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
 
           {renderStep()}
         </div>
 
-        <div className="flex justify-between gap-3">
-          {step > 1 && (
-            <Button variant="outline" onClick={() => setStep(step - 1)} disabled={loading}>
-              Back
-            </Button>
-          )}
-          {step < 7 ? (
-            <Button
-              onClick={() => setStep(step + 1)}
-              disabled={!canProceed()}
-              className="ml-auto"
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={!canProceed() || loading}
-              className="ml-auto"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                'Unlock Discount'
-              )}
-            </Button>
-          )}
-        </div>
+        {step > 0 && (
+          <div className="flex justify-between gap-3">
+            {step > 1 && (
+              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={loading}>
+                Back
+              </Button>
+            )}
+            {step < 7 ? (
+              <Button
+                onClick={() => setStep(step + 1)}
+                disabled={!canProceed()}
+                className="ml-auto"
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={!canProceed() || loading}
+                className="ml-auto"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Unlock Discount'
+                )}
+              </Button>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
