@@ -1,5 +1,8 @@
 project_id = "dlwyndcvnunvomgkbkhn"
 
+[functions.livestream-signaling]
+verify_jwt = false
+
 [functions.create-album-checkout]
 verify_jwt = true
 

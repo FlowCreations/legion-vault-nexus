@@ -36,7 +36,7 @@ Deno.serve((req) => {
     // Viewer offer -> broadcaster
     if (type === 'viewer-offer' && room.broadcaster) {
       try { 
-        room.broadcaster.send(JSON.stringify({ type, role, roomId, payload }));
+        room.broadcaster.send(JSON.stringify(msg));
         console.log(`[Signaling] Forwarded viewer offer to broadcaster`);
       } catch (e) {
         console.error('[Signaling] Failed to forward viewer offer:', e);
@@ -48,7 +48,7 @@ Deno.serve((req) => {
     if (type === 'broadcaster-answer') {
       for (const v of room.viewers) { 
         try { 
-          v.send(JSON.stringify({ type, role, roomId, payload }));
+          v.send(JSON.stringify(msg));
           console.log(`[Signaling] Forwarded broadcaster answer to viewer`);
         } catch (e) {
           console.error('[Signaling] Failed to forward answer to viewer:', e);
@@ -58,23 +58,34 @@ Deno.serve((req) => {
     }
 
     // ICE relay (both directions)
-    if (type === 'ice') {
-      if (role === 'viewer' && room.broadcaster) {
+    if (type === 'ice-candidate') {
+      const { from } = msg;
+      if (from === 'viewer' && room.broadcaster) {
         try { 
-          room.broadcaster.send(JSON.stringify({ type, role, roomId, payload }));
+          room.broadcaster.send(JSON.stringify(msg));
           console.log(`[Signaling] Forwarded ICE candidate from viewer to broadcaster`);
         } catch (e) {
           console.error('[Signaling] Failed to forward ICE to broadcaster:', e);
         }
-      } else if (role === 'broadcaster') {
+      } else if (from === 'broadcaster') {
         for (const v of room.viewers) { 
           try { 
-            v.send(JSON.stringify({ type, role, roomId, payload }));
+            v.send(JSON.stringify(msg));
             console.log(`[Signaling] Forwarded ICE candidate from broadcaster to viewer`);
           } catch (e) {
             console.error('[Signaling] Failed to forward ICE to viewer:', e);
           }
         }
+      }
+      return;
+    }
+
+    // Keepalive ping/pong
+    if (type === 'ping') {
+      try {
+        socket.send(JSON.stringify({ type: 'pong' }));
+      } catch (e) {
+        console.error('[Signaling] Failed to send pong:', e);
       }
       return;
     }
