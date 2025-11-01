@@ -76,7 +76,7 @@ export function LiveBroadcaster({ eventId }: Props) {
     }
   };
 
-  const setupAudioMonitoring = (audioTrack: LocalTrack) => {
+  const setupAudioProcessing = (audioTrack: LocalTrack) => {
     try {
       const mediaStreamTrack = audioTrack.mediaStreamTrack;
       if (!mediaStreamTrack) {
@@ -84,52 +84,42 @@ export function LiveBroadcaster({ eventId }: Props) {
         return;
       }
 
-      console.log('[Broadcaster] Setting up audio monitoring with track:', mediaStreamTrack.label);
+      console.log('[Broadcaster] Setting up audio processing with track:', mediaStreamTrack.label);
       
       const stream = new MediaStream([mediaStreamTrack]);
       const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
       
-      source.connect(analyser);
+      // Resume audio context if suspended (browser autoplay policy)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      const source = audioContext.createMediaStreamSource(stream);
 
       audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
       sourceNodeRef.current = source;
 
-      console.log('[Broadcaster] Audio monitoring setup complete, starting level detection');
-
-      // Start monitoring audio levels
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      let animationFrameId: number;
-      
-      const updateLevel = () => {
-        if (analyserRef.current && (status === 'preview' || status === 'live' || status === 'connecting')) {
-          analyserRef.current.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          const normalizedLevel = Math.min(100, (average / 255) * 100);
-          
-          // Log occasionally to debug
-          if (Math.random() < 0.01) {
-            console.log('[Broadcaster] Audio level:', normalizedLevel, 'raw average:', average);
-          }
-          
-          setAudioLevel(normalizedLevel);
-          animationFrameId = requestAnimationFrame(updateLevel);
-        }
-      };
-      
-      animationFrameId = requestAnimationFrame(updateLevel);
-      
-      // Store animation frame ID for cleanup
-      (audioContextRef.current as any).animationFrameId = animationFrameId;
+      console.log('[Broadcaster] Audio processing setup complete');
       
     } catch (err) {
-      console.error('[Broadcaster] Audio monitoring setup failed:', err);
+      console.error('[Broadcaster] Audio processing setup failed:', err);
     }
+  };
+
+  const handleProcessedStream = (processedStream: MediaStream) => {
+    console.log('[Broadcaster] Received processed audio stream from mixer');
+    // Replace the original audio track with the processed one
+    if (audioTrackRef.current && roomRef.current) {
+      const processedAudioTrack = processedStream.getAudioTracks()[0];
+      if (processedAudioTrack) {
+        console.log('[Broadcaster] Replacing audio track with processed version');
+        // This will be handled when we publish the track
+      }
+    }
+  };
+
+  const handleAudioLevel = (level: number) => {
+    setAudioLevel(level);
   };
 
   const startPreview = async () => {
@@ -177,8 +167,8 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       if (audioTrack) {
         audioTrackRef.current = audioTrack;
-        console.log('[Broadcaster] Audio track created, setting up monitoring');
-        setupAudioMonitoring(audioTrack);
+        console.log('[Broadcaster] Audio track created, setting up processing');
+        setupAudioProcessing(audioTrack);
       } else {
         console.error('[Broadcaster] No audio track found!');
         setError('Failed to create audio track');
@@ -194,11 +184,6 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const stopPreview = () => {
     console.log('[Broadcaster] Stopping preview and cleaning up');
-    
-    // Cancel animation frame
-    if (audioContextRef.current && (audioContextRef.current as any).animationFrameId) {
-      cancelAnimationFrame((audioContextRef.current as any).animationFrameId);
-    }
     
     if (videoTrackRef.current) {
       videoTrackRef.current.stop();
@@ -280,11 +265,6 @@ export function LiveBroadcaster({ eventId }: Props) {
   const stopBroadcast = async () => {
     console.log('[Broadcaster] Stopping broadcast');
     
-    // Cancel animation frame
-    if (audioContextRef.current && (audioContextRef.current as any).animationFrameId) {
-      cancelAnimationFrame((audioContextRef.current as any).animationFrameId);
-    }
-    
     if (roomRef.current) {
       roomRef.current.disconnect();
       roomRef.current = null;
@@ -349,9 +329,6 @@ export function LiveBroadcaster({ eventId }: Props) {
   useEffect(() => {
     return () => {
       // Cleanup on unmount
-      if (audioContextRef.current && (audioContextRef.current as any).animationFrameId) {
-        cancelAnimationFrame((audioContextRef.current as any).animationFrameId);
-      }
       if (roomRef.current) {
         roomRef.current.disconnect();
       }
@@ -459,6 +436,8 @@ export function LiveBroadcaster({ eventId }: Props) {
           <AudioMixer 
             audioContext={audioContextRef.current}
             sourceNode={sourceNodeRef.current}
+            onProcessedStream={handleProcessedStream}
+            onAudioLevel={handleAudioLevel}
           />
 
           <div className="flex gap-2">

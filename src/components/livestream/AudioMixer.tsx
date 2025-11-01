@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -11,9 +11,11 @@ interface AudioMixerProps {
   audioContext: AudioContext | null;
   sourceNode: MediaStreamAudioSourceNode | null;
   onProcessedStream?: (stream: MediaStream) => void;
+  onAudioLevel?: (level: number) => void;
 }
 
-export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: AudioMixerProps) => {
+export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel }: AudioMixerProps) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
   const [midGain, setMidGain] = useState(0);
@@ -42,8 +44,101 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: Audi
   // Spectrum data for visualization
   const [spectrumData, setSpectrumData] = useState<number[]>(new Array(32).fill(0));
 
+  // Draw EQ response curve
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw frequency labels
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    const freqLabels = ['20Hz', '100Hz', '1kHz', '10kHz', '20kHz'];
+    const freqPositions = [0.05, 0.2, 0.5, 0.8, 0.95];
+    freqLabels.forEach((label, i) => {
+      ctx.fillText(label, width * freqPositions[i], height - 4);
+    });
+    
+    // Draw dB labels
+    ctx.textAlign = 'right';
+    ctx.fillText('+12dB', 30, 15);
+    ctx.fillText('0dB', 30, height / 2);
+    ctx.fillText('-12dB', 30, height - 15);
+    
+    // Draw center line at 0dB
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(35, height / 2);
+    ctx.lineTo(width, height / 2);
+    ctx.stroke();
+    
+    // Draw EQ response curve
+    ctx.strokeStyle = lowGain === 0 && midGain === 0 && highGain === 0 
+      ? 'rgba(200, 200, 200, 0.8)' 
+      : 'rgba(34, 197, 94, 1)'; // green when active
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    
+    // Sample points across the frequency spectrum
+    const points = 100;
+    for (let i = 0; i < points; i++) {
+      const x = (i / points) * width;
+      const freq = 20 * Math.pow(1000, i / points); // logarithmic frequency
+      
+      // Calculate response at this frequency
+      let response = 0;
+      
+      // Low shelf effect (320Hz)
+      if (freq < 320) {
+        response += lowGain;
+      } else {
+        const transition = Math.max(0, 1 - (freq - 320) / 320);
+        response += lowGain * transition;
+      }
+      
+      // Mid peak effect (1kHz with Q=1)
+      const midQ = 1;
+      const midFreq = 1000;
+      const midBandwidth = midFreq / midQ;
+      const midDist = Math.abs(Math.log2(freq / midFreq));
+      const midEffect = Math.max(0, 1 - (midDist * midQ));
+      response += midGain * midEffect;
+      
+      // High shelf effect (3.2kHz)
+      if (freq > 3200) {
+        response += highGain;
+      } else {
+        const transition = Math.max(0, (freq - 1600) / 1600);
+        response += highGain * transition;
+      }
+      
+      // Convert dB to pixel position (center = 0dB)
+      const y = height / 2 - (response / 12) * (height / 2 - 20);
+      
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    
+    ctx.stroke();
+    
+  }, [lowGain, midGain, highGain]);
+
   useEffect(() => {
     if (!audioContext || !sourceNode) return;
+
+    let animationFrameId: number;
 
     try {
       // Create audio processing chain
@@ -110,6 +205,9 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: Audi
       analyser.fftSize = 64;
       analyser.smoothingTimeConstant = 0.8;
 
+      // MediaStreamDestination for broadcasting processed audio
+      const destination = audioContext.createMediaStreamDestination();
+
       // Connect the chain
       sourceNode.connect(lowShelf);
       lowShelf.connect(midPeak);
@@ -138,20 +236,36 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: Audi
       }
 
       master.connect(analyser);
-      master.connect(audioContext.destination);
+      master.connect(destination); // Send processed audio to MediaStream
+      
+      // Send processed stream back to broadcaster
+      if (onProcessedStream) {
+        console.log('[AudioMixer] Sending processed stream to broadcaster');
+        onProcessedStream(destination.stream);
+      }
 
-      // Update spectrum visualization
+      // Update spectrum visualization and audio levels
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       const updateSpectrum = () => {
         analyser.getByteFrequencyData(dataArray);
         setSpectrumData(Array.from(dataArray));
-        requestAnimationFrame(updateSpectrum);
+        
+        // Calculate overall audio level
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        const normalizedLevel = Math.min(100, (average / 255) * 100);
+        
+        if (onAudioLevel) {
+          onAudioLevel(normalizedLevel);
+        }
+        
+        animationFrameId = requestAnimationFrame(updateSpectrum);
       };
       updateSpectrum();
 
       // Cleanup
       return () => {
         try {
+          cancelAnimationFrame(animationFrameId);
           sourceNode.disconnect();
           lowShelf.disconnect();
           midPeak.disconnect();
@@ -160,6 +274,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: Audi
           limiter.disconnect();
           master.disconnect();
           analyser.disconnect();
+          destination.disconnect();
         } catch (e) {
           console.error('Error disconnecting audio nodes:', e);
         }
@@ -167,7 +282,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: Audi
     } catch (error) {
       console.error('Audio mixer setup error:', error);
     }
-  }, [audioContext, sourceNode, lowGain, midGain, highGain, compressorEnabled, threshold, ratio, attack, release, knee, limiterEnabled, limiterThreshold, masterGain, reverbMix]);
+  }, [audioContext, sourceNode, lowGain, midGain, highGain, compressorEnabled, threshold, ratio, attack, release, knee, limiterEnabled, limiterThreshold, masterGain, reverbMix, onProcessedStream, onAudioLevel]);
 
   if (!audioContext || !sourceNode) {
     return (
@@ -199,15 +314,23 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream }: Audi
           </TabsTrigger>
         </TabsList>
 
-        {/* Spectrum Analyzer */}
-        <div className="mt-4 mb-4 h-20 bg-black rounded-lg p-2 flex items-end gap-1">
-          {spectrumData.map((value, i) => (
-            <div
-              key={i}
-              className="flex-1 bg-gradient-to-t from-green-500 via-yellow-500 to-red-500 rounded-sm transition-all"
-              style={{ height: `${(value / 255) * 100}%`, minHeight: '2px' }}
-            />
-          ))}
+        {/* Spectrum Analyzer with EQ Response Curve */}
+        <div className="mt-4 mb-4 relative">
+          <div className="h-32 bg-black rounded-lg p-2 flex items-end gap-1">
+            {spectrumData.map((value, i) => (
+              <div
+                key={i}
+                className="flex-1 bg-gradient-to-t from-green-500/40 via-yellow-500/40 to-red-500/40 rounded-sm transition-all"
+                style={{ height: `${(value / 255) * 100}%`, minHeight: '2px' }}
+              />
+            ))}
+          </div>
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={128}
+            className="absolute inset-0 w-full h-full pointer-events-none rounded-lg"
+          />
         </div>
 
         {/* EQ Tab */}
