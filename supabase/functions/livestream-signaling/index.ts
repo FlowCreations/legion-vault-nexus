@@ -2,17 +2,35 @@
 // Handles WebSocket connections and routes messages between broadcaster and viewers
 
 // deno-lint-ignore-file no-explicit-any
-export const rooms: Map<string, { broadcaster?: WebSocket; viewers: Set<WebSocket> }> = new Map();
+type WS = WebSocket;
+type Room = { broadcaster?: WS; viewers: Set<WS> };
 
-function getRoom(roomId: string) {
-  if (!rooms.has(roomId)) rooms.set(roomId, { viewers: new Set() });
-  return rooms.get(roomId)!;
+const rooms = new Map<string, Room>();
+
+function getRoom(id: string): Room {
+  if (!rooms.has(id)) rooms.set(id, { viewers: new Set() });
+  return rooms.get(id)!;
 }
 
-function removeSocket(ws: WebSocket) {
+function safeSend(ws: WS | undefined, msg: unknown) {
+  try {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+  } catch (e) {
+    console.error('[Signaling] safeSend error:', e);
+  }
+}
+
+function broadcastViewers(room: Room, msg: unknown) {
+  for (const v of room.viewers) safeSend(v, msg);
+}
+
+function cleanupSocket(ws: WebSocket) {
   for (const [id, room] of rooms) {
-    if (room.broadcaster === ws) room.broadcaster = undefined;
-    if (room.viewers.has(ws)) room.viewers.delete(ws);
+    if (room.broadcaster === ws) {
+      room.broadcaster = undefined;
+      broadcastViewers(room, { type: 'broadcaster-left', roomId: id });
+    }
+    room.viewers.delete(ws);
     if (!room.broadcaster && room.viewers.size === 0) rooms.delete(id);
   }
 }
@@ -20,93 +38,98 @@ function removeSocket(ws: WebSocket) {
 Deno.serve((req) => {
   const { socket, response } = Deno.upgradeWebSocket(req);
 
+  let role: "broadcaster" | "viewer" | undefined;
+  let roomId = "unknown";
+
+  socket.onopen = () => {
+    console.log('[Signaling] WebSocket opened');
+  };
+
   socket.onmessage = (e) => {
     let msg: any;
-    try { msg = JSON.parse(e.data); } catch { return; }
-    const { type, role, roomId, payload } = msg || {};
-    if (!roomId) return;
+    try {
+      msg = JSON.parse(e.data);
+    } catch {
+      console.log('[Signaling] Non-JSON message ignored');
+      return;
+    }
+
+    const type = msg?.type as string | undefined;
+    roomId = msg?.roomId ?? roomId;
+    
+    if (!roomId || roomId === "unknown") {
+      console.log('[Signaling] Message missing roomId');
+      return;
+    }
+
     const room = getRoom(roomId);
 
-    console.log(`[Signaling] ${type} from ${role} in room ${roomId}`);
+    // Handle join separately (only message with 'role' field)
+    if (type === 'join') {
+      role = msg?.role;
+      console.log(`[Signaling] join: role=${role} room=${roomId}`);
 
-    // Register roles
-    if (type === 'join' && role === 'broadcaster') { room.broadcaster = socket; return; }
-    if (type === 'join' && role === 'viewer') { room.viewers.add(socket); return; }
-
-    // Viewer offer -> broadcaster
-    if (type === 'viewer-offer' && room.broadcaster) {
-      try { 
-        room.broadcaster.send(JSON.stringify(msg));
-        console.log(`[Signaling] Forwarded viewer offer to broadcaster`);
-      } catch (e) {
-        console.error('[Signaling] Failed to forward viewer offer:', e);
+      if (role === 'broadcaster') {
+        room.broadcaster = socket;
+      } else if (role === 'viewer') {
+        room.viewers.add(socket);
       }
       return;
     }
 
-    // Broadcaster answer -> all viewers
-    if (type === 'broadcaster-answer') {
-      for (const v of room.viewers) { 
-        try { 
-          v.send(JSON.stringify(msg));
-          console.log(`[Signaling] Forwarded broadcaster answer to viewer`);
-        } catch (e) {
-          console.error('[Signaling] Failed to forward answer to viewer:', e);
+    if (!type) return;
+
+    // Route messages based on type
+    switch (type) {
+      case 'viewer-offer': {
+        console.log(`[Signaling] viewer-offer → broadcaster (room=${roomId})`);
+        safeSend(room.broadcaster, msg);
+        break;
+      }
+
+      case 'broadcaster-answer': {
+        console.log(`[Signaling] broadcaster-answer → viewers (room=${roomId})`);
+        broadcastViewers(room, msg);
+        break;
+      }
+
+      case 'ice-candidate': {
+        const from = msg?.from as "viewer" | "broadcaster" | undefined;
+        console.log(`[Signaling] ice-candidate from=${from} room=${roomId}`);
+        
+        if (from === 'viewer') {
+          safeSend(room.broadcaster, msg);
+        } else if (from === 'broadcaster') {
+          broadcastViewers(room, msg);
         }
+        break;
       }
-      return;
-    }
 
-    // ICE relay (both directions)
-    if (type === 'ice-candidate') {
-      const { from } = msg;
-      if (from === 'viewer' && room.broadcaster) {
-        try { 
-          room.broadcaster.send(JSON.stringify(msg));
-          console.log(`[Signaling] Forwarded ICE candidate from viewer to broadcaster`);
-        } catch (e) {
-          console.error('[Signaling] Failed to forward ICE to broadcaster:', e);
-        }
-      } else if (from === 'broadcaster') {
-        for (const v of room.viewers) { 
-          try { 
-            v.send(JSON.stringify(msg));
-            console.log(`[Signaling] Forwarded ICE candidate from broadcaster to viewer`);
-          } catch (e) {
-            console.error('[Signaling] Failed to forward ICE to viewer:', e);
-          }
-        }
+      case 'ping': {
+        safeSend(socket, { type: 'pong' });
+        break;
       }
-      return;
-    }
 
-    // Keepalive ping/pong
-    if (type === 'ping') {
-      try {
-        socket.send(JSON.stringify({ type: 'pong' }));
-      } catch (e) {
-        console.error('[Signaling] Failed to send pong:', e);
+      case 'end': {
+        console.log(`[Signaling] Stream ended in room ${roomId}`);
+        broadcastViewers(room, { type: 'end', roomId });
+        break;
       }
-      return;
-    }
 
-    if (type === 'end') {
-      console.log(`[Signaling] Stream ended in room ${roomId}`);
-      for (const v of room.viewers) { 
-        try { v.send(JSON.stringify({ type: 'end', role, roomId })); } catch {} 
+      default: {
+        console.log(`[Signaling] Unknown type=${type} room=${roomId}`);
       }
-      return;
     }
+  };
+
+  socket.onerror = (ev) => {
+    console.error('[Signaling] WebSocket error:', ev);
+    cleanupSocket(socket);
   };
 
   socket.onclose = () => {
-    console.log('[Signaling] Socket closed');
-    removeSocket(socket);
-  };
-  
-  socket.onerror = (e) => {
-    console.error('[Signaling] Socket error:', e);
-    removeSocket(socket);
+    console.log(`[Signaling] WebSocket closed: role=${role} room=${roomId}`);
+    cleanupSocket(socket);
   };
 
   return response;
