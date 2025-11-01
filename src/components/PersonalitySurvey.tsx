@@ -180,7 +180,7 @@ export const PersonalitySurvey = ({ isOpen, onClose }: PersonalitySurveyProps) =
           <div className="space-y-6 text-center py-8">
             <div className="space-y-2">
               <h3 className="text-3xl font-bold text-primary">One Time 50% Off All Digital Items</h3>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-foreground">
                 Just fill out this quick survey to help us personalize your experience.
               </p>
             </div>
