@@ -236,7 +236,10 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       }
 
       master.connect(analyser);
-      master.connect(destination); // Send processed audio to MediaStream
+      analyser.connect(destination); // CRITICAL: Analyser must be connected to destination to process audio
+      
+      // Also connect to audioContext.destination for monitoring (this is what makes the analyser work!)
+      analyser.connect(audioContext.destination);
       
       // Send processed stream back to broadcaster
       if (onProcessedStream) {
@@ -253,6 +256,11 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         // Calculate overall audio level
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
         const normalizedLevel = Math.min(100, (average / 255) * 100);
+        
+        // Debug log occasionally
+        if (Math.random() < 0.02) {
+          console.log('[AudioMixer] Audio level:', normalizedLevel, 'raw:', average, 'sample:', dataArray.slice(0, 5));
+        }
         
         if (onAudioLevel) {
           onAudioLevel(normalizedLevel);
