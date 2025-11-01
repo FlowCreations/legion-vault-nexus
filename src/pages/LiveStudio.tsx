@@ -74,13 +74,20 @@ export default function LiveStudio() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'livestream_events',
-        filter: 'status=eq.live'
+        table: 'livestream_events'
       }, (payload) => {
         console.log('[LiveStudio] Realtime event received:', payload);
+        
+        // Check if the event is live
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          console.log('[LiveStudio] Setting live event ID:', payload.new.id);
-          setLiveEventId(payload.new.id);
+          const eventData = payload.new as any;
+          if (eventData.status === 'live') {
+            console.log('[LiveStudio] Setting live event ID:', eventData.id);
+            setLiveEventId(eventData.id);
+          } else {
+            console.log('[LiveStudio] Event status changed to non-live, clearing');
+            setLiveEventId(null);
+          }
         } else if (payload.eventType === 'DELETE') {
           console.log('[LiveStudio] Event deleted, clearing live event ID');
           setLiveEventId(null);
@@ -109,7 +116,7 @@ export default function LiveStudio() {
       .from('livestream_events')
       .select('id, status, title')
       .eq('status', 'live')
-      .single();
+      .maybeSingle();
     
     console.log('[LiveStudio] Live stream check result:', { data, error });
     
@@ -118,6 +125,7 @@ export default function LiveStudio() {
       setLiveEventId(data.id);
     } else {
       console.log('[LiveStudio] No live events found');
+      setLiveEventId(null);
     }
   };
 
