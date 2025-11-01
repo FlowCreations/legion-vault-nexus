@@ -167,12 +167,12 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
   return (
     <>
       <div className="space-y-3">
-        <div className="relative group">
+        <div className="relative rounded-2xl overflow-hidden bg-black shadow-xl">
           <video 
             ref={videoRef} 
             autoPlay 
             playsInline 
-            className="w-full rounded-lg border bg-black aspect-video" 
+            className="w-full h-full aspect-video object-contain" 
           />
           
           {/* Play button overlay */}
@@ -190,7 +190,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
           )}
 
           {/* Status Indicator */}
-          <div className="absolute top-4 left-4 flex items-center gap-3">
+          <div className="absolute top-3 left-3 flex items-center gap-3">
             <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
               <span className={`inline-block h-2 w-2 rounded-full ${
                 status === 'connected' ? 'bg-green-500' : 
@@ -209,11 +209,11 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
 
         {/* External Controls - Only show if enabled */}
         {showExternalControls && (
-          <div className="flex gap-2">
+          <div className="flex gap-4 mt-4">
             <Button
               variant="secondary"
               onClick={() => setIsExpanded(true)}
-              className="flex-1"
+              className="flex-1 min-w-[100px] h-11"
             >
               <Maximize2 className="w-4 h-4 mr-2" />
               Expand
@@ -221,7 +221,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
             <Button
               variant="secondary"
               onClick={handleTip}
-              className="flex-1"
+              className="flex-1 min-w-[100px] h-11"
             >
               <DollarSign className="w-4 h-4 mr-2" />
               Tip
@@ -229,7 +229,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
             <Button
               variant="secondary"
               onClick={handleShare}
-              className="flex-1"
+              className="flex-1 min-w-[100px] h-11"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share
