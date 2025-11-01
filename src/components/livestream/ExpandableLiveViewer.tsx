@@ -19,6 +19,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
   const [error, setError] = useState<string>();
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
+  const [hasVideoTrack, setHasVideoTrack] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
@@ -79,6 +80,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
         console.log('[Viewer] Track subscribed:', track.kind, 'from', participant.identity);
         if (track.kind === Track.Kind.Video) {
           videoTrackRef.current = track;
+          setHasVideoTrack(true);
           if (videoRef.current) {
             track.attach(videoRef.current);
           }
@@ -175,17 +177,13 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
             className="w-full rounded-2xl border bg-black aspect-video shadow-xl" 
           />
           
-          {/* Play button overlay */}
-          {status === 'connected' && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <button
-                onClick={() => videoRef.current?.play()}
-                className="pointer-events-auto w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-all"
-              >
-                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </button>
+          {/* Waiting for stream message */}
+          {status === 'connected' && !hasVideoTrack && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+              <div className="text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white border-r-transparent mb-3" />
+                <p className="text-white text-sm font-medium">Waiting for stream...</p>
+              </div>
             </div>
           )}
 
