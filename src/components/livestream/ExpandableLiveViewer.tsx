@@ -17,6 +17,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
@@ -50,11 +51,27 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
       room.on(RoomEvent.Connected, () => {
         console.log('[Viewer] Connected to room');
         setStatus('connected');
+        // Update viewer count on connect
+        setViewerCount(room.numParticipants);
       });
 
       room.on(RoomEvent.Disconnected, () => {
         console.log('[Viewer] Disconnected from room');
         setStatus('idle');
+      });
+
+      room.on(RoomEvent.ParticipantConnected, () => {
+        console.log('[Viewer] Participant joined');
+        if (roomRef.current) {
+          setViewerCount(roomRef.current.numParticipants);
+        }
+      });
+
+      room.on(RoomEvent.ParticipantDisconnected, () => {
+        console.log('[Viewer] Participant left');
+        if (roomRef.current) {
+          setViewerCount(roomRef.current.numParticipants);
+        }
       });
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
@@ -186,13 +203,20 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
         </div>
 
         {/* Status Indicator */}
-        <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-          <span className={`inline-block h-2 w-2 rounded-full ${
-            status === 'connected' ? 'bg-green-500' : 
-            status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-            'bg-red-500'
-          }`} />
-          <span className="text-white text-xs font-medium uppercase">{status}</span>
+        <div className="absolute top-4 left-4 flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+            <span className={`inline-block h-2 w-2 rounded-full ${
+              status === 'connected' ? 'bg-green-500' : 
+              status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+              'bg-red-500'
+            }`} />
+            <span className="text-white text-xs font-medium uppercase">{status}</span>
+          </div>
+          {status === 'connected' && viewerCount > 0 && (
+            <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+              <span className="text-white text-xs font-medium">{viewerCount} watching</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -209,6 +233,19 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare }: Props) {
                 controls 
                 className="w-full h-full" 
               />
+              
+              {/* Expanded Status & Viewer Count */}
+              <div className="absolute top-4 left-4 flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                  <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-white text-sm font-medium">LIVE</span>
+                </div>
+                {viewerCount > 0 && (
+                  <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                    <span className="text-white text-sm font-medium">{viewerCount} watching</span>
+                  </div>
+                )}
+              </div>
               
               {/* Expanded Controls */}
               <div className="absolute bottom-6 right-6 flex gap-2">

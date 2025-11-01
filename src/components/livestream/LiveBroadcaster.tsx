@@ -33,14 +33,33 @@ export function LiveBroadcaster({ eventId }: Props) {
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
   useEffect(() => {
-    loadDevices();
+    requestPermissionsAndLoadDevices();
   }, []);
 
-  const loadDevices = async () => {
+  const requestPermissionsAndLoadDevices = async () => {
     try {
+      // Request permissions first to get accurate device labels
+      console.log('[Broadcaster] Requesting media permissions...');
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true, 
+        video: true 
+      });
+      
+      // Stop the tracks immediately - we just needed them for permissions
+      stream.getTracks().forEach(track => track.stop());
+      console.log('[Broadcaster] Permissions granted, loading devices...');
+      
+      // Now enumerate devices - labels will be available after permission grant
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
       const audioDevices = devices.filter(d => d.kind === 'audioinput');
+      
+      console.log('[Broadcaster] Found devices:', {
+        cameras: videoDevices.length,
+        microphones: audioDevices.length,
+        videoDevices: videoDevices.map(d => ({ id: d.deviceId, label: d.label })),
+        audioDevices: audioDevices.map(d => ({ id: d.deviceId, label: d.label }))
+      });
       
       setCameras(videoDevices);
       setMicrophones(audioDevices);
@@ -52,7 +71,8 @@ export function LiveBroadcaster({ eventId }: Props) {
         setSelectedMicrophone(audioDevices[0].deviceId);
       }
     } catch (err) {
-      console.error('Failed to load devices:', err);
+      console.error('[Broadcaster] Failed to get permissions or load devices:', err);
+      setError('Please allow camera and microphone access to continue');
     }
   };
 
@@ -111,22 +131,21 @@ export function LiveBroadcaster({ eventId }: Props) {
     });
 
     try {
-      // Request permissions first
-      await navigator.mediaDevices.getUserMedia({ 
-        audio: true, 
-        video: true 
-      });
-      console.log('[Broadcaster] Permissions granted');
-
       const tracks = await createLocalTracks({
         audio: { 
           deviceId: { exact: selectedMicrophone },
           echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: false
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 2
         },
         video: { 
-          deviceId: { exact: selectedCamera }
+          deviceId: { exact: selectedCamera },
+          resolution: {
+            width: 1920,
+            height: 1080
+          }
         },
       });
 
