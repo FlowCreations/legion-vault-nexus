@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { renderEmailContent, getVariablesByCategory } from "@/utils/emailVariables";
-import { Copy, Check } from "lucide-react";
+import { validateChristConsciousness, calculateEthosScore } from "@/lib/christConsciousEthos";
+import { Copy, Check, Sparkles, AlertTriangle } from "lucide-react";
 
 interface EmailTemplateEditorProps {
   subject: string;
@@ -48,6 +49,8 @@ export function EmailTemplateEditor({
   };
 
   const renderedPreview = renderEmailContent(body, sampleUserData);
+  const christConsciousValidation = validateChristConsciousness(body);
+  const ethosScore = calculateEthosScore(christConsciousValidation);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -136,6 +139,49 @@ export function EmailTemplateEditor({
 
       {/* Preview Section */}
       <div className="space-y-4">
+        {/* Christ-Conscious Validation */}
+        <Card className="p-4 border-l-4" style={{ borderColor: christConsciousValidation.passes ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            Christ-Conscious Alignment
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Ethos Score</span>
+              <Badge variant={ethosScore >= 75 ? "default" : ethosScore >= 50 ? "secondary" : "destructive"}>
+                {ethosScore}/100
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className={christConsciousValidation.scores.loveFirst ? "text-green-600" : "text-muted-foreground"}>
+                {christConsciousValidation.scores.loveFirst ? "✓" : "○"} Love First
+              </div>
+              <div className={christConsciousValidation.scores.empowerment ? "text-green-600" : "text-muted-foreground"}>
+                {christConsciousValidation.scores.empowerment ? "✓" : "○"} Empowerment
+              </div>
+              <div className={christConsciousValidation.scores.truthBased ? "text-green-600" : "text-muted-foreground"}>
+                {christConsciousValidation.scores.truthBased ? "✓" : "○"} Truth-Based
+              </div>
+              <div className={christConsciousValidation.scores.manipulation ? "text-green-600" : "text-red-600"}>
+                {christConsciousValidation.scores.manipulation ? "✓" : "✗"} No Manipulation
+              </div>
+            </div>
+
+            {!christConsciousValidation.passes && (
+              <div className="pt-2 border-t space-y-1">
+                <p className="text-xs font-medium flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Suggestions:
+                </p>
+                {christConsciousValidation.suggestions.map((s, i) => (
+                  <p key={i} className="text-xs text-muted-foreground">• {s}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+
         <Card className="p-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             Live Preview

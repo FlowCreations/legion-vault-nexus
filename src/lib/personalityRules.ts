@@ -143,3 +143,34 @@ export function getPersonalityColor(type: string): string {
   };
   return colors[firstLetter] || 'hsl(var(--muted))';
 }
+
+export function applyChristConsciousOverlay(
+  message: MessageRecipe, 
+  posterior: Posterior
+): MessageRecipe {
+  const startsWithLove = (text: string): boolean => {
+    const loveKeywords = ['grateful', 'thank', 'honor', 'appreciate', 'love', 'blessed', 'gift'];
+    const firstWords = text.toLowerCase().split(' ').slice(0, 5);
+    return firstWords.some(word => loveKeywords.some(keyword => word.includes(keyword)));
+  };
+
+  // Ensure message starts with love-first principle
+  if (!startsWithLove(message.opener)) {
+    message.opener = `We're grateful you're part of this. ${message.opener}`;
+  }
+  
+  // Add empowerment reminder for Feeling types
+  if (posterior.p_f > 0.6) {
+    message.body += "\n\nYou have the power to choose what serves your highest good. We're just here to offer what feels aligned.";
+  }
+  
+  // Truth with compassion for Thinking types
+  if (posterior.p_t > 0.6) {
+    message.body += "\n\nWe speak plainly because we respect you. No games, no manipulation — just honest offering.";
+  }
+  
+  return {
+    ...message,
+    creative_tags: [...message.creative_tags, 'christ_conscious', 'empowerment']
+  };
+}

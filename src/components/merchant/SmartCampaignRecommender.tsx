@@ -71,6 +71,11 @@ interface Recommendation {
   subject: string;
   contentTheme: string;
   sendTime: string;
+  christConsciousStrategy?: {
+    opening: string;
+    framing: string;
+    empowerment: string;
+  };
   expectedPerformance: {
     openRate: number;
     clickRate: number;
@@ -164,16 +169,21 @@ export const SmartCampaignRecommender = ({ onClose }: { onClose: () => void }) =
           goal: 'Drive Merchandise Sales',
           targetAudience: 'High PTP Subscribers (PTP > 70)',
           estimatedReach: highPTPCount,
-          subject: '🔥 VIP Early Access: New Drop Tonight',
-          contentTheme: 'Exclusive sneak peek, limited quantity, urgency',
+          subject: '🎁 We made something with you in mind',
+          contentTheme: 'Gratitude-first, quality focus, empowering choice',
           sendTime: 'Thursday 6PM EST',
+          christConsciousStrategy: {
+            opening: "Your support means everything. We created this with people like you in mind.",
+            framing: "If this serves your journey, we'd be honored. No pressure, just offering.",
+            empowerment: "You know what aligns with your path - trust that."
+          },
           expectedPerformance: {
             openRate: baseOpenRate * 1.5,
             clickRate: baseClickRate * 2.2,
             conversionRate: 6
           },
           predictedRevenue: '$4,500 - $6,200',
-          reasoning: 'High PTP subscribers have shown strong purchase intent. Urgency + exclusivity drives conversions. Thursday evening catches fans before weekend shopping.'
+          reasoning: 'High PTP subscribers respond to authentic gratitude. Christ-conscious framing removes sales pressure, ironically increasing conversion through genuine connection.'
         };
       
       case 'vip_engagement':

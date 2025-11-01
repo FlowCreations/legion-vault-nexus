@@ -1099,8 +1099,11 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           email_body: string
+          ethos_score: number | null
           id: string
           list_id: string | null
+          love_first_validation: boolean | null
+          manipulation_flags: number | null
           name: string
           preview_text: string | null
           scheduled_for: string | null
@@ -1120,8 +1123,11 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           email_body: string
+          ethos_score?: number | null
           id?: string
           list_id?: string | null
+          love_first_validation?: boolean | null
+          manipulation_flags?: number | null
           name: string
           preview_text?: string | null
           scheduled_for?: string | null
@@ -1141,8 +1147,11 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           email_body?: string
+          ethos_score?: number | null
           id?: string
           list_id?: string | null
+          love_first_validation?: boolean | null
+          manipulation_flags?: number | null
           name?: string
           preview_text?: string | null
           scheduled_for?: string | null
@@ -1327,6 +1336,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ethos_performance_tracking: {
+        Row: {
+          campaign_id: string | null
+          click_rate: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          empowerment_language: boolean | null
+          ethos_score: number
+          id: string
+          love_first: boolean | null
+          open_rate: number | null
+          truth_based: boolean | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          click_rate?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          empowerment_language?: boolean | null
+          ethos_score: number
+          id?: string
+          love_first?: boolean | null
+          open_rate?: number | null
+          truth_based?: boolean | null
+        }
+        Update: {
+          campaign_id?: string | null
+          click_rate?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          empowerment_language?: boolean | null
+          ethos_score?: number
+          id?: string
+          love_first?: boolean | null
+          open_rate?: number | null
+          truth_based?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ethos_performance_tracking_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ethos_requests: {
         Row: {

@@ -98,43 +98,52 @@ function generateMessage(p: Posterior, offer: string): MessageRecipe {
   const framing = selectFraming(p);
   const ctaStyle = selectCTA(p);
 
+  // Christ-conscious overlay - lead with love, then offer
   let opener = '';
   let body = '';
   let subject = '';
 
   if (offer === 'ticket_local') {
+    // For Extraverts (E > 0.6)
     if (p.p_e > 0.6) {
-      opener = "We're pulling the crew together and you were on my mind.";
-      subject = "Dallas is about to be a moment ✨";
+      opener = "Your energy in this community has been a gift. We see you.";
+      subject = "Something special for souls like you ✨";
     } else {
-      opener = "A quiet note for you about something special coming up.";
-      subject = "An invitation just for you";
+      // For Introverts
+      opener = "In the quiet, we build something meaningful. You're part of that.";
+      subject = "A personal invitation, just for you";
     }
 
+    // Intuitive (N) vs Sensing (S)
     if (p.p_n > p.p_s) {
-      body = "We've been building something special with the Legion — this show is the next chapter. The energy, the movement, the moments we create together.";
+      body = "We've been building something that transcends a show — it's a movement, a moment of unity. You're invited to be part of the next chapter.";
     } else {
-      body = "We're playing The Echo Dallas on March 15th at 8PM. 300 capacity venue, full band, new songs from the upcoming album.";
+      body = "We're playing The Echo Dallas on March 15th at 8PM. Intimate venue, 300 capacity. Full band. New songs. Real connection.";
     }
 
+    // Feeling (F) vs Thinking (T)
     if (p.p_f > p.p_t) {
-      body += " If you can make it, I want you there. This is about us, together.";
+      body += " This isn't about a ticket — it's about us, together, creating something that matters. Your presence would honor us.";
     } else {
-      body += " Tickets are $35, includes meet & greet access. VIP packages available.";
+      body += " Tickets are $35, includes meet & greet. VIP packages available. We've structured this to honor your investment of time and trust.";
     }
   } else if (offer === 'merch_starter') {
-    subject = p.p_j > p.p_p ? "Limited drop ends Friday" : "New merch you might vibe with";
+    subject = p.p_j > p.p_p 
+      ? "We made something for you - available through Friday"
+      : "New pieces that might speak to your soul";
+    
     opener = p.p_f > p.p_t 
-      ? "Wanted to share something we made with you in mind."
-      : "Check out the new Legion collection — quality you can feel.";
+      ? "We created these with gratitude for people like you in mind."
+      : "Quality you can feel, design that stands the test. We don't compromise.";
     
     body = p.p_s > p.p_n
-      ? "Premium cotton tees, embroidered details, sizes XS-3XL. Ships in 3-5 days."
-      : "Each piece tells the story of where we've been and where we're going. Wear the movement.";
+      ? "Premium cotton tees, embroidered details. Sizes XS-3XL. Ships in 3-5 days. Every detail considered."
+      : "Each piece carries the story of our journey — wear it as a reminder of your own strength and purpose.";
   } else {
-    subject = "Something for you";
-    opener = "Quick note with an offer.";
-    body = `Check out our ${offer} — think you'd like it.`;
+    // Generic Christ-conscious template
+    subject = "A gift for you";
+    opener = "We're grateful you're here, walking this path with us.";
+    body = `We believe in ${offer.replace(/_/g, ' ')} — and we believe in you. Here's something that might serve your journey.`;
   }
 
   return {
@@ -143,7 +152,7 @@ function generateMessage(p: Posterior, offer: string): MessageRecipe {
     opener,
     body,
     cta: ctaStyle.cta,
-    creative_tags: [...copyStyle.elements, ...framing.proof],
+    creative_tags: [...copyStyle.elements, ...framing.proof, 'christ_conscious', 'love_first'],
     timing: p.assertiveness > 0.6 ? 'immediate' : 'evening',
   };
 }
