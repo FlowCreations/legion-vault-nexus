@@ -77,6 +77,13 @@ export default function ExpandableLiveViewer({ eventId }: ViewerProps) {
   async function connect() {
     setConnecting(true);
     setError(undefined);
+    
+    // CRITICAL: Send join message FIRST, before creating offer
+    sig.send({ type: 'join', role: 'viewer', roomId: eventId });
+    
+    // Give the signaling server a moment to register us
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     try {
       const newPc = createPeerConnection({
         onTrack: async (ev) => {
@@ -132,7 +139,6 @@ export default function ExpandableLiveViewer({ eventId }: ViewerProps) {
       }
     };
     sig.onMessage(handler);
-    sig.send({ type: 'join', role: 'viewer', roomId: eventId });
   }, [pc, eventId]);
 
   function teardown() {
