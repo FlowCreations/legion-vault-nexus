@@ -29,18 +29,9 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
   });
   const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [selectedMicrophone, setSelectedMicrophone] = useState<string>('');
-  const [wsState, setWsState] = useState<number | undefined>();
 
   useEffect(() => {
     sig.connect();
-    
-    const wsInterval = setInterval(() => {
-      const state = (sig as any).getState?.();
-      setWsState(state);
-      if (state !== WebSocket.OPEN && state !== undefined) {
-        console.warn('[LiveBroadcaster] WebSocket not connected. State:', state);
-      }
-    }, 1000);
     
     setTimeout(() => {
       sig.send({ type: 'join', role: 'broadcaster', roomId: eventId });
@@ -49,7 +40,6 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
     loadDevices();
     
     return () => {
-      clearInterval(wsInterval);
       sig.close();
     };
   }, [eventId]);
@@ -330,12 +320,6 @@ export const LiveBroadcaster = ({ eventId, onStreamStart, onStreamEnd }: LiveBro
       )}
 
       {err && <p className="text-destructive text-sm mt-2">{err}</p>}
-      
-      {wsState !== undefined && wsState !== WebSocket.OPEN && (
-        <div className="mt-2 p-2 bg-yellow-100 border border-yellow-400 rounded text-sm">
-          ⚠️ Signaling connection issue. State: {wsState === WebSocket.CONNECTING ? 'Connecting...' : wsState === WebSocket.CLOSING ? 'Closing' : 'Closed'}
-        </div>
-      )}
     </Card>
   );
 };
