@@ -2134,6 +2134,96 @@ export type Database = {
         }
         Relationships: []
       }
+      personality_features: {
+        Row: {
+          computed_at: string | null
+          feature_name: string
+          id: string
+          time_window: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          computed_at?: string | null
+          feature_name: string
+          id?: string
+          time_window: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          computed_at?: string | null
+          feature_name?: string
+          id?: string
+          time_window?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      personality_profiles: {
+        Row: {
+          assertiveness: number | null
+          confidence_score: number | null
+          created_at: string | null
+          feature_vector: Json | null
+          id: string
+          last_computed: string | null
+          mbti_type: string | null
+          p_e: number
+          p_f: number
+          p_i: number
+          p_j: number
+          p_n: number
+          p_p: number
+          p_s: number
+          p_t: number
+          survey_responses: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assertiveness?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          feature_vector?: Json | null
+          id?: string
+          last_computed?: string | null
+          mbti_type?: string | null
+          p_e?: number
+          p_f?: number
+          p_i?: number
+          p_j?: number
+          p_n?: number
+          p_p?: number
+          p_s?: number
+          p_t?: number
+          survey_responses?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assertiveness?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          feature_vector?: Json | null
+          id?: string
+          last_computed?: string | null
+          mbti_type?: string | null
+          p_e?: number
+          p_f?: number
+          p_i?: number
+          p_j?: number
+          p_n?: number
+          p_p?: number
+          p_s?: number
+          p_t?: number
+          survey_responses?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_admins: {
         Row: {
           created_at: string | null

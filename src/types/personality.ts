@@ -12,6 +12,7 @@ export interface PersonalityProfile {
   assertiveness: number;
   mbti_type: string | null;
   confidence_score: number;
+  survey_responses?: any;
   feature_vector: any;
   last_computed: string;
   created_at: string;
