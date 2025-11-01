@@ -41,6 +41,7 @@ export default function LiveStudio() {
     seconds: "60"
   });
   const [liveEventId, setLiveEventId] = useState<string | null>(null);
+  const [isViewingLive, setIsViewingLive] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -94,6 +95,13 @@ export default function LiveStudio() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Reset viewing state when stream ends
+  useEffect(() => {
+    if (!liveEventId) {
+      setIsViewingLive(false);
+    }
+  }, [liveEventId]);
 
   const checkLiveStream = async () => {
     console.log('[LiveStudio] Checking for live streams...');
@@ -332,7 +340,29 @@ export default function LiveStudio() {
               {/* Stream Preview or Live Video */}
               <div className="relative">
                 <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
-                  {liveEventId ? (
+                  {liveEventId && !isViewingLive ? (
+                    <div className="relative aspect-video cursor-pointer group" onClick={() => setIsViewingLive(true)}>
+                      <img 
+                        src={liveAcousticSession} 
+                        alt="Acoustic Sessions Live"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      
+                      {/* Live Now Button Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Button
+                          size="lg"
+                          className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 text-2xl font-bold shadow-2xl group-hover:scale-105 transition-transform"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="inline-block h-3 w-3 rounded-full bg-white animate-pulse" />
+                            SOL IS LIVE NOW - JOIN STREAM
+                          </div>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : liveEventId && isViewingLive ? (
                     <ExpandableLiveViewer eventId={liveEventId} showExternalControls />
                   ) : (
                     <div className="relative aspect-video">
