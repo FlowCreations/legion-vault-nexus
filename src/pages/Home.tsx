@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Play, Sparkles } from "lucide-react";
+import { Play, Sparkles, Loader2 } from "lucide-react";
 import solLogo from "@/assets/sol-logo-new.png";
 import LogoIntro from "@/components/LogoIntro";
 import { CameoDisplay } from "@/components/CameoDisplay";
@@ -11,12 +11,21 @@ import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
 import { JRNYProgressBar } from "@/components/JRNYProgressBar";
 import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+// Mapping of tier names to Stripe price IDs
+const TIER_PRICE_IDS: Record<string, string> = {
+  "Rebels": "price_1SP6a3FTZjyeQ8pZKLtwqtTg",
+  "Outlaws": "price_1SP6aOFTZjyeQ8pZDGwBCUqf",
+  "Legionnaires": "price_1SP6aeFTZjyeQ8pZFmmOX1Uc",
+};
 
 export default function Home() {
   const { trackEvent } = useEventTracking();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('other');
   const { progress, loading } = useMilestoneProgress();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(() => {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
@@ -35,6 +44,41 @@ export default function Home() {
     sessionStorage.setItem('introShown', 'true');
     // Scroll to top when homepage loads
     window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  const handleSubscribe = async (tierName: string) => {
+    trackEvent('subscribe', { tier: tierName, source: 'home_tiers' });
+    
+    // Check if user is logged in
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      // Redirect to subscribe page where they can sign up
+      window.location.href = '/subscribe';
+      return;
+    }
+
+    // User is logged in, proceed directly to checkout
+    setLoadingTier(tierName);
+    try {
+      const priceId = TIER_PRICE_IDS[tierName];
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId, embedded: false }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect directly to Stripe hosted checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
+      console.error('[Home] Checkout error:', error);
+      toast.error(error.message || "Failed to start checkout process");
+      setLoadingTier(null);
+    }
   };
 
   if (showIntro) {
@@ -216,10 +260,17 @@ export default function Home() {
                 <Button 
                   className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
                   variant={tier.featured ? 'default' : 'outline'}
-                  asChild
-                  onClick={() => trackEvent('subscribe', { tier: tier.name, price: tier.price, source: 'home_tiers' })}
+                  onClick={() => handleSubscribe(tier.name)}
+                  disabled={loadingTier === tier.name}
                 >
-                  <Link to="/subscribe">Subscribe</Link>
+                  {loadingTier === tier.name ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Subscribe"
+                  )}
                 </Button>
               </div>
             ))}
