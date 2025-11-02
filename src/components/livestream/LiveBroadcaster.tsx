@@ -37,27 +37,15 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const requestPermissionsAndLoadDevices = async () => {
     try {
-      // Request permissions first to get accurate device labels
-      console.log('[Broadcaster] Requesting media permissions...');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true, 
-        video: true 
-      });
-      
-      // Stop the tracks immediately - we just needed them for permissions
-      stream.getTracks().forEach(track => track.stop());
-      console.log('[Broadcaster] Permissions granted, loading devices...');
-      
-      // Now enumerate devices - labels will be available after permission grant
+      // Only enumerate devices - don't request permission yet
+      console.log('[Broadcaster] Loading device list...');
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
       const audioDevices = devices.filter(d => d.kind === 'audioinput');
       
       console.log('[Broadcaster] Found devices:', {
         cameras: videoDevices.length,
-        microphones: audioDevices.length,
-        videoDevices: videoDevices.map(d => ({ id: d.deviceId, label: d.label })),
-        audioDevices: audioDevices.map(d => ({ id: d.deviceId, label: d.label }))
+        microphones: audioDevices.length
       });
       
       setCameras(videoDevices);
@@ -70,37 +58,13 @@ export function LiveBroadcaster({ eventId }: Props) {
         setSelectedMicrophone(audioDevices[0].deviceId);
       }
     } catch (err) {
-      console.error('[Broadcaster] Failed to get permissions or load devices:', err);
-      setError('Please allow camera and microphone access to continue');
+      console.error('[Broadcaster] Failed to load devices:', err);
+      setError('Failed to load device list');
     }
   };
 
-  const setupAudioProcessing = async () => {
+  const setupAudioProcessing = async (rawStream: MediaStream) => {
     try {
-      // Get raw audio stream directly from getUserMedia for the mixer
-      const rawStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: false,
-          sampleRate: 48000,
-          channelCount: 2
-        }
-      });
-      
-      // Verify audio tracks are enabled
-      rawStream.getAudioTracks().forEach(track => {
-        track.enabled = true;
-        console.log('[Broadcaster] Audio track:', {
-          id: track.id,
-          label: track.label,
-          enabled: track.enabled,
-          muted: track.muted,
-          readyState: track.readyState
-        });
-      });
-      
       const ctx = new AudioContext({ sampleRate: 48000 });
       
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
@@ -135,9 +99,8 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       setAudioContext(ctx);
       setSourceNode(source);
-      setRawAudioStream(rawStream); // Store for cleanup
 
-      console.log('[Broadcaster] Raw audio processing setup complete:', {
+      console.log('[Broadcaster] Audio processing setup complete:', {
         contextState: ctx.state,
         sampleRate: ctx.sampleRate,
         hasSource: !!source
@@ -178,6 +141,42 @@ export function LiveBroadcaster({ eventId }: Props) {
     });
 
     try {
+      // STEP 1: Request raw media streams (this triggers permission dialog)
+      console.log('[Broadcaster] Requesting camera and microphone access...');
+      const rawStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: { exact: selectedMicrophone },
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 2
+        },
+        video: {
+          deviceId: { exact: selectedCamera },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+
+      console.log('[Broadcaster] Permission granted! Stream tracks:', {
+        audio: rawStream.getAudioTracks().map(t => ({
+          label: t.label,
+          enabled: t.enabled,
+          readyState: t.readyState
+        })),
+        video: rawStream.getVideoTracks().map(t => ({
+          label: t.label,
+          enabled: t.enabled
+        }))
+      });
+
+      // STEP 2: Setup audio processing FIRST (this needs user interaction to work)
+      const audioStream = new MediaStream(rawStream.getAudioTracks());
+      await setupAudioProcessing(audioStream);
+      setRawAudioStream(audioStream);
+
+      // STEP 3: Create LiveKit tracks for broadcasting
       const tracks = await createLocalTracks({
         audio: { 
           deviceId: { exact: selectedMicrophone },
@@ -196,7 +195,7 @@ export function LiveBroadcaster({ eventId }: Props) {
         },
       });
 
-      console.log('[Broadcaster] Created tracks:', tracks.length);
+      console.log('[Broadcaster] Created LiveKit tracks:', tracks.length);
 
       const videoTrack = tracks.find(t => t.kind === Track.Kind.Video);
       const audioTrack = tracks.find(t => t.kind === Track.Kind.Audio);
@@ -209,9 +208,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       if (audioTrack) {
         audioTrackRef.current = audioTrack;
-        console.log('[Broadcaster] Audio track created, setting up processing');
-        // User interaction already happened (button click), safe to setup audio
-        await setupAudioProcessing();
+        console.log('[Broadcaster] Audio track ready for broadcast');
       } else {
         console.error('[Broadcaster] No audio track found!');
         setError('Failed to create audio track');
