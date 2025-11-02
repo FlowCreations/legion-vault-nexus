@@ -244,7 +244,8 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         hasAudioContext: !!audioContext,
         hasSourceNode: !!sourceNode,
         analyserFftSize: analyser.fftSize,
-        contextState: audioContext.state
+        contextState: audioContext.state,
+        sampleRate: audioContext.sampleRate
       });
       
       // Send processed stream back to broadcaster
@@ -252,26 +253,49 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         console.log('[AudioMixer] Sending processed stream to broadcaster');
         onProcessedStream(destination.stream);
       }
+      
+      // Verify audio is flowing through
+      setTimeout(() => {
+        const testArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(testArray);
+        const hasSignal = testArray.some(value => value > 0);
+        console.log('[AudioMixer] Initial audio check:', {
+          hasSignal,
+          maxValue: Math.max(...testArray),
+          contextState: audioContext.state
+        });
+      }, 500);
 
       // Update spectrum visualization and audio levels with smoothing
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       let smoothedLevel = 0;
       const smoothingFactor = 0.3; // Lower = smoother, higher = more responsive
+      let frameCount = 0;
       
       const updateSpectrum = () => {
         analyser.getByteFrequencyData(dataArray);
         setSpectrumData(Array.from(dataArray));
         
-        // Calculate overall audio level
+        // Calculate overall audio level with better scaling
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        const rawLevel = Math.min(100, (average / 255) * 100);
+        // Scale from 0-255 to 0-100, with better sensitivity
+        const rawLevel = Math.min(100, (average / 255) * 150); // Boosted sensitivity
         
         // Apply exponential smoothing to reduce jitter
         smoothedLevel = smoothedLevel * (1 - smoothingFactor) + rawLevel * smoothingFactor;
         
-        // Debug log occasionally
-        if (Math.random() < 0.02) {
-          console.log('[AudioMixer] Audio level:', smoothedLevel.toFixed(1), 'raw:', rawLevel.toFixed(1));
+        // Debug log every 50 frames (~1 second at 60fps)
+        frameCount++;
+        if (frameCount % 50 === 0) {
+          const maxValue = Math.max(...dataArray);
+          const nonZeroCount = dataArray.filter(v => v > 0).length;
+          console.log('[AudioMixer] Audio level:', {
+            smoothed: smoothedLevel.toFixed(1),
+            raw: rawLevel.toFixed(1),
+            max: maxValue,
+            nonZero: `${nonZeroCount}/${dataArray.length}`,
+            contextState: audioContext.state
+          });
         }
         
         if (onAudioLevel) {

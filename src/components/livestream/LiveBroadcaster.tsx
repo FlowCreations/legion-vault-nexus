@@ -82,15 +82,23 @@ export function LiveBroadcaster({ eventId }: Props) {
         return;
       }
 
-      console.log('[Broadcaster] Setting up audio processing with track:', mediaStreamTrack.label);
+      console.log('[Broadcaster] Setting up audio processing with track:', {
+        label: mediaStreamTrack.label,
+        enabled: mediaStreamTrack.enabled,
+        readyState: mediaStreamTrack.readyState,
+        muted: mediaStreamTrack.muted
+      });
       
       const stream = new MediaStream([mediaStreamTrack]);
-      const ctx = new AudioContext();
+      const ctx = new AudioContext({ sampleRate: 48000 });
       
-      // Resume audio context if suspended (browser autoplay policy)
+      console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
+      
+      // CRITICAL: Resume audio context - required for browser autoplay policy
       if (ctx.state === 'suspended') {
-        console.log('[Broadcaster] Resuming suspended AudioContext');
+        console.log('[Broadcaster] Resuming suspended AudioContext...');
         await ctx.resume();
+        console.log('[Broadcaster] AudioContext resumed, new state:', ctx.state);
       }
       
       const source = ctx.createMediaStreamSource(stream);
@@ -98,7 +106,11 @@ export function LiveBroadcaster({ eventId }: Props) {
       setAudioContext(ctx);
       setSourceNode(source);
 
-      console.log('[Broadcaster] Audio processing setup complete, AudioContext state:', ctx.state);
+      console.log('[Broadcaster] Audio processing setup complete:', {
+        contextState: ctx.state,
+        sampleRate: ctx.sampleRate,
+        hasSource: !!source
+      });
       
     } catch (err) {
       console.error('[Broadcaster] Audio processing setup failed:', err);
@@ -167,7 +179,8 @@ export function LiveBroadcaster({ eventId }: Props) {
       if (audioTrack) {
         audioTrackRef.current = audioTrack;
         console.log('[Broadcaster] Audio track created, setting up processing');
-        setupAudioProcessing(audioTrack);
+        // User interaction already happened (button click), safe to setup audio
+        await setupAudioProcessing(audioTrack);
       } else {
         console.error('[Broadcaster] No audio track found!');
         setError('Failed to create audio track');
