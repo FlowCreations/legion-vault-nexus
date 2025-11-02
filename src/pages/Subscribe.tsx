@@ -71,20 +71,36 @@ export default function Subscribe() {
     try {
       const priceId = TIER_PRICE_IDS[tierName];
       
+      console.log('[Subscribe] Calling create-checkout with priceId:', priceId);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });
 
-      if (error) throw error;
+      console.log('[Subscribe] Checkout response:', { data, error });
+
+      if (error) {
+        console.error('[Subscribe] Edge function error:', error);
+        throw error;
+      }
 
       if (data?.url) {
-        // Redirect to Stripe checkout in same tab
-        window.location.href = data.url;
+        console.log('[Subscribe] Redirecting to Stripe checkout:', data.url);
+        // Show toast before redirect
+        toast({
+          title: "Redirecting to checkout...",
+          description: "You'll be taken to Stripe to complete payment.",
+        });
+        
+        // Small delay to ensure toast is visible
+        setTimeout(() => {
+          window.location.href = data.url;
+        }, 500);
       } else {
         throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
-      console.error('Checkout error:', error);
+      console.error('[Subscribe] Checkout error:', error);
       toast({
         variant: "destructive",
         title: "Error",
