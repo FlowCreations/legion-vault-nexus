@@ -124,8 +124,8 @@ export function LiveBroadcaster({ eventId }: Props) {
     }
   };
 
-  const handleAudioLevel = (level: number) => {
-    setAudioLevel(level);
+  const handleAudioLevel = (left: number, right: number) => {
+    setAudioLevel(Math.max(left, right));
   };
 
   const startPreview = async () => {

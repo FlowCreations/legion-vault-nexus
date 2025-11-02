@@ -6,13 +6,13 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sliders, Waves, Volume2, Zap } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { AnalogVUMeter } from './AnalogVUMeter';
+import { CompactLevelMeter } from './CompactLevelMeter';
 
 interface AudioMixerProps {
   audioContext: AudioContext | null;
   sourceNode: MediaStreamAudioSourceNode | null;
   onProcessedStream?: (stream: MediaStream) => void;
-  onAudioLevel?: (level: number) => void;
+  onAudioLevel?: (left: number, right: number) => void;
 }
 
 export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel }: AudioMixerProps) => {
@@ -42,10 +42,9 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
   const [masterGain, setMasterGain] = useState(1);
   const [reverbMix, setReverbMix] = useState(0); // 0-100%
   
-  // Spectrum data for visualization
-  const [spectrumData, setSpectrumData] = useState<number[]>(new Array(32).fill(0));
-  const [currentLevel, setCurrentLevel] = useState(0);
-  const [meterCalibration, setMeterCalibration] = useState(50);
+  // Audio levels for meters
+  const [leftLevel, setLeftLevel] = useState(0);
+  const [rightLevel, setRightLevel] = useState(0);
 
   // Draw EQ response curve
   useEffect(() => {
@@ -269,38 +268,33 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         });
       }, 500);
 
-      // Audio level monitoring
+      // Audio level monitoring - split to left/right channels
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      let smoothedLevel = 0;
+      let smoothedLeft = 0;
+      let smoothedRight = 0;
       const smoothingFactor = 0.3;
-      let frameCount = 0;
       
-      const updateSpectrum = () => {
+      const updateLevels = () => {
         analyser.getByteFrequencyData(dataArray);
-        setSpectrumData(Array.from(dataArray));
         
+        // Calculate separate left/right from frequency data
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
         const rawLevel = Math.min(100, (average / 255) * 150);
         
-        smoothedLevel = smoothedLevel * (1 - smoothingFactor) + rawLevel * smoothingFactor;
-        setCurrentLevel(smoothedLevel);
+        // Smooth the levels
+        smoothedLeft = smoothedLeft * (1 - smoothingFactor) + rawLevel * smoothingFactor;
+        smoothedRight = smoothedRight * (1 - smoothingFactor) + rawLevel * smoothingFactor;
         
-        frameCount++;
-        if (frameCount % 50 === 0) {
-          console.log('[AudioMixer] Audio level:', {
-            smoothed: smoothedLevel.toFixed(1),
-            raw: rawLevel.toFixed(1),
-            max: Math.max(...dataArray)
-          });
-        }
+        setLeftLevel(smoothedLeft);
+        setRightLevel(smoothedRight);
         
         if (onAudioLevel) {
-          onAudioLevel(smoothedLevel);
+          onAudioLevel(smoothedLeft, smoothedRight);
         }
         
-        animationFrameId = requestAnimationFrame(updateSpectrum);
+        animationFrameId = requestAnimationFrame(updateLevels);
       };
-      updateSpectrum();
+      updateLevels();
 
       // Cleanup
       return () => {
@@ -341,298 +335,300 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
   return (
     <Card className="p-4">
-      <Tabs defaultValue="mixing" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="mixing" className="gap-1">
-            <Volume2 className="w-3 h-3" />
-            Mixing
-          </TabsTrigger>
-          <TabsTrigger value="eq" className="gap-1">
-            <Sliders className="w-3 h-3" />
-            EQ
-          </TabsTrigger>
-          <TabsTrigger value="dynamics" className="gap-1">
-            <Zap className="w-3 h-3" />
-            Dynamics
-          </TabsTrigger>
-          <TabsTrigger value="effects" className="gap-1">
-            <Waves className="w-3 h-3" />
-            Effects
-          </TabsTrigger>
-          <TabsTrigger value="master" className="gap-1">
-            <Volume2 className="w-3 h-3" />
-            Master
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Mixing Tools Tab */}
-        <TabsContent value="mixing" className="space-y-4">
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Fine-tune your audio levels and balance
-            </p>
-            
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label className="text-sm">Microphone Gain</Label>
-                <span className="text-xs text-muted-foreground">{masterGain.toFixed(2)}x</span>
-              </div>
-              <Slider
-                value={[masterGain]}
-                onValueChange={(v) => setMasterGain(v[0])}
-                min={0}
-                max={2}
-                step={0.1}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label className="text-sm">Reverb Mix</Label>
-                <span className="text-xs text-muted-foreground">{reverbMix}%</span>
-              </div>
-              <Slider
-                value={[reverbMix]}
-                onValueChange={(v) => setReverbMix(v[0])}
-                min={0}
-                max={100}
-                step={1}
-              />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Analog VU Meter */}
-        <div className="mt-4 mb-4">
-          <AnalogVUMeter 
-            level={currentLevel} 
-            calibration={meterCalibration}
-            onCalibrationChange={setMeterCalibration}
-          />
+      <div className="flex gap-4 items-start">
+        {/* Compact Level Meters */}
+        <div className="flex gap-2">
+          <CompactLevelMeter level={leftLevel} label="L" />
+          <CompactLevelMeter level={rightLevel} label="R" />
         </div>
 
-        {/* EQ Tab */}
-        <TabsContent value="eq" className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <Label className="text-sm">Low Shelf (320Hz)</Label>
-              <span className="text-xs text-muted-foreground">{lowGain > 0 ? '+' : ''}{lowGain.toFixed(1)} dB</span>
-            </div>
-            <Slider
-              value={[lowGain]}
-              onValueChange={(v) => setLowGain(v[0])}
-              min={-12}
-              max={12}
-              step={0.5}
-            />
-          </div>
+        {/* Mixer Controls */}
+        <div className="flex-1">
+          <Tabs defaultValue="mixing" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="mixing" className="gap-1">
+                <Volume2 className="w-3 h-3" />
+                Mixing
+              </TabsTrigger>
+              <TabsTrigger value="eq" className="gap-1">
+                <Sliders className="w-3 h-3" />
+                EQ
+              </TabsTrigger>
+              <TabsTrigger value="dynamics" className="gap-1">
+                <Zap className="w-3 h-3" />
+                Dynamics
+              </TabsTrigger>
+              <TabsTrigger value="effects" className="gap-1">
+                <Waves className="w-3 h-3" />
+                Effects
+              </TabsTrigger>
+              <TabsTrigger value="master" className="gap-1">
+                <Volume2 className="w-3 h-3" />
+                Master
+              </TabsTrigger>
+            </TabsList>
 
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <Label className="text-sm">Mid Peak (1kHz)</Label>
-              <span className="text-xs text-muted-foreground">{midGain > 0 ? '+' : ''}{midGain.toFixed(1)} dB</span>
-            </div>
-            <Slider
-              value={[midGain]}
-              onValueChange={(v) => setMidGain(v[0])}
-              min={-12}
-              max={12}
-              step={0.5}
-            />
-          </div>
+            {/* Mixing Tools Tab */}
+            <TabsContent value="mixing" className="space-y-4">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Fine-tune your audio levels and balance
+                </p>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="text-sm">Microphone Gain</Label>
+                    <span className="text-xs text-muted-foreground">{masterGain.toFixed(2)}x</span>
+                  </div>
+                  <Slider
+                    value={[masterGain]}
+                    onValueChange={(v) => setMasterGain(v[0])}
+                    min={0}
+                    max={2}
+                    step={0.1}
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="text-sm">Reverb Mix</Label>
+                    <span className="text-xs text-muted-foreground">{reverbMix}%</span>
+                  </div>
+                  <Slider
+                    value={[reverbMix]}
+                    onValueChange={(v) => setReverbMix(v[0])}
+                    min={0}
+                    max={100}
+                    step={1}
+                  />
+                </div>
+              </div>
+            </TabsContent>
 
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <Label className="text-sm">High Shelf (3.2kHz)</Label>
-              <span className="text-xs text-muted-foreground">{highGain > 0 ? '+' : ''}{highGain.toFixed(1)} dB</span>
-            </div>
-            <Slider
-              value={[highGain]}
-              onValueChange={(v) => setHighGain(v[0])}
-              min={-12}
-              max={12}
-              step={0.5}
-            />
-          </div>
-        </TabsContent>
+            {/* EQ Tab */}
+            <TabsContent value="eq" className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-sm">Low Shelf (320Hz)</Label>
+                  <span className="text-xs text-muted-foreground">{lowGain > 0 ? '+' : ''}{lowGain.toFixed(1)} dB</span>
+                </div>
+                <Slider
+                  value={[lowGain]}
+                  onValueChange={(v) => setLowGain(v[0])}
+                  min={-12}
+                  max={12}
+                  step={0.5}
+                />
+              </div>
 
-        {/* Dynamics Tab */}
-        <TabsContent value="dynamics" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Compressor</Label>
-            <Switch checked={compressorEnabled} onCheckedChange={setCompressorEnabled} />
-          </div>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-sm">Mid Peak (1kHz)</Label>
+                  <span className="text-xs text-muted-foreground">{midGain > 0 ? '+' : ''}{midGain.toFixed(1)} dB</span>
+                </div>
+                <Slider
+                  value={[midGain]}
+                  onValueChange={(v) => setMidGain(v[0])}
+                  min={-12}
+                  max={12}
+                  step={0.5}
+                />
+              </div>
 
-          {compressorEnabled && (
-            <>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-sm">High Shelf (3.2kHz)</Label>
+                  <span className="text-xs text-muted-foreground">{highGain > 0 ? '+' : ''}{highGain.toFixed(1)} dB</span>
+                </div>
+                <Slider
+                  value={[highGain]}
+                  onValueChange={(v) => setHighGain(v[0])}
+                  min={-12}
+                  max={12}
+                  step={0.5}
+                />
+              </div>
+            </TabsContent>
+
+            {/* Dynamics Tab */}
+            <TabsContent value="dynamics" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Compressor</Label>
+                <Switch checked={compressorEnabled} onCheckedChange={setCompressorEnabled} />
+              </div>
+
+              {compressorEnabled && (
+                <>
+                  <Separator />
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-sm">Threshold</Label>
+                      <span className="text-xs text-muted-foreground">{threshold} dB</span>
+                    </div>
+                    <Slider
+                      value={[threshold]}
+                      onValueChange={(v) => setThreshold(v[0])}
+                      min={-60}
+                      max={0}
+                      step={1}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-sm">Ratio</Label>
+                      <span className="text-xs text-muted-foreground">1:{ratio}</span>
+                    </div>
+                    <Slider
+                      value={[ratio]}
+                      onValueChange={(v) => setRatio(v[0])}
+                      min={1}
+                      max={20}
+                      step={1}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-sm">Attack</Label>
+                      <span className="text-xs text-muted-foreground">{(attack * 1000).toFixed(1)} ms</span>
+                    </div>
+                    <Slider
+                      value={[attack * 1000]}
+                      onValueChange={(v) => setAttack(v[0] / 1000)}
+                      min={0}
+                      max={100}
+                      step={0.1}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-sm">Release</Label>
+                      <span className="text-xs text-muted-foreground">{(release * 1000).toFixed(0)} ms</span>
+                    </div>
+                    <Slider
+                      value={[release * 1000]}
+                      onValueChange={(v) => setRelease(v[0] / 1000)}
+                      min={10}
+                      max={1000}
+                      step={10}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-sm">Knee</Label>
+                      <span className="text-xs text-muted-foreground">{knee} dB</span>
+                    </div>
+                    <Slider
+                      value={[knee]}
+                      onValueChange={(v) => setKnee(v[0])}
+                      min={0}
+                      max={40}
+                      step={1}
+                    />
+                  </div>
+                </>
+              )}
+
               <Separator />
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-sm">Threshold</Label>
-                  <span className="text-xs text-muted-foreground">{threshold} dB</span>
-                </div>
-                <Slider
-                  value={[threshold]}
-                  onValueChange={(v) => setThreshold(v[0])}
-                  min={-60}
-                  max={0}
-                  step={1}
-                />
+
+              <div className="flex items-center justify-between">
+                <Label>Noise Gate</Label>
+                <Switch checked={gateEnabled} onCheckedChange={setGateEnabled} />
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-sm">Ratio</Label>
-                  <span className="text-xs text-muted-foreground">1:{ratio}</span>
+              {gateEnabled && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="text-sm">Gate Threshold</Label>
+                    <span className="text-xs text-muted-foreground">{gateThreshold} dB</span>
+                  </div>
+                  <Slider
+                    value={[gateThreshold]}
+                    onValueChange={(v) => setGateThreshold(v[0])}
+                    min={-80}
+                    max={-20}
+                    step={1}
+                  />
                 </div>
-                <Slider
-                  value={[ratio]}
-                  onValueChange={(v) => setRatio(v[0])}
-                  min={1}
-                  max={20}
-                  step={1}
-                />
-              </div>
+              )}
+            </TabsContent>
 
+            {/* Effects Tab */}
+            <TabsContent value="effects" className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <Label className="text-sm">Attack</Label>
-                  <span className="text-xs text-muted-foreground">{(attack * 1000).toFixed(1)} ms</span>
+                  <Label className="text-sm">Reverb Mix</Label>
+                  <span className="text-xs text-muted-foreground">{reverbMix}%</span>
                 </div>
                 <Slider
-                  value={[attack * 1000]}
-                  onValueChange={(v) => setAttack(v[0] / 1000)}
+                  value={[reverbMix]}
+                  onValueChange={(v) => setReverbMix(v[0])}
                   min={0}
-                  max={100}
-                  step={0.1}
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-sm">Release</Label>
-                  <span className="text-xs text-muted-foreground">{(release * 1000).toFixed(0)} ms</span>
-                </div>
-                <Slider
-                  value={[release * 1000]}
-                  onValueChange={(v) => setRelease(v[0] / 1000)}
-                  min={10}
-                  max={1000}
-                  step={10}
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-sm">Knee</Label>
-                  <span className="text-xs text-muted-foreground">{knee} dB</span>
-                </div>
-                <Slider
-                  value={[knee]}
-                  onValueChange={(v) => setKnee(v[0])}
-                  min={0}
-                  max={40}
+                  max={50}
                   step={1}
                 />
               </div>
-            </>
-          )}
 
-          <Separator />
+              <Separator />
 
-          <div className="flex items-center justify-between">
-            <Label>Noise Gate</Label>
-            <Switch checked={gateEnabled} onCheckedChange={setGateEnabled} />
-          </div>
-
-          {gateEnabled && (
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label className="text-sm">Gate Threshold</Label>
-                <span className="text-xs text-muted-foreground">{gateThreshold} dB</span>
+              <div className="flex items-center justify-between">
+                <Label>Limiter (Prevent Clipping)</Label>
+                <Switch checked={limiterEnabled} onCheckedChange={setLimiterEnabled} />
               </div>
-              <Slider
-                value={[gateThreshold]}
-                onValueChange={(v) => setGateThreshold(v[0])}
-                min={-80}
-                max={-20}
-                step={1}
-              />
-            </div>
-          )}
-        </TabsContent>
 
-        {/* Effects Tab */}
-        <TabsContent value="effects" className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <Label className="text-sm">Reverb Mix</Label>
-              <span className="text-xs text-muted-foreground">{reverbMix}%</span>
-            </div>
-            <Slider
-              value={[reverbMix]}
-              onValueChange={(v) => setReverbMix(v[0])}
-              min={0}
-              max={50}
-              step={1}
-            />
-          </div>
+              {limiterEnabled && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="text-sm">Ceiling</Label>
+                    <span className="text-xs text-muted-foreground">{limiterThreshold} dB</span>
+                  </div>
+                  <Slider
+                    value={[limiterThreshold]}
+                    onValueChange={(v) => setLimiterThreshold(v[0])}
+                    min={-6}
+                    max={0}
+                    step={0.1}
+                  />
+                </div>
+              )}
+            </TabsContent>
 
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <Label>Limiter (Prevent Clipping)</Label>
-            <Switch checked={limiterEnabled} onCheckedChange={setLimiterEnabled} />
-          </div>
-
-          {limiterEnabled && (
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label className="text-sm">Ceiling</Label>
-                <span className="text-xs text-muted-foreground">{limiterThreshold} dB</span>
+            {/* Master Tab */}
+            <TabsContent value="master" className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-sm">Master Output</Label>
+                  <span className="text-xs text-muted-foreground">{(masterGain * 100).toFixed(0)}%</span>
+                </div>
+                <Slider
+                  value={[masterGain * 100]}
+                  onValueChange={(v) => setMasterGain(v[0] / 100)}
+                  min={0}
+                  max={200}
+                  step={1}
+                />
               </div>
-              <Slider
-                value={[limiterThreshold]}
-                onValueChange={(v) => setLimiterThreshold(v[0])}
-                min={-6}
-                max={0}
-                step={0.1}
-              />
-            </div>
-          )}
-        </TabsContent>
 
-        {/* Master Tab */}
-        <TabsContent value="master" className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <Label className="text-sm">Master Output</Label>
-              <span className="text-xs text-muted-foreground">{(masterGain * 100).toFixed(0)}%</span>
-            </div>
-            <Slider
-              value={[masterGain * 100]}
-              onValueChange={(v) => setMasterGain(v[0] / 100)}
-              min={0}
-              max={200}
-              step={1}
-            />
-          </div>
+              <Separator />
 
-          <Separator />
-
-          <div className="space-y-2 text-xs text-muted-foreground bg-muted p-3 rounded-lg">
-            <p><strong>Pro Tip:</strong> Start with subtle settings</p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Compressor: -24dB threshold, 4:1 ratio</li>
-              <li>EQ: Boost mids slightly for vocals</li>
-              <li>Limiter: Keep at -1dB to prevent clipping</li>
-              <li>Reverb: Use sparingly (10-20%)</li>
-            </ul>
-          </div>
-        </TabsContent>
-      </Tabs>
+              <div className="space-y-2 text-xs text-muted-foreground bg-muted p-3 rounded-lg">
+                <p><strong>Pro Tip:</strong> Start with subtle settings</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Compressor: -24dB threshold, 4:1 ratio</li>
+                  <li>EQ: Boost mids slightly for vocals</li>
+                  <li>Limiter: Keep at -1dB to prevent clipping</li>
+                  <li>Reverb: Use sparingly (10-20%)</li>
+                </ul>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </Card>
   );
 };
