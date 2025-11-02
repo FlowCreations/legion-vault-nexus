@@ -142,7 +142,7 @@ export default function Checkout() {
           <h1 className="font-serif text-4xl sm:text-5xl font-bold mb-4">
             Complete Your Subscription
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-foreground text-lg font-semibold">
             Create your account to start your 7-day free trial
           </p>
         </div>
