@@ -617,7 +617,7 @@ export default function CommunityHub() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <SubscribePrompt 
           open={true}
-          onOpenChange={() => {}}
+          onOpenChange={() => navigate('/')}
           title="Subscribe to Access The Legion"
           description="Join the community, connect with fans, and get exclusive access."
         />
