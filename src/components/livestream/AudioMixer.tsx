@@ -43,6 +43,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
   
   // Spectrum data for visualization
   const [spectrumData, setSpectrumData] = useState<number[]>(new Array(32).fill(0));
+  const [currentLevel, setCurrentLevel] = useState(0);
 
   // Draw EQ response curve
   useEffect(() => {
@@ -283,6 +284,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         
         // Apply exponential smoothing to reduce jitter
         smoothedLevel = smoothedLevel * (1 - smoothingFactor) + rawLevel * smoothingFactor;
+        setCurrentLevel(smoothedLevel);
         
         // Debug log every 50 frames (~1 second at 60fps)
         frameCount++;
@@ -401,16 +403,27 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           </div>
         </TabsContent>
 
-        {/* Spectrum Analyzer with EQ Response Curve */}
+        {/* Vertical VU Meter */}
         <div className="mt-4 mb-4 relative">
-          <div className="h-32 bg-black rounded-lg p-2 flex items-end gap-1">
-            {spectrumData.map((value, i) => (
-              <div
-                key={i}
-                className="flex-1 bg-gradient-to-t from-green-500/40 via-yellow-500/40 to-red-500/40 rounded-sm transition-all"
-                style={{ height: `${(value / 255) * 100}%`, minHeight: '2px' }}
-              />
-            ))}
+          <div className="h-32 bg-black rounded-lg p-2 flex flex-col-reverse gap-0.5">
+            {Array.from({ length: 20 }).map((_, i) => {
+              const threshold = ((i + 1) / 20) * 100;
+              const isActive = currentLevel >= threshold - 5;
+              
+              let color = 'bg-green-500';
+              if (threshold > 90) color = 'bg-red-500';
+              else if (threshold > 80) color = 'bg-orange-500';
+              else if (threshold > 60) color = 'bg-yellow-500';
+              
+              return (
+                <div
+                  key={i}
+                  className={`h-[5px] w-full rounded-sm transition-all duration-75 ${
+                    isActive ? color : 'bg-gray-800'
+                  }`}
+                />
+              );
+            })}
           </div>
           <canvas
             ref={canvasRef}
