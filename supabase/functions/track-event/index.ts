@@ -19,7 +19,8 @@ const ALLOWED_EVENT_TYPES = [
   'video_watch',
   'merch_view',
   'show_view',
-  'chat_interaction'
+  'chat_interaction',
+  'subscribe'
 ];
 
 const MAX_EVENT_DATA_SIZE = 10000; // 10KB max for event data
