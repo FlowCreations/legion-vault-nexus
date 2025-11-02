@@ -1,4 +1,4 @@
-import { Users, Award, Calendar, MessageCircle } from "lucide-react";
+import { Users, Award, Calendar, MessageCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -73,7 +73,31 @@ export default function Community() {
     // For now, just navigate to subscribe page
     navigate('/subscribe');
   };
+
+  // Show loading state while checking
+  if (!checkComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If not authenticated or subscribed, show only the dialog
+  if (!isAuthenticated || !hasSubscription) {
+    return (
+      <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <SubscribePrompt 
+          open={true}
+          onOpenChange={() => {}} // Don't allow closing
+          title="Subscribe to Access Community"
+          description="Connect with other fans, earn achievements, and join exclusive events with a 7-day free trial."
+        />
+      </div>
+    );
+  }
   
+  // User is authenticated and subscribed, show full content
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
