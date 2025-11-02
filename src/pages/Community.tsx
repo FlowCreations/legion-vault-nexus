@@ -1,101 +1,52 @@
-import { Users, Award, Calendar, MessageCircle, Lock } from "lucide-react";
+import { Users, Award, Calendar, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SubscribePrompt } from "@/components/SubscribePrompt";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Community() {
   const navigate = useNavigate();
-  const [hasAccess, setHasAccess] = useState(false);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    checkAccess();
-  }, []);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const { toast } = useToast();
 
-  const checkAccess = async () => {
+  const handleFeatureClick = async (action: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (user) {
-      const { data } = await supabase.functions.invoke('check-subscription');
-      setHasAccess(!!data?.subscribed);
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
     }
-    
-    setLoading(false);
+
+    const { data } = await supabase.functions.invoke('check-subscription');
+    if (!data?.subscribed) {
+      setShowAuthDialog(true);
+      return;
+    }
+
+    // User has access, navigate to community hub
+    navigate("/community-hub");
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen py-32 flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
+  const handleSubscribe = async (tierName: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
 
-  // Show locked overlay if no access
-  if (!hasAccess) {
-    return (
-      <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8 relative">
-        {/* Blurred background content */}
-        <div className="max-w-7xl mx-auto blur-sm pointer-events-none select-none">
-          <div className="text-center mb-16">
-            <h1 className="font-serif text-5xl sm:text-6xl font-bold mb-4">
-              Join The Community
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Your SØL family is waiting to connect with you!
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {communityFeatures.slice(0, 2).map((feature) => (
-              <div key={feature.title} className="bg-card rounded-2xl p-8 border border-border">
-                <div className="w-14 h-14 bg-gradient-gold rounded-xl flex items-center justify-center mb-6">
-                  <feature.icon className="w-7 h-7" />
-                </div>
-                <h3 className="font-serif text-2xl font-bold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+    toast({
+      title: "Redirecting to checkout...",
+      description: `Setting up your ${tierName} subscription`,
+    });
 
-        {/* Lock overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="text-center max-w-lg mx-auto px-4">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-gold rounded-full mb-6 shadow-glow">
-              <Lock className="w-10 h-10 text-primary-foreground" />
-            </div>
-            <h2 className="font-serif text-4xl font-bold mb-4">
-              Subscribe to Access Community
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Connect with other fans, earn achievements, join exclusive events, and more. 
-              Start your 7-day free trial to unlock the community.
-            </p>
-            <div className="space-y-4">
-              <Button 
-                size="lg"
-                className="bg-gradient-gold hover:shadow-glow px-8"
-                onClick={() => navigate('/subscribe')}
-              >
-                Start 7-Day Free Trial
-              </Button>
-              <p className="text-sm text-muted-foreground">
-                Already subscribed?{" "}
-                <button 
-                  onClick={() => navigate('/auth')}
-                  className="text-primary hover:underline font-medium"
-                >
-                  Sign In
-                </button>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    // Here you would call your Stripe checkout
+    // For now, just navigate to subscribe page
+    navigate('/subscribe');
+  };
   
   return (
     <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
@@ -133,7 +84,7 @@ export default function Community() {
               <Button 
                 variant="outline" 
                 className="border-primary/30 hover:border-primary hover:bg-card/50"
-                onClick={() => navigate("/community-hub")}
+                onClick={() => handleFeatureClick(feature.cta)}
               >
                 {feature.cta}
               </Button>
@@ -182,6 +133,7 @@ export default function Community() {
                 <Button 
                   className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
                   variant={tier.featured ? 'default' : 'outline'}
+                  onClick={() => handleSubscribe(tier.name)}
                 >
                   Subscribe
                 </Button>
@@ -205,6 +157,13 @@ export default function Community() {
           </Button>
         </div>
       </div>
+
+      <SubscribePrompt 
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        title="Subscribe to Access Community"
+        description="Connect with other fans, earn achievements, and join exclusive events with a 7-day free trial."
+      />
     </div>
   );
 }
