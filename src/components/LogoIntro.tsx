@@ -17,14 +17,14 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     const glowTimer = setTimeout(() => setPhase("glow"), 3500);
     const completeTimer = setTimeout(() => onComplete(), 6000);
     
-    // Stop audio at exactly 6 seconds from now
+    // Stop audio at exactly 7 seconds (music duration)
     const audioStopTimer = setTimeout(() => {
       if (audio) {
         audio.pause();
         audio.currentTime = 0;
         audio.src = '';
       }
-    }, 6000);
+    }, 7000);
     
     // TRY TO PLAY AUDIO IN PARALLEL (optional enhancement)
     const tryPlayAudio = async () => {
@@ -32,7 +32,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         audio = new Audio('/intro-audio.wav');
         audio.volume = 0.7;
         await audio.play();
-        console.log('✓ Intro audio playing');
+        console.log('✓ Intro audio playing - will stop at 7 seconds');
       } catch (err) {
         // If autoplay blocked, try with muted audio
         console.log('Audio autoplay blocked, trying muted...');

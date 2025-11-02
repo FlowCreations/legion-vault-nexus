@@ -79,6 +79,8 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => {
         set({ items: [], cartId: null, checkoutUrl: null });
+        // Also clear from localStorage immediately
+        localStorage.removeItem('shopify-cart');
       },
 
       setCartId: (cartId) => set({ cartId }),
