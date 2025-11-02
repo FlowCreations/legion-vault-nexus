@@ -12,6 +12,7 @@ import { JRNYProgressBar } from "@/components/JRNYProgressBar";
 import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { QuickSignupDialog } from "@/components/QuickSignupDialog";
 
 // Mapping of tier names to Stripe price IDs
 const TIER_PRICE_IDS: Record<string, string> = {
@@ -26,6 +27,8 @@ export default function Home() {
   const { progress, loading } = useMilestoneProgress();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [showSignupDialog, setShowSignupDialog] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(() => {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
@@ -52,12 +55,17 @@ export default function Home() {
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      // Redirect to subscribe page where they can sign up
-      window.location.href = '/subscribe';
+      // Show signup dialog instead of redirecting
+      setSelectedTier(tierName);
+      setShowSignupDialog(true);
       return;
     }
 
     // User is logged in, proceed directly to checkout
+    proceedToCheckout(tierName);
+  };
+
+  const proceedToCheckout = async (tierName: string) => {
     setLoadingTier(tierName);
     try {
       const priceId = TIER_PRICE_IDS[tierName];
@@ -81,12 +89,26 @@ export default function Home() {
     }
   };
 
+  const handleSignupSuccess = () => {
+    // After successful signup, proceed to checkout with the selected tier
+    if (selectedTier) {
+      proceedToCheckout(selectedTier);
+    }
+  };
+
   if (showIntro) {
     return <LogoIntro onComplete={handleIntroComplete} />;
   }
 
   return (
     <div className="min-h-screen">
+      {/* Quick Signup Dialog */}
+      <QuickSignupDialog 
+        open={showSignupDialog}
+        onOpenChange={setShowSignupDialog}
+        onSignupSuccess={handleSignupSuccess}
+      />
+
       {/* Personality Survey - TEST MODE */}
       <PersonalitySurvey isOpen={showSurvey} onClose={handleSurveyClose} />
       
