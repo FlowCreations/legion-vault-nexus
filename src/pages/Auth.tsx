@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,13 @@ import { Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { toast as sonnerToast } from "sonner";
+
+const TIER_PRICE_IDS: { [key: string]: string } = {
+  "Rebels": "price_1QhunoAkEokk90mfkxLQJgI8",
+  "Outlaws": "price_1QhunvAkEokk90mfb7CqjJjq",
+  "Legionnaires": "price_1Qhuo2AkEokk90mfnhOBiSJQ",
+};
 
 export default function Auth() {
   const { trackEvent } = useEventTracking();
@@ -25,7 +32,7 @@ export default function Auth() {
   
   // Profile fields - Public
   const [displayName, setDisplayName] = useState("");
-  const [location, setLocation] = useState("");
+  const [userLocation, setUserLocation] = useState("");
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
@@ -35,22 +42,73 @@ export default function Auth() {
   const [realName, setRealName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState("");
+  const [pendingTier, setPendingTier] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check for pending tier on mount
+    const savedTier = localStorage.getItem('pendingSubscriptionTier');
+    if (savedTier) {
+      setPendingTier(savedTier);
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        // Check for pending subscription
+        handlePendingSubscription();
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        navigate("/");
+        // Check for pending subscription after login
+        setTimeout(() => {
+          handlePendingSubscription();
+        }, 100);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handlePendingSubscription = async () => {
+    const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
+    if (tierToSubscribe) {
+      const priceId = TIER_PRICE_IDS[tierToSubscribe];
+      if (priceId) {
+        sonnerToast("Completing your subscription...", {
+          description: "Please wait while we redirect you to checkout"
+        });
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('create-checkout', {
+            body: { priceId }
+          });
+
+          if (error) throw error;
+
+          if (data?.url) {
+            localStorage.removeItem('pendingSubscriptionTier');
+            window.open(data.url, '_blank');
+            sonnerToast.success("Checkout ready!", {
+              description: "Complete your subscription in the new tab"
+            });
+            navigate('/subscribe');
+          }
+        } catch (error) {
+          console.error('Checkout error:', error);
+          sonnerToast.error('Failed to create checkout', {
+            description: 'Please try subscribing again from the subscription page'
+          });
+          localStorage.removeItem('pendingSubscriptionTier');
+          navigate('/subscribe');
+        }
+      } else {
+        navigate("/");
+      }
+    } else {
+      navigate("/");
+    }
+  };
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     try {
@@ -62,7 +120,17 @@ export default function Auth() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('provider is not enabled')) {
+          toast({
+            variant: "destructive",
+            title: "Facebook Login Not Configured",
+            description: "Please use email/password or Google login for now. Facebook authentication requires additional setup.",
+          });
+        } else {
+          throw error;
+        }
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -132,7 +200,7 @@ export default function Auth() {
   const handleCompleteSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!displayName || !location || !bio) {
+    if (!displayName || !userLocation || !bio) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -182,28 +250,32 @@ export default function Auth() {
         // Create profile with both public and private data
         const { error: profileError } = await supabase
           .from('user_profiles')
-          .insert({
+          .insert([{
             user_id: authData.user.id,
             display_name: displayName,
-            location,
-            bio,
+            location: userLocation,
+            bio: bio,
             avatar_url: avatarUrl,
             real_name: realName || null,
             birthdate: birthdate || null,
             gender: gender || null,
-          });
+          }]);
 
         if (profileError) throw profileError;
 
         trackEvent('signup', {
-          location,
+          location: userLocation,
           hasProfilePicture: !!profilePicture
         });
 
-        toast({
-          title: "Success",
-          description: "Account created! Welcome to the community.",
+        sonnerToast.success("Account created!", {
+          description: "Welcome to the Legion community"
         });
+
+        // Don't navigate here - let the auth state change handler deal with pending subscription
+        if (!localStorage.getItem('pendingSubscriptionTier')) {
+          navigate('/');
+        }
       }
     } catch (error: any) {
       toast({
@@ -246,8 +318,8 @@ export default function Auth() {
                 <Label htmlFor="location">Location *</Label>
                 <Input
                   id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={userLocation}
+                  onChange={(e) => setUserLocation(e.target.value)}
                   placeholder="e.g., Nashville, TN"
                   required
                 />

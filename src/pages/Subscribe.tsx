@@ -1,29 +1,38 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { toast as sonnerToast } from "sonner";
 
 // Mapping of tier names to Stripe price IDs
 const TIER_PRICE_IDS: Record<string, string> = {
-  "Rebels": "price_rebels_monthly", // Replace with actual Stripe price ID
-  "Outlaws": "price_outlaws_monthly", // Replace with actual Stripe price ID
-  "Legionnaires": "price_legionnaires_monthly", // Replace with actual Stripe price ID
+  "Rebels": "price_1QhunoAkEokk90mfkxLQJgI8",
+  "Outlaws": "price_1QhunvAkEokk90mfb7CqjJjq",
+  "Legionnaires": "price_1Qhuo2AkEokk90mfnhOBiSJQ",
 };
 
 export default function Subscribe() {
   const { trackEvent } = useEventTracking();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   useEffect(() => {
     checkUser();
-  }, []);
+    
+    // Show feedback if user canceled checkout
+    if (searchParams.get('canceled') === 'true') {
+      sonnerToast("Checkout canceled", {
+        description: "No worries! Subscribe whenever you're ready."
+      });
+    }
+  }, [searchParams]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -31,8 +40,19 @@ export default function Subscribe() {
   };
 
   const handleSubscribe = async (tierName: string) => {
+    const priceId = TIER_PRICE_IDS[tierName];
+    if (!priceId) {
+      sonnerToast.error("Invalid subscription tier");
+      return;
+    }
+
     // Check if user is logged in
     if (!user) {
+      // Store tier selection for after login/signup
+      localStorage.setItem('pendingSubscriptionTier', tierName);
+      sonnerToast("Please create an account or sign in to start your free trial", {
+        description: "You'll be redirected to checkout after account creation"
+      });
       navigate("/auth");
       return;
     }
@@ -46,8 +66,6 @@ export default function Subscribe() {
 
     setLoadingTier(tierName);
     try {
-      const priceId = TIER_PRICE_IDS[tierName];
-      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });
@@ -55,15 +73,18 @@ export default function Subscribe() {
       if (error) throw error;
 
       if (data?.url) {
+        // Clear pending tier after successful checkout creation
+        localStorage.removeItem('pendingSubscriptionTier');
         window.open(data.url, '_blank');
+        sonnerToast.success("Redirecting to secure checkout", {
+          description: "Complete your subscription in the new tab"
+        });
+      } else {
+        throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to create checkout session",
-      });
-    } finally {
+      console.error('Checkout error:', error);
+      sonnerToast.error('Failed to start checkout process');
       setLoadingTier(null);
     }
   };
@@ -167,13 +188,8 @@ export default function Subscribe() {
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
                   </>
-                ) : user ? (
-                  <>
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Subscribe Now
-                  </>
                 ) : (
-                  "Sign In to Subscribe"
+                  "Start 7-Day Free Trial"
                 )}
               </Button>
             </Card>
