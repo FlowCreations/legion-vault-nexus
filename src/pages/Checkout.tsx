@@ -9,9 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 
 const TIER_PRICE_IDS: Record<string, string> = {
-  "Rebels": "price_1QhunoAkEokk90mfkxLQJgI8",
-  "Outlaws": "price_1QhunvAkEokk90mfb7CqjJjq",
-  "Legionnaires": "price_1Qhuo2AkEokk90mfnhOBiSJQ",
+  "Rebels": "price_1SP6a3FTZjyeQ8pZKLtwqtTg",
+  "Outlaws": "price_1SP6aOFTZjyeQ8pZDGwBCUqf",
+  "Legionnaires": "price_1SP6aeFTZjyeQ8pZFmmOX1Uc",
 };
 
 const TIER_DETAILS = {
