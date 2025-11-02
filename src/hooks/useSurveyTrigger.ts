@@ -23,8 +23,8 @@ export const useSurveyTrigger = (pageType: 'merch' | 'other', options?: { testMo
     // Get total songs listened from localStorage
     const songsListened = parseInt(localStorage.getItem(SONG_LISTEN_COUNT_KEY) || '0', 10);
 
-    // Trigger after 3 songs have been played
-    if (songsListened >= 3) {
+    // Trigger after 10 songs have been played
+    if (songsListened >= 10) {
       setShowSurvey(true);
     }
   }, [playlist]);
