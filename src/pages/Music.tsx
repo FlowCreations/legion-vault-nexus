@@ -70,6 +70,16 @@ export default function Music() {
     }
   };
 
+  // Helper function to get album ID from album name
+  const getAlbumIdFromName = (albumName: string): string | null => {
+    const lowerName = albumName?.toLowerCase() || '';
+    if (lowerName.includes('power')) return 'a1';
+    if (lowerName.includes('outlaw')) return 'a2';
+    if (lowerName.includes('acoustic') || lowerName.includes('barn')) return 'a3';
+    if (lowerName.includes('stripped')) return 'a4';
+    return null;
+  };
+
   // Map uploaded tracks to the expected format
   const getImageForTrack = (album: string) => {
     if (album.toLowerCase().includes('power')) return powerAlbum;
@@ -213,20 +223,40 @@ export default function Music() {
       return;
     }
 
-    // Check authentication and subscription
+    // Check authentication first
     if (!isAuthenticated) {
       setShowSubscribePrompt(true);
       return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
+    if (!user) {
+      setShowSubscribePrompt(true);
+      return;
+    }
+
+    // Check subscription status
+    const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
+    const hasSubscription = subscriptionData?.subscribed;
+    
+    // If track belongs to an album, check if user has access
+    if (track.album) {
+      const albumId = getAlbumIdFromName(track.album);
       
-      if (!subscriptionData?.subscribed) {
-        setShowSubscribePrompt(true);
-        return;
+      // Power album (a1) is free, others require subscription OR purchase
+      if (albumId && albumId !== 'a1') {
+        const albumPurchased = isPurchased(albumId);
+        
+        // User needs either active subscription OR purchased the specific album
+        if (!hasSubscription && !albumPurchased) {
+          setShowSubscribePrompt(true);
+          return;
+        }
       }
+    } else if (!hasSubscription) {
+      // For tracks without album info, require subscription
+      setShowSubscribePrompt(true);
+      return;
     }
     
     trackEvent('music_play', {
