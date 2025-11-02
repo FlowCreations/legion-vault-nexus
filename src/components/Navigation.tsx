@@ -10,6 +10,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { getTierColor } from "@/lib/tierColors";
+import { BadgeDisplay } from "@/components/BadgeDisplay";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ export const Navigation = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [currentBadge, setCurrentBadge] = useState<'silver_star' | 'gold_star' | 'medallion' | null>(null);
 
   useEffect(() => {
     checkAdminStatus();
@@ -66,6 +68,17 @@ export const Navigation = () => {
       .maybeSingle();
 
     setUserProfile(profile);
+
+    // Load milestone progress for badge
+    const { data: milestoneData } = await supabase
+      .from("milestone_progress")
+      .select("current_badge")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    
+    if (milestoneData) {
+      setCurrentBadge(milestoneData.current_badge as 'silver_star' | 'gold_star' | 'medallion' | null);
+    }
 
     const { data: roles } = await supabase
       .from("user_roles")
@@ -151,7 +164,12 @@ export const Navigation = () => {
                         <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
-                    {isSubscribed && (
+                    {currentBadge && (
+                      <div className="absolute -top-1 -right-1">
+                        <BadgeDisplay badge={currentBadge} size="sm" />
+                      </div>
+                    )}
+                    {!currentBadge && isSubscribed && (
                       <div className="absolute -top-1 -right-1">
                         <Crown className="w-4 h-4 text-primary" />
                       </div>

@@ -2012,6 +2012,30 @@ export type Database = {
         }
         Relationships: []
       }
+      milestone_progress: {
+        Row: {
+          current_badge: string | null
+          last_updated: string | null
+          next_milestone_minutes: number | null
+          total_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          current_badge?: string | null
+          last_updated?: string | null
+          next_milestone_minutes?: number | null
+          total_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          current_badge?: string | null
+          last_updated?: string | null
+          next_milestone_minutes?: number | null
+          total_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       music_streaming_data: {
         Row: {
           artist_name: string | null
@@ -3196,6 +3220,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_milestones: {
+        Row: {
+          achieved_at: string
+          created_at: string | null
+          id: string
+          milestone_type: string
+          reward_claimed: boolean | null
+          reward_claimed_at: string | null
+          shipping_address: Json | null
+          total_minutes_at_achievement: number
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string | null
+          id?: string
+          milestone_type: string
+          reward_claimed?: boolean | null
+          reward_claimed_at?: string | null
+          shipping_address?: Json | null
+          total_minutes_at_achievement: number
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string | null
+          id?: string
+          milestone_type?: string
+          reward_claimed?: boolean | null
+          reward_claimed_at?: string | null
+          shipping_address?: Json | null
+          total_minutes_at_achievement?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       user_preferences: {
         Row: {

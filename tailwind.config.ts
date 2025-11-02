@@ -32,6 +32,13 @@ export default {
           foreground: "hsl(var(--primary-foreground))",
           glow: "hsl(var(--primary-glow))",
         },
+        jrny: {
+          bronze: '#A97142',
+          silver: '#C0C0C0',
+          gold: '#FFD700',
+          ribbon: '#8B0000',
+          glow: 'rgba(255,205,29,0.3)',
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

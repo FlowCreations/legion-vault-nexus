@@ -4,11 +4,14 @@ import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { toast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { incrementSongListenCount } from "@/hooks/useSurveyTrigger";
+import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
+import { MilestoneModal } from "./MilestoneModal";
 
 export function GlobalMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { currentTrack, isPlaying, setIsPlaying, playNext, isMinimized } = useMusicPlayer();
   const { trackEvent } = useEventTracking();
+  const { newMilestone, clearMilestone } = useMilestoneProgress();
   const listenStartTime = useRef<number>(0);
 
   useEffect(() => {
@@ -150,6 +153,9 @@ export function GlobalMusicPlayer() {
     <>
       <audio ref={audioRef} preload="metadata" crossOrigin="anonymous" />
       <MusicPlayer audioRef={audioRef} />
+      {newMilestone && (
+        <MilestoneModal milestone={newMilestone} onClose={clearMilestone} />
+      )}
     </>
   );
 }

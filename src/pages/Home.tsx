@@ -8,14 +8,27 @@ import { CameoDisplay } from "@/components/CameoDisplay";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { PersonalitySurvey } from "@/components/PersonalitySurvey";
 import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
+import { JRNYProgressBar } from "@/components/JRNYProgressBar";
+import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Home() {
   const { trackEvent } = useEventTracking();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('other');
+  const { progress, loading } = useMilestoneProgress();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showIntro, setShowIntro] = useState(() => {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
   });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+    };
+    checkAuth();
+  }, []);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
@@ -37,6 +50,18 @@ export default function Home() {
       <div className="container mx-auto px-4 pt-24">
         <CameoDisplay />
       </div>
+
+      {/* JRNY Progress Bar - Shows for logged in users */}
+      {isLoggedIn && !loading && progress.totalMinutes > 0 && (
+        <div className="container mx-auto px-4 py-6">
+          <JRNYProgressBar 
+            totalMinutes={progress.totalMinutes}
+            currentBadge={progress.currentBadge}
+            nextMilestone={progress.nextMilestone}
+            compact
+          />
+        </div>
+      )}
       
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
