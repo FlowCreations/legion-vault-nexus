@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Play, Lock, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEventTracking } from "@/hooks/useEventTracking";
-import { useSubscription } from "@/contexts/SubscriptionContext";
-import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -36,7 +34,6 @@ interface VideoItem {
 
 export default function Videos() {
   const { trackEvent } = useEventTracking();
-  const { hasAccess } = useSubscription();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [heroVideoUrl, setHeroVideoUrl] = useState<string>("");
   const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
@@ -439,46 +436,39 @@ export default function Videos() {
           />
         )}
 
-        {/* Premium Content - Single Gate for REBELS tier */}
-        <SubscriptionGate requiredTier="Rebels" showUpgradePrompt={true}>
-          {/* Performances Row - REBELS */}
-          <ContentRow
-            title="Performances"
-            items={performances}
-            aspectRatio="portrait"
-            hoveredId={hoveredId}
-            setHoveredId={setHoveredId}
-            onVideoClick={handleVideoClick}
-          />
+        {/* Performances Row */}
+        <ContentRow
+          title="Performances"
+          items={performances}
+          aspectRatio="portrait"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+          onVideoClick={handleVideoClick}
+        />
 
-          {/* BTS Row - REBELS */}
-          <ContentRow
-            title="Behind The Scenes"
-            items={behindTheScenes}
-            aspectRatio="portrait"
-            hoveredId={hoveredId}
-            setHoveredId={setHoveredId}
-            onVideoClick={handleVideoClick}
-          />
+        {/* BTS Row */}
+        <ContentRow
+          title="Behind The Scenes"
+          items={behindTheScenes}
+          aspectRatio="portrait"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+          onVideoClick={handleVideoClick}
+        />
 
-          {/* Documentary Row - OUTLAWS (nested gate without prompt) */}
-          <SubscriptionGate feature="documentary" showUpgradePrompt={false}>
-            <ContentRow
-              title="Documentary"
-              items={documentary}
-              aspectRatio="landscape"
-              hoveredId={hoveredId}
-              setHoveredId={setHoveredId}
-              isPremium
-              onVideoClick={handleVideoClick}
-            />
-          </SubscriptionGate>
-        </SubscriptionGate>
+        {/* Documentary Row */}
+        <ContentRow
+          title="Documentary"
+          items={documentary}
+          aspectRatio="landscape"
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+          isPremium
+          onVideoClick={handleVideoClick}
+        />
 
-        {/* You Might Also Like - REBELS */}
-        <SubscriptionGate requiredTier="Rebels" showUpgradePrompt={false}>
-          <YouMightAlsoLike contentType="video" limit={5} />
-        </SubscriptionGate>
+        {/* You Might Also Like */}
+        <YouMightAlsoLike contentType="video" limit={5} />
       </div>
     </div>
   );
