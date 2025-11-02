@@ -2,8 +2,39 @@ import { Link } from "react-router-dom";
 import { BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Footer = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      setIsAdmin(!!roles);
+    };
+
+    checkAdmin();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAdmin();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <footer className="border-t border-border bg-background-dark/50 backdrop-blur-sm mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -23,17 +54,19 @@ export const Footer = () => {
             </Link>
           </div>
           
-          <Button 
-            asChild 
-            variant="outline" 
-            size="sm"
-            className="bg-gradient-gold hover:shadow-glow transition-all duration-300 text-black hover:text-black"
-          >
-            <Link to="/merchant" onClick={() => window.scrollTo(0, 0)}>
-              <BarChart className="w-4 h-4 mr-2" />
-              Merchant Dashboard
-            </Link>
-          </Button>
+          {isAdmin && (
+            <Button 
+              asChild 
+              variant="outline" 
+              size="sm"
+              className="bg-gradient-gold hover:shadow-glow transition-all duration-300 text-black hover:text-black"
+            >
+              <Link to="/merchant" onClick={() => window.scrollTo(0, 0)}>
+                <BarChart className="w-4 h-4 mr-2" />
+                Merchant Dashboard
+              </Link>
+            </Button>
+          )}
           
           <p className="text-sm text-muted-foreground">
             © 2025 Sons of Legion. All rights reserved.
