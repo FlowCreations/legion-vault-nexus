@@ -370,16 +370,33 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   useEffect(() => {
+    // Handle browser/tab close
+    const handleBeforeUnload = () => {
+      console.log('[Broadcaster] Browser closing, cleaning up live status');
+      if (roomRef.current && status === 'live') {
+        // Update event status synchronously before page unload
+        navigator.sendBeacon(
+          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/livestream_events?id=eq.${eventId}`,
+          JSON.stringify({ status: 'scheduled' })
+        );
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      
       // Cleanup on unmount
       if (roomRef.current) {
+        console.log('[Broadcaster] Component unmounting, disconnecting');
         roomRef.current.disconnect();
       }
       if (audioContext) {
         audioContext.close();
       }
     };
-  }, [audioContext]);
+  }, [audioContext, status, eventId]);
 
   return (
     <div className="space-y-6">

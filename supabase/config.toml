@@ -68,3 +68,6 @@ verify_jwt = true
 
 [functions.generate-next-best-action]
 verify_jwt = true
+
+[functions.cleanup-stale-streams]
+verify_jwt = false
