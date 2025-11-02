@@ -2610,6 +2610,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_emails: {
+        Row: {
+          created_at: string | null
+          email_data: Json
+          email_type: string
+          id: string
+          scheduled_for: string
+          sent: boolean | null
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_data: Json
+          email_type: string
+          id?: string
+          scheduled_for: string
+          sent?: boolean | null
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_data?: Json
+          email_type?: string
+          id?: string
+          scheduled_for?: string
+          sent?: boolean | null
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       session_analytics: {
         Row: {
           abandoned_cart: boolean | null

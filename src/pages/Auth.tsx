@@ -268,6 +268,20 @@ export default function Auth() {
           hasProfilePicture: !!profilePicture
         });
 
+        // Send welcome email
+        try {
+          await supabase.functions.invoke('send-welcome-email', {
+            body: {
+              userId: authData.user.id,
+              email: authData.user.email,
+              firstName: displayName,
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Don't block signup if email fails
+        }
+
         sonnerToast.success("Account created!", {
           description: "Welcome to the Legion community"
         });
