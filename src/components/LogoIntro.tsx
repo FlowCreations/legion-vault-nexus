@@ -14,8 +14,8 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     // START ANIMATION IMMEDIATELY (don't wait for audio)
     const blackTimer = setTimeout(() => setPhase("beams"), 500);
     const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
-    const glowTimer = setTimeout(() => setPhase("glow"), 3200);
-    const completeTimer = setTimeout(() => onComplete(), 4200);
+    const glowTimer = setTimeout(() => setPhase("glow"), 3500);
+    const completeTimer = setTimeout(() => onComplete(), 6000);
     
     // TRY TO PLAY AUDIO IN PARALLEL (optional enhancement)
     const tryPlayAudio = async () => {
@@ -24,6 +24,14 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         audio.volume = 0.7;
         await audio.play();
         console.log('✓ Intro audio playing');
+        
+        // Stop audio after 6 seconds
+        setTimeout(() => {
+          if (audio) {
+            audio.pause();
+            audio.src = '';
+          }
+        }, 6000);
       } catch (err) {
         // If autoplay blocked, try with muted audio
         console.log('Audio autoplay blocked, trying muted...');
@@ -38,6 +46,14 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
                 audio.volume = 0.7;
               }
             }, 100);
+            
+            // Stop audio after 6 seconds
+            setTimeout(() => {
+              if (audio) {
+                audio.pause();
+                audio.src = '';
+              }
+            }, 6000);
           }
         } catch (mutedErr) {
           console.log('Audio completely blocked, continuing with silent animation');

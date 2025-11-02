@@ -11,6 +11,7 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { getTierColor } from "@/lib/tierColors";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { useCartStore } from "@/stores/cartStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +39,7 @@ export const Navigation = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [currentBadge, setCurrentBadge] = useState<'silver_star' | 'gold_star' | 'medallion' | null>(null);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
     checkAdminStatus();
@@ -92,6 +94,7 @@ export const Navigation = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    clearCart();
     setUserProfile(null);
     navigate("/");
   };
