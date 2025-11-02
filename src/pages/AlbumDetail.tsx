@@ -1,8 +1,7 @@
-import { Play, Heart, Share2, Pause, ArrowLeft, Lock, ShoppingCart, Link, Download, MessageCircle } from "lucide-react";
+import { Play, Heart, Share2, Pause, ArrowLeft, Lock, Link, Download, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
-import { PurchaseModal } from "@/components/PurchaseModal";
 import { usePurchases } from "@/hooks/usePurchases";
 import { StripeCheckout } from "@/components/StripeCheckout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +25,6 @@ export default function AlbumDetail() {
   const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, toggleLike, isLiked } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
   const { hasAccess } = useSubscription();
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   const handleCopyLink = async () => {
     try {
@@ -147,10 +145,7 @@ export default function AlbumDetail() {
   };
 
   const handlePlayAll = () => {
-    if (isLocked) {
-      setShowPurchaseModal(true);
-      return;
-    }
+    if (isLocked) return;
     if (album?.trackList && album.trackList.length > 0) {
       const tracksWithMetadata = album.trackList.map((track, i) => ({
         ...track,
@@ -296,16 +291,14 @@ export default function AlbumDetail() {
                   <span className="font-bold text-xl text-primary">${album.price}</span>
                 </div>
               </div>
-              <Button 
-                size="lg"
-                onClick={() => setShowPurchaseModal(true)}
-              >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Purchase Album
-              </Button>
-              <p className="text-xs text-muted-foreground mt-4">
-                🎭 Demo Mode - No actual payment required
-              </p>
+              <StripeCheckout
+                albumId={album.id}
+                albumTitle={album.title}
+                price={album.price}
+                onSuccess={() => {
+                  purchaseAlbum(album.id);
+                }}
+              />
             </CardContent>
           </Card>
         ) : (
@@ -391,18 +384,6 @@ export default function AlbumDetail() {
         )}
       </div>
 
-
-      {album && (
-        <PurchaseModal
-          isOpen={showPurchaseModal}
-          onClose={() => setShowPurchaseModal(false)}
-          onPurchase={() => {
-            purchaseAlbum(album.id);
-            setShowPurchaseModal(false);
-          }}
-          album={album}
-        />
-      )}
     </div>
   );
 }
