@@ -128,15 +128,11 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const handleProcessedStream = (processedStream: MediaStream) => {
-    console.log('[Broadcaster] Received processed audio stream from mixer');
-    // Replace the original audio track with the processed one
-    if (audioTrackRef.current && roomRef.current) {
-      const processedAudioTrack = processedStream.getAudioTracks()[0];
-      if (processedAudioTrack) {
-        console.log('[Broadcaster] Replacing audio track with processed version');
-        // This will be handled when we publish the track
-      }
-    }
+    console.log('[Broadcaster] Received processed audio stream from mixer:', processedStream.id);
+    // Update the raw audio stream state with the PROCESSED stream
+    // This ensures MicrophoneMeter gets a fresh stream it can read from
+    setRawAudioStream(processedStream);
+    console.log('[Broadcaster] Updated visualization stream to processed output');
   };
 
   const handleAudioLevel = (left: number, right: number) => {
@@ -197,9 +193,9 @@ export function LiveBroadcaster({ eventId }: Props) {
       const audioStream = new MediaStream(rawStream.getAudioTracks());
       console.log('[Broadcaster] Created audio stream for processing:', audioStream.id);
       
+      // Setup audio processing - the processed stream will be set via handleProcessedStream callback
       await setupAudioProcessing(audioStream);
-      setRawAudioStream(audioStream);
-      console.log('[Broadcaster] Raw audio stream set for visualization');
+      console.log('[Broadcaster] Audio processing initialized, waiting for processed stream from AudioMixer');
 
       // STEP 3: Wait for audio signal confirmation
       console.log('[Broadcaster] Waiting for audio signal...');
