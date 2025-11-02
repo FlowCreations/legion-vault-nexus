@@ -47,25 +47,37 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
-    // Set up countdown timer for seconds only
-    let currentSeconds = 60;
+    // Target date: December 23, 2025 8:00 PM EST
+    const targetDate = new Date('2025-12-23T20:00:00-05:00');
     
     const updateCountdown = () => {
-      currentSeconds = currentSeconds - 1;
+      const now = new Date();
+      const difference = targetDate.getTime() - now.getTime();
       
-      if (currentSeconds < 0) {
-        currentSeconds = 59;
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setCountdown({
+          days: String(days).padStart(2, '0'),
+          hours: String(hours).padStart(2, '0'),
+          minutes: String(minutes).padStart(2, '0'),
+          seconds: String(seconds).padStart(2, '0')
+        });
+      } else {
+        setCountdown({
+          days: "00",
+          hours: "00",
+          minutes: "00",
+          seconds: "00"
+        });
       }
-      
-      setCountdown({
-        days: "03",
-        hours: "14",
-        minutes: "27",
-        seconds: String(currentSeconds).padStart(2, '0')
-      });
     };
     
-    // Update every second
+    // Update immediately and then every second
+    updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     
     // Subscribe to real-time livestream events
