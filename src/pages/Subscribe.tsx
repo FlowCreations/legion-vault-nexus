@@ -39,54 +39,16 @@ export default function Subscribe() {
     setUser(user);
   };
 
-  const handleSubscribe = async (tierName: string) => {
-    const priceId = TIER_PRICE_IDS[tierName];
-    if (!priceId) {
-      sonnerToast.error("Invalid subscription tier");
-      return;
-    }
-
-    // Check if user is logged in
-    if (!user) {
-      // Store tier selection for after login/signup
-      localStorage.setItem('pendingSubscriptionTier', tierName);
-      sonnerToast("Please create an account or sign in to start your free trial", {
-        description: "You'll be redirected to checkout after account creation"
-      });
-      navigate("/auth");
-      return;
-    }
-
+  const handleSubscribe = (tierName: string) => {
     const tier = memberTiers.find(t => t.name === tierName);
     trackEvent('initiate_checkout', {
       tier: tierName,
       price: tier?.price,
       type: 'subscription'
     });
-
-    setLoadingTier(tierName);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId }
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        // Clear pending tier after successful checkout creation
-        localStorage.removeItem('pendingSubscriptionTier');
-        window.open(data.url, '_blank');
-        sonnerToast.success("Redirecting to secure checkout", {
-          description: "Complete your subscription in the new tab"
-        });
-      } else {
-        throw new Error('No checkout URL returned');
-      }
-    } catch (error: any) {
-      console.error('Checkout error:', error);
-      sonnerToast.error('Failed to start checkout process');
-      setLoadingTier(null);
-    }
+    
+    // Navigate to checkout page with tier parameter
+    navigate(`/checkout?tier=${tierName}`);
   };
 
   const memberTiers = [
