@@ -142,7 +142,8 @@ export default function Subscribe() {
               <div className="text-4xl font-bold mb-1">
                 {tier.price}
               </div>
-              <div className="text-sm text-muted-foreground font-medium mb-4">per month</div>
+              <div className="text-sm text-muted-foreground font-medium mb-1">per month</div>
+              <div className="text-xs text-primary font-semibold mb-4">7-day free trial</div>
               
               <p className="text-sm font-semibold text-muted-foreground mb-6">{tier.subtitle}</p>
               

@@ -192,8 +192,16 @@ export default function Contact() {
                className="w-12 h-12 bg-[#2D2D2D] text-white flex items-center justify-center hover:bg-[#3D3D3D] transition-colors">
               <Instagram className="w-5 h-5" />
             </a>
-            <a href="https://www.facebook.com/sonsoflegion" target="_blank" rel="noopener noreferrer"
-               className="w-12 h-12 bg-[#2D2D2D] text-white flex items-center justify-center hover:bg-[#3D3D3D] transition-colors">
+            <a 
+              href="https://www.facebook.com/sonsoflegion" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-[#2D2D2D] text-white flex items-center justify-center hover:bg-[#3D3D3D] transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                window.open('https://www.facebook.com/sonsoflegion', '_blank', 'noopener,noreferrer');
+              }}
+            >
               <Facebook className="w-5 h-5" />
             </a>
             <a href="https://www.youtube.com/@sonsoflegion" target="_blank" rel="noopener noreferrer"

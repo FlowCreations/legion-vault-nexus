@@ -200,7 +200,8 @@ export default function Home() {
                 <div className="text-3xl font-bold mb-1">
                   {tier.price}
                 </div>
-                <div className="text-sm text-foreground/70 font-medium mb-4">per month</div>
+                <div className="text-sm text-foreground/70 font-medium mb-1">per month</div>
+                <div className="text-xs text-primary font-semibold mb-4">7-day free trial</div>
                 
                 <p className="text-sm font-semibold mb-4">{tier.subtitle}</p>
                 
@@ -218,7 +219,7 @@ export default function Home() {
                   asChild
                   onClick={() => trackEvent('subscribe', { tier: tier.name, price: tier.price, source: 'home_tiers' })}
                 >
-                  <Link to="/community">Subscribe</Link>
+                  <Link to="/subscribe">Subscribe</Link>
                 </Button>
               </div>
             ))}
