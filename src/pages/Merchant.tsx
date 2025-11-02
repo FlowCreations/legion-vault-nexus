@@ -19,6 +19,7 @@ import { PlatformCards } from "@/components/merchant/analytics/PlatformCards";
 import { BuildFunnel } from "@/components/merchant/BuildFunnel";
 import { Partnerships } from "@/components/merchant/Partnerships";
 import { LiveStreamManager } from "@/components/merchant/LiveStreamManager";
+import { LiveStreamEventManager } from "@/components/merchant/LiveStreamEventManager";
 import { PersonalityOverview } from "@/components/merchant/intelligence/PersonalityOverview";
 import { MemberPersonalityTable } from "@/components/merchant/intelligence/MemberPersonalityTable";
 import { NBAQueue } from "@/components/merchant/intelligence/NBAQueue";
@@ -245,6 +246,7 @@ const Merchant = () => {
                 <TabsTrigger value="videos">Videos</TabsTrigger>
                 <TabsTrigger value="music">Music Upload</TabsTrigger>
                 <TabsTrigger value="music-manager">Music Manager</TabsTrigger>
+                <TabsTrigger value="livestreams">Live Events</TabsTrigger>
                 <TabsTrigger value="tour">Tour Manager</TabsTrigger>
                 <TabsTrigger value="lab">Content Lab</TabsTrigger>
               </TabsList>
@@ -257,6 +259,9 @@ const Merchant = () => {
               </TabsContent>
               <TabsContent value="music-manager">
                 <MusicManager />
+              </TabsContent>
+              <TabsContent value="livestreams">
+                <LiveStreamEventManager />
               </TabsContent>
               <TabsContent value="tour">
                 <TourManager />
