@@ -11,9 +11,14 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [noSignalWarning, setNoSignalWarning] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const lastSignalTimeRef = useRef<number>(Date.now());
+  const logIntervalRef = useRef<number | null>(null);
 
   const startMicrophone = async () => {
     try {
@@ -159,25 +164,58 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
 
   // Auto-visualize when external stream is provided
   useEffect(() => {
-    if (!stream) return;
+    if (!stream) {
+      // Clean up when stream is removed
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      if (logIntervalRef.current) {
+        clearInterval(logIntervalRef.current);
+        logIntervalRef.current = null;
+      }
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.disconnect();
+        sourceNodeRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      analyserRef.current = null;
+      setIsActive(false);
+      setNoSignalWarning(false);
+      return;
+    }
     
     setError(null);
+    setNoSignalWarning(false);
+    lastSignalTimeRef.current = Date.now();
+    
+    console.log('[MicrophoneMeter] Initializing with stream:', stream.id);
     
     try {
+      // Create AudioContext and resume it immediately
       const ctx = new AudioContext({ sampleRate: 48000 });
       audioContextRef.current = ctx;
       
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      // Resume context to satisfy browser autoplay policy
+      ctx.resume().then(() => {
+        console.log('[MicrophoneMeter] AudioContext resumed, state:', ctx.state);
+      });
       
+      // Create source and analyser nodes
       const src = ctx.createMediaStreamSource(stream);
+      sourceNodeRef.current = src;
+      
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
       analyser.minDecibels = -100;
       analyser.maxDecibels = -30;
+      analyserRef.current = analyser;
       
+      // Connect: stream → source → analyser
       src.connect(analyser);
       
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -190,17 +228,45 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
       const WIDTH = canvas.width;
       const HEIGHT = canvas.height;
       
+      let lastLogTime = Date.now();
+      
       function draw() {
-        if (!canvasRef.current) return;
+        if (!canvasRef.current || !analyserRef.current) return;
         
         animationFrameRef.current = requestAnimationFrame(draw);
         
-        analyser.getByteTimeDomainData(dataArray);
+        // Get time domain data for RMS calculation
+        analyserRef.current.getByteTimeDomainData(dataArray);
         
+        // Calculate overall RMS for signal detection
+        let totalSum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const normalized = (dataArray[i] - 128) / 128;
+          totalSum += normalized * normalized;
+        }
+        const overallRms = Math.sqrt(totalSum / dataArray.length);
+        
+        // Log signal level every second
+        const now = Date.now();
+        if (now - lastLogTime >= 1000) {
+          console.log('[MicrophoneMeter] Signal level:', overallRms.toFixed(3));
+          lastLogTime = now;
+        }
+        
+        // Check for signal
+        if (overallRms > 0.01) {
+          lastSignalTimeRef.current = now;
+          setNoSignalWarning(false);
+        } else if (now - lastSignalTimeRef.current > 3000) {
+          setNoSignalWarning(true);
+        }
+        
+        // Clear canvas
         ctx2d.clearRect(0, 0, WIDTH, HEIGHT);
         ctx2d.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx2d.fillRect(0, 0, WIDTH, HEIGHT);
         
+        // Draw 10 vertical bars
         const barCount = 10;
         const barWidth = (WIDTH / barCount) - 2;
         const binSize = Math.floor(dataArray.length / barCount);
@@ -210,17 +276,19 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
           const end = start + binSize;
           const bandData = dataArray.slice(start, end);
           
+          // Calculate RMS for this bar segment
           let sum = 0;
           for (let j = 0; j < bandData.length; j++) {
             const normalized = (bandData[j] - 128) / 128;
             sum += normalized * normalized;
           }
           const rms = Math.sqrt(sum / bandData.length);
-          const level = Math.min(1, rms * 3);
+          const level = Math.min(1, rms * 3); // Amplify by 3x
           
           const barHeight = level * HEIGHT;
           const x = i * (barWidth + 2);
           
+          // Gradient: green → yellow → red
           const gradient = ctx2d.createLinearGradient(0, HEIGHT, 0, HEIGHT - barHeight);
           gradient.addColorStop(0, '#22c55e');
           gradient.addColorStop(0.5, '#eab308');
@@ -229,6 +297,7 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
           ctx2d.fillStyle = gradient;
           ctx2d.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
           
+          // Soft glow
           ctx2d.shadowBlur = 8;
           ctx2d.shadowColor = level < 0.4 ? '#22c55e' : level < 0.7 ? '#eab308' : '#ef4444';
           ctx2d.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
@@ -238,13 +307,33 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
       
       draw();
       setIsActive(true);
+      console.log('[MicrophoneMeter] Visualization started');
       
     } catch (err) {
-      console.error('Stream visualization error:', err);
+      console.error('[MicrophoneMeter] Initialization error:', err);
+      setError('Failed to initialize audio visualization');
     }
     
     return () => {
-      stopMicrophone();
+      console.log('[MicrophoneMeter] Cleaning up');
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      if (logIntervalRef.current) {
+        clearInterval(logIntervalRef.current);
+        logIntervalRef.current = null;
+      }
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.disconnect();
+        sourceNodeRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      analyserRef.current = null;
+      setIsActive(false);
     };
   }, [stream]);
 
@@ -294,6 +383,13 @@ export function MicrophoneMeter({ stream }: MicrophoneMeterProps) {
         <div className="flex items-center gap-1 text-xs text-destructive">
           <AlertCircle className="w-3 h-3" />
           <span>{error}</span>
+        </div>
+      )}
+      
+      {noSignalWarning && stream && (
+        <div className="flex items-center gap-1 text-xs text-yellow-500">
+          <AlertCircle className="w-3 h-3" />
+          <span>No audio detected</span>
         </div>
       )}
     </div>

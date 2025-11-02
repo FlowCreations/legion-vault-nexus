@@ -195,8 +195,11 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Initializing audio processing...');
       
       const audioStream = new MediaStream(rawStream.getAudioTracks());
+      console.log('[Broadcaster] Created audio stream for processing:', audioStream.id);
+      
       await setupAudioProcessing(audioStream);
       setRawAudioStream(audioStream);
+      console.log('[Broadcaster] Raw audio stream set for visualization');
 
       // STEP 3: Wait for audio signal confirmation
       console.log('[Broadcaster] Waiting for audio signal...');
