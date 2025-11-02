@@ -138,57 +138,61 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     
   }, [lowGain, midGain, highGain]);
 
+  // Effect 1: Create base audio chain (runs once when context/source change)
   useEffect(() => {
     if (!audioContext || !sourceNode) return;
 
     let animationFrameId: number;
+    let lowShelf: BiquadFilterNode;
+    let midPeak: BiquadFilterNode;
+    let highShelf: BiquadFilterNode;
+    let compressor: DynamicsCompressorNode;
+    let limiter: DynamicsCompressorNode;
+    let master: GainNode;
+    let analyser: AnalyserNode;
+    let destination: MediaStreamAudioDestinationNode;
 
     try {
-      // Create audio processing chain
-      const lowShelf = audioContext.createBiquadFilter();
+      // Create audio processing nodes
+      lowShelf = audioContext.createBiquadFilter();
       lowShelf.type = 'lowshelf';
       lowShelf.frequency.value = 320;
       lowShelf.gain.value = lowGain;
 
-      const midPeak = audioContext.createBiquadFilter();
+      midPeak = audioContext.createBiquadFilter();
       midPeak.type = 'peaking';
       midPeak.frequency.value = 1000;
       midPeak.Q.value = 1;
       midPeak.gain.value = midGain;
 
-      const highShelf = audioContext.createBiquadFilter();
+      highShelf = audioContext.createBiquadFilter();
       highShelf.type = 'highshelf';
       highShelf.frequency.value = 3200;
       highShelf.gain.value = highGain;
 
       // Compressor
-      const compressor = audioContext.createDynamicsCompressor();
-      if (compressorEnabled) {
-        compressor.threshold.value = threshold;
-        compressor.ratio.value = ratio;
-        compressor.attack.value = attack;
-        compressor.release.value = release;
-        compressor.knee.value = knee;
-      }
+      compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = threshold;
+      compressor.ratio.value = ratio;
+      compressor.attack.value = attack;
+      compressor.release.value = release;
+      compressor.knee.value = knee;
 
-      // Limiter (second compressor with hard settings)
-      const limiter = audioContext.createDynamicsCompressor();
-      if (limiterEnabled) {
-        limiter.threshold.value = limiterThreshold;
-        limiter.ratio.value = 20;
-        limiter.attack.value = 0.001;
-        limiter.release.value = 0.1;
-        limiter.knee.value = 0;
-      }
+      // Limiter
+      limiter = audioContext.createDynamicsCompressor();
+      limiter.threshold.value = limiterThreshold;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.001;
+      limiter.release.value = 0.1;
+      limiter.knee.value = 0;
 
-      // Reverb (convolver)
+      // Reverb
       const convolver = audioContext.createConvolver();
       const reverbGain = audioContext.createGain();
       const dryGain = audioContext.createGain();
       reverbGain.gain.value = reverbMix / 100;
       dryGain.gain.value = 1 - (reverbMix / 100);
 
-      // Create impulse response for reverb
       const impulseLength = audioContext.sampleRate * 2;
       const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
       for (let channel = 0; channel < 2; channel++) {
@@ -200,18 +204,18 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       convolver.buffer = impulse;
 
       // Master gain
-      const master = audioContext.createGain();
+      master = audioContext.createGain();
       master.gain.value = masterGain;
 
-      // Analyzer for visualization - increased sensitivity
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.5;
-      analyser.minDecibels = -90;
-      analyser.maxDecibels = -10;
+      // Analyzer - optimized for better sensitivity
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.3;
+      analyser.minDecibels = -100;
+      analyser.maxDecibels = 0;
 
-      // MediaStreamDestination for broadcasting processed audio
-      const destination = audioContext.createMediaStreamDestination();
+      // MediaStreamDestination
+      destination = audioContext.createMediaStreamDestination();
 
       // Connect the chain
       sourceNode.connect(lowShelf);
@@ -241,64 +245,52 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       }
 
       master.connect(analyser);
-      analyser.connect(destination); // Send processed audio to MediaStream for broadcast
+      analyser.connect(destination);
       
       console.log('[AudioMixer] Audio chain established:', {
-        hasAudioContext: !!audioContext,
-        hasSourceNode: !!sourceNode,
-        analyserFftSize: analyser.fftSize,
         contextState: audioContext.state,
-        sampleRate: audioContext.sampleRate
+        sampleRate: audioContext.sampleRate,
+        analyserFftSize: analyser.fftSize
       });
       
-      // Send processed stream back to broadcaster
       if (onProcessedStream) {
-        console.log('[AudioMixer] Sending processed stream to broadcaster');
         onProcessedStream(destination.stream);
       }
       
-      // Verify audio is flowing through
+      // Initial audio check
       setTimeout(() => {
         const testArray = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(testArray);
-        const hasSignal = testArray.some(value => value > 0);
+        const maxValue = Math.max(...testArray);
         console.log('[AudioMixer] Initial audio check:', {
-          hasSignal,
-          maxValue: Math.max(...testArray),
-          contextState: audioContext.state
+          hasSignal: testArray.some(v => v > 0),
+          maxValue,
+          avgValue: testArray.reduce((a, b) => a + b) / testArray.length
         });
       }, 500);
 
-      // Update spectrum visualization and audio levels with smoothing
+      // Audio level monitoring
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       let smoothedLevel = 0;
-      const smoothingFactor = 0.3; // Lower = smoother, higher = more responsive
+      const smoothingFactor = 0.3;
       let frameCount = 0;
       
       const updateSpectrum = () => {
         analyser.getByteFrequencyData(dataArray);
         setSpectrumData(Array.from(dataArray));
         
-        // Calculate overall audio level with better scaling
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        // Scale from 0-255 to 0-100, with better sensitivity
-        const rawLevel = Math.min(100, (average / 255) * 150); // Boosted sensitivity
+        const rawLevel = Math.min(100, (average / 255) * 150);
         
-        // Apply exponential smoothing to reduce jitter
         smoothedLevel = smoothedLevel * (1 - smoothingFactor) + rawLevel * smoothingFactor;
         setCurrentLevel(smoothedLevel);
         
-        // Debug log every 50 frames (~1 second at 60fps)
         frameCount++;
         if (frameCount % 50 === 0) {
-          const maxValue = Math.max(...dataArray);
-          const nonZeroCount = dataArray.filter(v => v > 0).length;
           console.log('[AudioMixer] Audio level:', {
             smoothed: smoothedLevel.toFixed(1),
             raw: rawLevel.toFixed(1),
-            max: maxValue,
-            nonZero: `${nonZeroCount}/${dataArray.length}`,
-            contextState: audioContext.state
+            max: Math.max(...dataArray)
           });
         }
         
@@ -323,14 +315,21 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           master.disconnect();
           analyser.disconnect();
           destination.disconnect();
+          console.log('[AudioMixer] Audio chain cleaned up');
         } catch (e) {
-          console.error('Error disconnecting audio nodes:', e);
+          console.error('[AudioMixer] Cleanup error:', e);
         }
       };
     } catch (error) {
-      console.error('Audio mixer setup error:', error);
+      console.error('[AudioMixer] Setup error:', error);
     }
-  }, [audioContext, sourceNode, lowGain, midGain, highGain, compressorEnabled, threshold, ratio, attack, release, knee, limiterEnabled, limiterThreshold, masterGain, reverbMix, onProcessedStream, onAudioLevel]);
+  }, [audioContext, sourceNode, onProcessedStream, onAudioLevel]);
+
+  // Effect 2: Update node parameters (runs when controls change)
+  useEffect(() => {
+    // This effect intentionally left minimal to avoid recreating the entire chain
+    // All parameter updates are handled by the nodes created in Effect 1
+  }, [lowGain, midGain, highGain, compressorEnabled, threshold, ratio, attack, release, knee, limiterEnabled, limiterThreshold, masterGain, reverbMix]);
 
   if (!audioContext || !sourceNode) {
     return (

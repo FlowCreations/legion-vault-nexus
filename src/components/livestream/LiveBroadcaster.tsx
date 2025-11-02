@@ -89,6 +89,18 @@ export function LiveBroadcaster({ eventId }: Props) {
         }
       });
       
+      // Verify audio tracks are enabled
+      rawStream.getAudioTracks().forEach(track => {
+        track.enabled = true;
+        console.log('[Broadcaster] Audio track:', {
+          id: track.id,
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState
+        });
+      });
+      
       const ctx = new AudioContext({ sampleRate: 48000 });
       
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
@@ -101,6 +113,25 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
       
       const source = ctx.createMediaStreamSource(rawStream);
+
+      // Test raw audio directly
+      const testAnalyser = ctx.createAnalyser();
+      testAnalyser.fftSize = 256;
+      source.connect(testAnalyser);
+      
+      // Check for audio after 500ms
+      setTimeout(() => {
+        const testData = new Uint8Array(testAnalyser.frequencyBinCount);
+        testAnalyser.getByteFrequencyData(testData);
+        const maxValue = Math.max(...testData);
+        const hasAudio = testData.some(v => v > 0);
+        console.log('[Broadcaster] Raw mic test:', {
+          hasAudio,
+          maxValue,
+          avgValue: testData.reduce((a, b) => a + b) / testData.length
+        });
+        testAnalyser.disconnect();
+      }, 500);
 
       setAudioContext(ctx);
       setSourceNode(source);
