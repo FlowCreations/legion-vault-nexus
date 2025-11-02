@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, Loader2, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Check, Loader2, ExternalLink, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { toast as sonnerToast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Mapping of tier names to Stripe price IDs
 const TIER_PRICE_IDS: Record<string, string> = {
@@ -22,6 +25,11 @@ export default function Subscribe() {
   const [searchParams] = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [showSignupDialog, setShowSignupDialog] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [signingUp, setSigningUp] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -39,16 +47,91 @@ export default function Subscribe() {
     setUser(user);
   };
 
-  const handleSubscribe = (tierName: string) => {
+  const handleSubscribe = async (tierName: string) => {
     const tier = memberTiers.find(t => t.name === tierName);
     trackEvent('initiate_checkout', {
       tier: tierName,
       price: tier?.price,
       type: 'subscription'
     });
-    
-    // Navigate to checkout page with tier parameter
-    navigate(`/checkout?tier=${tierName}`);
+
+    // Check if user is logged in
+    if (!user) {
+      setSelectedTier(tierName);
+      setShowSignupDialog(true);
+      return;
+    }
+
+    // User is logged in, proceed directly to checkout
+    await proceedToCheckout(tierName);
+  };
+
+  const proceedToCheckout = async (tierName: string) => {
+    setLoadingTier(tierName);
+    try {
+      const priceId = TIER_PRICE_IDS[tierName];
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to Stripe checkout in same tab
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to start checkout process",
+      });
+      setLoadingTier(null);
+    }
+  };
+
+  const handleSignupAndCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTier) return;
+
+    setSigningUp(true);
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/profile?subscription=success`,
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      // Close dialog
+      setShowSignupDialog(false);
+      
+      toast({
+        title: "Account created!",
+        description: "Redirecting to checkout...",
+      });
+
+      // Wait a moment for auth state to update
+      setTimeout(async () => {
+        await proceedToCheckout(selectedTier);
+      }, 1000);
+
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Signup failed",
+        description: error.message,
+      });
+    } finally {
+      setSigningUp(false);
+    }
   };
 
   const memberTiers = [
@@ -148,10 +231,10 @@ export default function Subscribe() {
                 {loadingTier === tier.name ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    Redirecting to checkout...
                   </>
                 ) : (
-                  "Start 7-Day Free Trial"
+                  "Subscribe"
                 )}
               </Button>
             </Card>
@@ -168,6 +251,78 @@ export default function Subscribe() {
           </p>
         </div>
       </div>
+
+      {/* Signup Dialog */}
+      <Dialog open={showSignupDialog} onOpenChange={setShowSignupDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Account & Subscribe</DialogTitle>
+            <DialogDescription>
+              Create an account to subscribe to {selectedTier}. You'll start with a 7-day free trial.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSignupAndCheckout} className="space-y-4">
+            <div>
+              <Label htmlFor="signup-email">Email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="your@email.com"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="signup-password">Password</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="Minimum 6 characters"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowSignupDialog(false)}
+                className="flex-1"
+                disabled={signingUp}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-gradient-gold"
+                disabled={signingUp}
+              >
+                {signingUp ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Create Account & Subscribe"
+                )}
+              </Button>
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Already have an account?{" "}
+              <Link to="/auth" className="text-primary hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

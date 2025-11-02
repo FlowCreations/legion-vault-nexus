@@ -41,7 +41,6 @@ import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Subscribe from "./pages/Subscribe";
-import Checkout from "./pages/Checkout";
 import Step1LeadCapture from "./pages/funnel/Step1LeadCapture";
 import Step2ThankYou from "./pages/funnel/Step2ThankYou";
 import Step3SalesPage from "./pages/funnel/Step3SalesPage";
@@ -132,7 +131,6 @@ const App = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<ProtectedRoute requireAuth><Profile /></ProtectedRoute>} />
           <Route path="/subscribe" element={<Subscribe />} />
-          <Route path="/checkout" element={<Checkout />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/videos/manage" element={<ProtectedRoute requireAdmin><VideoManager /></ProtectedRoute>} />
           <Route path="/music" element={<Music />} />

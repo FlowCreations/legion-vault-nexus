@@ -37,6 +37,7 @@ import VideoManager from "./VideoManager";
 import { SeedCoordinatesButton } from "@/components/merchant/SeedCoordinatesButton";
 import { ViberateSyncButton } from "@/components/merchant/ViberateSyncButton";
 import { TourManager } from "@/components/merchant/TourManager";
+import { CommunityMembers } from "@/components/merchant/CommunityMembers";
 
 interface AnalyticsData {
   events: number;
@@ -297,7 +298,20 @@ const Merchant = () => {
           </TabsContent>
 
           <TabsContent value="community">
-            <AdminDashboard selectedUserId={selectedUserId} />
+            <Tabs defaultValue="members" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="members">Community Members</TabsTrigger>
+                <TabsTrigger value="activity">Activity Feed</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="members">
+                <CommunityMembers />
+              </TabsContent>
+              
+              <TabsContent value="activity">
+                <AdminDashboard selectedUserId={selectedUserId} />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="intelligence" className="space-y-6">
