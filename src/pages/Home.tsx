@@ -11,7 +11,7 @@ import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
 
 export default function Home() {
   const { trackEvent } = useEventTracking();
-  const { showSurvey, handleSurveyClose } = useSurveyTrigger('other', { testMode: true });
+  const { showSurvey, handleSurveyClose } = useSurveyTrigger('other');
   const [showIntro, setShowIntro] = useState(() => {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
