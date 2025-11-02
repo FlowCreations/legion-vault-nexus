@@ -41,8 +41,10 @@ export function LiveBroadcaster({ eventId }: Props) {
       // Only enumerate devices - don't request permission yet
       console.log('[Broadcaster] Loading device list...');
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === 'videoinput');
-      const audioDevices = devices.filter(d => d.kind === 'audioinput');
+      
+      // Filter out devices with empty deviceId (happens before permission is granted)
+      const videoDevices = devices.filter(d => d.kind === 'videoinput' && d.deviceId && d.deviceId !== '');
+      const audioDevices = devices.filter(d => d.kind === 'audioinput' && d.deviceId && d.deviceId !== '');
       
       console.log('[Broadcaster] Found devices:', {
         cameras: videoDevices.length,
