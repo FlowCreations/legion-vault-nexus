@@ -49,7 +49,7 @@ export default function Subscribe() {
 
   const handleSubscribe = async (tierName: string) => {
     const tier = memberTiers.find(t => t.name === tierName);
-    trackEvent('initiate_checkout', {
+    trackEvent('purchase_started', {
       tier: tierName,
       price: tier?.price,
       type: 'subscription'
