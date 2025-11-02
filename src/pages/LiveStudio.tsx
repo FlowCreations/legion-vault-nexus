@@ -466,96 +466,17 @@ export default function LiveStudio() {
           </div>
         </div>
 
-        {/* Upcoming Events */}
-        <div>
-          <h2 className="font-serif text-3xl font-bold mb-8">Upcoming Events</h2>
-          
-          <div className="grid gap-6">
-            {upcomingEvents.map((event) => (
-              <div
-                key={event.id}
-                className="bg-card hover:bg-card-hover rounded-2xl p-6 border border-border hover:border-primary/30 transition-all duration-300 shadow-cosmic"
-              >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      {event.isVIP && (
-                        <Badge className="bg-primary/20 text-primary border-primary/30">
-                          VIP Only
-                        </Badge>
-                      )}
-                      {event.isPremium && (
-                        <Badge className="bg-secondary/50 text-secondary-foreground border-border">
-                          Premium
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <h3 className="font-serif text-2xl font-bold mb-2">
-                      {event.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground mb-4">
-                      {event.description}
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-primary" />
-                        <span>{event.date}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-primary" />
-                        <span>{event.time}</span>
-                      </div>
-                      {event.price && (
-                        <div className="flex items-center space-x-2">
-                          <Ticket className="w-4 h-4 text-primary" />
-                          <span>{event.price}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-2 md:min-w-[200px]">
-                    {event.id === "1" && (
-                      <Button 
-                        className="bg-gradient-gold hover:shadow-glow transition-all"
-                        onClick={handleAddToCart}
-                      >
-                        Add to Cart
-                      </Button>
-                    )}
-                    {event.id === "2" && (
-                      <Button 
-                        className="bg-gradient-gold hover:shadow-glow transition-all"
-                        onClick={() => navigate('/community')}
-                      >
-                        Join VIP Today
-                      </Button>
-                    )}
-                    {event.id === "3" && (
-                      <Button 
-                        className="bg-gradient-gold hover:shadow-glow transition-all"
-                        onClick={() => setShowEmailDialog(true)}
-                      >
-                        Register Free
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Past Streams */}
         <div className="mt-16">
           <h2 className="font-serif text-3xl font-bold mb-8">Watch Past Streams</h2>
           <p className="text-muted-foreground mb-6">
             Missed a live show? Premium and VIP members can watch recordings of all past events.
           </p>
-          <Button variant="outline" className="border-primary/30 hover:border-primary">
+          <Button 
+            variant="outline" 
+            className="border-primary/30 hover:border-primary"
+            onClick={() => navigate('/videos')}
+          >
             Browse Archive
           </Button>
         </div>
@@ -734,36 +655,3 @@ export default function LiveStudio() {
     </div>
   );
 }
-
-const upcomingEvents = [
-  {
-    id: "1",
-    title: "Virtual World Tour Finale",
-    description: "The grand finale of our virtual tour featuring special guests and never before performed tracks",
-    date: "March 15, 2026",
-    time: "9:00 PM EST",
-    price: "$19.99",
-    isVIP: false,
-    isPremium: false,
-  },
-  {
-    id: "2",
-    title: "Q&A with the Band",
-    description: "Ask us anything! Live video chat session with all band members",
-    date: "February 20, 2026",
-    time: "7:00 PM EST",
-    price: null,
-    isVIP: true,
-    isPremium: false,
-  },
-  {
-    id: "3",
-    title: "Album Listening Party",
-    description: "Listen to Sons of Legion's newest album live with the band before its released.",
-    date: "January 30, 2026",
-    time: "8:00 PM EST",
-    price: null,
-    isVIP: false,
-    isPremium: true,
-  },
-];
