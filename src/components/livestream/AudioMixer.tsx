@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sliders, Waves, Volume2, Zap } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { AnalogVUMeter } from './AnalogVUMeter';
 
 interface AudioMixerProps {
   audioContext: AudioContext | null;
@@ -44,6 +45,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
   // Spectrum data for visualization
   const [spectrumData, setSpectrumData] = useState<number[]>(new Array(32).fill(0));
   const [currentLevel, setCurrentLevel] = useState(0);
+  const [meterCalibration, setMeterCalibration] = useState(50);
 
   // Draw EQ response curve
   useEffect(() => {
@@ -403,33 +405,12 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           </div>
         </TabsContent>
 
-        {/* Vertical VU Meter */}
-        <div className="mt-4 mb-4 relative">
-          <div className="h-32 bg-black rounded-lg p-2 flex flex-col-reverse gap-0.5">
-            {Array.from({ length: 20 }).map((_, i) => {
-              const threshold = ((i + 1) / 20) * 100;
-              const isActive = currentLevel >= threshold - 5;
-              
-              let color = 'bg-green-500';
-              if (threshold > 90) color = 'bg-red-500';
-              else if (threshold > 80) color = 'bg-orange-500';
-              else if (threshold > 60) color = 'bg-yellow-500';
-              
-              return (
-                <div
-                  key={i}
-                  className={`h-[5px] w-full rounded-sm transition-all duration-75 ${
-                    isActive ? color : 'bg-gray-800'
-                  }`}
-                />
-              );
-            })}
-          </div>
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={128}
-            className="absolute inset-0 w-full h-full pointer-events-none rounded-lg"
+        {/* Analog VU Meter */}
+        <div className="mt-4 mb-4">
+          <AnalogVUMeter 
+            level={currentLevel} 
+            calibration={meterCalibration}
+            onCalibrationChange={setMeterCalibration}
           />
         </div>
 

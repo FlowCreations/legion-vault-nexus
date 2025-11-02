@@ -29,6 +29,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   const audioTrackRef = useRef<LocalTrack | null>(null);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [sourceNode, setSourceNode] = useState<MediaStreamAudioSourceNode | null>(null);
+  const [rawAudioStream, setRawAudioStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     requestPermissionsAndLoadDevices();
@@ -74,39 +75,38 @@ export function LiveBroadcaster({ eventId }: Props) {
     }
   };
 
-  const setupAudioProcessing = async (audioTrack: LocalTrack) => {
+  const setupAudioProcessing = async () => {
     try {
-      const mediaStreamTrack = audioTrack.mediaStreamTrack;
-      if (!mediaStreamTrack) {
-        console.error('[Broadcaster] No mediaStreamTrack available');
-        return;
-      }
-
-      console.log('[Broadcaster] Setting up audio processing with track:', {
-        label: mediaStreamTrack.label,
-        enabled: mediaStreamTrack.enabled,
-        readyState: mediaStreamTrack.readyState,
-        muted: mediaStreamTrack.muted
+      // Get raw audio stream directly from getUserMedia for the mixer
+      const rawStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 2
+        }
       });
       
-      const stream = new MediaStream([mediaStreamTrack]);
       const ctx = new AudioContext({ sampleRate: 48000 });
       
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
       
-      // CRITICAL: Resume audio context - required for browser autoplay policy
+      // Resume audio context - required for browser autoplay policy
       if (ctx.state === 'suspended') {
         console.log('[Broadcaster] Resuming suspended AudioContext...');
         await ctx.resume();
         console.log('[Broadcaster] AudioContext resumed, new state:', ctx.state);
       }
       
-      const source = ctx.createMediaStreamSource(stream);
+      const source = ctx.createMediaStreamSource(rawStream);
 
       setAudioContext(ctx);
       setSourceNode(source);
+      setRawAudioStream(rawStream); // Store for cleanup
 
-      console.log('[Broadcaster] Audio processing setup complete:', {
+      console.log('[Broadcaster] Raw audio processing setup complete:', {
         contextState: ctx.state,
         sampleRate: ctx.sampleRate,
         hasSource: !!source
@@ -180,7 +180,7 @@ export function LiveBroadcaster({ eventId }: Props) {
         audioTrackRef.current = audioTrack;
         console.log('[Broadcaster] Audio track created, setting up processing');
         // User interaction already happened (button click), safe to setup audio
-        await setupAudioProcessing(audioTrack);
+        await setupAudioProcessing();
       } else {
         console.error('[Broadcaster] No audio track found!');
         setError('Failed to create audio track');
@@ -216,6 +216,13 @@ export function LiveBroadcaster({ eventId }: Props) {
       audioTrackRef.current.stop();
       audioTrackRef.current = null;
     }
+    
+    // Stop raw audio stream tracks
+    if (rawAudioStream) {
+      rawAudioStream.getTracks().forEach(track => track.stop());
+      setRawAudioStream(null);
+    }
+    
     if (sourceNode) {
       sourceNode.disconnect();
       setSourceNode(null);
