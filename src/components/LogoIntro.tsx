@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
 import solLogo from "@/assets/sol-logo-new.png";
+import { Button } from "@/components/ui/button";
 
 interface LogoIntroProps {
   onComplete: () => void;
 }
 
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
+  const [hasStarted, setHasStarted] = useState(false);
   const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "glow" | "fadeout">("black");
 
   useEffect(() => {
+    if (!hasStarted) return;
+    
     let audio: HTMLAudioElement | null = null;
     
-    // START ANIMATION IMMEDIATELY (don't wait for audio)
+    // START ANIMATION IMMEDIATELY after user clicks
     const blackTimer = setTimeout(() => setPhase("beams"), 500);
     const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
     const glowTimer = setTimeout(() => setPhase("glow"), 3500);
@@ -26,35 +30,19 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       }
     }, 8000);
     
-    // TRY TO PLAY AUDIO IN PARALLEL (optional enhancement)
-    const tryPlayAudio = async () => {
+    // Play audio - now triggered by user interaction so it will work across browsers
+    const playAudio = async () => {
       try {
         audio = new Audio('/intro-audio.wav');
         audio.volume = 0.7;
         await audio.play();
         console.log('✓ Intro audio playing - will stop at 8 seconds');
       } catch (err) {
-        // If autoplay blocked, try with muted audio
-        console.log('Audio autoplay blocked, trying muted...');
-        try {
-          if (audio) {
-            audio.muted = true;
-            await audio.play();
-            // Gradually unmute (some browsers allow this)
-            setTimeout(() => {
-              if (audio) {
-                audio.muted = false;
-                audio.volume = 0.7;
-              }
-            }, 100);
-          }
-        } catch (mutedErr) {
-          console.log('Audio completely blocked, continuing with silent animation');
-        }
+        console.error('Audio playback failed:', err);
       }
     };
     
-    tryPlayAudio();
+    playAudio();
     
     return () => {
       clearTimeout(blackTimer);
@@ -68,7 +56,28 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         audio.src = '';
       }
     };
-  }, [onComplete]);
+  }, [onComplete, hasStarted]);
+
+  // Show start button if not started yet
+  if (!hasStarted) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center overflow-hidden">
+        <img 
+          src={solLogo}
+          alt="Sons of Legion"
+          className="h-48 sm:h-56 md:h-64 w-auto object-contain mb-8 opacity-80"
+        />
+        <Button
+          onClick={() => setHasStarted(true)}
+          size="lg"
+          className="bg-primary hover:bg-primary-glow text-black font-bold px-8 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(247,201,70,0.5)]"
+        >
+          Enter the Legion
+        </Button>
+        <p className="text-sm text-muted-foreground mt-4">Click to start your journey with sound</p>
+      </div>
+    );
+  }
 
   return (
     <div 
