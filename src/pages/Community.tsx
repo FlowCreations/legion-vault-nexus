@@ -2,7 +2,7 @@ import { Users, Award, Calendar, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,32 @@ import { useToast } from "@/hooks/use-toast";
 export default function Community() {
   const navigate = useNavigate();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [checkComplete, setCheckComplete] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+
+      if (user) {
+        const { data: subData } = await supabase.functions.invoke('check-subscription');
+        setHasSubscription(subData?.subscribed || false);
+      }
+      
+      setCheckComplete(true);
+    };
+
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    // Show auth dialog if not authenticated or not subscribed after check is complete
+    if (checkComplete && (!isAuthenticated || !hasSubscription)) {
+      setShowAuthDialog(true);
+    }
+  }, [checkComplete, isAuthenticated, hasSubscription]);
   const { toast } = useToast();
 
   const handleFeatureClick = async (action: string) => {
