@@ -25,10 +25,10 @@ export function MicrophoneMeter() {
       
       const src = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.7;
-      analyser.minDecibels = -90;
-      analyser.maxDecibels = -10;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.minDecibels = -100;
+      analyser.maxDecibels = -30;
       
       src.connect(analyser);
       
@@ -48,8 +48,8 @@ export function MicrophoneMeter() {
         
         animationFrameRef.current = requestAnimationFrame(draw);
         
-        // Analyze the microphone stream
-        analyser.getByteFrequencyData(dataArray);
+        // Analyze the microphone stream using time domain data for better real-time response
+        analyser.getByteTimeDomainData(dataArray);
         
         // Clear canvas
         ctx2d.clearRect(0, 0, WIDTH, HEIGHT);
@@ -64,12 +64,19 @@ export function MicrophoneMeter() {
         const binSize = Math.floor(dataArray.length / barCount);
         
         for (let i = 0; i < barCount; i++) {
-          // Get average for this frequency band
+          // Get segment for this bar
           const start = i * binSize;
           const end = start + binSize;
           const bandData = dataArray.slice(start, end);
-          const bandAvg = bandData.reduce((a, b) => a + b) / bandData.length;
-          const level = Math.min(1, bandAvg / 255);
+          
+          // Calculate RMS (root mean square) for actual audio power
+          let sum = 0;
+          for (let j = 0; j < bandData.length; j++) {
+            const normalized = (bandData[j] - 128) / 128; // Normalize from 0-255 to -1 to 1
+            sum += normalized * normalized;
+          }
+          const rms = Math.sqrt(sum / bandData.length);
+          const level = Math.min(1, rms * 3); // Amplify by 3x for better visibility
           
           // Calculate bar height based on real decibel intensity
           const barHeight = level * HEIGHT;

@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Video, VideoOff, Mic, MicOff, Play, Volume2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { AudioMixer } from './AudioMixer';
+import { MicrophoneMeter } from './MicrophoneMeter';
 
 type Props = { eventId: string };
 
@@ -547,6 +548,12 @@ export function LiveBroadcaster({ eventId }: Props) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Real-time Microphone Test */}
+          <div className="space-y-2">
+            <Label>Test Microphone Input</Label>
+            <MicrophoneMeter />
           </div>
 
           <Button onClick={startPreview} className="w-full">
