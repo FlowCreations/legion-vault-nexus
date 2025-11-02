@@ -140,7 +140,7 @@ const App = () => {
           <Route path="/song-credits" element={<SongCredits />} />
           <Route path="/music/success" element={<PurchaseSuccess />} />
           <Route path="/shows" element={<Shows />} />
-          <Route path="/shows/gallery" element={<ProtectedRoute requiredTier={TIERS.OUTLAWS}><Gallery /></ProtectedRoute>} />
+          <Route path="/shows/gallery" element={<Gallery />} />
           <Route path="/community" element={<CommunityHub />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
