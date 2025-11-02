@@ -12,7 +12,7 @@ import { AudioMixer } from './AudioMixer';
 type Props = { eventId: string };
 
 export function LiveBroadcaster({ eventId }: Props) {
-  const [status, setStatus] = useState<'idle' | 'preview' | 'connecting' | 'live' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'requesting-permission' | 'initializing-audio' | 'preview' | 'connecting' | 'live' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
@@ -30,6 +30,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [sourceNode, setSourceNode] = useState<MediaStreamAudioSourceNode | null>(null);
   const [rawAudioStream, setRawAudioStream] = useState<MediaStream | null>(null);
+  const [audioReady, setAudioReady] = useState(false);
 
   useEffect(() => {
     requestPermissionsAndLoadDevices();
@@ -133,16 +134,12 @@ export function LiveBroadcaster({ eventId }: Props) {
       return;
     }
 
-    setStatus('preview');
-    setError(undefined);
-    console.log('[Broadcaster] Starting preview with devices:', {
-      camera: selectedCamera,
-      microphone: selectedMicrophone
-    });
-
     try {
-      // STEP 1: Request raw media streams (this triggers permission dialog)
+      setError(undefined);
+      setStatus('requesting-permission');
       console.log('[Broadcaster] Requesting camera and microphone access...');
+
+      // STEP 1: Request raw media streams (this triggers browser permission dialog)
       const rawStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           deviceId: { exact: selectedMicrophone },
@@ -171,12 +168,35 @@ export function LiveBroadcaster({ eventId }: Props) {
         }))
       });
 
-      // STEP 2: Setup audio processing FIRST (this needs user interaction to work)
+      // STEP 2: Initialize audio processing
+      setStatus('initializing-audio');
+      console.log('[Broadcaster] Initializing audio processing...');
+      
       const audioStream = new MediaStream(rawStream.getAudioTracks());
       await setupAudioProcessing(audioStream);
       setRawAudioStream(audioStream);
 
-      // STEP 3: Create LiveKit tracks for broadcasting
+      // STEP 3: Wait for audio signal confirmation
+      console.log('[Broadcaster] Waiting for audio signal...');
+      let audioDetected = false;
+      const maxWaitTime = 2000;
+      const startTime = Date.now();
+
+      while (!audioDetected && Date.now() - startTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        if (audioLevel > 0) {
+          audioDetected = true;
+          console.log('[Broadcaster] Audio signal confirmed:', audioLevel);
+        }
+      }
+
+      if (!audioDetected) {
+        console.warn('[Broadcaster] No audio signal detected yet - microphone might be muted or quiet');
+      }
+
+      setAudioReady(true);
+
+      // STEP 4: Create LiveKit tracks for broadcasting
       const tracks = await createLocalTracks({
         audio: { 
           deviceId: { exact: selectedMicrophone },
@@ -214,11 +234,20 @@ export function LiveBroadcaster({ eventId }: Props) {
         setError('Failed to create audio track');
       }
 
+      setStatus('preview');
       console.log('[Broadcaster] Preview started successfully');
     } catch (e: any) {
       console.error('[Broadcaster] Preview error:', e);
-      setError(e.message || 'Failed to start preview');
-      setStatus('error');
+      const errorMessage = e.message || 'Failed to start preview';
+      
+      if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
+        setError('Camera/microphone access denied. Please allow access in your browser settings.');
+      } else {
+        setError(errorMessage);
+      }
+      
+      setStatus('idle');
+      setAudioReady(false);
     }
   };
 
@@ -491,6 +520,36 @@ export function LiveBroadcaster({ eventId }: Props) {
         </div>
       )}
 
+      {/* Requesting Permission State */}
+      {status === 'requesting-permission' && (
+        <Card className="p-6">
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <Video className="h-12 w-12 animate-pulse text-blue-500" />
+            <div>
+              <h3 className="font-semibold mb-2">Requesting Access</h3>
+              <p className="text-sm text-muted-foreground">
+                Please allow camera and microphone access in your browser
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Initializing Audio State */}
+      {status === 'initializing-audio' && (
+        <Card className="p-6">
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <Mic className="h-12 w-12 animate-pulse text-green-500" />
+            <div>
+              <h3 className="font-semibold mb-2">Initializing Audio</h3>
+              <p className="text-sm text-muted-foreground">
+                Setting up audio processing...
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Preview / Live Video */}
       {status !== 'idle' && (
         <>
@@ -513,13 +572,15 @@ export function LiveBroadcaster({ eventId }: Props) {
             </div>
           </div>
 
-          {/* Professional Audio Mixer */}
-          <AudioMixer 
-            audioContext={audioContext}
-            sourceNode={sourceNode}
-            onProcessedStream={handleProcessedStream}
-            onAudioLevel={handleAudioLevel}
-          />
+          {/* Professional Audio Mixer - only show when audio is ready */}
+          {audioReady && audioContext && sourceNode && (
+            <AudioMixer 
+              audioContext={audioContext}
+              sourceNode={sourceNode}
+              onProcessedStream={handleProcessedStream}
+              onAudioLevel={handleAudioLevel}
+            />
+          )}
 
           <div className="flex gap-2">
             {status === 'preview' ? (
