@@ -25,9 +25,9 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId } = await req.json();
+    const { priceId, embedded } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Price ID received", { priceId });
+    logStep("Price ID received", { priceId, embedded });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -58,7 +58,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
     // Create checkout session with 7-day free trial
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -71,16 +71,33 @@ serve(async (req) => {
       subscription_data: {
         trial_period_days: 7,
       },
-      success_url: `${origin}/profile?subscription=success`,
-      cancel_url: `${origin}/subscribe?canceled=true`,
-    });
+    };
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    // Configure for embedded or hosted checkout
+    if (embedded) {
+      sessionConfig.ui_mode = "embedded";
+      sessionConfig.return_url = `${origin}/subscribe?session_id={CHECKOUT_SESSION_ID}`;
+    } else {
+      sessionConfig.success_url = `${origin}/profile?subscription=success`;
+      sessionConfig.cancel_url = `${origin}/subscribe?canceled=true`;
+    }
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    logStep("Checkout session created", { sessionId: session.id, embedded });
+
+    // Return client secret for embedded or URL for hosted
+    if (embedded) {
+      return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } else {
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in create-checkout", { message: errorMessage });
