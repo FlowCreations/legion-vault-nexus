@@ -477,45 +477,6 @@ export function LiveBroadcaster({ eventId }: Props) {
             </div>
           </div>
 
-          {/* Audio Level Meter */}
-          <Card className="p-4">
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium">Audio Input Level</Label>
-                  <span className="text-xs text-muted-foreground font-mono">{Math.round(audioLevel)}%</span>
-                </div>
-                <div className="h-8 bg-muted rounded-lg overflow-hidden border border-border relative">
-                  {/* Background level bar - fills from left */}
-                  <div 
-                    className={`h-full transition-all duration-150 ease-out ${
-                      audioLevel > 80 ? 'bg-red-500/20' : 
-                      audioLevel > 50 ? 'bg-yellow-500/20' : 
-                      audioLevel > 0 ? 'bg-green-500/20' :
-                      'bg-muted'
-                    }`}
-                    style={{ width: `${audioLevel}%` }}
-                  />
-                  {/* Peak indicator - animated glow */}
-                  <div 
-                    className={`absolute top-0 bottom-0 w-1 transition-all duration-150 ease-out ${
-                      audioLevel > 80 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 
-                      audioLevel > 50 ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]' : 
-                      audioLevel > 0 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' :
-                      'bg-transparent'
-                    }`}
-                    style={{ left: `${audioLevel}%` }}
-                  />
-                </div>
-                {audioLevel === 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Speak into your microphone to test audio input
-                  </p>
-                )}
-              </div>
-            </div>
-          </Card>
-
           {/* Professional Audio Mixer */}
           <AudioMixer 
             audioContext={audioContext}
