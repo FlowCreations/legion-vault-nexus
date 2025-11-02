@@ -4,16 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Loader2, ExternalLink, X, ArrowLeft } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { toast as sonnerToast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { loadStripe } from "@stripe/stripe-js";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
 // Mapping of tier names to Stripe price IDs
 const TIER_PRICE_IDS: Record<string, string> = {
@@ -34,8 +30,6 @@ export default function Subscribe() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signingUp, setSigningUp] = useState(false);
-  const [checkoutMode, setCheckoutMode] = useState<'selection' | 'checkout'>('selection');
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   useEffect(() => {
     checkUser();
@@ -90,18 +84,18 @@ export default function Subscribe() {
     try {
       const priceId = TIER_PRICE_IDS[tierName];
       
+      // Call with embedded: false to get hosted checkout URL
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId, embedded: true }
+        body: { priceId, embedded: false }
       });
 
       if (error) throw error;
 
-      if (data?.clientSecret) {
-        setClientSecret(data.clientSecret);
-        setCheckoutMode('checkout');
-        setLoadingTier(null);
+      if (data?.url) {
+        // Redirect directly to Stripe hosted checkout
+        window.location.href = data.url;
       } else {
-        throw new Error('No client secret returned');
+        throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
       console.error('[Subscribe] Checkout error:', error);
@@ -193,71 +187,8 @@ export default function Subscribe() {
     },
   ];
 
-  const selectedTierData = memberTiers.find(tier => tier.name === selectedTier);
 
-  // Embedded Checkout View
-  if (checkoutMode === 'checkout' && clientSecret && selectedTierData) {
-    return (
-      <div className="min-h-screen bg-background pt-40 pb-12">
-        <div className="container max-w-7xl mx-auto px-4">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setCheckoutMode('selection');
-              setClientSecret(null);
-              setSelectedTier(null);
-            }}
-            className="mb-8"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Plans
-          </Button>
-
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Selected Plan Details */}
-            <Card className="p-8 border-primary bg-gradient-to-br from-card to-card-hover">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif text-3xl font-bold">{selectedTierData.name}</h2>
-                {selectedTierData.featured && (
-                  <div className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
-                    Most Popular
-                  </div>
-                )}
-              </div>
-              <p className="text-muted-foreground text-sm mb-6">{selectedTierData.subtitle}</p>
-              
-              <div className="text-4xl font-bold mb-1">
-                {selectedTierData.price}
-                <span className="text-lg font-normal text-muted-foreground">/month</span>
-              </div>
-              <div className="text-sm text-primary font-semibold mb-8">7-day free trial included</div>
-              
-              <div className="space-y-3">
-                {selectedTierData.features.map((feature, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Embedded Checkout */}
-            <div className="bg-card rounded-lg border p-1">
-              <EmbeddedCheckoutProvider
-                stripe={stripePromise}
-                options={{ clientSecret }}
-              >
-                <EmbeddedCheckout />
-              </EmbeddedCheckoutProvider>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Tier Selection View
+  // Tier Selection View - No embedded checkout, direct redirect
   return (
     <div className="min-h-screen bg-background pt-40 pb-12">
       <div className="container max-w-7xl mx-auto px-4">

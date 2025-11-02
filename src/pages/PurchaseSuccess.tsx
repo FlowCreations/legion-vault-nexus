@@ -36,7 +36,7 @@ export default function PurchaseSuccess() {
             View All Music
           </Button>
           {albumId && (
-            <Button variant="outline" onClick={() => navigate(`/album/${albumId}`)}>
+            <Button variant="outline" onClick={() => navigate(`/music/album/${albumId}`)}>
               Listen Now
             </Button>
           )}
