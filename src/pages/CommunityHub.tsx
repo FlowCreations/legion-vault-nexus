@@ -7,7 +7,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
-  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X, MapPin, Clock
+  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X, MapPin, Clock, Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +21,7 @@ import { getTierColor } from "@/lib/tierColors";
 import { CameoBookingTab } from "@/components/community/CameoBookingTab";
 import { OnlineMembersSidebar } from "@/components/community/OnlineMembersSidebar";
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { SubscribePrompt } from "@/components/SubscribePrompt";
 
 interface Post {
   id: string;
@@ -75,6 +76,9 @@ export default function CommunityHub() {
   const [activeTab, setActiveTab] = useState("announcements");
   const { enabled: cameosEnabled } = useFeatureFlag('enable_cameo_booking');
   const { hasAccess } = useSubscription();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [checkComplete, setCheckComplete] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
   const [postMediaUrl, setPostMediaUrl] = useState("");
@@ -220,6 +224,23 @@ export default function CommunityHub() {
   const [newMessage, setNewMessage] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Check authentication and subscription on mount
+  useEffect(() => {
+    checkAuthAndSubscription();
+  }, []);
+
+  const checkAuthAndSubscription = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsAuthenticated(!!user);
+    
+    if (user) {
+      const { data } = await supabase.functions.invoke('check-subscription');
+      setHasSubscription(data?.subscribed || false);
+    }
+    
+    setCheckComplete(true);
+  };
 
   useEffect(() => {
     if (activeTab === "announcements" || activeTab === "legion_speaks") {
@@ -580,6 +601,29 @@ export default function CommunityHub() {
   };
 
   const hasSearchResults = globalSearchQuery.length > 0 && (searchResults.posts.length > 0 || searchResults.members.length > 0);
+
+  // Show loading state while checking auth/subscription
+  if (!checkComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show subscribe prompt if not authenticated or not subscribed
+  if (!isAuthenticated || !hasSubscription) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <SubscribePrompt 
+          open={true}
+          onOpenChange={() => {}}
+          title="Subscribe to Access The Legion"
+          description="Join the community, connect with fans, and get exclusive access."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
