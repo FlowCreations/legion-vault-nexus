@@ -1,6 +1,5 @@
 import { useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 interface UseAgentOptions {
   enabled?: boolean;
@@ -9,7 +8,6 @@ interface UseAgentOptions {
 
 export const useAgent = (options: UseAgentOptions = {}) => {
   const { enabled = true, checkInterval = 5 } = options;
-  const { toast } = useToast();
 
   const triggerAgent = useCallback(async (
     triggerType: string,
