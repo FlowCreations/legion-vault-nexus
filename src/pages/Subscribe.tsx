@@ -85,17 +85,14 @@ export default function Subscribe() {
       }
 
       if (data?.url) {
-        console.log('[Subscribe] Redirecting to Stripe checkout:', data.url);
-        // Show toast before redirect
+        console.log('[Subscribe] Opening Stripe checkout in new tab:', data.url);
+        // Open checkout in new tab to avoid iframe restrictions
         toast({
-          title: "Redirecting to checkout...",
-          description: "You'll be taken to Stripe to complete payment.",
+          title: "Opening checkout...",
+          description: "Complete your payment in the new tab.",
         });
         
-        // Small delay to ensure toast is visible
-        setTimeout(() => {
-          window.location.href = data.url;
-        }, 500);
+        window.open(data.url, '_blank');
       } else {
         throw new Error('No checkout URL returned');
       }
