@@ -195,7 +195,18 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const stopPreview = () => {
-    console.log('[Broadcaster] Stopping preview and cleaning up');
+    console.log('[Broadcaster] Stopping preview (keeping AudioContext alive)');
+    
+    // Disconnect audio nodes but keep AudioContext alive
+    if (sourceNode) {
+      sourceNode.disconnect();
+    }
+    setAudioLevel(0);
+    setStatus('idle');
+  };
+
+  const fullCleanup = () => {
+    console.log('[Broadcaster] Full cleanup - stopping all tracks and closing AudioContext');
     
     if (videoTrackRef.current) {
       videoTrackRef.current.stop();
@@ -210,7 +221,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       setSourceNode(null);
     }
     if (audioContext) {
-      audioContext.close();
+      audioContext.close(); // Only close AudioContext on full cleanup
       setAudioContext(null);
     }
     if (videoRef.current) {
@@ -325,27 +336,9 @@ export function LiveBroadcaster({ eventId }: Props) {
       roomRef.current.disconnect();
       roomRef.current = null;
     }
-    if (videoTrackRef.current) {
-      videoTrackRef.current.stop();
-      videoTrackRef.current = null;
-    }
-    if (audioTrackRef.current) {
-      audioTrackRef.current.stop();
-      audioTrackRef.current = null;
-    }
-    if (sourceNode) {
-      sourceNode.disconnect();
-      setSourceNode(null);
-    }
-    if (audioContext) {
-      audioContext.close();
-      setAudioContext(null);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setAudioLevel(0);
-    setStatus('idle');
+    
+    // Use full cleanup when stopping broadcast
+    fullCleanup();
   };
 
   const toggleCamera = async () => {
@@ -405,9 +398,8 @@ export function LiveBroadcaster({ eventId }: Props) {
         console.log('[Broadcaster] Component unmounting, disconnecting');
         roomRef.current.disconnect();
       }
-      if (audioContext) {
-        audioContext.close();
-      }
+      // Use full cleanup on unmount
+      fullCleanup();
     };
   }, [audioContext, status, eventId]);
 
