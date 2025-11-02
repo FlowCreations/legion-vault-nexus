@@ -25,8 +25,8 @@ export function MicrophoneMeter() {
       
       const src = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.3;
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.7;
       analyser.minDecibels = -90;
       analyser.maxDecibels = -10;
       
@@ -50,8 +50,6 @@ export function MicrophoneMeter() {
         
         // Analyze the microphone stream
         analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        const level = Math.min(1, avg / 255);
         
         // Clear canvas
         ctx2d.clearRect(0, 0, WIDTH, HEIGHT);
@@ -60,30 +58,37 @@ export function MicrophoneMeter() {
         ctx2d.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx2d.fillRect(0, 0, WIDTH, HEIGHT);
         
-        // Display audio levels as vertical bars that react to microphone volume
-        // Use gradient colors (green → yellow → red) to indicate loudness
-        const gradient = ctx2d.createLinearGradient(0, HEIGHT, 0, 0);
-        gradient.addColorStop(0, '#22c55e');    // green
-        gradient.addColorStop(0.5, '#eab308');  // yellow
-        gradient.addColorStop(1, '#ef4444');    // red
+        // Display audio levels as 10 vertical bars that react to microphone volume
+        const barCount = 10;
+        const barWidth = (WIDTH / barCount) - 2; // 2px gap between bars
+        const binSize = Math.floor(dataArray.length / barCount);
         
-        // Only the bar height changes - container stays stable
-        const barHeight = level * HEIGHT;
-        ctx2d.fillStyle = gradient;
-        ctx2d.fillRect(0, HEIGHT - barHeight, WIDTH, barHeight);
-        
-        // Add soft glow effect
-        ctx2d.shadowBlur = 10;
-        ctx2d.shadowColor = level < 0.4 ? '#22c55e' : level < 0.7 ? '#eab308' : '#ef4444';
-        ctx2d.fillRect(0, HEIGHT - barHeight, WIDTH, barHeight);
-        ctx2d.shadowBlur = 0;
-        
-        // Draw dB scale markers
-        ctx2d.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx2d.font = '9px monospace';
-        for (let i = 0; i <= 4; i++) {
-          const y = (HEIGHT / 4) * i;
-          ctx2d.fillText(`${-10 - i * 20}dB`, 5, y + 10);
+        for (let i = 0; i < barCount; i++) {
+          // Get average for this frequency band
+          const start = i * binSize;
+          const end = start + binSize;
+          const bandData = dataArray.slice(start, end);
+          const bandAvg = bandData.reduce((a, b) => a + b) / bandData.length;
+          const level = Math.min(1, bandAvg / 255);
+          
+          // Calculate bar height based on real decibel intensity
+          const barHeight = level * HEIGHT;
+          const x = i * (barWidth + 2); // 2px gap
+          
+          // Create gradient for this bar (green → yellow → red)
+          const gradient = ctx2d.createLinearGradient(0, HEIGHT, 0, HEIGHT - barHeight);
+          gradient.addColorStop(0, '#22c55e');    // green
+          gradient.addColorStop(0.5, '#eab308');  // yellow
+          gradient.addColorStop(1, '#ef4444');    // red
+          
+          ctx2d.fillStyle = gradient;
+          ctx2d.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+          
+          // Add soft glow to each bar
+          ctx2d.shadowBlur = 8;
+          ctx2d.shadowColor = level < 0.4 ? '#22c55e' : level < 0.7 ? '#eab308' : '#ef4444';
+          ctx2d.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+          ctx2d.shadowBlur = 0;
         }
       }
       
