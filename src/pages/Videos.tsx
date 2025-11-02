@@ -243,6 +243,18 @@ export default function Videos() {
       return;
     }
 
+    // Check if user has active subscription
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
+      
+      if (!subscriptionData?.subscribed) {
+        // User is logged in but not subscribed - show subscribe prompt
+        setShowAuthDialog(true);
+        return;
+      }
+    }
+
     // Get the video URL from storage
     const { data: { publicUrl } } = supabase.storage
       .from('videos')
@@ -344,26 +356,26 @@ export default function Videos() {
       </div>
 
 
-      {/* Auth Dialog */}
+      {/* Auth/Subscribe Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-md bg-black/95 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white">
-              Start Watching
+              Subscribe to Watch
             </DialogTitle>
             <DialogDescription className="text-gray-300">
-              Sign up to access exclusive content and start watching.
+              Get instant access to exclusive videos, music, and content.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <Button 
               className="w-full bg-white hover:bg-gray-100 text-black font-semibold"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/subscribe')}
             >
-              Sign Up
+              Start 7-Day Free Trial
             </Button>
             <p className="text-center text-sm text-gray-400">
-              Already have an account?{" "}
+              Already subscribed?{" "}
               <button 
                 onClick={() => navigate('/auth')}
                 className="text-white hover:underline font-medium"

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { supabase } from "@/integrations/supabase/client";
+import { SubscribePrompt } from "@/components/SubscribePrompt";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -44,10 +45,18 @@ export default function Music() {
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const { toast } = useToast();
   const [uploadedTracks, setUploadedTracks] = useState<any[]>([]);
+  const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    checkAuth();
     fetchUploadedTracks();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsAuthenticated(!!session);
+  };
 
   const fetchUploadedTracks = async () => {
     const { data, error } = await supabase
@@ -198,10 +207,26 @@ export default function Music() {
   };
 
 
-  const handlePlayTrack = (track: any, trackList?: any[]) => {
+  const handlePlayTrack = async (track: any, trackList?: any[]) => {
     if (!track.url) {
       console.warn('Track has no URL:', track);
       return;
+    }
+
+    // Check authentication and subscription
+    if (!isAuthenticated) {
+      setShowSubscribePrompt(true);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
+      
+      if (!subscriptionData?.subscribed) {
+        setShowSubscribePrompt(true);
+        return;
+      }
     }
     
     trackEvent('music_play', {
@@ -618,6 +643,13 @@ export default function Music() {
         <YouMightAlsoLike contentType="music" limit={5} />
       </div>
 
+      {/* Subscribe Prompt */}
+      <SubscribePrompt
+        open={showSubscribePrompt}
+        onOpenChange={setShowSubscribePrompt}
+        title="Subscribe to Listen"
+        description="Get unlimited access to all music with a 7-day free trial."
+      />
 
       {selectedAlbum && (
         <PurchaseModal
