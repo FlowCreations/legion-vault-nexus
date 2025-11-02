@@ -552,8 +552,8 @@ export function LiveBroadcaster({ eventId }: Props) {
 
           {/* Real-time Microphone Test */}
           <div className="space-y-2">
-            <Label>Test Microphone Input</Label>
-            <MicrophoneMeter />
+            <Label>Live Microphone Level</Label>
+            <MicrophoneMeter stream={rawAudioStream} />
           </div>
 
           <Button onClick={startPreview} className="w-full">
