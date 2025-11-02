@@ -375,8 +375,8 @@ export function LiveBroadcaster({ eventId }: Props) {
     setMusicGain(value[0]);
   };
 
+  // Effect 1: Handle browser close/unload - runs when status/eventId change
   useEffect(() => {
-    // Handle browser/tab close
     const handleBeforeUnload = () => {
       console.log('[Broadcaster] Browser closing, cleaning up live status');
       if (roomRef.current && status === 'live') {
@@ -392,16 +392,25 @@ export function LiveBroadcaster({ eventId }: Props) {
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // NO fullCleanup here - just remove the event listener
+    };
+  }, [status, eventId]); // Only re-run when status or eventId changes
+
+  // Effect 2: Full cleanup only on component unmount
+  useEffect(() => {
+    return () => {
+      console.log('[Broadcaster] Component unmounting, full cleanup');
       
-      // Cleanup on unmount
+      // Disconnect LiveKit room
       if (roomRef.current) {
-        console.log('[Broadcaster] Component unmounting, disconnecting');
         roomRef.current.disconnect();
+        roomRef.current = null;
       }
+      
       // Use full cleanup on unmount
       fullCleanup();
     };
-  }, [audioContext, status, eventId]);
+  }, []); // Empty dependencies = only runs on mount/unmount
 
   return (
     <div className="space-y-6">
