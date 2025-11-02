@@ -38,13 +38,25 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const requestPermissionsAndLoadDevices = async () => {
     try {
-      // Only enumerate devices - don't request permission yet
       console.log('[Broadcaster] Loading device list...');
       const devices = await navigator.mediaDevices.enumerateDevices();
       
-      // Filter out devices with empty deviceId (happens before permission is granted)
-      const videoDevices = devices.filter(d => d.kind === 'videoinput' && d.deviceId && d.deviceId !== '');
-      const audioDevices = devices.filter(d => d.kind === 'audioinput' && d.deviceId && d.deviceId !== '');
+      // Map devices with fallback IDs for devices without permission
+      const videoDevices = devices
+        .filter(d => d.kind === 'videoinput')
+        .map((d, idx) => ({
+          ...d,
+          deviceId: d.deviceId || `video-${idx}`,
+          label: d.label || `Camera ${idx + 1}`
+        }));
+      
+      const audioDevices = devices
+        .filter(d => d.kind === 'audioinput')
+        .map((d, idx) => ({
+          ...d,
+          deviceId: d.deviceId || `audio-${idx}`,
+          label: d.label || `Microphone ${idx + 1}`
+        }));
       
       console.log('[Broadcaster] Found devices:', {
         cameras: videoDevices.length,
@@ -142,8 +154,12 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Requesting camera and microphone access...');
 
       // STEP 1: Request raw media streams (this triggers browser permission dialog)
+      // Use true for default device if we don't have real deviceIds yet
+      const useDefaultCamera = selectedCamera.startsWith('video-');
+      const useDefaultMic = selectedMicrophone.startsWith('audio-');
+      
       const rawStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
+        audio: useDefaultMic ? true : {
           deviceId: { exact: selectedMicrophone },
           echoCancellation: true,
           noiseSuppression: true,
@@ -151,7 +167,7 @@ export function LiveBroadcaster({ eventId }: Props) {
           sampleRate: 48000,
           channelCount: 2
         },
-        video: {
+        video: useDefaultCamera ? true : {
           deviceId: { exact: selectedCamera },
           width: { ideal: 1920 },
           height: { ideal: 1080 }
@@ -169,6 +185,9 @@ export function LiveBroadcaster({ eventId }: Props) {
           enabled: t.enabled
         }))
       });
+
+      // Re-enumerate devices now that we have permission to get actual device IDs and labels
+      await requestPermissionsAndLoadDevices();
 
       // STEP 2: Initialize audio processing
       setStatus('initializing-audio');
@@ -199,17 +218,32 @@ export function LiveBroadcaster({ eventId }: Props) {
       setAudioReady(true);
 
       // STEP 4: Create LiveKit tracks for broadcasting
+      // Get the actual device IDs from the active tracks
+      const actualVideoId = rawStream.getVideoTracks()[0]?.getSettings().deviceId;
+      const actualAudioId = rawStream.getAudioTracks()[0]?.getSettings().deviceId;
+      
       const tracks = await createLocalTracks({
-        audio: { 
-          deviceId: { exact: selectedMicrophone },
+        audio: actualAudioId ? { 
+          deviceId: { exact: actualAudioId },
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 2
+        } : {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
           sampleRate: 48000,
           channelCount: 2
         },
-        video: { 
-          deviceId: { exact: selectedCamera },
+        video: actualVideoId ? { 
+          deviceId: { exact: actualVideoId },
+          resolution: {
+            width: 1920,
+            height: 1080
+          }
+        } : {
           resolution: {
             width: 1920,
             height: 1080
