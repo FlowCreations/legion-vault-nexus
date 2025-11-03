@@ -27,27 +27,29 @@ export default function Home() {
   const { trackEvent } = useEventTracking();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('other');
   const { progress, loading } = useMilestoneProgress();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { loading: subLoading } = useSubscription();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [showSignupDialog, setShowSignupDialog] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
-  const { loading: subLoading } = useSubscription();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const checkAuthAndIntro = async () => {
-      // Wait for SubscriptionContext to finish loading
-      if (subLoading) return;
+    // Check authentication status immediately
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsLoggedIn(!!user);
-      
-      // Only show intro if user is NOT logged in AND intro hasn't been shown this session
-      if (!user && !sessionStorage.getItem('introShown')) {
+      // Only show intro if:
+      // 1. User is NOT authenticated
+      // 2. Intro hasn't been shown this session
+      // 3. SubscriptionContext has finished loading
+      if (!session && !sessionStorage.getItem('introShown') && !subLoading) {
         setShowIntro(true);
       }
     };
-    checkAuthAndIntro();
+    
+    checkAuth();
   }, [subLoading]);
 
   const handleIntroComplete = () => {
@@ -59,9 +61,8 @@ export default function Home() {
   const handleSubscribe = async (tierName: string) => {
     trackEvent('subscribe', { tier: tierName, source: 'home_tiers' });
     
-    // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Check if user is logged in using current state
+    if (!isAuthenticated) {
       // Show signup dialog instead of redirecting
       setSelectedTier(tierName);
       setShowSignupDialog(true);
