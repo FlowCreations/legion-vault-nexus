@@ -2135,6 +2135,51 @@ export type Database = {
         }
         Relationships: []
       }
+      next_best_actions: {
+        Row: {
+          action_type: string
+          channel: string
+          created_at: string | null
+          id: string
+          message_recipe: Json
+          offer_id: string | null
+          personality_match: Json | null
+          predicted_conversion_rate: number | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          channel: string
+          created_at?: string | null
+          id?: string
+          message_recipe?: Json
+          offer_id?: string | null
+          personality_match?: Json | null
+          predicted_conversion_rate?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          channel?: string
+          created_at?: string | null
+          id?: string
+          message_recipe?: Json
+          offer_id?: string | null
+          personality_match?: Json | null
+          predicted_conversion_rate?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
