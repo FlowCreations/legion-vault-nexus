@@ -16,8 +16,8 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-2 pb-4 relative items-center border-b border-gray-800 mb-4",
-        caption_label: "text-base font-bold tracking-wide text-white",
-        caption_dropdowns: "flex gap-2",
+        caption_label: "hidden", // Hide when using dropdowns
+        caption_dropdowns: "flex gap-3 justify-center w-full",
         dropdown_month: "relative inline-flex items-center px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-gray-700 text-white text-sm font-medium hover:bg-[#222] hover:border-primary transition-all cursor-pointer appearance-none pr-8 z-50",
         dropdown_year: "relative inline-flex items-center px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-gray-700 text-white text-sm font-medium hover:bg-[#222] hover:border-primary transition-all cursor-pointer appearance-none pr-8 z-50",
         dropdown_icon: "absolute right-2 top-1/2 -translate-y-1/2 text-primary pointer-events-none",
