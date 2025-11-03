@@ -573,11 +573,22 @@ export default function CommunityHub() {
       return;
     }
 
-    // Add to local state immediately for instant feedback
+    // Get recipient profile info
+    const { data: recipientProfile } = await supabase
+      .from("user_profiles")
+      .select("user_id, display_name, avatar_url")
+      .eq("user_id", selectedConversation)
+      .single();
+
+    // Add to local state immediately for instant feedback with complete profile info
     const newMsg: Message = {
       ...savedMessage,
       sender_profile: {
         display_name: 'You',
+        avatar_url: ''
+      },
+      recipient_profile: recipientProfile || {
+        display_name: 'User',
         avatar_url: ''
       }
     };
