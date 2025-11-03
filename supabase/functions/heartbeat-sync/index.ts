@@ -15,6 +15,14 @@ serve(async (req) => {
   }
 
   try {
+    // Validate API key is configured
+    if (!HEARTBEAT_API_KEY) {
+      console.error('❌ HEARTBEAT_API_KEY is not configured');
+      throw new Error('HEARTBEAT_API_KEY environment variable is not set');
+    }
+    
+    console.log('✅ API Key configured (first 10 chars):', HEARTBEAT_API_KEY.substring(0, 10) + '...');
+    
     const body = await req.json();
     const { action, memberId } = body;
     
