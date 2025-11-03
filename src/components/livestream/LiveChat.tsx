@@ -198,7 +198,7 @@ export const LiveChat = ({ eventId, isModerator = false, onTipRequest }: LiveCha
         <h3 className="font-semibold">Live Chat</h3>
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
         <div className="space-y-3">
           {messages.map((msg) => {
             const displayName = msg.display_name || msg.username;
@@ -263,7 +263,7 @@ export const LiveChat = ({ eventId, isModerator = false, onTipRequest }: LiveCha
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
 
       {onTipRequest && (
         <div className="px-4 pb-2">

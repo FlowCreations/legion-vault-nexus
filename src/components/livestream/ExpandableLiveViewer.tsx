@@ -84,20 +84,18 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
           videoTrackRef.current = track;
           setHasVideoTrack(true);
           
-          // Attach to appropriate video element based on expansion state
-          const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
-          if (activeVideoEl) {
-            track.attach(activeVideoEl);
-            console.log(`[Viewer] Video track attached to ${isExpanded ? 'expanded' : 'compact'} view`);
+          // Always attach to compact view initially
+          if (videoRef.current) {
+            track.attach(videoRef.current);
+            console.log('[Viewer] Video track attached to compact view');
           }
         } else if (track.kind === Track.Kind.Audio) {
           audioTrackRef.current = track;
           
-          // Attach to appropriate video element based on expansion state
-          const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
-          if (activeVideoEl) {
-            track.attach(activeVideoEl);
-            console.log(`[Viewer] Audio track attached to ${isExpanded ? 'expanded' : 'compact'} view`);
+          // Always attach to compact view initially
+          if (videoRef.current) {
+            track.attach(videoRef.current);
+            console.log('[Viewer] Audio track attached to compact view');
           }
         }
       });
