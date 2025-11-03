@@ -34,7 +34,7 @@ export default function AlbumDetail() {
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user?.email === 'arock@sonsoflegion.com') {
+    if (user?.email === 'adam.kravemedia@gmail.com') {
       setIsArockUser(true);
     }
   };

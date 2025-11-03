@@ -239,8 +239,8 @@ export default function Music() {
     const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
     const hasSubscription = subscriptionData?.subscribed;
     
-    // Special handling for arock user - all albums are locked for testing purchase flow
-    const isArockUser = user.email === 'arock@sonsoflegion.com';
+    // Special handling for arock user (adam.kravemedia@gmail.com) - all albums locked for testing
+    const isArockUser = user.email === 'adam.kravemedia@gmail.com';
     
     // If track belongs to an album, check if user has access
     if (track.album) {
