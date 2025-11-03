@@ -10,6 +10,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "glow" | "fadeout">("black");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     if (!hasStarted) return;
@@ -24,7 +25,10 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     const blackTimer = setTimeout(() => setPhase("beams"), 500);
     const beamsTimer = setTimeout(() => setPhase("reveal"), 2000);
     const glowTimer = setTimeout(() => setPhase("glow"), 3500);
-    const completeTimer = setTimeout(() => onComplete(), 6000);
+    const transitionTimer = setTimeout(() => {
+      setIsTransitioning(true);
+    }, 5500);
+    const completeTimer = setTimeout(() => onComplete(), 6500);
     
     // Stop audio at exactly 8 seconds (music duration)
     const audioStopTimer = setTimeout(() => {
@@ -52,6 +56,7 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       clearTimeout(blackTimer);
       clearTimeout(beamsTimer);
       clearTimeout(glowTimer);
+      clearTimeout(transitionTimer);
       clearTimeout(completeTimer);
       clearTimeout(audioStopTimer);
       if (audioRef.current) {
@@ -86,7 +91,9 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden"
+      className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden transition-all duration-1000 ${
+        isTransitioning ? 'bg-background' : 'bg-black'
+      }`}
     >
       {/* Multiple rushing light beams with staggered timing */}
       {(phase === "beams" || phase === "reveal") && (
@@ -108,15 +115,21 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         </div>
       )}
 
-      {/* Logo with continuous glowing animation */}
+      {/* Logo with continuous glowing animation and smooth transition to hero position */}
       {(phase === "reveal" || phase === "glow") && (
         <div 
-          className={`transition-all duration-1000 ease-out ${
+          className={`transition-all ease-out ${
+            isTransitioning ? 'duration-1000' : 'duration-1000'
+          } ${
             phase === "reveal" ? "animate-logo-push-reveal" : 
-            phase === "glow" ? "animate-logo-continuous-glow" : ""
+            phase === "glow" && !isTransitioning ? "animate-logo-continuous-glow" : ""
+          } ${
+            isTransitioning ? 'transform translate-y-32 scale-75' : ''
           }`}
           style={{
-            filter: "drop-shadow(0 0 50px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.8))"
+            filter: isTransitioning 
+              ? "drop-shadow(0 0 30px rgba(247, 201, 70, 0.5))"
+              : "drop-shadow(0 0 50px rgba(247, 201, 70, 0.6)) drop-shadow(0 0 25px rgba(247, 201, 70, 0.8))"
           }}
         >
           <img 
@@ -127,9 +140,11 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
         </div>
       )}
 
-      {/* Continuous warm halo */}
+      {/* Continuous warm halo - fades out during transition */}
       {phase === "glow" && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-1000 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}>
           <div className="w-[900px] h-[900px] rounded-full bg-primary/8 blur-[120px] animate-pulse-glow" />
         </div>
       )}
