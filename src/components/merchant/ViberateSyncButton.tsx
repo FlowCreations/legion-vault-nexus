@@ -42,6 +42,17 @@ export const ViberateSyncButton = () => {
         body: { artist_id: 'sons-of-legion' }
       });
 
+      // Check if the response indicates artist not found (404)
+      if (data && !data.success && data.error === 'Artist not found on Viberate') {
+        console.warn('⚠️ Artist not found on Viberate:', data.message);
+        setSyncStatus('error');
+        toast.warning('Artist not found on Viberate', {
+          description: data.suggestion || 'The artist may not be listed on Viberate yet.',
+          duration: 6000,
+        });
+        return;
+      }
+
       if (error) {
         console.error('❌ Sync error:', error);
         throw error;
