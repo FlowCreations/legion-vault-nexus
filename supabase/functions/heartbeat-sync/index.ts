@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const HEARTBEAT_API_KEY = Deno.env.get('HEARTBEAT_API_KEY');
-const HEARTBEAT_API_URL = 'https://api.heartbeat.chat/api/v1';
-const HEARTBEAT_WORKSPACE_ID = '12345'; // Numeric workspace ID
+const HEARTBEAT_API_URL = 'https://api.heartbeat.chat/v0';
+const HEARTBEAT_WORKSPACE_ID = 'sonsoflegion';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,41 +28,80 @@ serve(async (req) => {
 
     switch (action) {
       case 'get_members': {
-        // Fetch members from Heartbeat with workspace_id as query param
-        const response = await fetch(`${HEARTBEAT_API_URL}/members?workspace_id=${HEARTBEAT_WORKSPACE_ID}`, {
-          headers: {
-            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Try multiple endpoint formats to find what works
+        const endpoints = [
+          `/users?workspace=${HEARTBEAT_WORKSPACE_ID}`,
+          `/workspaces/${HEARTBEAT_WORKSPACE_ID}/users`,
+          `/users`,
+          `/members?workspace=${HEARTBEAT_WORKSPACE_ID}`,
+        ];
 
-        if (!response.ok) {
-          throw new Error(`Heartbeat API error: ${response.statusText}`);
+        let members = null;
+        let successEndpoint = null;
+
+        for (const endpoint of endpoints) {
+          try {
+            console.log(`Trying endpoint: ${HEARTBEAT_API_URL}${endpoint}`);
+            const response = await fetch(`${HEARTBEAT_API_URL}${endpoint}`, {
+              headers: {
+                'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+                'Content-Type': 'application/json',
+                'accept': 'application/json',
+              },
+            });
+
+            console.log(`Response status: ${response.status}`);
+            console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+
+            if (response.ok) {
+              const data = await response.json();
+              console.log(`Response data structure:`, JSON.stringify(data, null, 2));
+              
+              // Handle different possible response structures
+              members = data.users || data.data || data.members || (Array.isArray(data) ? data : null);
+              
+              if (members) {
+                successEndpoint = endpoint;
+                console.log(`✅ Success with endpoint: ${endpoint}`);
+                console.log(`Found ${Array.isArray(members) ? members.length : 0} members`);
+                break;
+              }
+            }
+          } catch (err) {
+            console.log(`❌ Failed with endpoint ${endpoint}:`, err);
+          }
         }
 
-        const members = await response.json();
-        console.log(`Fetched ${members.length} members from Heartbeat`);
+        if (!members) {
+          throw new Error('Could not fetch members from any endpoint');
+        }
 
         return new Response(
-          JSON.stringify({ success: true, members }),
+          JSON.stringify({ success: true, members, endpoint: successEndpoint }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'get_member': {
-        // Fetch single member with workspace_id as query param
-        const response = await fetch(`${HEARTBEAT_API_URL}/members/${memberId}?workspace_id=${HEARTBEAT_WORKSPACE_ID}`, {
+        console.log(`Fetching member: ${memberId}`);
+        const response = await fetch(`${HEARTBEAT_API_URL}/users/${memberId}`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
             'Content-Type': 'application/json',
+            'accept': 'application/json',
           },
         });
 
+        console.log(`Get member response status: ${response.status}`);
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Heartbeat API error:`, errorText);
           throw new Error(`Heartbeat API error: ${response.statusText}`);
         }
 
         const member = await response.json();
+        console.log(`Member data:`, JSON.stringify(member, null, 2));
         
         return new Response(
           JSON.stringify({ success: true, member }),
@@ -71,19 +110,61 @@ serve(async (req) => {
       }
 
       case 'sync_to_database': {
-        // Fetch members from Heartbeat with workspace_id as query param
-        const response = await fetch(`${HEARTBEAT_API_URL}/members?workspace_id=${HEARTBEAT_WORKSPACE_ID}`, {
-          headers: {
-            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        console.log('🔄 Starting Heartbeat member sync...');
+        
+        // Try multiple endpoint formats to find what works
+        const endpoints = [
+          `/users?workspace=${HEARTBEAT_WORKSPACE_ID}`,
+          `/workspaces/${HEARTBEAT_WORKSPACE_ID}/users`,
+          `/users`,
+          `/members?workspace=${HEARTBEAT_WORKSPACE_ID}`,
+        ];
 
-        if (!response.ok) {
-          throw new Error(`Heartbeat API error: ${response.statusText}`);
+        let members = null;
+        let successEndpoint = null;
+
+        for (const endpoint of endpoints) {
+          try {
+            console.log(`Trying endpoint: ${HEARTBEAT_API_URL}${endpoint}`);
+            const response = await fetch(`${HEARTBEAT_API_URL}${endpoint}`, {
+              headers: {
+                'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+                'Content-Type': 'application/json',
+                'accept': 'application/json',
+              },
+            });
+
+            console.log(`Response status: ${response.status}`);
+
+            if (response.ok) {
+              const data = await response.json();
+              console.log(`Response data structure:`, JSON.stringify(data, null, 2).substring(0, 500));
+              
+              // Handle different possible response structures
+              members = data.users || data.data || data.members || (Array.isArray(data) ? data : null);
+              
+              if (members && Array.isArray(members)) {
+                successEndpoint = endpoint;
+                console.log(`✅ Success with endpoint: ${endpoint}`);
+                console.log(`Found ${members.length} members to sync`);
+                if (members.length > 0) {
+                  console.log(`Sample member structure:`, JSON.stringify(members[0], null, 2));
+                }
+                break;
+              }
+            } else {
+              const errorText = await response.text();
+              console.log(`❌ Failed with status ${response.status}:`, errorText);
+            }
+          } catch (err) {
+            console.log(`❌ Error with endpoint ${endpoint}:`, err);
+          }
         }
 
-        const members = await response.json();
+        if (!members || !Array.isArray(members)) {
+          throw new Error('Could not fetch members from any endpoint');
+        }
+
         console.log(`Syncing ${members.length} members to database`);
 
         // Sync members to user_profiles table
@@ -116,20 +197,32 @@ serve(async (req) => {
                 continue;
               }
 
-              // Create profile with proper Heartbeat data mapping
+              // Create profile with flexible Heartbeat data mapping
+              const profileData = {
+                user_id: authData.user.id,
+                heartbeat_member_id: member.id,
+                display_name: member.name || member.display_name || member.username || 
+                             member.displayName || member.email?.split('@')[0] || 'Unknown Member',
+                real_name: member.full_name || member.fullName || member.realName || 
+                          member.name || null,
+                avatar_url: member.avatar_url || member.avatarUrl || 
+                           member.profile_picture_url || member.profilePictureUrl || 
+                           member.picture || member.image || null,
+                bio: member.bio || member.description || member.about || 
+                    member.profile_description || null,
+                location: member.location || member.city || member.address?.city || 
+                         member.location_name || null,
+                tier: member.subscription_tier || member.subscriptionTier || 
+                     member.membership_level || member.membershipLevel || 
+                     member.tier || 'free',
+                is_public: true, // Make visible in Community Hub
+              };
+
+              console.log(`Creating profile for member ${member.id}:`, profileData);
+
               const { error: profileError } = await supabase
                 .from('user_profiles')
-                .insert({
-                  user_id: authData.user.id,
-                  heartbeat_member_id: member.id,
-                  display_name: member.name || member.username || member.email?.split('@')[0],
-                  real_name: member.full_name || member.name,
-                  avatar_url: member.avatar_url || member.profile_picture_url,
-                  bio: member.bio || member.description,
-                  location: member.location || member.city,
-                  tier: member.subscription_tier || member.membership_level || 'free',
-                  is_public: true, // Make visible in Community Hub
-                });
+                .insert(profileData);
 
               if (profileError) {
                 console.error('Error syncing member:', member.id, profileError);
