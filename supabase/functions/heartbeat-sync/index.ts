@@ -152,10 +152,6 @@ serve(async (req) => {
               bio: member.bio || null,
               location: member.location || null,
               tier: tier,
-              // Social links from Heartbeat
-              linkedin_url: member.linkedin || null,
-              twitter_url: member.twitter || null,
-              instagram_url: member.instagram || null,
               // Timestamps
               created_at: member.created_at || new Date().toISOString(),
               // Make visible in Community Hub
