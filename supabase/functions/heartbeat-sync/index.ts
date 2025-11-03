@@ -50,11 +50,12 @@ serve(async (req) => {
           throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
         }
 
-        const data = await response.json();
-        console.log(`✅ Found ${data.length || 0} members`);
+        const responseData = await response.json();
+        const members = responseData.users || responseData;
+        console.log(`✅ Found ${members.length || 0} members`);
 
         return new Response(
-          JSON.stringify({ success: true, members: data }),
+          JSON.stringify({ success: true, members, total: responseData.total }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -100,13 +101,20 @@ serve(async (req) => {
           throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
         }
 
-        const members = await response.json();
+        const responseData = await response.json();
+        
+        // Heartbeat API returns { users: [...] } with pagination info
+        const members = responseData.users || responseData;
         
         if (!Array.isArray(members)) {
+          console.error('Invalid response format:', responseData);
           throw new Error('Invalid response format from Heartbeat API');
         }
 
         console.log(`📊 Found ${members.length} members to sync`);
+        if (responseData.total) {
+          console.log(`📊 Total members in Heartbeat: ${responseData.total}`);
+        }
         if (members.length > 0) {
           console.log(`Sample member:`, JSON.stringify(members[0], null, 2));
         }
@@ -126,18 +134,29 @@ serve(async (req) => {
               .maybeSingle();
 
             // Map Heartbeat data fields according to API documentation
+            // Determine tier from groups (subscription tier)
+            let tier = 'free';
+            if (member.groups && Array.isArray(member.groups) && member.groups.length > 0) {
+              const groupName = member.groups[0].toLowerCase();
+              if (groupName.includes('legionnaire')) tier = 'legionnaire';
+              else if (groupName.includes('outlaw')) tier = 'outlaw';
+              else if (groupName.includes('rebel')) tier = 'rebel';
+            }
+
             const profileData = {
               heartbeat_member_id: member.id,
+              email: member.email,
               display_name: member.name || member.email?.split('@')[0] || 'Unknown Member',
               avatar_url: member.profile_picture || null,
               bio: member.bio || null,
               location: member.location || null,
-              // Map groups to subscription tier (Heartbeat uses "groups" for subscription levels)
-              tier: member.groups?.[0] || 'free',
+              tier: tier,
               // Social links from Heartbeat
               linkedin_url: member.linkedin || null,
               twitter_url: member.twitter || null,
               instagram_url: member.instagram || null,
+              // Timestamps
+              created_at: member.created_at || new Date().toISOString(),
               // Make visible in Community Hub
               is_public: true,
             };
