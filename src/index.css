@@ -113,3 +113,58 @@ All colors MUST be HSL.
     text-wrap: balance;
   }
 }
+
+/* Calendar Dropdown Styling - Premium Dark Theme */
+.rdp-dropdown {
+  @apply relative inline-flex items-center px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-gray-700 text-white text-sm font-medium hover:bg-[#222] hover:border-primary transition-all cursor-pointer appearance-none z-[100];
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FFCD1D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+  padding-right: 2rem;
+  min-width: 100px;
+}
+
+.rdp-dropdown:hover {
+  @apply bg-[#222] border-primary;
+}
+
+.rdp-dropdown:focus {
+  @apply outline-none ring-1 ring-primary;
+}
+
+.rdp-dropdown option {
+  @apply bg-[#1a1a1a] text-white;
+}
+
+.rdp-caption_dropdowns {
+  @apply flex gap-2 items-center z-[100];
+}
+
+.rdp-vhidden {
+  @apply sr-only;
+}
+
+/* Custom scrollbar for year dropdown */
+select.rdp-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary)) #1a1a1a;
+}
+
+select.rdp-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+select.rdp-dropdown::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+select.rdp-dropdown::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--primary));
+  border-radius: 4px;
+  border: 2px solid #1a1a1a;
+}
+
+select.rdp-dropdown::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--primary-glow));
+}
