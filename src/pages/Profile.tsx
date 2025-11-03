@@ -33,6 +33,10 @@ export default function Profile() {
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
   
+  // Password change fields
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
   // Subscription state
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
@@ -189,25 +193,57 @@ export default function Profile() {
   };
 
   const handleChangePassword = async () => {
-    if (!user?.email) return;
-    
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth?mode=resetPassword`,
-      });
-      
-      if (error) throw error;
-      
+    if (!newPassword || !confirmPassword) {
       toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link.",
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all password fields.",
       });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Passwords do not match.",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Password must be at least 6 characters long.",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Your password has been changed successfully.",
+      });
+
+      // Clear password fields
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message,
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -650,18 +686,54 @@ export default function Profile() {
                 <CardTitle>Security Settings</CardTitle>
                 <CardDescription>Manage your password and security options</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full" onClick={handleChangePassword}>
-                  Change Password
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  className="w-full gap-2"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Log Out
-                </Button>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirm-password">Confirm New Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    onClick={handleChangePassword}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Changing Password...
+                      </>
+                    ) : (
+                      "Change Password"
+                    )}
+                  </Button>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <Button 
+                    variant="destructive" 
+                    className="w-full gap-2"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log Out
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

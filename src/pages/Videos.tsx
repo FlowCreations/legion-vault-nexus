@@ -561,8 +561,12 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-0" />
-        <CarouselNext className="right-0" />
+        {items.length > 5 && (
+          <>
+            <CarouselPrevious className="left-0" />
+            <CarouselNext className="right-0" />
+          </>
+        )}
       </Carousel>
     </div>
   );
