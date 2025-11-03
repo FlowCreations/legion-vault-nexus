@@ -33,24 +33,38 @@ export default function Home() {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Check authentication status immediately
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+    // Listen to auth state changes immediately
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const authenticated = !!session;
+      setIsAuthenticated(authenticated);
+      setAuthChecked(true);
       
-      // Only show intro if:
-      // 1. User is NOT authenticated
-      // 2. Intro hasn't been shown this session
-      // 3. SubscriptionContext has finished loading
-      if (!session && !sessionStorage.getItem('introShown') && !subLoading) {
+      // Only show intro if user is NOT authenticated AND intro hasn't been shown
+      if (!authenticated && !sessionStorage.getItem('introShown')) {
         setShowIntro(true);
+      } else {
+        setShowIntro(false);
       }
-    };
-    
-    checkAuth();
-  }, [subLoading]);
+    });
+
+    // Also check current session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const authenticated = !!session;
+      setIsAuthenticated(authenticated);
+      setAuthChecked(true);
+      
+      if (!authenticated && !sessionStorage.getItem('introShown')) {
+        setShowIntro(true);
+      } else {
+        setShowIntro(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
