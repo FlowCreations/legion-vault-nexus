@@ -486,6 +486,10 @@ interface ContentRowProps {
 
 function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPremium, onVideoClick }: ContentRowProps) {
   const [isShuffling, setIsShuffling] = useState(false);
+  
+  // Determine scroll threshold based on aspect ratio (approximate items visible on large screens)
+  const scrollThreshold = aspectRatio === "portrait" ? 8 : aspectRatio === "landscape-large" ? 4 : 5;
+  const showScrollButtons = items.length > scrollThreshold;
 
   useEffect(() => {
     setIsShuffling(true);
@@ -561,7 +565,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
             </CarouselItem>
           ))}
         </CarouselContent>
-        {items.length > 5 && (
+        {showScrollButtons && (
           <>
             <CarouselPrevious className="left-0" />
             <CarouselNext className="right-0" />

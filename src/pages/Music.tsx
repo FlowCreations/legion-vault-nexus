@@ -239,12 +239,18 @@ export default function Music() {
     const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
     const hasSubscription = subscriptionData?.subscribed;
     
+    // Special handling for arock user - all albums are locked for testing
+    const isArockUser = user.email === 'arock@sonsoflegion.com';
+    
     // If track belongs to an album, check if user has access
     if (track.album) {
       const albumId = getAlbumIdFromName(track.album);
       
-      // Power album (a1) is free, others require subscription OR purchase
-      if (albumId && albumId !== 'a1') {
+      // For arock user, all albums are locked. For others, Power album (a1) is free
+      const isPowerAlbum = albumId === 'a1';
+      const isFreeForUser = !isArockUser && isPowerAlbum;
+      
+      if (albumId && !isFreeForUser) {
         const albumPurchased = isPurchased(albumId);
         
         // User needs either active subscription OR purchased the specific album

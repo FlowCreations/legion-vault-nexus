@@ -7,6 +7,7 @@ import { StripeCheckout } from "@/components/StripeCheckout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,18 @@ export default function AlbumDetail() {
   const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, toggleLike, isLiked } = useMusicPlayer();
   const { isPurchased, purchaseAlbum } = usePurchases();
   const { hasAccess } = useSubscription();
+  const [isArockUser, setIsArockUser] = useState(false);
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email === 'arock@sonsoflegion.com') {
+      setIsArockUser(true);
+    }
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -126,9 +139,10 @@ export default function AlbumDetail() {
   const album = albumsData.find(a => a.id === albumId);
   const albumPurchased = album ? isPurchased(album.id) : false;
   
-  // Power album (a1) is always free, other albums require premium_albums feature
+  // For arock user, all albums are locked. For others, Power album (a1) is free
   const isPowerAlbum = album?.id === 'a1';
-  const hasAlbumAccess = isPowerAlbum || hasAccess('premium_albums');
+  const isFreeForUser = !isArockUser && isPowerAlbum;
+  const hasAlbumAccess = isFreeForUser || hasAccess('premium_albums');
   const isLocked = album?.forSale && !albumPurchased && !hasAlbumAccess;
 
   const handlePlayTrack = (track: any, trackList?: any[]) => {
