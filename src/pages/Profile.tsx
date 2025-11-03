@@ -397,7 +397,7 @@ export default function Profile() {
                               !birthdate && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4 text-white" />
+                            <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                             {birthdate ? format(new Date(birthdate), "PPP") : <span>Pick a date</span>}
                           </Button>
                         </PopoverTrigger>
@@ -411,6 +411,9 @@ export default function Profile() {
                             }
                             initialFocus
                             className="pointer-events-auto"
+                            captionLayout="dropdown-buttons"
+                            fromYear={1900}
+                            toYear={new Date().getFullYear()}
                           />
                         </PopoverContent>
                       </Popover>
