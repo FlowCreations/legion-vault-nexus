@@ -58,9 +58,9 @@ export default function Auth() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        // Check for pending subscription after login
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && event === 'SIGNED_IN') {
+        // Only redirect on successful sign in, not on initial session check
         setTimeout(() => {
           handlePendingSubscription();
         }, 100);
@@ -176,6 +176,9 @@ export default function Auth() {
           title: "Success",
           description: "Welcome back!",
         });
+
+        // Don't navigate here - let onAuthStateChange handle it
+        // The handler will redirect appropriately based on pending subscriptions
       }
     } catch (error: any) {
       toast({
