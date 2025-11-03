@@ -976,51 +976,6 @@ export default function CommunityHub() {
                 </div>
               </div>
 
-              {/* Tour Shows */}
-              <div>
-                <h3 className="font-semibold text-lg mb-4">Tour Dates</h3>
-                <div className="space-y-3">
-                  {tourShows.map((show) => (
-                    <div key={show.id} className="bg-card rounded-lg p-5 border hover:border-primary/30 transition-all flex items-center justify-between">
-                      <div className="flex items-center gap-6">
-                        <div className="text-center">
-                          <div className="text-3xl font-bold">{show.day}</div>
-                          <div className="text-sm text-muted-foreground uppercase">{show.month}</div>
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-lg">{show.venue}</h4>
-                          <p className="text-muted-foreground">{show.city}, {show.state}</p>
-                          <p className="text-sm text-muted-foreground">{show.time}</p>
-                          {show.specialGuests && (
-                            <p className="text-xs text-primary mt-1">Special Guest: {show.specialGuests}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge 
-                          className={
-                            show.status === "Sold Out" 
-                              ? "bg-destructive/20 text-destructive border-destructive/30"
-                              : show.status === "Low Tickets"
-                              ? "bg-yellow-500/20 text-yellow-600 border-yellow-500/30"
-                              : "bg-green-500/20 text-green-600 border-green-500/30"
-                          }
-                        >
-                          {show.status}
-                        </Badge>
-                        <Button 
-                          className="bg-white text-black hover:bg-white/90"
-                          disabled={show.status === "Sold Out"}
-                          onClick={() => handleBuyTicket(show)}
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-2" />
-                          {show.status === "Sold Out" ? "Sold Out" : "Get Tickets"}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
