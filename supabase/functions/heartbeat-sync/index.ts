@@ -8,7 +8,6 @@ const corsHeaders = {
 
 const HEARTBEAT_API_KEY = Deno.env.get('HEARTBEAT_API_KEY');
 const HEARTBEAT_API_URL = 'https://api.heartbeat.chat/v0';
-const HEARTBEAT_WORKSPACE_ID = 'sonsoflegion';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,74 +27,47 @@ serve(async (req) => {
 
     switch (action) {
       case 'get_members': {
-        console.log('Attempting to fetch Heartbeat members...');
-        console.log('API Key (first 10 chars):', HEARTBEAT_API_KEY?.substring(0, 10));
+        console.log('📥 Fetching Heartbeat members...');
         
-        // Try the exact format from the documentation
-        const response = await fetch(`https://api.heartbeat.chat/v0/users`, {
+        const response = await fetch(`${HEARTBEAT_API_URL}/users`, {
           headers: {
-            'accept': 'application/json',
-            'Authorization': `${HEARTBEAT_API_KEY}`, // Try without "Bearer" prefix
+            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            'Accept': 'application/json',
           },
         });
 
-        console.log(`Response status: ${response.status}`);
-        const responseText = await response.text();
-        console.log(`Response body:`, responseText);
-
         if (!response.ok) {
-          // Try again with Bearer prefix
-          const response2 = await fetch(`https://api.heartbeat.chat/v0/users`, {
-            headers: {
-              'accept': 'application/json',
-              'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-            },
-          });
-          
-          console.log(`Second attempt status: ${response2.status}`);
-          const response2Text = await response2.text();
-          console.log(`Second attempt body:`, response2Text);
-          
-          if (!response2.ok) {
-            throw new Error(`Heartbeat API error: ${response2.status} - ${response2Text}`);
-          }
-          
-          const members = JSON.parse(response2Text);
-          return new Response(
-            JSON.stringify({ success: true, members }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          const errorText = await response.text();
+          console.error(`❌ Heartbeat API error: ${response.status}`, errorText);
+          throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
         }
 
-        const members = JSON.parse(responseText);
-        console.log(`Found ${Array.isArray(members) ? members.length : 'unknown'} members`);
+        const data = await response.json();
+        console.log(`✅ Found ${data.length || 0} members`);
 
         return new Response(
-          JSON.stringify({ success: true, members }),
+          JSON.stringify({ success: true, members: data }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'get_member': {
-        console.log(`Fetching member: ${memberId}`);
+        console.log(`📥 Fetching member: ${memberId}`);
         const response = await fetch(`${HEARTBEAT_API_URL}/users/${memberId}`, {
           headers: {
             'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-            'Content-Type': 'application/json',
-            'accept': 'application/json',
+            'Accept': 'application/json',
           },
         });
 
-        console.log(`Get member response status: ${response.status}`);
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`Heartbeat API error:`, errorText);
+          console.error(`❌ Heartbeat API error:`, errorText);
           throw new Error(`Heartbeat API error: ${response.statusText}`);
         }
 
         const member = await response.json();
-        console.log(`Member data:`, JSON.stringify(member, null, 2));
+        console.log(`✅ Member data:`, JSON.stringify(member, null, 2));
         
         return new Response(
           JSON.stringify({ success: true, member }),
@@ -105,132 +77,127 @@ serve(async (req) => {
 
       case 'sync_to_database': {
         console.log('🔄 Starting Heartbeat member sync...');
-        console.log('API Key (first 10 chars):', HEARTBEAT_API_KEY?.substring(0, 10));
         
-        // Try the exact format from the documentation
-        let response = await fetch(`https://api.heartbeat.chat/v0/users`, {
+        // Fetch all members from Heartbeat
+        const response = await fetch(`${HEARTBEAT_API_URL}/users`, {
           headers: {
-            'accept': 'application/json',
-            'Authorization': `${HEARTBEAT_API_KEY}`,
+            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            'Accept': 'application/json',
           },
         });
 
-        console.log(`Response status: ${response.status}`);
-
         if (!response.ok) {
-          // Try again with Bearer prefix
-          response = await fetch(`https://api.heartbeat.chat/v0/users`, {
-            headers: {
-              'accept': 'application/json',
-              'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-            },
-          });
-          
-          console.log(`Second attempt status: ${response.status}`);
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.log(`❌ Failed with status ${response.status}:`, errorText);
-            throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
-          }
+          const errorText = await response.text();
+          console.error(`❌ Heartbeat API error: ${response.status}`, errorText);
+          throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
         }
 
-        const data = await response.json();
-        console.log(`Response data structure:`, JSON.stringify(data, null, 2).substring(0, 500));
+        const members = await response.json();
         
-        // Handle different possible response structures
-        const members = data.users || data.data || data.members || (Array.isArray(data) ? data : null);
-        
-        if (!members || !Array.isArray(members)) {
-          throw new Error('Could not find members array in response');
+        if (!Array.isArray(members)) {
+          throw new Error('Invalid response format from Heartbeat API');
         }
 
-        console.log(`Found ${members.length} members to sync`);
+        console.log(`📊 Found ${members.length} members to sync`);
         if (members.length > 0) {
-          console.log(`Sample member structure:`, JSON.stringify(members[0], null, 2));
+          console.log(`Sample member:`, JSON.stringify(members[0], null, 2));
         }
-
-        console.log(`Syncing ${members.length} members to database`);
 
         // Sync members to user_profiles table
         let syncedCount = 0;
+        let updatedCount = 0;
         const errors = [];
         
         for (const member of members) {
           try {
-            // Check if user profile exists
+            // Check if user profile exists by heartbeat_member_id
             const { data: existingProfile } = await supabase
               .from('user_profiles')
-              .select('user_id')
+              .select('id')
               .eq('heartbeat_member_id', member.id)
               .maybeSingle();
 
-            if (!existingProfile) {
-              // Create auth user for this Heartbeat member
+            // Map Heartbeat data fields according to API documentation
+            const profileData = {
+              heartbeat_member_id: member.id,
+              display_name: member.name || member.email?.split('@')[0] || 'Unknown Member',
+              avatar_url: member.profile_picture || null,
+              bio: member.bio || null,
+              location: member.location || null,
+              // Map groups to subscription tier (Heartbeat uses "groups" for subscription levels)
+              tier: member.groups?.[0] || 'free',
+              // Social links from Heartbeat
+              linkedin_url: member.linkedin || null,
+              twitter_url: member.twitter || null,
+              instagram_url: member.instagram || null,
+              // Make visible in Community Hub
+              is_public: true,
+            };
+
+            if (existingProfile) {
+              // Update existing profile
+              const { error: updateError } = await supabase
+                .from('user_profiles')
+                .update(profileData)
+                .eq('id', existingProfile.id);
+
+              if (updateError) {
+                console.error(`❌ Error updating member ${member.id}:`, updateError);
+                errors.push({ memberId: member.id, error: updateError.message });
+              } else {
+                updatedCount++;
+                console.log(`✅ Updated member ${member.id}`);
+              }
+            } else {
+              // Create new auth user and profile
               const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-                email: member.email || `heartbeat-${member.id}@placeholder.com`,
+                email: member.email || `heartbeat-${member.id}@sonsoflegion.com`,
                 email_confirm: true,
                 user_metadata: {
                   heartbeat_member_id: member.id,
-                  synced_from_heartbeat: true
+                  synced_from_heartbeat: true,
+                  name: member.name,
                 }
               });
 
               if (authError) {
-                console.error('Error creating auth user for member:', member.id, authError);
+                console.error(`❌ Error creating auth user for ${member.id}:`, authError);
                 errors.push({ memberId: member.id, error: authError.message });
                 continue;
               }
 
-              // Create profile with flexible Heartbeat data mapping
-              const profileData = {
-                user_id: authData.user.id,
-                heartbeat_member_id: member.id,
-                display_name: member.name || member.display_name || member.username || 
-                             member.displayName || member.email?.split('@')[0] || 'Unknown Member',
-                real_name: member.full_name || member.fullName || member.realName || 
-                          member.name || null,
-                avatar_url: member.avatar_url || member.avatarUrl || 
-                           member.profile_picture_url || member.profilePictureUrl || 
-                           member.picture || member.image || null,
-                bio: member.bio || member.description || member.about || 
-                    member.profile_description || null,
-                location: member.location || member.city || member.address?.city || 
-                         member.location_name || null,
-                tier: member.subscription_tier || member.subscriptionTier || 
-                     member.membership_level || member.membershipLevel || 
-                     member.tier || 'free',
-                is_public: true, // Make visible in Community Hub
-              };
-
-              console.log(`Creating profile for member ${member.id}:`, profileData);
-
-              const { error: profileError } = await supabase
+              // Insert profile with user_id
+              const { error: insertError } = await supabase
                 .from('user_profiles')
-                .insert(profileData);
+                .insert({
+                  id: authData.user.id,
+                  ...profileData,
+                });
 
-              if (profileError) {
-                console.error('Error syncing member:', member.id, profileError);
-                errors.push({ memberId: member.id, error: profileError.message });
+              if (insertError) {
+                console.error(`❌ Error creating profile for ${member.id}:`, insertError);
+                errors.push({ memberId: member.id, error: insertError.message });
               } else {
                 syncedCount++;
+                console.log(`✅ Created new member ${member.id}`);
               }
             }
           } catch (err) {
-            console.error('Unexpected error syncing member:', member.id, err);
+            console.error(`❌ Unexpected error syncing member ${member.id}:`, err);
             errors.push({ memberId: member.id, error: err instanceof Error ? err.message : 'Unknown error' });
           }
         }
 
-        console.log(`Successfully synced ${syncedCount} out of ${members.length} members`);
+        console.log(`✅ Sync complete: ${syncedCount} created, ${updatedCount} updated out of ${members.length} total`);
         if (errors.length > 0) {
-          console.log('Errors encountered:', errors);
+          console.log(`⚠️ Errors encountered:`, errors);
         }
 
         return new Response(
           JSON.stringify({ 
             success: true, 
             synced: syncedCount,
+            updated: updatedCount,
             total: members.length,
             errors: errors.length > 0 ? errors : undefined
           }),
