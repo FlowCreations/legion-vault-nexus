@@ -607,6 +607,10 @@ export default function CommunityHub() {
     
     messages.forEach(msg => {
       const otherUserId = msg.sender_id === userId ? msg.recipient_id : msg.sender_id;
+      
+      // Skip conversations with yourself
+      if (otherUserId === userId) return;
+      
       if (!conversations.has(otherUserId)) {
         conversations.set(otherUserId, []);
       }
@@ -1193,16 +1197,16 @@ export default function CommunityHub() {
 
               <div className="bg-card rounded-2xl p-6 border">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <span className="text-xl">📅</span> Upcoming Event • Oct 22
+                  <span className="text-xl">📅</span> Upcoming Event • Apr 12
                 </h3>
-                <h4 className="font-semibold mb-2">The Legion Meetup @ Midtown Cafe in Nashville, TN</h4>
+                <h4 className="font-semibold mb-2">Tortuga Music Festival - Fort Lauderdale, FL</h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  The Legion community has organized a meetup in Nashville for those who'd like to connect in person.
+                  Sons of Legion performing at Tortuga Music Festival alongside Post Malone, Kenny Chesney, and Ice Cube.
                 </p>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">8 attending</p>
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-600">
-                    ✓ Hosting
+                  <p className="text-sm text-muted-foreground">Festival Pass Required</p>
+                  <Badge variant="secondary" className="bg-primary/20 text-primary">
+                    Festival Show
                   </Badge>
                 </div>
               </div>
