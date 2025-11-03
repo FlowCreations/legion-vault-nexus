@@ -54,28 +54,25 @@ export default function Auth() {
     // Check if already logged in on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // User is already logged in, handle any pending subscription or redirect
-        const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
-        if (tierToSubscribe) {
-          handlePendingSubscription();
-        } else {
-          // Just redirect to home if already logged in
-          navigate("/");
-        }
+        console.log('User already logged in, redirecting...');
+        // User is already logged in, redirect to home
+        navigate("/");
       }
     });
 
-    // Listen for new sign-ins
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event, 'Has session:', !!session);
       
       if (event === 'SIGNED_IN' && session) {
-        // User just signed in
+        console.log('User signed in successfully');
+        // User just signed in - check for pending subscription
         const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
         if (tierToSubscribe) {
+          console.log('Has pending tier:', tierToSubscribe);
           handlePendingSubscription();
         } else {
-          // Successful login without pending subscription - go to home
+          console.log('No pending tier, redirecting to home');
           navigate("/");
         }
       }
@@ -184,22 +181,30 @@ export default function Auth() {
         setLoading(false);
         return;
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        // Sign in
+        console.log('Attempting sign in for:', email);
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Sign in error:', error);
+          throw error;
+        }
 
+        console.log('Sign in successful, session:', !!data.session);
+        
         toast({
           title: "Success",
           description: "Welcome back!",
         });
 
-        // Don't navigate here - let onAuthStateChange handle it
-        // The handler will redirect appropriately based on pending subscriptions
+        // Navigation will be handled by onAuthStateChange
+        // But keep loading state until redirect happens
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         variant: "destructive",
         title: "Error",
