@@ -85,6 +85,16 @@ export default function Profile() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "File too large",
+          description: "Profile picture must be less than 10MB",
+        });
+        return;
+      }
+      
       setProfilePicture(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -107,21 +117,28 @@ export default function Profile() {
       // Upload new profile picture if provided
       if (profilePicture) {
         const fileExt = profilePicture.name.split('.').pop();
-        const fileName = `${user.id}/avatar.${fileExt}`;
+        const timestamp = Date.now();
+        const fileName = `${user.id}/avatar-${timestamp}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('profile-pictures')
           .upload(fileName, profilePicture, {
+            cacheControl: '0',
             upsert: true
           });
 
         if (uploadError) {
           console.error('Error uploading profile picture:', uploadError);
+          toast({
+            variant: "destructive",
+            title: "Upload failed",
+            description: uploadError.message,
+          });
         } else {
           const { data: { publicUrl } } = supabase.storage
             .from('profile-pictures')
             .getPublicUrl(fileName);
-          newAvatarUrl = publicUrl;
+          newAvatarUrl = `${publicUrl}?t=${timestamp}`;
         }
       }
 
@@ -147,6 +164,10 @@ export default function Profile() {
       
       setProfilePicture(null);
       setAvatarUrl(newAvatarUrl);
+      setProfilePicturePreview(newAvatarUrl);
+      
+      // Reload profile to ensure it's fresh
+      await loadProfile(user.id);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -283,7 +304,7 @@ export default function Profile() {
                           </p>
                         )}
                         <p className="text-sm text-muted-foreground">
-                          👆 Click "Choose File" to upload your profile picture
+                          👆 Click "Choose File" to upload your profile picture (max 10MB)
                         </p>
                       </div>
                     </div>
