@@ -37,6 +37,18 @@ interface ViberateApiResponse {
   instagram_likes_1m: number;
   facebook_followers_1m: number;
   facebook_followers_total: number;
+  deezer_fans_1m?: number;
+  deezer_fans_total?: number;
+  deezer_rank?: number;
+  soundcloud_followers_1m?: number;
+  soundcloud_followers_total?: number;
+  soundcloud_plays_1m?: number;
+  soundcloud_rank?: number;
+  shazam_shazams_1m?: number;
+  shazam_rank?: number;
+  beatport_rank?: number;
+  beatport_tracks_total?: number;
+  beatport_followers?: number;
   radio_airplay_rank: number;
   radio_airplay_spins_1m: number;
   radio_airplay_countries_1m: number;
@@ -78,49 +90,73 @@ Deno.serve(async (req) => {
     }
 
     const viberateData: ViberateApiResponse = await apiResponse.json();
-    console.log('Viberate API response received:', viberateData.artist_name);
+    console.log('✅ Viberate API response received for:', viberateData.artist_name);
+    console.log('📊 Full API Response:', JSON.stringify(viberateData, null, 2));
 
-    // Transform to our format
+    // Transform to match frontend TypeScript interfaces
     const metricsData = {
       rank: viberateData.rank || 0,
-      artistName: viberateData.artist_name || 'Sons of Legion',
+      artist: viberateData.artist_name || 'Sons of Legion',
       country: viberateData.country || 'United States',
       genre: viberateData.genre || 'Rock',
       label: viberateData.label || 'Other Indie / Unsigned',
       viberateRank: viberateData.viberate_rank || 0,
       spotify: {
         rank: viberateData.spotify_rank || 0,
-        totalFollowers: viberateData.spotify_followers_total || 0,
-        totalFollowersChange1m: viberateData.spotify_followers_1m || 0,
+        followers: viberateData.spotify_followers_total || 0,
+        followersChange1m: viberateData.spotify_followers_1m || 0,
         totalStreams: viberateData.spotify_streams_total || 0,
         totalStreamsChange1m: viberateData.spotify_streams_1m || 0,
         monthlyListeners: viberateData.spotify_monthly_listeners_total || 0,
         monthlyListenersChange1m: viberateData.spotify_monthly_listeners_1m || 0,
         playlistReach: viberateData.spotify_playlist_reach_total || 0,
+        playlistReachChange1m: 0,
       },
       youtube: {
         rank: viberateData.youtube_rank || 0,
-        totalSubscribers: viberateData.youtube_subscribers_total || 0,
-        totalSubscribersChange1m: viberateData.youtube_subscribers_1m || 0,
+        subscribers: viberateData.youtube_subscribers_total || 0,
+        subscribersChange1m: viberateData.youtube_subscribers_1m || 0,
         totalViews: viberateData.youtube_views_total || 0,
         totalViewsChange1m: viberateData.youtube_views_1m || 0,
         totalLikes: viberateData.youtube_likes_total || 0,
         totalLikesChange1m: viberateData.youtube_likes_1m || 0,
       },
       tiktok: {
-        totalFollowers: viberateData.tiktok_followers_total || 0,
-        totalFollowersChange1m: viberateData.tiktok_followers_1m || 0,
+        rank: 0,
+        followers: viberateData.tiktok_followers_total || 0,
+        followersChange1m: viberateData.tiktok_followers_1m || 0,
         totalLikes: viberateData.tiktok_likes_1m || 0,
         totalViews1m: viberateData.tiktok_views_1m || 0,
       },
       instagram: {
-        totalFollowers: viberateData.instagram_followers_total || 0,
-        totalFollowersChange1m: viberateData.instagram_followers_1m || 0,
+        rank: 0,
+        followers: viberateData.instagram_followers_total || 0,
+        followersChange1m: viberateData.instagram_followers_1m || 0,
         totalLikes1m: viberateData.instagram_likes_1m || 0,
       },
       facebook: {
-        totalFollowers: viberateData.facebook_followers_total || 0,
-        totalFollowersChange1m: viberateData.facebook_followers_1m || 0,
+        rank: 0,
+        followers: viberateData.facebook_followers_total || 0,
+        followersChange1m: viberateData.facebook_followers_1m || 0,
+      },
+      deezer: {
+        fans: viberateData.deezer_fans_total || 0,
+        fansChange1m: viberateData.deezer_fans_1m || 0,
+        rank: viberateData.deezer_rank || 0,
+      },
+      soundcloud: {
+        followers: viberateData.soundcloud_followers_total || 0,
+        followersChange1m: viberateData.soundcloud_followers_1m || 0,
+        plays: viberateData.soundcloud_plays_1m || 0,
+        rank: viberateData.soundcloud_rank || 0,
+      },
+      shazam: {
+        shazams1m: viberateData.shazam_shazams_1m || 0,
+        rank: viberateData.shazam_rank || 0,
+      },
+      beatport: {
+        followers: viberateData.beatport_followers || 0,
+        rank: viberateData.beatport_rank || 0,
       },
       socialRank: viberateData.social_rank || 0,
       radioAirplay: {
@@ -130,6 +166,8 @@ Deno.serve(async (req) => {
         stations1m: viberateData.radio_airplay_stations_1m || 0,
       },
     };
+
+    console.log('🔄 Transformed data structure:', JSON.stringify(metricsData, null, 2));
 
     // Store in database
     const { error: insertError } = await supabase
@@ -142,11 +180,11 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Database insert error:', insertError);
+      console.error('❌ Database insert error:', insertError);
       throw insertError;
     }
 
-    console.log('Viberate data synced successfully');
+    console.log('✅ Viberate data synced successfully to database');
 
     return new Response(
       JSON.stringify({ 
@@ -158,9 +196,19 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('❌ Sync error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : undefined
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
