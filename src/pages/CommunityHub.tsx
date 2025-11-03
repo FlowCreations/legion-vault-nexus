@@ -103,6 +103,10 @@ export default function CommunityHub() {
   const [conversations, setConversations] = useState<Array<{ userId: string; lastMessage: Message; unreadCount: number }>>([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [conversationSearchQuery, setConversationSearchQuery] = useState("");
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Check authentication and subscription on mount
@@ -140,6 +144,7 @@ export default function CommunityHub() {
     }
     loadUnreadCount();
     loadMessages();
+    loadAvailableMembers();
     setupRealtimeSubscription();
   }, [activeTab]);
 
@@ -296,6 +301,44 @@ export default function CommunityHub() {
     setUnreadMessages(count || 0);
   };
 
+  const loadAvailableMembers = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profiles } = await supabase
+      .from("user_profiles")
+      .select("user_id, display_name, avatar_url, tier")
+      .neq("user_id", user.id);
+
+    if (profiles) {
+      setAvailableMembers(profiles.map(p => ({
+        id: p.user_id,
+        name: p.display_name,
+        avatar: p.avatar_url || "",
+        tier: p.tier || "Free Member"
+      })));
+    }
+  };
+
+  const startNewConversation = async (memberId: string) => {
+    setSelectedConversation(memberId);
+    setShowNewMessageModal(false);
+    setMemberSearchQuery("");
+    
+    // Mark existing messages as read if any
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("community_messages")
+        .update({ read: true })
+        .eq("recipient_id", user.id)
+        .eq("sender_id", memberId);
+      
+      await loadMessages();
+      await loadUnreadCount();
+    }
+  };
+
   const setupRealtimeSubscription = () => {
     const postsChannel = supabase
       .channel("community-posts")
@@ -311,9 +354,9 @@ export default function CommunityHub() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "community_messages" },
-        () => {
-          loadMessages();
-          loadUnreadCount();
+        async () => {
+          await loadMessages();
+          await loadUnreadCount();
         }
       )
       .subscribe();
@@ -1106,79 +1149,125 @@ export default function CommunityHub() {
 
       {/* Inbox Dialog */}
       <Dialog open={showInbox} onOpenChange={setShowInbox}>
-        <DialogContent className="max-w-4xl max-h-[600px]">
+        <DialogContent className="max-w-4xl max-h-[700px]">
           <DialogHeader>
             <DialogTitle>Messages</DialogTitle>
           </DialogHeader>
           
-          <div className="flex gap-4 h-[500px]">
+          <div className="flex gap-4 h-[600px]">
             {/* Conversations List */}
-            <div className="w-1/3 border-r pr-4 overflow-y-auto">
-              <h3 className="font-semibold mb-3">Conversations</h3>
-              <div className="space-y-2">
-                {conversations.map((conv) => {
-                  // Get the other person's info from messages
-                  const otherPersonMsg = messages.find(m => 
-                    m.sender_id === conv.userId || m.recipient_id === conv.userId
-                  );
-                  
-                  // Determine display name - prioritize the sender_profile if they're not "You"
-                  let displayName = "User";
-                  let avatarUrl = "";
-                  
-                  if (otherPersonMsg) {
-                    // If the other person is the sender, use their profile
-                    if (otherPersonMsg.sender_id === conv.userId && otherPersonMsg.sender_profile) {
-                      displayName = otherPersonMsg.sender_profile.display_name;
-                      avatarUrl = otherPersonMsg.sender_profile.avatar_url || "";
-                    } 
-                    // If the other person is the recipient, we need to fetch their profile
-                    else {
-                      // Try to find a message where they were the sender
-                      const senderMsg = messages.find(m => m.sender_id === conv.userId && m.sender_profile);
-                      if (senderMsg?.sender_profile) {
-                        displayName = senderMsg.sender_profile.display_name;
-                        avatarUrl = senderMsg.sender_profile.avatar_url || "";
+            <div className="w-1/3 border-r pr-4 flex flex-col">
+              <div className="mb-3 space-y-2">
+                <Button 
+                  onClick={() => setShowNewMessageModal(true)} 
+                  className="w-full"
+                  size="sm"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  New Message
+                </Button>
+                
+                <Input
+                  placeholder="Search conversations..."
+                  value={conversationSearchQuery}
+                  onChange={(e) => setConversationSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2">
+                {conversations
+                  .filter(conv => {
+                    if (!conversationSearchQuery) return true;
+                    const otherPersonMsg = messages.find(m => 
+                      m.sender_id === conv.userId || m.recipient_id === conv.userId
+                    );
+                    const displayName = otherPersonMsg?.sender_profile?.display_name || "User";
+                    return displayName.toLowerCase().includes(conversationSearchQuery.toLowerCase());
+                  })
+                  .map((conv) => {
+                    // Get the other person's info from messages
+                    const otherPersonMsg = messages.find(m => 
+                      m.sender_id === conv.userId || m.recipient_id === conv.userId
+                    );
+                    
+                    // Determine display name - prioritize the sender_profile if they're not "You"
+                    let displayName = "User";
+                    let avatarUrl = "";
+                    
+                    if (otherPersonMsg) {
+                      // If the other person is the sender, use their profile
+                      if (otherPersonMsg.sender_id === conv.userId && otherPersonMsg.sender_profile) {
+                        displayName = otherPersonMsg.sender_profile.display_name;
+                        avatarUrl = otherPersonMsg.sender_profile.avatar_url || "";
+                      } 
+                      // If the other person is the recipient, we need to fetch their profile
+                      else {
+                        // Try to find a message where they were the sender
+                        const senderMsg = messages.find(m => m.sender_id === conv.userId && m.sender_profile);
+                        if (senderMsg?.sender_profile) {
+                          displayName = senderMsg.sender_profile.display_name;
+                          avatarUrl = senderMsg.sender_profile.avatar_url || "";
+                        }
                       }
                     }
-                  }
-                  
-                  return (
-                    <div
-                      key={conv.userId}
-                      onClick={() => setSelectedConversation(conv.userId)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedConversation === conv.userId
-                          ? "bg-primary/10"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={avatarUrl} />
-                          <AvatarFallback>
-                            {displayName[0] || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-sm truncate">
-                              {displayName}
+                    
+                    return (
+                      <div
+                        key={conv.userId}
+                        onClick={() => {
+                          setSelectedConversation(conv.userId);
+                          // Mark messages as read
+                          supabase
+                            .from("community_messages")
+                            .update({ read: true })
+                            .eq("recipient_id", conv.userId)
+                            .eq("sender_id", conv.userId)
+                            .then(() => {
+                              loadMessages();
+                              loadUnreadCount();
+                            });
+                        }}
+                        className={`p-3 rounded-lg cursor-pointer transition-all ${
+                          selectedConversation === conv.userId
+                            ? "bg-primary/20 border border-primary/30"
+                            : "hover:bg-muted/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={avatarUrl} />
+                            <AvatarFallback>
+                              {displayName[0] || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-bold' : 'font-semibold'}`}>
+                                {displayName}
+                              </p>
+                              {conv.unreadCount > 0 && (
+                                <Badge className="h-5 min-w-5 px-1.5 flex items-center justify-center bg-primary text-primary-foreground text-xs">
+                                  {conv.unreadCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className={`text-xs text-muted-foreground truncate ${conv.unreadCount > 0 ? 'font-medium' : ''}`}>
+                              {conv.lastMessage.content}
                             </p>
-                            {conv.unreadCount > 0 && (
-                              <Badge className="h-5 w-5 p-0 flex items-center justify-center">
-                                {conv.unreadCount}
-                              </Badge>
-                            )}
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {conv.lastMessage.content}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                
+                {conversations.length === 0 && (
+                  <div className="text-center text-muted-foreground py-8">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No conversations yet</p>
+                    <p className="text-xs mt-1">Start a new message to connect</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1186,7 +1275,7 @@ export default function CommunityHub() {
             <div className="flex-1 flex flex-col">
               {selectedConversation ? (
                 <>
-                  <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+                  <div className="flex-1 overflow-y-auto mb-4 space-y-3 px-2">
                     {messages
                       .filter(m => 
                         m.sender_id === selectedConversation || 
@@ -1194,23 +1283,23 @@ export default function CommunityHub() {
                       )
                       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                       .map((msg) => {
-                        const isCurrentUser = msg.sender_id === 'current-user' || msg.sender_profile?.display_name === 'You';
+                        const isCurrentUser = msg.sender_profile?.display_name === 'You';
                         return (
                         <div
                           key={msg.id}
                           className={`flex ${
-                            isCurrentUser ? "justify-end" : ""
+                            isCurrentUser ? "justify-end" : "justify-start"
                           }`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
+                            className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                               isCurrentUser
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
+                                ? "bg-primary text-primary-foreground rounded-br-sm"
+                                : "bg-muted text-foreground rounded-bl-sm"
                             }`}
                           >
-                            <p className="text-sm">{msg.content}</p>
-                            <p className="text-xs opacity-70 mt-1">
+                            <p className="text-sm leading-relaxed">{msg.content}</p>
+                            <p className="text-xs opacity-60 mt-1">
                               {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                             </p>
                           </div>
@@ -1219,21 +1308,78 @@ export default function CommunityHub() {
                     })}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center bg-muted/30 p-3 rounded-lg">
                     <Input
                       placeholder="Type a message..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                      className="flex-1 bg-background"
                     />
-                    <Button onClick={sendMessage}>
+                    <Button onClick={sendMessage} size="icon" className="shrink-0">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                  Select a conversation to start messaging
+                <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
+                  <MessageCircle className="h-16 w-16 mb-4 opacity-20" />
+                  <p className="text-lg font-medium mb-1">Select a conversation</p>
+                  <p className="text-sm">Choose from existing chats or start a new message</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Message Modal */}
+      <Dialog open={showNewMessageModal} onOpenChange={setShowNewMessageModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Message</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Input
+              placeholder="Search members..."
+              value={memberSearchQuery}
+              onChange={(e) => setMemberSearchQuery(e.target.value)}
+              autoFocus
+            />
+            
+            <div className="max-h-[400px] overflow-y-auto space-y-2">
+              {availableMembers
+                .filter(member => 
+                  member.name.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                )
+                .map(member => (
+                  <div
+                    key={member.id}
+                    onClick={() => startNewConversation(member.id)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={member.avatar} />
+                      <AvatarFallback>{member.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{member.name}</p>
+                      <p className="text-xs text-muted-foreground">{member.tier}</p>
+                    </div>
+                  </div>
+                ))}
+              
+              {availableMembers.filter(member => 
+                member.name.toLowerCase().includes(memberSearchQuery.toLowerCase())
+              ).length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  <p className="text-sm">No members found</p>
                 </div>
               )}
             </div>
