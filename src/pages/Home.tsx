@@ -30,17 +30,19 @@ export default function Home() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [showSignupDialog, setShowSignupDialog] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
-  const [showIntro, setShowIntro] = useState(() => {
-    // Check if intro has been shown in this session
-    return !sessionStorage.getItem('introShown');
-  });
+  const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndIntro = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsLoggedIn(!!user);
+      
+      // Only show intro if user is NOT logged in AND intro hasn't been shown this session
+      if (!user && !sessionStorage.getItem('introShown')) {
+        setShowIntro(true);
+      }
     };
-    checkAuth();
+    checkAuthAndIntro();
   }, []);
 
   const handleIntroComplete = () => {
