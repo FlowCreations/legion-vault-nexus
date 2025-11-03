@@ -395,7 +395,14 @@ export default function Music() {
               return (
               <div
                 key={track.id}
-                onClick={() => handlePlayTrack(track, topTracks)}
+                onClick={() => {
+                  // If this track is already playing, toggle pause
+                  if (isCurrentTrack && isPlaying) {
+                    togglePlayPause();
+                  } else {
+                    handlePlayTrack(track, topTracks);
+                  }
+                }}
                 className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 rounded-lg hover:bg-card/50 transition-colors group cursor-pointer items-center"
               >
                 <div className="w-10 h-10 flex-shrink-0">
