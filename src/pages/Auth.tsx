@@ -51,32 +51,26 @@ export default function Auth() {
       setPendingTier(savedTier);
     }
 
-    // Check if already logged in on mount
+    // Check if already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        console.log('User already logged in on mount, redirecting to home');
-        navigate("/", { replace: true });
+        const pendingTier = localStorage.getItem('pendingSubscriptionTier');
+        if (pendingTier) {
+          handlePendingSubscription();
+        } else {
+          navigate("/", { replace: true });
+        }
       }
     });
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, 'Has session:', !!session);
-      
+    // Listen for sign-in events only for new sign-ins
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        console.log('Sign in event detected');
-        
-        // Check for pending subscription
-        const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
-        if (tierToSubscribe) {
-          console.log('Processing pending tier:', tierToSubscribe);
+        const pendingTier = localStorage.getItem('pendingSubscriptionTier');
+        if (pendingTier) {
           handlePendingSubscription();
         } else {
-          console.log('No pending subscription, redirecting to home');
-          // Small delay to ensure session is fully established
-          setTimeout(() => {
-            navigate("/", { replace: true });
-          }, 100);
+          navigate("/", { replace: true });
         }
       }
     });
@@ -185,29 +179,25 @@ export default function Auth() {
         return;
       } else {
         // Sign in
-        console.log('Attempting sign in for:', email);
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error) {
-          console.error('Sign in error:', error);
-          throw error;
-        }
+        if (error) throw error;
+        if (!data.session) throw new Error('No session created');
 
-        console.log('Sign in response received, session exists:', !!data.session);
-        
-        if (data.session) {
-          toast({
-            title: "Success",
-            description: "Welcome back!",
-          });
-          
-          // onAuthStateChange will handle navigation
-          // Keep loading state active during redirect
+        toast({
+          title: "Success",
+          description: "Welcome back!",
+        });
+
+        // Navigate directly on successful login
+        const pendingTier = localStorage.getItem('pendingSubscriptionTier');
+        if (pendingTier) {
+          await handlePendingSubscription();
         } else {
-          throw new Error('No session returned from sign in');
+          navigate("/", { replace: true });
         }
       }
     } catch (error: any) {
