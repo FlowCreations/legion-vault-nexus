@@ -11,6 +11,7 @@ import { PersonalitySurvey } from "@/components/PersonalitySurvey";
 import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
 import { JRNYProgressBar } from "@/components/JRNYProgressBar";
 import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QuickSignupDialog } from "@/components/QuickSignupDialog";
@@ -31,9 +32,13 @@ export default function Home() {
   const [showSignupDialog, setShowSignupDialog] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
+  const { loading: subLoading } = useSubscription();
 
   useEffect(() => {
     const checkAuthAndIntro = async () => {
+      // Wait for SubscriptionContext to finish loading
+      if (subLoading) return;
+      
       const { data: { user } } = await supabase.auth.getUser();
       setIsLoggedIn(!!user);
       
@@ -43,7 +48,7 @@ export default function Home() {
       }
     };
     checkAuthAndIntro();
-  }, []);
+  }, [subLoading]);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
