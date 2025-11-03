@@ -69,6 +69,10 @@ interface Message {
     display_name: string;
     avatar_url: string;
   };
+  recipient_profile?: {
+    display_name: string;
+    avatar_url: string;
+  };
 }
 
 export default function CommunityHub() {
@@ -198,20 +202,67 @@ export default function CommunityHub() {
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
 
-      // Format messages with sender profiles attached
+      // Format messages with complete sender and recipient profiles
       const formattedMessages: Message[] = dbMessages.map(msg => {
         const senderProfile = msg.sender_id === user.id 
           ? { display_name: 'You', avatar_url: '' }
-          : profileMap.get(msg.sender_id) || { display_name: 'Unknown', avatar_url: '' };
+          : profileMap.get(msg.sender_id) || { 
+              display_name: 'Unknown User', 
+              avatar_url: ''
+            };
         
         return {
           ...msg,
-          sender_profile: senderProfile
+          sender_profile: senderProfile,
+          recipient_profile: msg.recipient_id === user.id
+            ? { display_name: 'You', avatar_url: '' }
+            : profileMap.get(msg.recipient_id) || {
+                display_name: 'Unknown User',
+                avatar_url: ''
+              }
         };
       });
 
       setMessages(formattedMessages);
     }
+  };
+
+  // Helper function to get user initials from display name
+  const getUserInitials = (name: string) => {
+    if (!name || name === 'Unknown User') return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Helper function to get conversation partner's info
+  const getConversationPartner = (userId: string) => {
+    // Find any message involving this user to get their profile
+    const msg = messages.find(m => 
+      m.sender_id === userId || m.recipient_id === userId
+    );
+    
+    if (!msg) return { displayName: 'Unknown User', avatarUrl: '' };
+    
+    // If they're the sender, use sender_profile
+    if (msg.sender_id === userId && msg.sender_profile) {
+      return {
+        displayName: msg.sender_profile.display_name,
+        avatarUrl: msg.sender_profile.avatar_url || ''
+      };
+    }
+    
+    // If they're the recipient, use recipient_profile
+    if (msg.recipient_id === userId && msg.recipient_profile) {
+      return {
+        displayName: msg.recipient_profile.display_name,
+        avatarUrl: msg.recipient_profile.avatar_url || ''
+      };
+    }
+    
+    return { displayName: 'Unknown User', avatarUrl: '' };
   };
 
   const loadDirectoryProfiles = async () => {
@@ -1179,38 +1230,12 @@ export default function CommunityHub() {
                 {conversations
                   .filter(conv => {
                     if (!conversationSearchQuery) return true;
-                    const otherPersonMsg = messages.find(m => 
-                      m.sender_id === conv.userId || m.recipient_id === conv.userId
-                    );
-                    const displayName = otherPersonMsg?.sender_profile?.display_name || "User";
+                    const { displayName } = getConversationPartner(conv.userId);
                     return displayName.toLowerCase().includes(conversationSearchQuery.toLowerCase());
                   })
                   .map((conv) => {
-                    // Get the other person's info from messages
-                    const otherPersonMsg = messages.find(m => 
-                      m.sender_id === conv.userId || m.recipient_id === conv.userId
-                    );
-                    
-                    // Determine display name - prioritize the sender_profile if they're not "You"
-                    let displayName = "User";
-                    let avatarUrl = "";
-                    
-                    if (otherPersonMsg) {
-                      // If the other person is the sender, use their profile
-                      if (otherPersonMsg.sender_id === conv.userId && otherPersonMsg.sender_profile) {
-                        displayName = otherPersonMsg.sender_profile.display_name;
-                        avatarUrl = otherPersonMsg.sender_profile.avatar_url || "";
-                      } 
-                      // If the other person is the recipient, we need to fetch their profile
-                      else {
-                        // Try to find a message where they were the sender
-                        const senderMsg = messages.find(m => m.sender_id === conv.userId && m.sender_profile);
-                        if (senderMsg?.sender_profile) {
-                          displayName = senderMsg.sender_profile.display_name;
-                          avatarUrl = senderMsg.sender_profile.avatar_url || "";
-                        }
-                      }
-                    }
+                    const { displayName, avatarUrl } = getConversationPartner(conv.userId);
+                    const initials = getUserInitials(displayName);
                     
                     return (
                       <div
@@ -1218,15 +1243,19 @@ export default function CommunityHub() {
                         onClick={() => {
                           setSelectedConversation(conv.userId);
                           // Mark messages as read
-                          supabase
-                            .from("community_messages")
-                            .update({ read: true })
-                            .eq("recipient_id", conv.userId)
-                            .eq("sender_id", conv.userId)
-                            .then(() => {
-                              loadMessages();
-                              loadUnreadCount();
-                            });
+                          supabase.auth.getUser().then(({ data: { user } }) => {
+                            if (user) {
+                              supabase
+                                .from("community_messages")
+                                .update({ read: true })
+                                .eq("recipient_id", user.id)
+                                .eq("sender_id", conv.userId)
+                                .then(() => {
+                                  loadMessages();
+                                  loadUnreadCount();
+                                });
+                            }
+                          });
                         }}
                         className={`p-3 rounded-lg cursor-pointer transition-all ${
                           selectedConversation === conv.userId
@@ -1236,9 +1265,9 @@ export default function CommunityHub() {
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={avatarUrl} />
-                            <AvatarFallback>
-                              {displayName[0] || "U"}
+                            <AvatarImage src={avatarUrl} alt={displayName} />
+                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-foreground font-semibold">
+                              {initials}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -1275,6 +1304,28 @@ export default function CommunityHub() {
             <div className="flex-1 flex flex-col">
               {selectedConversation ? (
                 <>
+                  {/* Message Header */}
+                  {(() => {
+                    const { displayName, avatarUrl } = getConversationPartner(selectedConversation);
+                    const initials = getUserInitials(displayName);
+                    
+                    return (
+                      <div className="pb-3 mb-3 border-b flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={avatarUrl} alt={displayName} />
+                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-foreground font-semibold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{displayName}</p>
+                          <p className="text-xs text-muted-foreground">Community Member</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Messages */}
                   <div className="flex-1 overflow-y-auto mb-4 space-y-3 px-2">
                     {messages
                       .filter(m => 
@@ -1287,10 +1338,18 @@ export default function CommunityHub() {
                         return (
                         <div
                           key={msg.id}
-                          className={`flex ${
+                          className={`flex gap-2 ${
                             isCurrentUser ? "justify-end" : "justify-start"
                           }`}
                         >
+                          {!isCurrentUser && (
+                            <Avatar className="h-8 w-8 shrink-0">
+                              <AvatarImage src={msg.sender_profile?.avatar_url} alt={msg.sender_profile?.display_name} />
+                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-xs">
+                                {getUserInitials(msg.sender_profile?.display_name || 'U')}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
                           <div
                             className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                               isCurrentUser
@@ -1308,6 +1367,7 @@ export default function CommunityHub() {
                     })}
                   </div>
 
+                  {/* Input */}
                   <div className="flex gap-2 items-center bg-muted/30 p-3 rounded-lg">
                     <Input
                       placeholder="Type a message..."
