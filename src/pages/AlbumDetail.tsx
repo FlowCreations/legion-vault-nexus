@@ -139,7 +139,8 @@ export default function AlbumDetail() {
   const album = albumsData.find(a => a.id === albumId);
   const albumPurchased = album ? isPurchased(album.id) : false;
   
-  // For arock user, all albums are locked. For others, Power album (a1) is free
+  // For arock user: all albums are locked (including Power)
+  // For everyone else: Power album (a1) is free after sign up
   const isPowerAlbum = album?.id === 'a1';
   const isFreeForUser = !isArockUser && isPowerAlbum;
   const hasAlbumAccess = isFreeForUser || hasAccess('premium_albums');
