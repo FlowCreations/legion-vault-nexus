@@ -1367,7 +1367,35 @@ export default function CommunityHub() {
                 </div>
               )}
               
-              <Button className="w-full bg-gradient-gold">
+              <Button 
+                className="w-full bg-gradient-gold"
+                onClick={async () => {
+                  // Get the user_id from the selected profile
+                  const { data: profiles } = await supabase
+                    .from('user_profiles')
+                    .select('user_id, display_name, avatar_url')
+                    .eq('display_name', selectedProfile.display_name)
+                    .limit(1);
+                  
+                  const userId = profiles?.[0]?.user_id;
+                  
+                  if (userId) {
+                    setDirectMessageRecipient({
+                      id: userId,
+                      name: selectedProfile.display_name,
+                      avatar: selectedProfile.avatar_url || ''
+                    });
+                    setShowProfileDialog(false);
+                    setShowDirectMessage(true);
+                  } else {
+                    toast({ 
+                      title: "Unable to message this user", 
+                      description: "Please try again later",
+                      variant: "destructive" 
+                    });
+                  }
+                }}
+              >
                 <Send className="mr-2 h-4 w-4" />
                 Message
               </Button>
