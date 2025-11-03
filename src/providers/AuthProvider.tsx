@@ -18,6 +18,8 @@ type AuthCtx = {
   profile: UserProfile | null;
   isAdmin: boolean;
   signInWithGoogle: (returnTo?: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -149,6 +151,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      toast.success('Signed in successfully');
+    } catch (err: any) {
+      console.error('[AUTH] Email sign-in error', err);
+      toast.error('Sign-in failed', { description: err.message });
+      throw err;
+    }
+  }, []);
+
+  const signUpWithEmail = useCallback(async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      toast.success('Account created successfully!');
+    } catch (err: any) {
+      console.error('[AUTH] Email sign-up error', err);
+      toast.error('Sign-up failed', { description: err.message });
+      throw err;
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -176,9 +211,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       ready, session, user, profile, isAdmin,
-      signInWithGoogle, signOut, refreshProfile,
+      signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, refreshProfile,
     }),
-    [ready, session, user, profile, isAdmin, signInWithGoogle, signOut, refreshProfile]
+    [ready, session, user, profile, isAdmin, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, refreshProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
