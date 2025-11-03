@@ -51,19 +51,33 @@ export default function Auth() {
       setPendingTier(savedTier);
     }
 
+    // Check if already logged in on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // Check for pending subscription
-        handlePendingSubscription();
+        // User is already logged in, handle any pending subscription or redirect
+        const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
+        if (tierToSubscribe) {
+          handlePendingSubscription();
+        } else {
+          // Just redirect to home if already logged in
+          navigate("/");
+        }
       }
     });
 
+    // Listen for new sign-ins
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && event === 'SIGNED_IN') {
-        // Only redirect on successful sign in, not on initial session check
-        setTimeout(() => {
+      console.log('Auth event:', event, 'Has session:', !!session);
+      
+      if (event === 'SIGNED_IN' && session) {
+        // User just signed in
+        const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
+        if (tierToSubscribe) {
           handlePendingSubscription();
-        }, 100);
+        } else {
+          // Successful login without pending subscription - go to home
+          navigate("/");
+        }
       }
     });
 
@@ -72,41 +86,46 @@ export default function Auth() {
 
   const handlePendingSubscription = async () => {
     const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
-    if (tierToSubscribe) {
-      const priceId = TIER_PRICE_IDS[tierToSubscribe];
-      if (priceId) {
-        sonnerToast("Completing your subscription...", {
-          description: "Please wait while we redirect you to checkout"
-        });
-        
-        try {
-          const { data, error } = await supabase.functions.invoke('create-checkout', {
-            body: { priceId }
-          });
-
-          if (error) throw error;
-
-          if (data?.url) {
-            localStorage.removeItem('pendingSubscriptionTier');
-            window.open(data.url, '_blank');
-            sonnerToast.success("Checkout ready!", {
-              description: "Complete your subscription in the new tab"
-            });
-            navigate('/subscribe');
-          }
-        } catch (error) {
-          console.error('Checkout error:', error);
-          sonnerToast.error('Failed to create checkout', {
-            description: 'Please try subscribing again from the subscription page'
-          });
-          localStorage.removeItem('pendingSubscriptionTier');
-          navigate('/subscribe');
-        }
-      } else {
-        navigate("/");
-      }
-    } else {
+    if (!tierToSubscribe) {
+      // No pending subscription, just go home
       navigate("/");
+      return;
+    }
+
+    const priceId = TIER_PRICE_IDS[tierToSubscribe];
+    if (!priceId) {
+      console.error('Invalid tier:', tierToSubscribe);
+      localStorage.removeItem('pendingSubscriptionTier');
+      navigate("/");
+      return;
+    }
+
+    sonnerToast("Completing your subscription...", {
+      description: "Please wait while we redirect you to checkout"
+    });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        localStorage.removeItem('pendingSubscriptionTier');
+        window.open(data.url, '_blank');
+        sonnerToast.success("Checkout ready!", {
+          description: "Complete your subscription in the new tab"
+        });
+        navigate('/subscribe');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      sonnerToast.error('Failed to create checkout', {
+        description: 'Please try subscribing again from the subscription page'
+      });
+      localStorage.removeItem('pendingSubscriptionTier');
+      navigate('/subscribe');
     }
   };
 
