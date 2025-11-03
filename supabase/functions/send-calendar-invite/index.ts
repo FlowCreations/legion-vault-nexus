@@ -81,17 +81,20 @@ END:VCALENDAR`;
     .event-section { background-color: #1a1a1a; border: 2px solid #f7c946; border-radius: 12px; padding: 30px; margin-bottom: 30px; }
     .event-title { color: #ffffff; font-size: 24px; font-weight: bold; margin: 0 0 15px; }
     .description { color: #a0a0a0; font-size: 16px; line-height: 1.6; margin: 0 0 20px; }
-    .divider { border-color: #333333; margin: 20px 0; }
+    .divider { border: none; border-top: 1px solid #333333; margin: 20px 0; }
     .detail-label { color: #f7c946; font-size: 14px; font-weight: bold; margin: 15px 0 5px; text-transform: uppercase; letter-spacing: 0.5px; }
     .detail-value { color: #ffffff; font-size: 16px; margin: 0 0 5px; }
-    .instructions { background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 30px; color: #a0a0a0; font-size: 14px; line-height: 1.6; }
-    .footer { color: #666666; font-size: 14px; text-align: center; margin: 30px 0 20px; }
-    .signature { color: #ffffff; font-size: 16px; text-align: center; margin: 0; }
+    .instructions { background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+    .instructions p { color: #a0a0a0; font-size: 16px; line-height: 1.8; margin: 0 0 20px; }
+    .instructions ul { color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 20px; padding-left: 20px; }
+    .instructions li { margin-bottom: 10px; }
+    .signature { color: #ffffff; font-size: 16px; text-align: center; margin: 30px 0 0; }
+    .team { color: #f7c946; font-weight: bold; font-size: 18px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">🎉 You're all set!</div>
+    <div class="header">Thanks for RSVPing!</div>
     <div class="event-section">
       <h2 class="event-title">${eventDetails.title}</h2>
       <p class="description">${eventDetails.description}</p>
@@ -102,13 +105,25 @@ END:VCALENDAR`;
       <p class="detail-label">📍 Where</p>
       <p class="detail-value">${eventDetails.location}</p>
     </div>
+    
     <div class="instructions">
-      <p>A calendar invite (.ics file) is attached to this email. Click on it to add this event to your calendar.</p>
-      <p>We'll send you a reminder email with the event link 24 hours before the event starts.</p>
+      <p style="color: #f7c946; font-size: 18px; font-weight: bold; margin-bottom: 20px;">Your spot is confirmed!</p>
+      
+      <p>You'll get access directly through your Sons of Legion Portal account when the event starts.</p>
+      
+      <p style="font-weight: bold; color: #ffffff; margin-top: 25px;">To make sure you don't miss it:</p>
+      <ul>
+        <li>Add this event to your calendar (attached .ics file)</li>
+        <li>Check that you're logged in before the start time</li>
+        <li>Join early to connect with other members in chat</li>
+      </ul>
+      
+      <p style="margin-top: 25px;">Can't wait to see you there.</p>
     </div>
-    <hr class="divider" />
-    <p class="footer">Can't make it? Just remove the event from your calendar or email us.</p>
-    <p class="signature">See you there!<br /><strong>The Sons of Legion Team</strong></p>
+    
+    <p class="signature">
+      <span class="team">The SØL Team 🛡️🔥🩸</span>
+    </p>
   </div>
 </body>
 </html>
