@@ -626,10 +626,10 @@ export default function CommunityHub() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative pt-20">
       <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-card px-6 py-4">
+      <header className="sticky top-16 z-40 border-b bg-card px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
