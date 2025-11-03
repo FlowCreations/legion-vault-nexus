@@ -14,6 +14,7 @@ import { ShopifyProduct } from "@/lib/shopify";
 import { ExpandableLiveViewer } from "@/components/livestream/ExpandableLiveViewer";
 import { StreamCountdown } from "@/components/livestream/StreamCountdown";
 import { StreamIntro } from "@/components/livestream/StreamIntro";
+import { SubscribePrompt } from "@/components/SubscribePrompt";
 
 export default function LiveStudio() {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ export default function LiveStudio() {
   });
   const [liveEventId, setLiveEventId] = useState<string | null>(null);
   const [isViewingLive, setIsViewingLive] = useState(false);
+  const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -393,7 +395,13 @@ export default function LiveStudio() {
                 {liveEventId && !isViewingLive && (
                   <Button
                     size="lg"
-                    onClick={() => setIsViewingLive(true)}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        setShowSubscribePrompt(true);
+                        return;
+                      }
+                      setIsViewingLive(true);
+                    }}
                     className="bg-red-600 hover:bg-red-700 text-white px-6 py-6 text-xl font-bold mb-6 shadow-xl"
                   >
                     <div className="flex items-center gap-3">
@@ -652,6 +660,14 @@ export default function LiveStudio() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Subscribe Prompt */}
+      <SubscribePrompt
+        open={showSubscribePrompt}
+        onOpenChange={setShowSubscribePrompt}
+        title="Subscribe to Watch Live"
+        description="Get unlimited access to all live streams with a 7-day free trial."
+      />
     </div>
   );
 }

@@ -127,6 +127,10 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
       if (videoTrackRef.current) {
         videoTrackRef.current.attach(expandedVideoRef.current);
         console.log('[Viewer] Video track attached to expanded view');
+        // Ensure video plays
+        expandedVideoRef.current.play().catch(err => 
+          console.error('[Viewer] Error playing expanded video:', err)
+        );
       }
       if (audioTrackRef.current) {
         audioTrackRef.current.attach(expandedVideoRef.current);
@@ -246,20 +250,9 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
                 ref={expandedVideoRef} 
                 autoPlay 
                 playsInline 
+                muted={false}
                 className="w-full h-full" 
               />
-              
-              {/* Play button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <button
-                  onClick={() => expandedVideoRef.current?.play()}
-                  className="pointer-events-auto w-20 h-20 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-all"
-                >
-                  <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </button>
-              </div>
               
               {/* Expanded Status & Viewer Count */}
               <div className="absolute top-4 left-4 flex items-center gap-3">
