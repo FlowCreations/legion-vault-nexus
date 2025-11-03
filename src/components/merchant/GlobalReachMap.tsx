@@ -184,10 +184,13 @@ export const GlobalReachMap = () => {
     map.current.on('load', () => {
       if (!map.current) return;
 
-      // Add community members source
+      // Add community members source (start with empty data)
       map.current.addSource('clients', {
         type: 'geojson',
-        data: geojson,
+        data: {
+          type: 'FeatureCollection',
+          features: [],
+        },
       });
 
       // Add circle layer for member markers
@@ -197,9 +200,9 @@ export const GlobalReachMap = () => {
         source: 'clients',
         paint: {
           'circle-radius': 10,
-          'circle-color': 'rgba(124, 189, 255, 0.6)',
-          'circle-stroke-color': 'rgba(255, 255, 255, 0.9)',
-          'circle-stroke-width': 1.5,
+          'circle-color': 'rgba(124, 189, 255, 0.8)',
+          'circle-stroke-color': 'rgba(255, 255, 255, 1)',
+          'circle-stroke-width': 2,
         },
       });
 
@@ -261,11 +264,23 @@ export const GlobalReachMap = () => {
 
   // Update source data when members change
   useEffect(() => {
-    if (!map.current || !map.current.isStyleLoaded()) return;
+    if (!map.current) return;
 
-    const source = map.current.getSource('clients');
-    if (source && source.type === 'geojson') {
-      source.setData(geojson);
+    // Wait for style to be loaded before updating source
+    const updateSource = () => {
+      if (!map.current || !map.current.isStyleLoaded()) return;
+
+      const source = map.current.getSource('clients');
+      if (source && source.type === 'geojson') {
+        console.log('Updating map with members:', geojson.features.length);
+        source.setData(geojson);
+      }
+    };
+
+    if (map.current.isStyleLoaded()) {
+      updateSource();
+    } else {
+      map.current.once('load', updateSource);
     }
   }, [geojson]);
 
@@ -283,6 +298,14 @@ export const GlobalReachMap = () => {
         )}
 
         <div ref={mapContainer} className="absolute inset-0" />
+        
+        {/* Hide Mapbox branding */}
+        <style>{`
+          .mapboxgl-ctrl-logo,
+          .mapboxgl-ctrl-attrib {
+            display: none !important;
+          }
+        `}</style>
 
         {/* Starfield background overlay */}
         <div className="absolute inset-0 pointer-events-none">
@@ -298,9 +321,9 @@ export const GlobalReachMap = () => {
           {isPaused ? '▶' : '❚❚'}
         </button>
 
-        {/* Member count badge */}
+        {/* Member count badge - positioned to cover bottom left */}
         {!loading && (
-          <div className="absolute bottom-4 left-4 z-10 px-3 py-2 bg-black/60 border border-white/20 rounded-lg text-white text-sm">
+          <div className="absolute bottom-3 left-3 z-10 px-4 py-2.5 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm">
             <span className="font-semibold">{filteredMembers.length}</span> members
           </div>
         )}
