@@ -244,7 +244,17 @@ export default function CommunityHub() {
       m.sender_id === userId || m.recipient_id === userId
     );
     
-    if (!msg) return { displayName: 'Unknown User', avatarUrl: '' };
+    if (!msg) {
+      // If no message found, try to get from availableMembers
+      const member = availableMembers.find(m => m.id === userId);
+      if (member) {
+        return {
+          displayName: member.name,
+          avatarUrl: member.avatar || ''
+        };
+      }
+      return { displayName: 'User', avatarUrl: '' };
+    }
     
     // If they're the sender, use sender_profile
     if (msg.sender_id === userId && msg.sender_profile) {
@@ -262,7 +272,7 @@ export default function CommunityHub() {
       };
     }
     
-    return { displayName: 'Unknown User', avatarUrl: '' };
+    return { displayName: 'User', avatarUrl: '' };
   };
 
   const loadDirectoryProfiles = async () => {
