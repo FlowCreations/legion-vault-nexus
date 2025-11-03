@@ -158,6 +158,8 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
   };
 
   const fetchOnlineMembers = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
     // Consider users online if active in last 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
@@ -169,7 +171,12 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
       .order('last_active_at', { ascending: false })
       .limit(50);
 
-    const realMembers = (data || []) as OnlineMember[];
+    let realMembers = (data || []) as OnlineMember[];
+    
+    // Filter out current user
+    if (user) {
+      realMembers = realMembers.filter(m => m.user_id !== user.id);
+    }
     
     // Combine real members with mock members
     const combined = [...realMembers, ...mockMembers];

@@ -22,6 +22,7 @@ import { CameoBookingTab } from "@/components/community/CameoBookingTab";
 import { OnlineMembersSidebar } from "@/components/community/OnlineMembersSidebar";
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
+import { generateICSFile, downloadICSFile } from "@/utils/calendarHelper";
 
 interface Post {
   id: string;
@@ -686,6 +687,17 @@ export default function CommunityHub() {
   };
 
   const handleRSVP = async (event: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to RSVP for events",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const eventId = event.id;
     const isAlreadyRSVPd = rsvpEvents.has(eventId);
     
@@ -697,24 +709,43 @@ export default function CommunityHub() {
       } else {
         newSet.add(eventId);
         
-        // Create calendar event - send invite via edge function
-        supabase.functions.invoke('send-calendar-invite', {
-          body: {
-            title: event.title,
-            description: event.description,
-            date: event.date,
-            time: event.time,
-            eventType: 'community_event'
+        (async () => {
+          // Get user email
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          if (currentUser?.email) {
+            // Parse date and time to create proper datetime
+            const eventDateTime = new Date(`${event.date} ${event.time}`);
+            const endDateTime = new Date(eventDateTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
+
+            const eventDetails = {
+              title: event.title,
+              description: event.description,
+              location: "Virtual Event - Link will be sent before the event",
+              startDate: eventDateTime.toISOString(),
+              endDate: endDateTime.toISOString()
+            };
+
+            // Send calendar invite via email
+            supabase.functions.invoke('send-calendar-invite', {
+              body: {
+                email: currentUser.email,
+                eventDetails
+              }
+            }).then(({ error }) => {
+              if (error) {
+                console.error('Calendar invite error:', error);
+              }
+            });
+
+            // Generate and download ICS file
+            const icsContent = generateICSFile(eventDetails);
+            downloadICSFile(icsContent, `${event.title.replace(/\s+/g, '-')}.ics`);
           }
-        }).then(({ data, error }) => {
-          if (error) {
-            console.error('Calendar invite error:', error);
-          }
-        });
+        })();
         
         toast({ 
           title: "RSVP Confirmed!", 
-          description: "Calendar invite sent to your email"
+          description: "Calendar invite sent to your email and downloaded"
         });
       }
       return newSet;
