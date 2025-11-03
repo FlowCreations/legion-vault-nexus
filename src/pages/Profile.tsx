@@ -8,9 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
+import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -182,6 +186,29 @@ export default function Profile() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
+  };
+
+  const handleChangePassword = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/auth?mode=resetPassword`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
   };
 
   const loadSubscriptionData = async () => {
@@ -361,12 +388,32 @@ export default function Profile() {
 
                     <div>
                       <Label htmlFor="birthdate">Date of Birth</Label>
-                      <Input
-                        id="birthdate"
-                        type="date"
-                        value={birthdate}
-                        onChange={(e) => setBirthdate(e.target.value)}
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !birthdate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4 text-white" />
+                            {birthdate ? format(new Date(birthdate), "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={birthdate ? new Date(birthdate) : undefined}
+                            onSelect={(date) => setBirthdate(date ? format(date, "yyyy-MM-dd") : "")}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div>
@@ -601,7 +648,9 @@ export default function Profile() {
                 <CardDescription>Manage your password and security options</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full">Change Password</Button>
+                <Button variant="outline" className="w-full" onClick={handleChangePassword}>
+                  Change Password
+                </Button>
                 <Button 
                   variant="destructive" 
                   className="w-full gap-2"
