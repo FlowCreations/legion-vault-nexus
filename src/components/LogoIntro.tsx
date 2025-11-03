@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import solLogo from "@/assets/sol-logo-new.png";
 import { Button } from "@/components/ui/button";
 
@@ -9,11 +9,16 @@ interface LogoIntroProps {
 export default function LogoIntro({ onComplete }: LogoIntroProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [phase, setPhase] = useState<"black" | "beams" | "reveal" | "glow" | "fadeout">("black");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!hasStarted) return;
     
-    let audio: HTMLAudioElement | null = null;
+    // Prevent multiple audio instances
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     
     // START ANIMATION IMMEDIATELY after user clicks
     const blackTimer = setTimeout(() => setPhase("beams"), 500);
@@ -23,19 +28,18 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
     
     // Stop audio at exactly 8 seconds (music duration)
     const audioStopTimer = setTimeout(() => {
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.src = '';
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
     }, 8000);
     
     // Play audio - now triggered by user interaction so it will work across browsers
     const playAudio = async () => {
       try {
-        audio = new Audio('/intro-audio.wav');
-        audio.volume = 0.7;
-        await audio.play();
+        audioRef.current = new Audio('/intro-audio.wav');
+        audioRef.current.volume = 0.7;
+        await audioRef.current.play();
         console.log('✓ Intro audio playing - will stop at 8 seconds');
       } catch (err) {
         console.error('Audio playback failed:', err);
@@ -50,10 +54,11 @@ export default function LogoIntro({ onComplete }: LogoIntroProps) {
       clearTimeout(glowTimer);
       clearTimeout(completeTimer);
       clearTimeout(audioStopTimer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.src = '';
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = '';
+        audioRef.current = null;
       }
     };
   }, [onComplete, hasStarted]);
