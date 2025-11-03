@@ -54,26 +54,29 @@ export default function Auth() {
     // Check if already logged in on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        console.log('User already logged in, redirecting...');
-        // User is already logged in, redirect to home
-        navigate("/");
+        console.log('User already logged in on mount, redirecting to home');
+        navigate("/", { replace: true });
       }
     });
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event, 'Has session:', !!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, 'Has session:', !!session);
       
       if (event === 'SIGNED_IN' && session) {
-        console.log('User signed in successfully');
-        // User just signed in - check for pending subscription
+        console.log('Sign in event detected');
+        
+        // Check for pending subscription
         const tierToSubscribe = localStorage.getItem('pendingSubscriptionTier');
         if (tierToSubscribe) {
-          console.log('Has pending tier:', tierToSubscribe);
+          console.log('Processing pending tier:', tierToSubscribe);
           handlePendingSubscription();
         } else {
-          console.log('No pending tier, redirecting to home');
-          navigate("/");
+          console.log('No pending subscription, redirecting to home');
+          // Small delay to ensure session is fully established
+          setTimeout(() => {
+            navigate("/", { replace: true });
+          }, 100);
         }
       }
     });
@@ -193,15 +196,19 @@ export default function Auth() {
           throw error;
         }
 
-        console.log('Sign in successful, session:', !!data.session);
+        console.log('Sign in response received, session exists:', !!data.session);
         
-        toast({
-          title: "Success",
-          description: "Welcome back!",
-        });
-
-        // Navigation will be handled by onAuthStateChange
-        // But keep loading state until redirect happens
+        if (data.session) {
+          toast({
+            title: "Success",
+            description: "Welcome back!",
+          });
+          
+          // onAuthStateChange will handle navigation
+          // Keep loading state active during redirect
+        } else {
+          throw new Error('No session returned from sign in');
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
