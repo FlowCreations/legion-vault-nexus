@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,6 +35,9 @@ export default function Profile() {
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
   
   // Password change fields
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [verificationBirthdate, setVerificationBirthdate] = useState<Date | undefined>();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   
@@ -192,6 +196,48 @@ export default function Profile() {
     navigate("/");
   };
 
+  const handleVerifyBirthdate = () => {
+    if (!verificationBirthdate) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter your date of birth.",
+      });
+      return;
+    }
+
+    if (!birthdate) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No date of birth found in your profile. Please add it in the Profile tab first.",
+      });
+      setShowVerificationDialog(false);
+      return;
+    }
+
+    const verificationDate = format(verificationBirthdate, "yyyy-MM-dd");
+    
+    if (verificationDate !== birthdate) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: "The date of birth you entered does not match our records.",
+      });
+      return;
+    }
+
+    // Verification successful
+    setShowVerificationDialog(false);
+    setShowPasswordSection(true);
+    setVerificationBirthdate(undefined);
+    
+    toast({
+      title: "Verified",
+      description: "You can now change your password.",
+    });
+  };
+
   const handleChangePassword = async () => {
     if (!newPassword || !confirmPassword) {
       toast({
@@ -233,9 +279,10 @@ export default function Profile() {
         description: "Your password has been changed successfully.",
       });
 
-      // Clear password fields
+      // Clear password fields and close section
       setNewPassword("");
       setConfirmPassword("");
+      setShowPasswordSection(false);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -687,42 +734,70 @@ export default function Profile() {
                 <CardDescription>Manage your password and security options</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder="Enter new password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
+                {!showPasswordSection ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      To change your password, you'll need to verify your identity first.
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => setShowVerificationDialog(true)}
+                    >
+                      Change Password
+                    </Button>
                   </div>
-                  <div>
-                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Confirm new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold">Change Your Password</h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setShowPasswordSection(false);
+                          setNewPassword("");
+                          setConfirmPassword("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    <div>
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        placeholder="Enter new password (min 6 characters)"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        placeholder="Confirm new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      className="w-full" 
+                      onClick={handleChangePassword}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Changing Password...
+                        </>
+                      ) : (
+                        "Save New Password"
+                      )}
+                    </Button>
                   </div>
-                  <Button 
-                    className="w-full" 
-                    onClick={handleChangePassword}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Changing Password...
-                      </>
-                    ) : (
-                      "Change Password"
-                    )}
-                  </Button>
-                </div>
+                )}
                 
                 <div className="border-t pt-4">
                   <Button 
@@ -739,6 +814,67 @@ export default function Profile() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Birthdate Verification Dialog */}
+      <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+        <DialogContent className="sm:max-w-md bg-[#111] border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Verify Your Identity</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Please enter your date of birth to continue with changing your password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label htmlFor="verify-birthdate" className="text-white">Date of Birth</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="verify-birthdate"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal bg-[#1a1a1a] border-gray-700 text-white hover:bg-[#222] hover:border-primary",
+                      !verificationBirthdate && "text-gray-400"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {verificationBirthdate ? format(verificationBirthdate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-[#111] border-gray-800" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={verificationBirthdate}
+                    onSelect={setVerificationBirthdate}
+                    captionLayout="dropdown-buttons"
+                    fromYear={1940}
+                    toYear={new Date().getFullYear()}
+                    defaultMonth={verificationBirthdate}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  setShowVerificationDialog(false);
+                  setVerificationBirthdate(undefined);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="flex-1 bg-primary hover:bg-primary/90"
+                onClick={handleVerifyBirthdate}
+              >
+                Verify
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
