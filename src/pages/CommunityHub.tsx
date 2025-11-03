@@ -179,13 +179,13 @@ export default function CommunityHub() {
     }
 
     if (dbMessages && dbMessages.length > 0) {
-      // Get unique user IDs from messages
+      // Get unique user IDs from messages (both senders and recipients)
       const userIds = Array.from(new Set([
         ...dbMessages.map(m => m.sender_id),
         ...dbMessages.map(m => m.recipient_id)
       ])).filter(id => id !== user.id);
 
-      // Load profiles for these users
+      // Load profiles for all users involved in conversations
       const { data: profiles } = await supabase
         .from("user_profiles")
         .select("user_id, display_name, avatar_url")
@@ -193,13 +193,17 @@ export default function CommunityHub() {
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
 
-      // Format messages with profiles
-      const formattedMessages: Message[] = dbMessages.map(msg => ({
-        ...msg,
-        sender_profile: msg.sender_id === user.id 
+      // Format messages with sender profiles attached
+      const formattedMessages: Message[] = dbMessages.map(msg => {
+        const senderProfile = msg.sender_id === user.id 
           ? { display_name: 'You', avatar_url: '' }
-          : profileMap.get(msg.sender_id) || { display_name: 'Unknown', avatar_url: '' }
-      }));
+          : profileMap.get(msg.sender_id) || { display_name: 'Unknown', avatar_url: '' };
+        
+        return {
+          ...msg,
+          sender_profile: senderProfile
+        };
+      });
 
       setMessages(formattedMessages);
     }
@@ -1158,13 +1162,31 @@ export default function CommunityHub() {
               <h3 className="font-semibold mb-3">Conversations</h3>
               <div className="space-y-2">
                 {conversations.map((conv) => {
-                  // Get the display info for the other person in the conversation
+                  // Get the other person's info from messages
                   const otherPersonMsg = messages.find(m => 
-                    (m.sender_id === conv.userId || m.recipient_id === conv.userId) &&
-                    m.sender_id !== "current-user"
+                    m.sender_id === conv.userId || m.recipient_id === conv.userId
                   );
-                  const displayName = otherPersonMsg?.sender_profile?.display_name || "User";
-                  const avatarUrl = otherPersonMsg?.sender_profile?.avatar_url || "";
+                  
+                  // Determine display name - prioritize the sender_profile if they're not "You"
+                  let displayName = "User";
+                  let avatarUrl = "";
+                  
+                  if (otherPersonMsg) {
+                    // If the other person is the sender, use their profile
+                    if (otherPersonMsg.sender_id === conv.userId && otherPersonMsg.sender_profile) {
+                      displayName = otherPersonMsg.sender_profile.display_name;
+                      avatarUrl = otherPersonMsg.sender_profile.avatar_url || "";
+                    } 
+                    // If the other person is the recipient, we need to fetch their profile
+                    else {
+                      // Try to find a message where they were the sender
+                      const senderMsg = messages.find(m => m.sender_id === conv.userId && m.sender_profile);
+                      if (senderMsg?.sender_profile) {
+                        displayName = senderMsg.sender_profile.display_name;
+                        avatarUrl = senderMsg.sender_profile.avatar_url || "";
+                      }
+                    }
+                  }
                   
                   return (
                     <div
