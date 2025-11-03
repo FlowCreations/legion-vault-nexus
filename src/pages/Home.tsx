@@ -117,17 +117,6 @@ export default function Home() {
         <CameoDisplay />
       </div>
 
-      {/* JRNY Progress Bar - Shows for logged in users */}
-      {isLoggedIn && !loading && progress.totalMinutes > 0 && (
-        <div className="container mx-auto px-4 py-6">
-          <JRNYProgressBar 
-            totalMinutes={progress.totalMinutes}
-            currentBadge={progress.currentBadge}
-            nextMilestone={progress.nextMilestone}
-            compact
-          />
-        </div>
-      )}
       
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
