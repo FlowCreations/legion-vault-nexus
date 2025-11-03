@@ -48,7 +48,29 @@ export const Navigation = () => {
       checkAdminStatus();
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for profile updates
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_profiles'
+        },
+        async (payload) => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && payload.new.user_id === user.id) {
+            setUserProfile(payload.new);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(profileChannel);
+    };
   }, []);
 
   const checkAdminStatus = async () => {

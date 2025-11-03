@@ -150,6 +150,28 @@ export default function CommunityHub() {
     loadMessages();
     loadAvailableMembers();
     setupRealtimeSubscription();
+
+    // Listen for profile updates to refresh member avatars
+    const profileChannel = supabase
+      .channel('community-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_profiles'
+        },
+        () => {
+          loadPosts();
+          loadDirectoryProfiles();
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+    };
   }, [activeTab]);
 
   // Close search results when clicking outside
