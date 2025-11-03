@@ -147,7 +147,6 @@ serve(async (req) => {
 
             const profileData = {
               heartbeat_member_id: member.id,
-              email: member.email,
               display_name: member.name || member.email?.split('@')[0] || 'Unknown Member',
               avatar_url: member.profile_picture || null,
               bio: member.bio || null,
@@ -161,6 +160,7 @@ serve(async (req) => {
               created_at: member.created_at || new Date().toISOString(),
               // Make visible in Community Hub
               is_public: true,
+              // Note: user_id will be null for Heartbeat-only members
             };
 
             if (existingProfile) {
@@ -178,30 +178,10 @@ serve(async (req) => {
                 console.log(`✅ Updated member ${member.id}`);
               }
             } else {
-              // Create new auth user and profile
-              const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-                email: member.email || `heartbeat-${member.id}@sonsoflegion.com`,
-                email_confirm: true,
-                user_metadata: {
-                  heartbeat_member_id: member.id,
-                  synced_from_heartbeat: true,
-                  name: member.name,
-                }
-              });
-
-              if (authError) {
-                console.error(`❌ Error creating auth user for ${member.id}:`, authError);
-                errors.push({ memberId: member.id, error: authError.message });
-                continue;
-              }
-
-              // Insert profile with user_id
+              // Insert profile without creating auth user - these are external community members
               const { error: insertError } = await supabase
                 .from('user_profiles')
-                .insert({
-                  user_id: authData.user.id,
-                  ...profileData,
-                });
+                .insert(profileData);
 
               if (insertError) {
                 console.error(`❌ Error creating profile for ${member.id}:`, insertError);
