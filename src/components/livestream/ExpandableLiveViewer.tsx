@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Maximize2, DollarSign, Share2 } from 'lucide-react';
 import { LiveChat } from './LiveChat';
+import { TipDialog } from './TipDialog';
 import { toast } from 'sonner';
 
 type Props = { 
@@ -20,6 +21,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
+  const [showTipDialog, setShowTipDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
@@ -157,7 +159,7 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
     if (onTip) {
       onTip();
     } else {
-      toast.success('Tip feature coming soon!');
+      setShowTipDialog(true);
     }
   };
 
@@ -287,6 +289,13 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Tip Dialog */}
+      <TipDialog 
+        open={showTipDialog} 
+        onOpenChange={setShowTipDialog} 
+        eventId={eventId}
+      />
       
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800 mt-2">
