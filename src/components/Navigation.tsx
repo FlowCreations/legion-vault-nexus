@@ -42,14 +42,29 @@ export const Navigation = () => {
   const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
-    checkAdminStatus();
+    // IMMEDIATE check for existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // User is signed in, update state immediately
+        setIsLoggedIn(true);
+        // Then fetch full profile data
+        checkAdminStatus();
+      } else {
+        setIsLoggedIn(false);
+        setUserProfile(null);
+      }
+    });
     
+    // Continue with auth state listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Clear cart when user logs out
       if (event === 'SIGNED_OUT' || !session) {
         clearCart();
+        setIsLoggedIn(false);
+        setUserProfile(null);
+      } else if (session) {
+        setIsLoggedIn(true);
+        await checkAdminStatus();
       }
-      await checkAdminStatus();
     });
 
     // Listen for profile updates
@@ -83,12 +98,12 @@ export const Navigation = () => {
       setIsAdmin(false);
       setIsLoggedIn(false);
       setUserProfile(null);
-      // Clear cart when no user is logged in
       clearCart();
       return;
     }
 
-    setIsLoggedIn(true);
+    // isLoggedIn is already set in useEffect - just load profile data
+    // This prevents flickering
 
     // Load user profile
     const { data: profile } = await supabase
