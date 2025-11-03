@@ -17,7 +17,26 @@ export const HeartbeatSyncButton = () => {
       if (error) throw error;
       
       console.log('Heartbeat sync result:', data);
-      toast.success(`Synced ${data.synced} members from Heartbeat!`);
+      
+      const createdCount = data.synced || 0;
+      const updatedCount = data.updated || 0;
+      const totalCount = data.total || 0;
+      const errorCount = data.errors?.length || 0;
+      
+      if (errorCount > 0) {
+        toast.warning(
+          `Synced ${createdCount + updatedCount} of ${totalCount} members. ${errorCount} errors encountered.`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(
+          `Successfully synced ${totalCount} members! (${createdCount} new, ${updatedCount} updated)`,
+          { duration: 5000 }
+        );
+      }
+      
+      // Refresh the page to show updated members
+      window.location.reload();
     } catch (error) {
       console.error('Error syncing Heartbeat members:', error);
       toast.error('Failed to sync Heartbeat members');

@@ -113,7 +113,7 @@ serve(async (req) => {
             // Check if user profile exists by heartbeat_member_id
             const { data: existingProfile } = await supabase
               .from('user_profiles')
-              .select('id')
+              .select('id, user_id')
               .eq('heartbeat_member_id', member.id)
               .maybeSingle();
 
@@ -170,7 +170,7 @@ serve(async (req) => {
               const { error: insertError } = await supabase
                 .from('user_profiles')
                 .insert({
-                  id: authData.user.id,
+                  user_id: authData.user.id,
                   ...profileData,
                 });
 
