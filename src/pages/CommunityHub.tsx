@@ -99,128 +99,8 @@ export default function CommunityHub() {
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender_id: '2',
-      recipient_id: 'current-user',
-      content: "Hey! Just saw your post about the upcoming show. Can't wait!",
-      read: false,
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      sender_profile: {
-        display_name: 'Sarah Johnson',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah'
-      }
-    },
-    {
-      id: '2',
-      sender_id: 'current-user',
-      recipient_id: '2',
-      content: "Same here! It's going to be amazing. Are you going to the meet & greet?",
-      read: true,
-      created_at: new Date(Date.now() - 3000000).toISOString(),
-      sender_profile: {
-        display_name: 'You',
-        avatar_url: ''
-      }
-    },
-    {
-      id: '3',
-      sender_id: '3',
-      recipient_id: 'current-user',
-      content: "Thanks for the Legion merch recommendation! Just ordered mine.",
-      read: false,
-      created_at: new Date(Date.now() - 7200000).toISOString(),
-      sender_profile: {
-        display_name: 'Mike Chen',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike'
-      }
-    },
-    {
-      id: '4',
-      sender_id: '4',
-      recipient_id: 'current-user',
-      content: "Love your intro! We have so much in common with the music taste.",
-      read: true,
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      sender_profile: {
-        display_name: 'Emily Rodriguez',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emily'
-      }
-    },
-    {
-      id: '5',
-      sender_id: '5',
-      recipient_id: 'current-user',
-      content: "Did you catch the acoustic session last night? Fire! 🔥",
-      read: true,
-      created_at: new Date(Date.now() - 172800000).toISOString(),
-      sender_profile: {
-        display_name: 'David Kim',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=david'
-      }
-    },
-    {
-      id: '6',
-      sender_id: '6',
-      recipient_id: 'current-user',
-      content: "The new album is incredible! Been on repeat all week.",
-      read: false,
-      created_at: new Date(Date.now() - 259200000).toISOString(),
-      sender_profile: {
-        display_name: 'Alex Thompson',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex'
-      }
-    },
-    {
-      id: '7',
-      sender_id: '7',
-      recipient_id: 'current-user',
-      content: "Hey, are you coming to the Nashville meetup? Would love to meet you!",
-      read: true,
-      created_at: new Date(Date.now() - 345600000).toISOString(),
-      sender_profile: {
-        display_name: 'Jessica Martinez',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jessica'
-      }
-    },
-    {
-      id: '8',
-      sender_id: 'current-user',
-      recipient_id: '7',
-      content: "Definitely! Looking forward to it.",
-      read: true,
-      created_at: new Date(Date.now() - 340000000).toISOString(),
-      sender_profile: {
-        display_name: 'You',
-        avatar_url: ''
-      }
-    },
-    {
-      id: '9',
-      sender_id: '8',
-      recipient_id: 'current-user',
-      content: "Just got my VIP tickets! See you at the show!",
-      read: true,
-      created_at: new Date(Date.now() - 432000000).toISOString(),
-      sender_profile: {
-        display_name: 'Robert Taylor',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=robert'
-      }
-    },
-    {
-      id: '10',
-      sender_id: 'current-user',
-      recipient_id: '8',
-      content: "Awesome! It's going to be legendary!",
-      read: true,
-      created_at: new Date(Date.now() - 430000000).toISOString(),
-      sender_profile: {
-        display_name: 'You',
-        avatar_url: ''
-      }
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Array<{ userId: string; lastMessage: Message; unreadCount: number }>>([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const { toast } = useToast();
@@ -229,6 +109,15 @@ export default function CommunityHub() {
   useEffect(() => {
     checkAuthAndSubscription();
   }, []);
+
+  // Update conversations whenever messages change
+  useEffect(() => {
+    const updateConversations = async () => {
+      const convs = await getConversations();
+      setConversations(convs);
+    };
+    updateConversations();
+  }, [messages]);
 
   const checkAuthAndSubscription = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -267,8 +156,53 @@ export default function CommunityHub() {
   }, []);
 
   const loadMessages = async () => {
-    // Keep using mock messages for demo purposes
-    // Real database messages would be loaded here in production
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Load real messages from database
+    const { data: dbMessages, error } = await supabase
+      .from("community_messages")
+      .select(`
+        id,
+        sender_id,
+        recipient_id,
+        content,
+        read,
+        created_at
+      `)
+      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading messages:", error);
+      return;
+    }
+
+    if (dbMessages && dbMessages.length > 0) {
+      // Get unique user IDs from messages
+      const userIds = Array.from(new Set([
+        ...dbMessages.map(m => m.sender_id),
+        ...dbMessages.map(m => m.recipient_id)
+      ])).filter(id => id !== user.id);
+
+      // Load profiles for these users
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+
+      // Format messages with profiles
+      const formattedMessages: Message[] = dbMessages.map(msg => ({
+        ...msg,
+        sender_profile: msg.sender_id === user.id 
+          ? { display_name: 'You', avatar_url: '' }
+          : profileMap.get(msg.sender_id) || { display_name: 'Unknown', avatar_url: '' }
+      }));
+
+      setMessages(formattedMessages);
+    }
   };
 
   const loadDirectoryProfiles = async () => {
@@ -507,17 +441,33 @@ export default function CommunityHub() {
   const sendMessage = async () => {
     if (!newMessage || !selectedConversation) return;
 
-    // For demo purposes, add message to local state only (mock conversations)
     const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id || 'current-user';
+    if (!user) {
+      toast({ title: "Please sign in to send messages", variant: "destructive" });
+      return;
+    }
     
-    const newMsg = {
-      id: Date.now().toString(),
-      sender_id: currentUserId,
-      recipient_id: selectedConversation,
-      content: newMessage,
-      read: false,
-      created_at: new Date().toISOString(),
+    // Save message to database
+    const { data: savedMessage, error } = await supabase
+      .from("community_messages")
+      .insert({
+        sender_id: user.id,
+        recipient_id: selectedConversation,
+        content: newMessage,
+        read: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error sending message:", error);
+      toast({ title: "Failed to send message", variant: "destructive" });
+      return;
+    }
+
+    // Add to local state immediately for instant feedback
+    const newMsg: Message = {
+      ...savedMessage,
       sender_profile: {
         display_name: 'You',
         avatar_url: ''
@@ -529,8 +479,11 @@ export default function CommunityHub() {
     toast({ title: "Message sent!" });
   };
 
-  const getConversations = () => {
-    const userId = "current-user";
+  const getConversations = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+    if (!userId) return [];
+
     const conversations = new Map<string, Message[]>();
     
     messages.forEach(msg => {
@@ -555,6 +508,25 @@ export default function CommunityHub() {
       .sort((a, b) => 
         new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime()
       );
+  };
+
+  const openMemberProfile = async (profile: any) => {
+    // If it's a real user ID (UUID format), fetch from database
+    if (profile.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      await viewProfile(profile.id);
+    } else {
+      // Mock profile - create a temporary profile object
+      const mockProfile: UserProfile = {
+        display_name: profile.name,
+        avatar_url: profile.avatar,
+        bio: profile.bio || '',
+        location: profile.location || '',
+        tier: profile.tier || 'Member',
+        intro_answers: null
+      };
+      setSelectedProfile(mockProfile);
+      setShowProfileDialog(true);
+    }
   };
 
   const getReactionCount = (post: Post, reactionType: string) => {
@@ -1163,7 +1135,7 @@ export default function CommunityHub() {
             <div className="w-1/3 border-r pr-4 overflow-y-auto">
               <h3 className="font-semibold mb-3">Conversations</h3>
               <div className="space-y-2">
-                {getConversations().map((conv) => {
+                {conversations.map((conv) => {
                   // Get the display info for the other person in the conversation
                   const otherPersonMsg = messages.find(m => 
                     (m.sender_id === conv.userId || m.recipient_id === conv.userId) &&
@@ -1469,15 +1441,31 @@ export default function CommunityHub() {
                 onKeyPress={async (e) => {
                   if (e.key === "Enter" && directMessageRecipient && newMessage.trim()) {
                     const { data: { user } } = await supabase.auth.getUser();
-                    const currentUserId = user?.id || 'current-user';
+                    if (!user) {
+                      toast({ title: "Please sign in to send messages", variant: "destructive" });
+                      return;
+                    }
                     
-                    const newMsg = {
-                      id: Date.now().toString(),
-                      sender_id: currentUserId,
-                      recipient_id: directMessageRecipient.id,
-                      content: newMessage,
-                      read: false,
-                      created_at: new Date().toISOString(),
+                    // Save to database
+                    const { data: savedMessage, error } = await supabase
+                      .from("community_messages")
+                      .insert({
+                        sender_id: user.id,
+                        recipient_id: directMessageRecipient.id,
+                        content: newMessage,
+                        read: false
+                      })
+                      .select()
+                      .single();
+
+                    if (error) {
+                      console.error("Error sending message:", error);
+                      toast({ title: "Failed to send message", variant: "destructive" });
+                      return;
+                    }
+
+                    const newMsg: Message = {
+                      ...savedMessage,
                       sender_profile: {
                         display_name: 'You',
                         avatar_url: ''
@@ -1495,15 +1483,31 @@ export default function CommunityHub() {
                   if (!newMessage || !directMessageRecipient) return;
 
                   const { data: { user } } = await supabase.auth.getUser();
-                  const currentUserId = user?.id || 'current-user';
+                  if (!user) {
+                    toast({ title: "Please sign in to send messages", variant: "destructive" });
+                    return;
+                  }
                   
-                  const newMsg = {
-                    id: Date.now().toString(),
-                    sender_id: currentUserId,
-                    recipient_id: directMessageRecipient.id,
-                    content: newMessage,
-                    read: false,
-                    created_at: new Date().toISOString(),
+                  // Save to database
+                  const { data: savedMessage, error } = await supabase
+                    .from("community_messages")
+                    .insert({
+                      sender_id: user.id,
+                      recipient_id: directMessageRecipient.id,
+                      content: newMessage,
+                      read: false
+                    })
+                    .select()
+                    .single();
+
+                  if (error) {
+                    console.error("Error sending message:", error);
+                    toast({ title: "Failed to send message", variant: "destructive" });
+                    return;
+                  }
+
+                  const newMsg: Message = {
+                    ...savedMessage,
                     sender_profile: {
                       display_name: 'You',
                       avatar_url: ''
