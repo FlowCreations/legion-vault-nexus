@@ -187,18 +187,15 @@ export default function Auth() {
         if (error) throw error;
         if (!data.session) throw new Error('No session created');
 
+        console.log('[Auth] Login successful, session created');
+
         toast({
           title: "Success",
           description: "Welcome back!",
         });
 
-        // Navigate directly on successful login
-        const pendingTier = localStorage.getItem('pendingSubscriptionTier');
-        if (pendingTier) {
-          await handlePendingSubscription();
-        } else {
-          navigate("/", { replace: true });
-        }
+        // Don't manually navigate - let auth state listener handle it
+        setLoading(false);
       }
     } catch (error: any) {
       console.error('Auth error:', error);

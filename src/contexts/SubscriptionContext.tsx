@@ -101,10 +101,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     checkSubscription();
 
-    // Listen to auth changes
+    // Listen to auth changes - but don't call checkSubscription inside the callback
+    // to avoid deadlock
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('[SubscriptionContext] Auth event:', event);
+      
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        checkSubscription();
+        // Use setTimeout to defer the checkSubscription call
+        setTimeout(() => {
+          checkSubscription();
+        }, 100);
       }
     });
 

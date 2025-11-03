@@ -42,26 +42,31 @@ export const Navigation = () => {
   const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
-    // IMMEDIATE check for existing session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // User is signed in, update state immediately
+    // Check for existing session on mount
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
         setIsLoggedIn(true);
-        // Then fetch full profile data
-        checkAdminStatus();
+        await checkAdminStatus();
       } else {
         setIsLoggedIn(false);
         setUserProfile(null);
+        setIsAdmin(false);
       }
-    });
+    };
+
+    initAuth();
     
-    // Continue with auth state listener for future changes
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[Navigation] Auth event:', event);
+      
       if (event === 'SIGNED_OUT' || !session) {
         clearCart();
         setIsLoggedIn(false);
         setUserProfile(null);
-      } else if (session) {
+        setIsAdmin(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsLoggedIn(true);
         await checkAdminStatus();
       }
@@ -93,46 +98,49 @@ export const Navigation = () => {
   }, [clearCart]);
 
   const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setIsAdmin(false);
-      setIsLoggedIn(false);
-      setUserProfile(null);
-      clearCart();
-      return;
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('[Navigation] Error getting user:', userError);
+        setIsAdmin(false);
+        setIsLoggedIn(false);
+        setUserProfile(null);
+        clearCart();
+        return;
+      }
+
+      // Load user profile
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setUserProfile(profile);
+
+      // Load milestone progress for badge
+      const { data: milestoneData } = await supabase
+        .from("milestone_progress")
+        .select("current_badge")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (milestoneData) {
+        setCurrentBadge(milestoneData.current_badge as 'silver_star' | 'gold_star' | 'medallion' | null);
+      }
+
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      setIsAdmin(!!roles);
+    } catch (error) {
+      console.error('[Navigation] Error in checkAdminStatus:', error);
     }
-
-    // isLoggedIn is already set in useEffect - just load profile data
-    // This prevents flickering
-
-    // Load user profile
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    setUserProfile(profile);
-
-    // Load milestone progress for badge
-    const { data: milestoneData } = await supabase
-      .from("milestone_progress")
-      .select("current_badge")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    
-    if (milestoneData) {
-      setCurrentBadge(milestoneData.current_badge as 'silver_star' | 'gold_star' | 'medallion' | null);
-    }
-
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    setIsAdmin(!!roles);
   };
 
   const handleLogout = async () => {
