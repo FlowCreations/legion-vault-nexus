@@ -1,6 +1,7 @@
 import { Film, Music, Users, ShoppingBag, Radio, LogIn, LogOut, Calendar, Shield, User, Settings, Crown, Package } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,130 +35,38 @@ const navItems = [
 export const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { tier, isAdmin: isAdminFromSub, isSubscribed } = useSubscription();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const { user, profile, isAdmin, signOut } = useAuth();
+  const { tier, isSubscribed } = useSubscription();
   const [currentBadge, setCurrentBadge] = useState<'silver_star' | 'gold_star' | 'medallion' | null>(null);
   const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setIsLoggedIn(true);
-        await checkAdminStatus();
-      } else {
-        setIsLoggedIn(false);
-        setUserProfile(null);
-        setIsAdmin(false);
-      }
-    };
+    // Load milestone progress for badge when user changes
+    if (user) {
+      loadMilestoneBadge();
+    } else {
+      setCurrentBadge(null);
+    }
+  }, [user]);
 
-    initAuth();
+  const loadMilestoneBadge = async () => {
+    if (!user) return;
     
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Navigation] Auth event:', event);
-      
-      if (event === 'SIGNED_OUT' || !session) {
-        clearCart();
-        setIsLoggedIn(false);
-        setUserProfile(null);
-        setIsAdmin(false);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setIsLoggedIn(true);
-        await checkAdminStatus();
-      }
-    });
-
-    // Listen for profile updates
-    const profileChannel = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_profiles'
-        },
-        async (payload) => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && payload.new.user_id === user.id) {
-            setUserProfile(payload.new);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-      supabase.removeChannel(profileChannel);
-    };
-  }, [clearCart]);
-
-  const checkAdminStatus = async () => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        console.error('[Navigation] Error getting user:', userError);
-        setIsAdmin(false);
-        setIsLoggedIn(false);
-        setUserProfile(null);
-        clearCart();
-        return;
-      }
-
-      // Load user profile
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      setUserProfile(profile);
-
-      // Load milestone progress for badge
-      const { data: milestoneData } = await supabase
-        .from("milestone_progress")
-        .select("current_badge")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (milestoneData) {
-        setCurrentBadge(milestoneData.current_badge as 'silver_star' | 'gold_star' | 'medallion' | null);
-      }
-
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      setIsAdmin(!!roles);
-    } catch (error) {
-      console.error('[Navigation] Error in checkAdminStatus:', error);
+    const { data: milestoneData } = await supabase
+      .from("milestone_progress")
+      .select("current_badge")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    
+    if (milestoneData) {
+      setCurrentBadge(milestoneData.current_badge as 'silver_star' | 'gold_star' | 'medallion' | null);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force clear session even if API call fails
-      localStorage.removeItem('sb-dlwyndcvnunvomgkbkhn-auth-token');
-    } finally {
-      // Always clear UI state and cart
-      clearCart();
-      setIsLoggedIn(false);
-      setUserProfile(null);
-      setIsAdmin(false);
-      navigate("/");
-    }
+    clearCart();
+    await signOut();
+    navigate("/auth");
   };
 
   const isHomePage = location.pathname === "/";
@@ -211,7 +120,7 @@ export const Navigation = () => {
           <div className="hidden md:flex items-center gap-3">
             <CartDrawer />
             <GlobalSearch />
-            {!isLoggedIn ? (
+            {!user ? (
               <Link to="/auth">
                 <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
                   <LogIn className="w-4 h-4" />
@@ -223,7 +132,7 @@ export const Navigation = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10 border-2 border-primary/20">
-                      <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.display_name} />
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.display_name || "User"} />
                       <AvatarFallback>
                         <User className="h-5 w-5" />
                       </AvatarFallback>
@@ -244,8 +153,8 @@ export const Navigation = () => {
                   <DropdownMenuLabel>
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium">{userProfile?.display_name || "My Account"}</p>
-                        <p className="text-xs text-muted-foreground">{userProfile?.location}</p>
+                        <p className="text-sm font-medium">{profile?.display_name || "My Account"}</p>
+                        <p className="text-xs text-muted-foreground">{profile?.location}</p>
                       </div>
                       {tier !== 'free' && (
                         <Badge className={cn("text-xs", getTierColor(tier))}>
@@ -323,7 +232,7 @@ export const Navigation = () => {
             
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
               <CartDrawer />
-              {!isLoggedIn ? (
+              {!user ? (
                 <Link to="/auth">
                   <Button variant="outline" size="sm">
                     <LogIn className="w-4 h-4" />
@@ -337,7 +246,7 @@ export const Navigation = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>{userProfile?.display_name || "My Account"}</DropdownMenuLabel>
+                    <DropdownMenuLabel>{profile?.display_name || "My Account"}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <User className="mr-2 h-4 w-4" />

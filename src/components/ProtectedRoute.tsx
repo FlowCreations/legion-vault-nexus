@@ -1,6 +1,6 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { type TierType } from '@/config/subscriptions';
 import { Loader2 } from 'lucide-react';
@@ -22,28 +22,12 @@ export function ProtectedRoute({
   requiredTier,
   redirectTo = '/auth',
 }: ProtectedRouteProps) {
-  const [authLoading, setAuthLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const location = useLocation();
+  const { ready, user, isAdmin: authIsAdmin } = useAuth();
   const { isAdmin, isMerchant, requiresMinimumTier, loading: subLoading } = useSubscription();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-    } catch (error) {
-      console.error('Error checking auth:', error);
-      setIsAuthenticated(false);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  // Show loading state
-  if (authLoading || subLoading) {
+  // Show loading state while auth or subscription is initializing
+  if (!ready || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -52,12 +36,13 @@ export function ProtectedRoute({
   }
 
   // Check authentication requirement
-  if (requireAuth && !isAuthenticated) {
-    return <Navigate to={redirectTo} replace />;
+  if (requireAuth && !user) {
+    const returnTo = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`${redirectTo}?returnTo=${returnTo}`} replace />;
   }
 
-  // Check admin requirement
-  if (requireAdmin && !isAdmin) {
+  // Check admin requirement (use both auth context and subscription context)
+  if (requireAdmin && !isAdmin && !authIsAdmin) {
     return <Navigate to="/" replace />;
   }
 
@@ -68,7 +53,8 @@ export function ProtectedRoute({
 
   // Check tier requirement
   if (requiredTier && !requiresMinimumTier(requiredTier)) {
-    return <Navigate to="/subscribe" replace />;
+    const returnTo = encodeURIComponent(location.pathname);
+    return <Navigate to={`/subscribe?returnTo=${returnTo}`} replace />;
   }
 
   return <>{children}</>;

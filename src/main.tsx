@@ -1,10 +1,13 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { AuthProvider } from "./providers/AuthProvider";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
 createRoot(document.getElementById("root")!).render(
-  <SubscriptionProvider>
-    <App />
-  </SubscriptionProvider>
+  <AuthProvider>
+    <SubscriptionProvider>
+      <App />
+    </SubscriptionProvider>
+  </AuthProvider>
 );

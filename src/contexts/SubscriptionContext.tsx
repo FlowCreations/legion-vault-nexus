@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { TIERS, type TierType, hasFeatureAccess, hasMinimumTier } from '@/config/subscriptions';
 
 interface SubscriptionContextType {
@@ -16,6 +17,7 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
+  const { user, ready } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [tier, setTier] = useState<TierType>(TIERS.FREE);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -99,25 +101,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Only check subscription once auth is ready
+    if (!ready) return;
+    
     checkSubscription();
-
-    // Listen to auth changes - but don't call checkSubscription inside the callback
-    // to avoid deadlock
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      console.log('[SubscriptionContext] Auth event:', event);
-      
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        // Use setTimeout to defer the checkSubscription call
-        setTimeout(() => {
-          checkSubscription();
-        }, 100);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  }, [ready, user]);
 
   const hasAccess = (feature: string): boolean => {
     // Admins have access to everything
