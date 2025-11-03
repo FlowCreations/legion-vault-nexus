@@ -33,6 +33,7 @@ export default function Home() {
     // Check if intro has been shown in this session
     return !sessionStorage.getItem('introShown');
   });
+  const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -43,10 +44,14 @@ export default function Home() {
   }, []);
 
   const handleIntroComplete = () => {
-    setShowIntro(false);
+    // Start fade transition
+    setFadeIn(true);
     sessionStorage.setItem('introShown', 'true');
-    // Scroll to top when homepage loads
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Wait for fade to start before hiding intro
+    setTimeout(() => {
+      setShowIntro(false);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 100);
   };
 
   const handleSubscribe = async (tierName: string) => {
@@ -96,12 +101,17 @@ export default function Home() {
     }
   };
 
-  if (showIntro) {
-    return <LogoIntro onComplete={handleIntroComplete} />;
-  }
-
   return (
-    <div className="min-h-screen">
+    <>
+      {/* Intro overlay with fade out */}
+      {showIntro && (
+        <div className={`transition-opacity duration-1000 ${fadeIn ? 'opacity-0' : 'opacity-100'}`}>
+          <LogoIntro onComplete={handleIntroComplete} />
+        </div>
+      )}
+      
+      {/* Main content with fade in */}
+      <div className={`min-h-screen transition-opacity duration-1000 ${!showIntro || fadeIn ? 'opacity-100' : 'opacity-0'}`}>
       {/* Quick Signup Dialog */}
       <QuickSignupDialog 
         open={showSignupDialog}
@@ -288,7 +298,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
 
