@@ -136,10 +136,20 @@ export const Navigation = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    clearCart();
-    setUserProfile(null);
-    navigate("/");
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force clear session even if API call fails
+      localStorage.removeItem('sb-dlwyndcvnunvomgkbkhn-auth-token');
+    } finally {
+      // Always clear UI state and cart
+      clearCart();
+      setIsLoggedIn(false);
+      setUserProfile(null);
+      setIsAdmin(false);
+      navigate("/");
+    }
   };
 
   const isHomePage = location.pathname === "/";
