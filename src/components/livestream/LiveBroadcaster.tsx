@@ -269,7 +269,12 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       if (audioTrack) {
         audioTrackRef.current = audioTrack;
-        console.log('[Broadcaster] Audio track ready for broadcast');
+        console.log('[Broadcaster] Audio track ready for broadcast', {
+          kind: audioTrack.kind,
+          source: audioTrack.source,
+          mediaStreamTrack: audioTrack.mediaStreamTrack?.id,
+          enabled: audioTrack.mediaStreamTrack?.enabled
+        });
       } else {
         console.error('[Broadcaster] No audio track found!');
         setError('Failed to create audio track');
@@ -411,9 +416,14 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       if (videoTrackRef.current) {
         await room.localParticipant.publishTrack(videoTrackRef.current);
+        console.log('[Broadcaster] Video track published successfully');
       }
       if (audioTrackRef.current) {
         await room.localParticipant.publishTrack(audioTrackRef.current);
+        console.log('[Broadcaster] Audio track published successfully', {
+          sid: audioTrackRef.current.sid,
+          kind: audioTrackRef.current.kind
+        });
       }
 
       console.log('[Broadcaster] Broadcasting!');

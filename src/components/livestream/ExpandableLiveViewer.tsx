@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Room, RoomEvent, Track } from 'livekit-client';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -24,9 +24,44 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
   const [showTipDialog, setShowTipDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const expandedAudioRef = useRef<HTMLAudioElement>(null);
   const roomRef = useRef<Room | null>(null);
   const videoTrackRef = useRef<Track | null>(null);
   const audioTrackRef = useRef<Track | null>(null);
+  const currentVideoElRef = useRef<HTMLVideoElement | null>(null);
+  const currentAudioElRef = useRef<HTMLAudioElement | null>(null);
+
+  // Unified attach helper for both video and audio tracks
+  const attachTrack = useCallback((
+    track: Track | null, 
+    targetElement: HTMLVideoElement | HTMLAudioElement | null,
+    isVideo: boolean
+  ) => {
+    if (!track || !targetElement) return;
+    
+    console.log(`[Viewer] Attaching ${isVideo ? 'video' : 'audio'} track to ${targetElement.id}`);
+    
+    // Set playback attributes BEFORE attaching
+    if ('playsInline' in targetElement) {
+      targetElement.playsInline = true;
+    }
+    targetElement.muted = false; // Allow audio
+    targetElement.autoplay = true;
+    
+    // Attach the track
+    track.attach(targetElement);
+    
+    // Force playback with delay for iOS
+    setTimeout(() => {
+      const playPromise = targetElement.play?.();
+      if (playPromise) {
+        playPromise
+          .then(() => console.log(`[Viewer] ${isVideo ? 'Video' : 'Audio'} playback started`))
+          .catch(err => console.log('[Viewer] Autoplay prevented:', err.message));
+      }
+    }, 100);
+  }, []);
 
   const connect = async () => {
     setStatus('connecting');
@@ -80,22 +115,25 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
         console.log('[Viewer] Track subscribed:', track.kind, 'from', participant.identity);
+        
         if (track.kind === Track.Kind.Video) {
           videoTrackRef.current = track;
           setHasVideoTrack(true);
           
-          // Always attach to compact view initially
-          if (videoRef.current) {
-            track.attach(videoRef.current);
-            console.log('[Viewer] Video track attached to compact view');
+          // Attach to the currently active video element
+          const targetVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+          if (targetVideoEl) {
+            attachTrack(track, targetVideoEl, true);
+            currentVideoElRef.current = targetVideoEl;
           }
         } else if (track.kind === Track.Kind.Audio) {
           audioTrackRef.current = track;
           
-          // Always attach to compact view initially
-          if (videoRef.current) {
-            track.attach(videoRef.current);
-            console.log('[Viewer] Audio track attached to compact view');
+          // Attach to the currently active audio element
+          const targetAudioEl = isExpanded ? expandedAudioRef.current : audioRef.current;
+          if (targetAudioEl) {
+            attachTrack(track, targetAudioEl, false);
+            currentAudioElRef.current = targetAudioEl;
           }
         }
       });
@@ -123,53 +161,62 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
 
   // Detach/Attach tracks when expanding/collapsing
   useEffect(() => {
-    if (!videoTrackRef.current && !audioTrackRef.current) return;
+    console.log('[Viewer] Expansion state changed:', isExpanded, {
+      hasVideo: !!videoTrackRef.current,
+      hasAudio: !!audioTrackRef.current
+    });
     
-    console.log('[Viewer] Expansion state changed:', isExpanded);
+    // Detach from old elements
+    if (currentVideoElRef.current && videoTrackRef.current) {
+      videoTrackRef.current.detach(currentVideoElRef.current);
+      currentVideoElRef.current = null;
+    }
+    if (currentAudioElRef.current && audioTrackRef.current) {
+      audioTrackRef.current.detach(currentAudioElRef.current);
+      currentAudioElRef.current = null;
+    }
     
-    if (isExpanded && expandedVideoRef.current) {
-      // Detach from compact view
-      if (videoRef.current && videoTrackRef.current) {
-        videoTrackRef.current.detach(videoRef.current);
-      }
-      if (videoRef.current && audioTrackRef.current) {
-        audioTrackRef.current.detach(videoRef.current);
-      }
-      
-      // Attach to expanded view
-      if (videoTrackRef.current) {
-        videoTrackRef.current.attach(expandedVideoRef.current);
-        console.log('[Viewer] Video track attached to expanded view');
-      }
-      if (audioTrackRef.current) {
-        audioTrackRef.current.attach(expandedVideoRef.current);
-        console.log('[Viewer] Audio track attached to expanded view');
-      }
-      
-      // Ensure playback
-      expandedVideoRef.current.play().catch(err => 
-        console.log('[Viewer] Autoplay prevented (expected):', err)
-      );
-    } else if (!isExpanded && videoRef.current) {
-      // Detach from expanded view
+    // Attach to new elements
+    if (isExpanded) {
       if (expandedVideoRef.current && videoTrackRef.current) {
-        videoTrackRef.current.detach(expandedVideoRef.current);
+        attachTrack(videoTrackRef.current, expandedVideoRef.current, true);
+        currentVideoElRef.current = expandedVideoRef.current;
       }
-      if (expandedVideoRef.current && audioTrackRef.current) {
-        audioTrackRef.current.detach(expandedVideoRef.current);
+      if (expandedAudioRef.current && audioTrackRef.current) {
+        attachTrack(audioTrackRef.current, expandedAudioRef.current, false);
+        currentAudioElRef.current = expandedAudioRef.current;
       }
-      
-      // Attach back to compact view
-      if (videoTrackRef.current) {
-        videoTrackRef.current.attach(videoRef.current);
-        console.log('[Viewer] Video track attached to compact view');
+    } else {
+      if (videoRef.current && videoTrackRef.current) {
+        attachTrack(videoTrackRef.current, videoRef.current, true);
+        currentVideoElRef.current = videoRef.current;
       }
-      if (audioTrackRef.current) {
-        audioTrackRef.current.attach(videoRef.current);
-        console.log('[Viewer] Audio track attached to compact view');
+      if (audioRef.current && audioTrackRef.current) {
+        attachTrack(audioTrackRef.current, audioRef.current, false);
+        currentAudioElRef.current = audioRef.current;
       }
     }
-  }, [isExpanded]);
+  }, [isExpanded, attachTrack]);
+
+  // Re-attach if tracks arrive after component mount or expansion
+  useEffect(() => {
+    if (!videoTrackRef.current && !audioTrackRef.current) return;
+    
+    console.log('[Viewer] Tracks changed, re-attaching to current view');
+    
+    const targetVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+    const targetAudioEl = isExpanded ? expandedAudioRef.current : audioRef.current;
+    
+    if (videoTrackRef.current && targetVideoEl && targetVideoEl !== currentVideoElRef.current) {
+      attachTrack(videoTrackRef.current, targetVideoEl, true);
+      currentVideoElRef.current = targetVideoEl;
+    }
+    
+    if (audioTrackRef.current && targetAudioEl && targetAudioEl !== currentAudioElRef.current) {
+      attachTrack(audioTrackRef.current, targetAudioEl, false);
+      currentAudioElRef.current = targetAudioEl;
+    }
+  }, [videoTrackRef.current, audioTrackRef.current, isExpanded, attachTrack]);
 
   useEffect(() => {
     return () => {
@@ -207,11 +254,14 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
       <div className="space-y-3">
         <div className="relative group">
           <video 
-            ref={videoRef} 
+            ref={videoRef}
+            id="compact-video"
             autoPlay 
-            playsInline 
+            playsInline
+            muted={false}
             className="w-full rounded-2xl border bg-black aspect-video shadow-xl" 
           />
+          <audio ref={audioRef} id="compact-audio" autoPlay muted={false} hidden />
           
           {/* Waiting for stream message */}
           {status === 'connected' && !hasVideoTrack && (
@@ -279,12 +329,14 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
             {/* Video Player */}
             <div className="relative bg-black flex items-center justify-center">
               <video 
-                ref={expandedVideoRef} 
+                ref={expandedVideoRef}
+                id="expanded-video"
                 autoPlay 
                 playsInline 
                 muted={false}
                 className="w-full h-full" 
               />
+              <audio ref={expandedAudioRef} id="expanded-audio" autoPlay muted={false} hidden />
               
               {/* Expanded Status & Viewer Count */}
               <div className="absolute top-4 left-4 flex items-center gap-3">
