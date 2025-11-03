@@ -137,10 +137,12 @@ serve(async (req) => {
             // Determine tier from groups (subscription tier)
             let tier = 'free';
             if (member.groups && Array.isArray(member.groups) && member.groups.length > 0) {
-              const groupName = member.groups[0].toLowerCase();
-              if (groupName.includes('legionnaire')) tier = 'legionnaire';
-              else if (groupName.includes('outlaw')) tier = 'outlaw';
-              else if (groupName.includes('rebel')) tier = 'rebel';
+              const group = member.groups[0];
+              const groupName = typeof group === 'string' ? group : (group?.name || '');
+              const groupLower = groupName.toLowerCase();
+              if (groupLower.includes('legionnaire')) tier = 'legionnaire';
+              else if (groupLower.includes('outlaw')) tier = 'outlaw';
+              else if (groupLower.includes('rebel')) tier = 'rebel';
             }
 
             const profileData = {
