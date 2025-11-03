@@ -83,22 +83,22 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
         if (track.kind === Track.Kind.Video) {
           videoTrackRef.current = track;
           setHasVideoTrack(true);
-          if (videoRef.current) {
-            track.attach(videoRef.current);
+          
+          // Attach to appropriate video element based on expansion state
+          const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+          if (activeVideoEl) {
+            track.attach(activeVideoEl);
+            console.log(`[Viewer] Video track attached to ${isExpanded ? 'expanded' : 'compact'} view`);
           }
-          if (expandedVideoRef.current && isExpanded) {
-            track.attach(expandedVideoRef.current);
-          }
-          console.log('[Viewer] Video track attached');
         } else if (track.kind === Track.Kind.Audio) {
           audioTrackRef.current = track;
-          if (videoRef.current) {
-            track.attach(videoRef.current);
+          
+          // Attach to appropriate video element based on expansion state
+          const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+          if (activeVideoEl) {
+            track.attach(activeVideoEl);
+            console.log(`[Viewer] Audio track attached to ${isExpanded ? 'expanded' : 'compact'} view`);
           }
-          if (expandedVideoRef.current && isExpanded) {
-            track.attach(expandedVideoRef.current);
-          }
-          console.log('[Viewer] Audio track attached');
         }
       });
 
@@ -123,20 +123,52 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
     setStatus('idle');
   };
 
-  // Attach tracks when expanded view opens
+  // Detach/Attach tracks when expanding/collapsing
   useEffect(() => {
+    if (!videoTrackRef.current && !audioTrackRef.current) return;
+    
+    console.log('[Viewer] Expansion state changed:', isExpanded);
+    
     if (isExpanded && expandedVideoRef.current) {
+      // Detach from compact view
+      if (videoRef.current && videoTrackRef.current) {
+        videoTrackRef.current.detach(videoRef.current);
+      }
+      if (videoRef.current && audioTrackRef.current) {
+        audioTrackRef.current.detach(videoRef.current);
+      }
+      
+      // Attach to expanded view
       if (videoTrackRef.current) {
         videoTrackRef.current.attach(expandedVideoRef.current);
         console.log('[Viewer] Video track attached to expanded view');
-        // Ensure video plays
-        expandedVideoRef.current.play().catch(err => 
-          console.error('[Viewer] Error playing expanded video:', err)
-        );
       }
       if (audioTrackRef.current) {
         audioTrackRef.current.attach(expandedVideoRef.current);
         console.log('[Viewer] Audio track attached to expanded view');
+      }
+      
+      // Ensure playback
+      expandedVideoRef.current.play().catch(err => 
+        console.log('[Viewer] Autoplay prevented (expected):', err)
+      );
+    } else if (!isExpanded && videoRef.current) {
+      // Detach from expanded view
+      if (expandedVideoRef.current && videoTrackRef.current) {
+        videoTrackRef.current.detach(expandedVideoRef.current);
+      }
+      if (expandedVideoRef.current && audioTrackRef.current) {
+        audioTrackRef.current.detach(expandedVideoRef.current);
+      }
+      
+      // Attach back to compact view
+      if (videoTrackRef.current) {
+        videoTrackRef.current.attach(videoRef.current);
+        console.log('[Viewer] Video track attached to compact view');
+      }
+      if (audioTrackRef.current) {
+        audioTrackRef.current.attach(videoRef.current);
+        console.log('[Viewer] Audio track attached to compact view');
       }
     }
   }, [isExpanded]);
