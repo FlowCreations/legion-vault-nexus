@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Room, RoomEvent, createLocalTracks, Track, LocalTrack } from 'livekit-client';
+import { Room, RoomEvent, createLocalTracks, Track, LocalTrack, LocalAudioTrack } from 'livekit-client';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,6 +32,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   const [sourceNode, setSourceNode] = useState<MediaStreamAudioSourceNode | null>(null);
   const [rawAudioStream, setRawAudioStream] = useState<MediaStream | null>(null);
   const [audioReady, setAudioReady] = useState(false);
+  const processedAudioStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     requestPermissionsAndLoadDevices();
@@ -129,6 +130,8 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const handleProcessedStream = (processedStream: MediaStream) => {
     console.log('[Broadcaster] Received processed audio stream from mixer:', processedStream.id);
+    // Store the processed stream for LiveKit to use
+    processedAudioStreamRef.current = processedStream;
     // Update the raw audio stream state with the PROCESSED stream
     // This ensures MicrophoneMeter gets a fresh stream it can read from
     setRawAudioStream(processedStream);
@@ -220,23 +223,19 @@ export function LiveBroadcaster({ eventId }: Props) {
       // STEP 4: Create LiveKit tracks for broadcasting
       // Get the actual device IDs from the active tracks
       const actualVideoId = rawStream.getVideoTracks()[0]?.getSettings().deviceId;
-      const actualAudioId = rawStream.getAudioTracks()[0]?.getSettings().deviceId;
       
-      const tracks = await createLocalTracks({
-        audio: actualAudioId ? { 
-          deviceId: { exact: actualAudioId },
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 48000,
-          channelCount: 2
-        } : {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 48000,
-          channelCount: 2
-        },
+      // Wait a moment for processed audio to be available
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (!processedAudioStreamRef.current) {
+        throw new Error('Processed audio stream not ready');
+      }
+      
+      console.log('[Broadcaster] Using processed audio stream for LiveKit');
+      
+      // Create video track with LiveKit
+      const videoTracks = await createLocalTracks({
+        audio: false,
         video: actualVideoId ? { 
           deviceId: { exact: actualVideoId },
           resolution: {
@@ -250,6 +249,12 @@ export function LiveBroadcaster({ eventId }: Props) {
           }
         },
       });
+      
+      // Create audio track manually from the processed stream
+      const processedAudioTrack = processedAudioStreamRef.current.getAudioTracks()[0];
+      const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
+      
+      const tracks = [...videoTracks, livekitAudioTrack];
 
       console.log('[Broadcaster] Created LiveKit tracks:', tracks.length);
 
