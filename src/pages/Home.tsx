@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles, Loader2 } from "lucide-react";
 import solLogo from "@/assets/sol-logo-new.png";
@@ -118,15 +119,53 @@ export default function Home() {
 
       
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
+      >
         {/* Animated background glow */}
-        <div className="absolute inset-0 bg-gradient-cosmic">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-glow-pulse -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-primary-glow/10 rounded-full blur-3xl animate-glow-pulse delay-1000 -translate-y-1/2" />
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2, delay: 0.3 }}
+          className="absolute inset-0 bg-gradient-cosmic"
+        >
+          <motion.div 
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.25, 0.2]
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute top-1/2 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl -translate-y-1/2" 
+          />
+          <motion.div 
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.1, 0.15, 0.1]
+            }}
+            transition={{
+              duration: 4,
+              delay: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute top-1/2 right-1/4 w-96 h-96 bg-primary-glow/10 rounded-full blur-3xl -translate-y-1/2" 
+          />
+        </motion.div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+          className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        >
           {/* Logo */}
           <div className="mb-3 mt-64">
             <img 
@@ -182,9 +221,9 @@ export default function Home() {
               </Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-      </section>
+      </motion.section>
 
       {/* Featured Content Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
