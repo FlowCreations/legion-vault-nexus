@@ -103,7 +103,21 @@ Deno.serve(async (req) => {
     if (!apiResponse || !apiResponse.ok) {
       const errorText = apiResponse ? await apiResponse.text() : 'No response';
       console.error(`❌ All artist IDs failed. Last response:`, errorText);
-      throw new Error(`Viberate API error: Could not find artist. Tried: ${artistIds.join(', ')}`);
+      
+      // Return a graceful response instead of throwing an error
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Artist not found on Viberate',
+          message: `Could not find artist on Viberate. Tried: ${artistIds.join(', ')}`,
+          suggestion: 'The artist may not be listed on Viberate yet, or may use a different artist ID. Please check the Viberate website for the correct artist ID.',
+          triedIds: artistIds
+        }),
+        { 
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const viberateData: ViberateApiResponse = await apiResponse.json();
