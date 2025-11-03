@@ -540,15 +540,37 @@ export default function CommunityHub() {
     });
   };
 
-  const handleRSVP = (eventId: string) => {
+  const handleRSVP = async (event: any) => {
+    const eventId = event.id;
+    const isAlreadyRSVPd = rsvpEvents.has(eventId);
+    
     setRsvpEvents(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(eventId)) {
+      if (isAlreadyRSVPd) {
         newSet.delete(eventId);
         toast({ title: "RSVP Cancelled" });
       } else {
         newSet.add(eventId);
-        toast({ title: "RSVP Confirmed!", description: "You're signed up for this event" });
+        
+        // Create calendar event - send invite via edge function
+        supabase.functions.invoke('send-calendar-invite', {
+          body: {
+            title: event.title,
+            description: event.description,
+            date: event.date,
+            time: event.time,
+            eventType: 'community_event'
+          }
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Calendar invite error:', error);
+          }
+        });
+        
+        toast({ 
+          title: "RSVP Confirmed!", 
+          description: "Calendar invite sent to your email"
+        });
       }
       return newSet;
     });
@@ -939,7 +961,7 @@ export default function CommunityHub() {
                           <Button 
                             variant={rsvpEvents.has(event.id) ? "outline" : "default"}
                             className={!rsvpEvents.has(event.id) ? "bg-gradient-gold" : ""}
-                            onClick={() => handleRSVP(event.id)}
+                            onClick={() => handleRSVP(event)}
                           >
                             {rsvpEvents.has(event.id) ? "Cancel RSVP" : "RSVP Free"}
                           </Button>
@@ -1660,7 +1682,7 @@ const mockProfiles = [
   },
 ];
 
-// Live events from LiveStudio
+// Live events from LiveStudio - ALL FREE with RSVP
 const liveEvents = [
   {
     id: "1",
@@ -1668,7 +1690,7 @@ const liveEvents = [
     description: "The grand finale of our virtual tour featuring special guests and never before performed tracks",
     date: "March 15, 2026",
     time: "9:00 PM EST",
-    price: "$19.99",
+    price: null,
     isVIP: false,
     isPremium: false,
   },
@@ -1679,18 +1701,18 @@ const liveEvents = [
     date: "February 20, 2026",
     time: "7:00 PM EST",
     price: null,
-    isVIP: true,
+    isVIP: false,
     isPremium: false,
   },
   {
     id: "3",
     title: "Album Listening Party",
-    description: "Listen to Sons of Legion's newest album live with the band before its released.",
+    description: "Listen to Sons of Legion's newest album live with the band before it's released.",
     date: "January 30, 2026",
     time: "8:00 PM EST",
     price: null,
     isVIP: false,
-    isPremium: true,
+    isPremium: false,
   },
 ];
 
@@ -1863,55 +1885,25 @@ const sampleIntros = [
 const tourShows = [
   {
     id: "1",
-    month: "Mar",
-    day: "15",
-    venue: "Madison Square Garden",
-    city: "New York",
-    state: "NY",
-    time: "8:00 PM",
+    month: "Apr",
+    day: "12",
+    venue: "Tortuga Music Festival",
+    city: "Fort Lauderdale",
+    state: "FL",
+    time: "TBA",
     status: "On Sale",
-    specialGuests: "The Midnight Collective",
+    price: "Festival Pass",
+    specialGuests: "Post Malone, Kenny Chesney, Ice Cube"
   },
   {
     id: "2",
-    month: "Mar",
-    day: "22",
-    venue: "The Forum",
-    city: "Los Angeles",
-    state: "CA",
-    time: "7:30 PM",
-    status: "Low Tickets",
-    specialGuests: "Echo Valley",
-  },
-  {
-    id: "3",
-    month: "Apr",
-    day: "05",
+    month: "May",
+    day: "20",
     venue: "Red Rocks Amphitheatre",
     city: "Morrison",
     state: "CO",
-    time: "8:00 PM",
-    status: "Sold Out",
-  },
-  {
-    id: "4",
-    month: "Apr",
-    day: "12",
-    venue: "Bridgestone Arena",
-    city: "Nashville",
-    state: "TN",
-    time: "7:00 PM",
+    time: "7:30 PM",
     status: "On Sale",
-  },
-  {
-    id: "5",
-    month: "Apr",
-    day: "20",
-    venue: "United Center",
-    city: "Chicago",
-    state: "IL",
-    time: "8:00 PM",
-    status: "On Sale",
-    specialGuests: "The Resonance",
-  },
+    price: "$45 - $85",
+  }
 ];
