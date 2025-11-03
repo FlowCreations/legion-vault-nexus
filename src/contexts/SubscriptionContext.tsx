@@ -44,10 +44,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'admin')
-        .single();
+        .maybeSingle();
 
       const adminStatus = !!adminRoleData;
       setIsAdmin(adminStatus);
+      console.log('Admin status for user:', user.email, '=', adminStatus);
 
       // Check merchant status (merchant or admin)
       const { data: merchantRoleData } = await supabase
