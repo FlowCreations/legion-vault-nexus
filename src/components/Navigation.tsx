@@ -44,8 +44,12 @@ export const Navigation = () => {
   useEffect(() => {
     checkAdminStatus();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAdminStatus();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Clear cart when user logs out
+      if (event === 'SIGNED_OUT' || !session) {
+        clearCart();
+      }
+      await checkAdminStatus();
     });
 
     // Listen for profile updates
@@ -71,7 +75,7 @@ export const Navigation = () => {
       subscription.unsubscribe();
       supabase.removeChannel(profileChannel);
     };
-  }, []);
+  }, [clearCart]);
 
   const checkAdminStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -79,6 +83,8 @@ export const Navigation = () => {
       setIsAdmin(false);
       setIsLoggedIn(false);
       setUserProfile(null);
+      // Clear cart when no user is logged in
+      clearCart();
       return;
     }
 
