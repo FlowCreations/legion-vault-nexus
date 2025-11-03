@@ -191,7 +191,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
   };
 
   return (
-    <div className="hidden xl:block fixed right-4 top-24 w-20 bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-lg p-3 shadow-lg z-40">
+    <div className="hidden xl:block fixed right-4 top-[136px] w-20 bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-lg p-3 shadow-lg z-40">
       <div className="flex flex-col items-center gap-2 mb-3">
         <Users className="w-5 h-5 text-primary" />
         <Badge variant="secondary" className="text-xs px-2 py-0.5">

@@ -724,14 +724,6 @@ export default function CommunityHub() {
       <header className="sticky top-16 z-40 border-b bg-card px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate("/")}
-              className="hover:bg-primary/10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <h1 className="font-serif text-2xl font-bold">THE LEGION</h1>
             <Badge variant="secondary" className="bg-primary/20 text-primary">
               385 <span className="ml-1">members</span>
