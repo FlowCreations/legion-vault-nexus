@@ -72,21 +72,38 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Default artist ID for Sons of Legion
+    // Default artist ID for Sons of Legion - try different formats
     const { artist_id = 'sons-of-legion' } = await req.json().catch(() => ({}));
 
     console.log(`Fetching Viberate data for artist: ${artist_id}`);
+    
+    // Try multiple possible artist IDs
+    const artistIds = [artist_id, 'sons-of-legion', 'sonsoflegion', 'Sons of Legion'];
+    let apiResponse: Response | null = null;
+    let successfulId: string | null = null;
 
-    // Fetch from Viberate API
-    const apiResponse = await fetch(`https://api.viberate.com/api/v3/artist/${artist_id}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    for (const id of artistIds) {
+      console.log(`Trying artist ID: ${id}`);
+      apiResponse = await fetch(`https://api.viberate.com/api/v3/artist/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log(`Response status for ${id}: ${apiResponse.status}`);
+      
+      if (apiResponse.ok) {
+        successfulId = id;
+        console.log(`✅ Success with artist ID: ${id}`);
+        break;
+      }
+    }
 
-    if (!apiResponse.ok) {
-      throw new Error(`Viberate API error: ${apiResponse.status} ${apiResponse.statusText}`);
+    if (!apiResponse || !apiResponse.ok) {
+      const errorText = apiResponse ? await apiResponse.text() : 'No response';
+      console.error(`❌ All artist IDs failed. Last response:`, errorText);
+      throw new Error(`Viberate API error: Could not find artist. Tried: ${artistIds.join(', ')}`);
     }
 
     const viberateData: ViberateApiResponse = await apiResponse.json();

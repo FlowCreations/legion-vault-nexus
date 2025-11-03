@@ -28,56 +28,50 @@ serve(async (req) => {
 
     switch (action) {
       case 'get_members': {
-        // Try multiple endpoint formats to find what works
-        const endpoints = [
-          `/users?workspace=${HEARTBEAT_WORKSPACE_ID}`,
-          `/workspaces/${HEARTBEAT_WORKSPACE_ID}/users`,
-          `/users`,
-          `/members?workspace=${HEARTBEAT_WORKSPACE_ID}`,
-        ];
+        console.log('Attempting to fetch Heartbeat members...');
+        console.log('API Key (first 10 chars):', HEARTBEAT_API_KEY?.substring(0, 10));
+        
+        // Try the exact format from the documentation
+        const response = await fetch(`https://api.heartbeat.chat/v0/users`, {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `${HEARTBEAT_API_KEY}`, // Try without "Bearer" prefix
+          },
+        });
 
-        let members = null;
-        let successEndpoint = null;
+        console.log(`Response status: ${response.status}`);
+        const responseText = await response.text();
+        console.log(`Response body:`, responseText);
 
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`Trying endpoint: ${HEARTBEAT_API_URL}${endpoint}`);
-            const response = await fetch(`${HEARTBEAT_API_URL}${endpoint}`, {
-              headers: {
-                'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-                'Content-Type': 'application/json',
-                'accept': 'application/json',
-              },
-            });
-
-            console.log(`Response status: ${response.status}`);
-            console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
-
-            if (response.ok) {
-              const data = await response.json();
-              console.log(`Response data structure:`, JSON.stringify(data, null, 2));
-              
-              // Handle different possible response structures
-              members = data.users || data.data || data.members || (Array.isArray(data) ? data : null);
-              
-              if (members) {
-                successEndpoint = endpoint;
-                console.log(`✅ Success with endpoint: ${endpoint}`);
-                console.log(`Found ${Array.isArray(members) ? members.length : 0} members`);
-                break;
-              }
-            }
-          } catch (err) {
-            console.log(`❌ Failed with endpoint ${endpoint}:`, err);
+        if (!response.ok) {
+          // Try again with Bearer prefix
+          const response2 = await fetch(`https://api.heartbeat.chat/v0/users`, {
+            headers: {
+              'accept': 'application/json',
+              'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            },
+          });
+          
+          console.log(`Second attempt status: ${response2.status}`);
+          const response2Text = await response2.text();
+          console.log(`Second attempt body:`, response2Text);
+          
+          if (!response2.ok) {
+            throw new Error(`Heartbeat API error: ${response2.status} - ${response2Text}`);
           }
+          
+          const members = JSON.parse(response2Text);
+          return new Response(
+            JSON.stringify({ success: true, members }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
-        if (!members) {
-          throw new Error('Could not fetch members from any endpoint');
-        }
+        const members = JSON.parse(responseText);
+        console.log(`Found ${Array.isArray(members) ? members.length : 'unknown'} members`);
 
         return new Response(
-          JSON.stringify({ success: true, members, endpoint: successEndpoint }),
+          JSON.stringify({ success: true, members }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -111,58 +105,49 @@ serve(async (req) => {
 
       case 'sync_to_database': {
         console.log('🔄 Starting Heartbeat member sync...');
+        console.log('API Key (first 10 chars):', HEARTBEAT_API_KEY?.substring(0, 10));
         
-        // Try multiple endpoint formats to find what works
-        const endpoints = [
-          `/users?workspace=${HEARTBEAT_WORKSPACE_ID}`,
-          `/workspaces/${HEARTBEAT_WORKSPACE_ID}/users`,
-          `/users`,
-          `/members?workspace=${HEARTBEAT_WORKSPACE_ID}`,
-        ];
+        // Try the exact format from the documentation
+        let response = await fetch(`https://api.heartbeat.chat/v0/users`, {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `${HEARTBEAT_API_KEY}`,
+          },
+        });
 
-        let members = null;
-        let successEndpoint = null;
+        console.log(`Response status: ${response.status}`);
 
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`Trying endpoint: ${HEARTBEAT_API_URL}${endpoint}`);
-            const response = await fetch(`${HEARTBEAT_API_URL}${endpoint}`, {
-              headers: {
-                'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
-                'Content-Type': 'application/json',
-                'accept': 'application/json',
-              },
-            });
-
-            console.log(`Response status: ${response.status}`);
-
-            if (response.ok) {
-              const data = await response.json();
-              console.log(`Response data structure:`, JSON.stringify(data, null, 2).substring(0, 500));
-              
-              // Handle different possible response structures
-              members = data.users || data.data || data.members || (Array.isArray(data) ? data : null);
-              
-              if (members && Array.isArray(members)) {
-                successEndpoint = endpoint;
-                console.log(`✅ Success with endpoint: ${endpoint}`);
-                console.log(`Found ${members.length} members to sync`);
-                if (members.length > 0) {
-                  console.log(`Sample member structure:`, JSON.stringify(members[0], null, 2));
-                }
-                break;
-              }
-            } else {
-              const errorText = await response.text();
-              console.log(`❌ Failed with status ${response.status}:`, errorText);
-            }
-          } catch (err) {
-            console.log(`❌ Error with endpoint ${endpoint}:`, err);
+        if (!response.ok) {
+          // Try again with Bearer prefix
+          response = await fetch(`https://api.heartbeat.chat/v0/users`, {
+            headers: {
+              'accept': 'application/json',
+              'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            },
+          });
+          
+          console.log(`Second attempt status: ${response.status}`);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.log(`❌ Failed with status ${response.status}:`, errorText);
+            throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
           }
         }
 
+        const data = await response.json();
+        console.log(`Response data structure:`, JSON.stringify(data, null, 2).substring(0, 500));
+        
+        // Handle different possible response structures
+        const members = data.users || data.data || data.members || (Array.isArray(data) ? data : null);
+        
         if (!members || !Array.isArray(members)) {
-          throw new Error('Could not fetch members from any endpoint');
+          throw new Error('Could not find members array in response');
+        }
+
+        console.log(`Found ${members.length} members to sync`);
+        if (members.length > 0) {
+          console.log(`Sample member structure:`, JSON.stringify(members[0], null, 2));
         }
 
         console.log(`Syncing ${members.length} members to database`);
