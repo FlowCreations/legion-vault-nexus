@@ -26,6 +26,8 @@ const LiveStreamEventManager = lazy(() => import("@/components/merchant/LiveStre
 const PersonalityOverview = lazy(() => import("@/components/merchant/intelligence/PersonalityOverview").then(m => ({ default: m.PersonalityOverview })));
 const MemberPersonalityTable = lazy(() => import("@/components/merchant/intelligence/MemberPersonalityTable").then(m => ({ default: m.MemberPersonalityTable })));
 const NBAQueue = lazy(() => import("@/components/merchant/intelligence/NBAQueue").then(m => ({ default: m.NBAQueue })));
+const OracleInsight = lazy(() => import("@/components/merchant/intelligence/OracleInsight").then(m => ({ default: m.OracleInsight })));
+const EpiphanyInsight = lazy(() => import("@/components/merchant/intelligence/EpiphanyInsight").then(m => ({ default: m.EpiphanyInsight })));
 const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview"));
 const DistributorIntegration = lazy(() => import("@/components/merchant/DistributorIntegration").then(m => ({ default: m.DistributorIntegration })));
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
@@ -388,6 +390,12 @@ const Merchant = memo(() => {
           </TabsContent>
 
           <TabsContent value="intelligence" className="space-y-6">
+            <Suspense fallback={<LoadingSpinner />}>
+              <OracleInsight />
+            </Suspense>
+            <Suspense fallback={<LoadingSpinner />}>
+              <EpiphanyInsight />
+            </Suspense>
             <Suspense fallback={<LoadingSpinner />}>
               <PersonalityOverview />
             </Suspense>
