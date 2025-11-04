@@ -127,7 +127,7 @@ export const EarningsOverview = () => {
               EARNINGS / {selectedMonth.toUpperCase()}
             </p>
             <h1 className="text-6xl font-bold text-foreground">
-              ${currentData.totalEarnings.toLocaleString()}.00
+              ${currentData.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h1>
           </div>
           
@@ -168,7 +168,7 @@ export const EarningsOverview = () => {
               DAILY SALES
             </p>
             <h2 className="text-4xl font-bold text-foreground">
-              ${dailySalesData[selectedPeriod].toLocaleString()}.00
+              ${dailySalesData[selectedPeriod].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h2>
           </div>
           
