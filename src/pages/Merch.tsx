@@ -532,11 +532,14 @@ export default function Merch() {
                       <label className="text-sm font-medium">Available Sizes</label>
                       <div className="flex flex-wrap gap-2">
                         {quickViewProduct.variants.map((variant) => (
-                          <div key={variant.id} className="px-3 py-1 border rounded text-sm">
+                          <div key={variant.id} className="px-3 py-2 border rounded-lg text-sm bg-muted/50 font-medium">
                             {variant.name}
                           </div>
                         ))}
                       </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Select size in the customizer
+                      </p>
                     </div>
                   )}
                   <Button 
@@ -548,7 +551,10 @@ export default function Merch() {
                       handleAddToCart(quickViewProduct);
                     }}
                   >
-                    Add to Cart
+                    {quickViewProduct.variants && quickViewProduct.variants.length > 0 
+                      ? 'Select Size & Add to Cart'
+                      : 'Add to Cart'
+                    }
                   </Button>
                 </div>
               </div>
