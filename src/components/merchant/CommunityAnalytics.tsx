@@ -38,16 +38,65 @@ export function CommunityAnalytics() {
 
   const loadAnalytics = async () => {
     try {
-      const response = await fetch('/api/community-analytics');
-      if (!response.ok) throw new Error('Failed to load analytics');
-      
-      const data = await response.json();
-      setAnalytics(data);
+      // Fetch real-time member counts directly from user_profiles
+      const { data: memberData, error: memberError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('is_public', true);
+
+      if (memberError) throw memberError;
+
+      const total = memberData?.length || 0;
+      const active7d = memberData?.filter(m => 
+        m.last_active_at && new Date(m.last_active_at) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      ).length || 0;
+
+      const tierCounts = {
+        free: memberData?.filter(m => !m.membership_tier && !m.tier).length || 0,
+        rebels: memberData?.filter(m => 
+          (m.membership_tier?.toLowerCase() || m.tier?.toLowerCase() || '').includes('rebel')
+        ).length || 0,
+        outlaws: memberData?.filter(m => 
+          (m.membership_tier?.toLowerCase() || m.tier?.toLowerCase() || '').includes('outlaw')
+        ).length || 0,
+        legionnaires: memberData?.filter(m => 
+          (m.membership_tier?.toLowerCase() || m.tier?.toLowerCase() || '').includes('legionnaire')
+        ).length || 0,
+      };
+
+      // Create analytics snapshot
+      const analyticsData: CommunityAnalytics = {
+        date: new Date().toISOString(),
+        total_members: total,
+        new_members_today: memberData?.filter(m => 
+          new Date(m.created_at).toDateString() === new Date().toDateString()
+        ).length || 0,
+        active_members_7d: active7d,
+        active_members_30d: memberData?.filter(m => 
+          m.last_active_at && new Date(m.last_active_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        ).length || 0,
+        tier_free: tierCounts.free,
+        tier_rebels: tierCounts.rebels,
+        tier_outlaws: tierCounts.outlaws,
+        tier_legionnaires: tierCounts.legionnaires,
+        avg_engagement_score: 0,
+        total_posts: 0,
+        total_messages: 0,
+        countries_represented: new Set(memberData?.map(m => m.location?.split(',')[2]?.trim()).filter(Boolean)).size,
+        top_country: '',
+        top_region: '',
+        total_mrr: memberData?.reduce((sum, m) => sum + (m.mrr || 0), 0) || 0,
+        avg_lifetime_value: memberData?.reduce((sum, m) => sum + (m.total_spend || 0), 0) / (total || 1),
+      };
+
+      setAnalytics([analyticsData]);
     } catch (error) {
       console.error('Error loading analytics:', error);
-      
-      // Fallback: compute analytics if not available
-      await computeAnalytics();
+      toast({
+        title: "Error",
+        description: "Failed to load community analytics",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -56,21 +105,17 @@ export function CommunityAnalytics() {
   const computeAnalytics = async () => {
     setComputing(true);
     try {
-      const { error } = await supabase.functions.invoke('compute-community-analytics');
-      
-      if (error) throw error;
+      await loadAnalytics();
       
       toast({
         title: "Success",
-        description: "Community analytics updated",
+        description: "Community analytics refreshed",
       });
-      
-      await loadAnalytics();
     } catch (error) {
       console.error('Error computing analytics:', error);
       toast({
         title: "Error",
-        description: "Failed to compute analytics",
+        description: "Failed to refresh analytics",
         variant: "destructive",
       });
     } finally {
