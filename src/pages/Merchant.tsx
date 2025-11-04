@@ -400,9 +400,6 @@ const Merchant = memo(() => {
               <PersonalityOverview />
             </Suspense>
             <Suspense fallback={<LoadingSpinner />}>
-              <NBAQueue />
-            </Suspense>
-            <Suspense fallback={<LoadingSpinner />}>
               <MemberPersonalityTable />
             </Suspense>
           </TabsContent>
