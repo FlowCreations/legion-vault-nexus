@@ -181,6 +181,12 @@ const Merchant = memo(() => {
               Marketing
             </TabsTrigger>
             <TabsTrigger 
+              value="community"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Community
+            </TabsTrigger>
+            <TabsTrigger 
               value="livestream"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
