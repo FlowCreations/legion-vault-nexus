@@ -150,7 +150,8 @@ serve(async (req) => {
               display_name: member.name || member.email?.split('@')[0] || 'Unknown Member',
               email: member.email || null,
               full_name: member.full_name || member.name || null,
-              avatar_url: member.profile_picture || null,
+              // Try multiple avatar field variations from Heartbeat API
+              avatar_url: member.profile_picture || member.avatar_url || member.avatar || member.photo_url || null,
               bio: member.bio || null,
               location: member.location || null,
               tier: tier,
