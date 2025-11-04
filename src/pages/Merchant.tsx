@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ import VideoManager from "./VideoManager";
 import { SeedCoordinatesButton } from "@/components/merchant/SeedCoordinatesButton";
 import { ViberateSyncButton } from "@/components/merchant/ViberateSyncButton";
 import { TourManager } from "@/components/merchant/TourManager";
-import { CommunityMembers } from "@/components/merchant/CommunityMembers";
+const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(module => ({ default: module.CommunityMembers })));
 
 interface AnalyticsData {
   events: number;
@@ -305,7 +305,9 @@ const Merchant = () => {
               </TabsList>
               
               <TabsContent value="members">
-                <CommunityMembers />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div></div>}>
+                  <CommunityMembers />
+                </Suspense>
               </TabsContent>
               
               <TabsContent value="activity">

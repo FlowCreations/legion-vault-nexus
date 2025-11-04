@@ -26,10 +26,10 @@ const monthsData: MonthData[] = [
     month: "October 2025",
     totalEarnings: 95300,
     sales: {
-      albums: 29500,
-      merch: 25000,
-      tickets: 14200,
-      community: 5300,
+      albums: 982,
+      merch: 833,
+      tickets: 474,
+      community: 177,
     },
   },
   {
@@ -55,13 +55,13 @@ const monthsData: MonthData[] = [
 ];
 
 const dailySalesData = {
-  today: 850,
-  yesterday: 920,
-  "7days": 5800,
-  "14days": 11200,
-  "thismonth": 21300,
-  "30days": 19800,
-  alltime: 127500,
+  today: 2466,
+  yesterday: 2350,
+  "7days": 16800,
+  "14days": 32500,
+  "thismonth": 95300,
+  "30days": 89400,
+  alltime: 487500,
 };
 
 export const EarningsOverview = () => {
