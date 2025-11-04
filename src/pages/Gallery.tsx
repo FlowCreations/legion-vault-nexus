@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, ArrowLeft, Mail, Loader2, ShoppingCart, X } from "lucide-react";
+import { Download, ArrowLeft, Mail, Loader2, ShoppingCart, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +45,8 @@ export default function Gallery() {
   const [isLoading, setIsLoading] = useState(false);
   const [nyProducts, setNyProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewSelectedSize, setQuickViewSelectedSize] = useState<string | null>(null);
   const addItem = useCartStore(state => state.addItem);
 
   useEffect(() => {
@@ -194,15 +196,7 @@ export default function Gallery() {
     toast.success(`${item.title} added to cart!`);
   };
 
-  const handleAddToCart = (product: Product, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    // For products with variants, open customizer
-    if (product.variants && product.variants.length > 0) {
-      setSelectedProduct(product);
-      return;
-    }
-    
+  const handleQuickViewAddToCart = (product: Product, selectedSize: string | null) => {
     // Create a Shopify-compatible product structure
     const mockShopifyProduct: ShopifyProduct = {
       node: {
@@ -228,13 +222,13 @@ export default function Gallery() {
           edges: [{
             node: {
               id: `gid://shopify/ProductVariant/${product.id}`,
-              title: 'Default',
+              title: selectedSize || 'Default',
               price: {
                 amount: product.base_price.toString(),
                 currencyCode: 'USD'
               },
               availableForSale: true,
-              selectedOptions: []
+              selectedOptions: selectedSize ? [{ name: 'Size', value: selectedSize }] : []
             }
           }]
         },
@@ -253,7 +247,9 @@ export default function Gallery() {
       selectedOptions: variant.selectedOptions
     });
     
-    toast.success(`${product.title} added to cart!`);
+    toast.success(`${product.title}${selectedSize ? ` (${selectedSize})` : ''} added to cart!`);
+    setQuickViewProduct(null);
+    setQuickViewSelectedSize(null);
   };
 
   return (
@@ -366,20 +362,25 @@ export default function Gallery() {
                       <ShoppingCart className="h-12 w-12 text-muted-foreground" />
                     </div>
                   )}
+                  {/* Quick View Button */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickViewProduct(product);
+                      }}
+                    >
+                      Quick View
+                    </Button>
+                  </div>
                 </div>
                 <div className="p-4 space-y-3">
                   <h3 className="font-semibold text-sm sm:text-base">{product.title}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{product.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => handleAddToCart(product, e)}
-                      className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
-                    >
-                      Add to Cart
-                    </Button>
                   </div>
                 </div>
               </Card>
@@ -468,6 +469,70 @@ export default function Gallery() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="max-w-4xl w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">{quickViewProduct.title}</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    setQuickViewProduct(null);
+                    setQuickViewSelectedSize(null);
+                  }}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                  {quickViewProduct.image_url ? (
+                    <img src={quickViewProduct.image_url} alt={quickViewProduct.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ShoppingCart className="h-16 w-16 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">{quickViewProduct.description}</p>
+                  <div className="text-3xl font-bold">${quickViewProduct.base_price.toFixed(2)}</div>
+                  {quickViewProduct.variants && quickViewProduct.variants.length > 0 && (
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Select Size</label>
+                      <div className="flex flex-wrap gap-2">
+                        {quickViewProduct.variants.map((variant) => (
+                          <Button
+                            key={variant.id}
+                            variant={quickViewSelectedSize === variant.name ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setQuickViewSelectedSize(variant.name)}
+                            className="min-w-[60px]"
+                          >
+                            {variant.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <Button 
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" 
+                    size="lg"
+                    disabled={quickViewProduct.variants && quickViewProduct.variants.length > 0 && !quickViewSelectedSize}
+                    onClick={() => handleQuickViewAddToCart(quickViewProduct, quickViewSelectedSize)}
+                  >
+                    Add to Cart
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Product Customizer for NY Merch */}
       {selectedProduct && (
