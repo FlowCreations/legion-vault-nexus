@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { fetchCommunityMembers, getTerritoryGroup, type CommunityMemberPoint } from '@/lib/communityData';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { MemberCard } from './MemberCard';
+import { useNavigate } from 'react-router-dom';
 
 type MemberWithTerritory = CommunityMemberPoint & {
   territoryGroup: 'america' | 'world';
@@ -13,6 +17,9 @@ export const GlobalReachMap = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [members, setMembers] = useState<CommunityMemberPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [showMemberDialog, setShowMemberDialog] = useState(false);
+  const navigate = useNavigate();
   
   // Interaction state refs
   const isInteractingRef = useRef(false);
@@ -32,6 +39,7 @@ export const GlobalReachMap = () => {
         (m) => typeof m.lat === 'number' && typeof m.lng === 'number'
       );
 
+      console.log('Loaded members for map:', validMembers.length);
       setMembers(validMembers);
       setLoading(false);
     }
@@ -64,6 +72,31 @@ export const GlobalReachMap = () => {
       })),
     };
   }, [filteredMembers]);
+
+  // Fetch full member details
+  const fetchMemberDetails = async (memberId: string) => {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', memberId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Error fetching member details:', error);
+      return null;
+    }
+    
+    return {
+      ...data,
+      name: data.display_name,
+      joined_at: data.created_at,
+      tier: data.membership_tier || data.tier,
+      era: data.era_current,
+      era_label: data.era_label,
+      ptp: data.ptp_current,
+      ptp_status: data.ptp_status,
+    };
+  };
 
   // Auto-rotation loop using requestAnimationFrame
   useEffect(() => {
@@ -207,35 +240,17 @@ export const GlobalReachMap = () => {
       });
 
       // Click handler for markers
-      map.current.on('click', 'client-points', (e) => {
+      map.current.on('click', 'client-points', async (e) => {
         if (!e.features?.[0] || !map.current) return;
 
         const props = e.features[0].properties;
-        const coordinates = (e.features[0].geometry as any).coordinates.slice();
-
-        // Build location string, skipping empty parts
-        const locationParts = [props.city, props.region, props.country].filter(Boolean);
-        const locationString = locationParts.join(', ');
-
-        new mapboxgl.Popup({
-          closeButton: false,
-          className: 'client-popup',
-        })
-          .setLngLat(coordinates as [number, number])
-          .setHTML(`
-            <div style="
-              background: #1E1E1E; 
-              color: white; 
-              padding: 12px 16px; 
-              border-radius: 8px;
-              border: 1px solid rgba(255,255,255,0.2);
-              font-family: system-ui, -apple-system, sans-serif;
-            ">
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${props.name}</div>
-              ${locationString ? `<div style="font-size: 12px; color: rgba(255,255,255,0.7);">${locationString}</div>` : ''}
-            </div>
-          `)
-          .addTo(map.current);
+        
+        // Fetch full member details
+        const memberDetails = await fetchMemberDetails(props.id);
+        if (memberDetails) {
+          setSelectedMember(memberDetails);
+          setShowMemberDialog(true);
+        }
       });
 
       // Change cursor on hover
@@ -284,6 +299,18 @@ export const GlobalReachMap = () => {
     }
   }, [geojson]);
 
+  const handleViewProfile = () => {
+    if (selectedMember) {
+      setShowMemberDialog(false);
+      navigate('/merchant', {
+        state: {
+          activeTab: 'community',
+          selectedUserId: selectedMember.id,
+        },
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Map Container */}
@@ -328,8 +355,19 @@ export const GlobalReachMap = () => {
           </div>
         )}
       </div>
+
+      {/* Member Profile Dialog */}
+      <Dialog open={showMemberDialog} onOpenChange={setShowMemberDialog}>
+        <DialogContent className="max-w-2xl">
+          {selectedMember && (
+            <MemberCard
+              member={selectedMember}
+              onClose={() => setShowMemberDialog(false)}
+              onViewProfile={handleViewProfile}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
-
-
