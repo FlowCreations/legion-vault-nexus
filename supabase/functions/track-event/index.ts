@@ -20,7 +20,8 @@ const ALLOWED_EVENT_TYPES = [
   'merch_view',
   'show_view',
   'chat_interaction',
-  'subscribe'
+  'subscribe',
+  'add_to_cart'
 ];
 
 const MAX_EVENT_DATA_SIZE = 10000; // 10KB max for event data
