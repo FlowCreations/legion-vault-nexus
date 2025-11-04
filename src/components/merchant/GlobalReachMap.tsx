@@ -78,7 +78,7 @@ export const GlobalReachMap = () => {
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
-      .eq('id', memberId)
+      .eq('user_id', memberId)
       .single();
     
     if (error || !data) {
@@ -244,6 +244,7 @@ export const GlobalReachMap = () => {
         if (!e.features?.[0] || !map.current) return;
 
         const props = e.features[0].properties;
+        console.log('Clicked marker properties:', props);
         
         // Fetch full member details
         const memberDetails = await fetchMemberDetails(props.id);
