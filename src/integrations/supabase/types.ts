@@ -943,6 +943,63 @@ export type Database = {
         }
         Relationships: []
       }
+      community_analytics: {
+        Row: {
+          active_members_30d: number
+          active_members_7d: number
+          avg_ltv: number
+          computed_at: string
+          countries_count: number
+          id: string
+          new_members_today: number
+          tier_free: number
+          tier_legionnaire: number
+          tier_outlaw: number
+          tier_rebel: number
+          top_country: string | null
+          top_region: string | null
+          total_members: number
+          total_mrr: number
+          updated_at: string
+        }
+        Insert: {
+          active_members_30d?: number
+          active_members_7d?: number
+          avg_ltv?: number
+          computed_at?: string
+          countries_count?: number
+          id?: string
+          new_members_today?: number
+          tier_free?: number
+          tier_legionnaire?: number
+          tier_outlaw?: number
+          tier_rebel?: number
+          top_country?: string | null
+          top_region?: string | null
+          total_members?: number
+          total_mrr?: number
+          updated_at?: string
+        }
+        Update: {
+          active_members_30d?: number
+          active_members_7d?: number
+          avg_ltv?: number
+          computed_at?: string
+          countries_count?: number
+          id?: string
+          new_members_today?: number
+          tier_free?: number
+          tier_legionnaire?: number
+          tier_outlaw?: number
+          tier_rebel?: number
+          top_country?: string | null
+          top_region?: string | null
+          total_members?: number
+          total_mrr?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_messages: {
         Row: {
           content: string
@@ -3679,6 +3736,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_community_analytics: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
       has_role: {
         Args: {

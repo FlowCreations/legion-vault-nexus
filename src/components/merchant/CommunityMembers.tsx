@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Users, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommunityMember {
   id: string;
@@ -32,6 +34,10 @@ export function CommunityMembers() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const MEMBERS_PER_PAGE = 50;
+  const { toast } = useToast();
 
   useEffect(() => {
     loadMembers();
@@ -41,21 +47,40 @@ export function CommunityMembers() {
     filterMembers();
   }, [searchQuery, tierFilter, members]);
 
-  const loadMembers = async () => {
+  const loadMembers = async (pageNum = 0) => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      const from = pageNum * MEMBERS_PER_PAGE;
+      const to = from + MEMBERS_PER_PAGE - 1;
+      
+      const { data, error, count } = await supabase
         .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
 
-      setMembers(data || []);
+      if (pageNum === 0) {
+        setMembers(data || []);
+      } else {
+        setMembers(prev => [...prev, ...(data || [])]);
+      }
+      
+      setHasMore((count || 0) > (pageNum + 1) * MEMBERS_PER_PAGE);
     } catch (error) {
       console.error('Error loading members:', error);
+      toast({ title: "Error loading members", variant: "destructive" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadMembers(nextPage);
   };
 
   const filterMembers = () => {
@@ -233,6 +258,13 @@ export function CommunityMembers() {
             </Table>
           </div>
         </CardContent>
+        {hasMore && !loading && (
+          <div className="p-4 border-t flex justify-center">
+            <Button onClick={loadMore} variant="outline">
+              Load More Members
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );

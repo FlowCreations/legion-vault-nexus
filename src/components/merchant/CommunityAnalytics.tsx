@@ -38,58 +38,44 @@ export function CommunityAnalytics() {
 
   const loadAnalytics = async () => {
     try {
-      // Fetch real-time member counts directly from user_profiles
-      const { data: memberData, error: memberError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('is_public', true);
+      setLoading(true);
 
-      if (memberError) throw memberError;
+      // Fetch pre-computed analytics from database
+      const { data: analyticsData, error } = await supabase
+        .from("community_analytics")
+        .select("*")
+        .eq("id", "00000000-0000-0000-0000-000000000001")
+        .single();
 
-      const total = memberData?.length || 0;
-      const active7d = memberData?.filter(m => 
-        m.last_active_at && new Date(m.last_active_at) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      ).length || 0;
+      if (error) {
+        console.error("Error loading analytics:", error);
+        // If no analytics exist yet, compute them
+        await computeAnalytics();
+        return;
+      }
 
-      const tierCounts = {
-        free: memberData?.filter(m => !m.membership_tier && !m.tier).length || 0,
-        rebels: memberData?.filter(m => 
-          (m.membership_tier?.toLowerCase() || m.tier?.toLowerCase() || '').includes('rebel')
-        ).length || 0,
-        outlaws: memberData?.filter(m => 
-          (m.membership_tier?.toLowerCase() || m.tier?.toLowerCase() || '').includes('outlaw')
-        ).length || 0,
-        legionnaires: memberData?.filter(m => 
-          (m.membership_tier?.toLowerCase() || m.tier?.toLowerCase() || '').includes('legionnaire')
-        ).length || 0,
-      };
-
-      // Create analytics snapshot
-      const analyticsData: CommunityAnalytics = {
-        date: new Date().toISOString(),
-        total_members: total,
-        new_members_today: memberData?.filter(m => 
-          new Date(m.created_at).toDateString() === new Date().toDateString()
-        ).length || 0,
-        active_members_7d: active7d,
-        active_members_30d: memberData?.filter(m => 
-          m.last_active_at && new Date(m.last_active_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        ).length || 0,
-        tier_free: tierCounts.free,
-        tier_rebels: tierCounts.rebels,
-        tier_outlaws: tierCounts.outlaws,
-        tier_legionnaires: tierCounts.legionnaires,
+      // Map database fields to component interface
+      const mappedAnalytics: CommunityAnalytics = {
+        date: analyticsData.computed_at,
+        total_members: analyticsData.total_members,
+        new_members_today: analyticsData.new_members_today,
+        active_members_7d: analyticsData.active_members_7d,
+        active_members_30d: analyticsData.active_members_30d,
+        tier_free: analyticsData.tier_free,
+        tier_rebels: analyticsData.tier_rebel,
+        tier_outlaws: analyticsData.tier_outlaw,
+        tier_legionnaires: analyticsData.tier_legionnaire,
         avg_engagement_score: 0,
         total_posts: 0,
         total_messages: 0,
-        countries_represented: new Set(memberData?.map(m => m.location?.split(',')[2]?.trim()).filter(Boolean)).size,
-        top_country: '',
-        top_region: '',
-        total_mrr: memberData?.reduce((sum, m) => sum + (m.mrr || 0), 0) || 0,
-        avg_lifetime_value: memberData?.reduce((sum, m) => sum + (m.total_spend || 0), 0) / (total || 1),
+        countries_represented: analyticsData.countries_count,
+        top_country: analyticsData.top_country || 'N/A',
+        top_region: analyticsData.top_region || 'N/A',
+        total_mrr: parseFloat(analyticsData.total_mrr?.toString() || "0"),
+        avg_lifetime_value: parseFloat(analyticsData.avg_ltv?.toString() || "0"),
       };
 
-      setAnalytics([analyticsData]);
+      setAnalytics([mappedAnalytics]);
     } catch (error) {
       console.error('Error loading analytics:', error);
       toast({
@@ -105,6 +91,25 @@ export function CommunityAnalytics() {
   const computeAnalytics = async () => {
     setComputing(true);
     try {
+      toast({
+        title: "Computing analytics...",
+        description: "This may take a moment",
+      });
+
+      // Call the database function to compute analytics
+      const { error } = await supabase.rpc("compute_community_analytics");
+
+      if (error) {
+        console.error("Error computing analytics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to compute analytics",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Reload analytics after computation
       await loadAnalytics();
       
       toast({

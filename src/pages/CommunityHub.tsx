@@ -299,10 +299,11 @@ export default function CommunityHub() {
   };
 
   const loadDirectoryProfiles = async () => {
-    // Load real user profiles
+    // Load real user profiles with pagination
     const { data: realProfiles } = await supabase
       .from("user_profiles")
-      .select("user_id, display_name, avatar_url, location, bio, tier");
+      .select("user_id, display_name, avatar_url, location, bio, tier")
+      .limit(50);
 
     // Convert real profiles to directory format
     const formattedRealProfiles = (realProfiles || []).map(profile => ({
@@ -314,8 +315,7 @@ export default function CommunityHub() {
       bio: profile.bio || ""
     }));
 
-    // Combine real profiles with mock profiles - always show all
-    setAllProfiles([...formattedRealProfiles, ...mockProfiles]);
+    setAllProfiles(formattedRealProfiles);
   };
 
   const loadPosts = async () => {
@@ -327,7 +327,8 @@ export default function CommunityHub() {
         post_comments(id)
       `)
       .eq("category", activeTab)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(20);
 
     if (error) {
       console.error("Error loading posts:", error);
@@ -335,10 +336,10 @@ export default function CommunityHub() {
       return;
     }
 
-    // Fetch user profiles separately for database posts
+    // Batch fetch user profiles for all posts at once
     let dbPosts: any[] = [];
     if (data && data.length > 0) {
-      const userIds = data.filter(post => post.user_id).map(post => post.user_id);
+      const userIds = [...new Set(data.filter(post => post.user_id).map(post => post.user_id))];
       
       let profileMap = new Map();
       if (userIds.length > 0) {
