@@ -6,15 +6,15 @@ const corsHeaders = {
 };
 
 interface FeatureWindow {
-  window: '24h' | '7d' | '28d' | 'lifetime';
+  time_window: '24h' | '7d' | '28d' | 'lifetime';
   hours: number;
 }
 
 const WINDOWS: FeatureWindow[] = [
-  { window: '24h', hours: 24 },
-  { window: '7d', hours: 168 },
-  { window: '28d', hours: 672 },
-  { window: 'lifetime', hours: 999999 },
+  { time_window: '24h', hours: 24 },
+  { time_window: '7d', hours: 168 },
+  { time_window: '28d', hours: 672 },
+  { time_window: 'lifetime', hours: 999999 },
 ];
 
 Deno.serve(async (req) => {
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     const features: any[] = [];
     const now = new Date();
 
-    for (const { window, hours } of WINDOWS) {
+    for (const { time_window, hours } of WINDOWS) {
       const windowStart = new Date(now.getTime() - hours * 60 * 60 * 1000);
 
       // Get events in this window
@@ -66,8 +66,8 @@ Deno.serve(async (req) => {
         : 0;
 
       features.push(
-        { user_id: userId, feature_name: 'avg_session_length', value: avgSessionLength, window },
-        { user_id: userId, feature_name: 'session_variance', value: variance, window }
+        { user_id: userId, feature_name: 'avg_session_length', value: avgSessionLength, time_window },
+        { user_id: userId, feature_name: 'session_variance', value: variance, time_window }
       );
 
       // Content Preference Features (N vs S)
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
         : 0.5;
 
       features.push(
-        { user_id: userId, feature_name: 'long_form_ratio', value: longFormRatio, window }
+        { user_id: userId, feature_name: 'long_form_ratio', value: longFormRatio, time_window }
       );
 
       // Social Signals (F vs T, E vs I)
@@ -92,9 +92,9 @@ Deno.serve(async (req) => {
       const shareFreq = shares / Math.max(events.length, 1);
 
       features.push(
-        { user_id: userId, feature_name: 'comment_frequency', value: commentFreq, window },
-        { user_id: userId, feature_name: 'share_frequency', value: shareFreq, window },
-        { user_id: userId, feature_name: 'heart_frequency', value: hearts / Math.max(events.length, 1), window }
+        { user_id: userId, feature_name: 'comment_frequency', value: commentFreq, time_window },
+        { user_id: userId, feature_name: 'share_frequency', value: shareFreq, time_window },
+        { user_id: userId, feature_name: 'heart_frequency', value: hearts / Math.max(events.length, 1), time_window }
       );
 
       // Rational Signals (T tilt)
@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       ).length;
 
       features.push(
-        { user_id: userId, feature_name: 'rational_clicks', value: faqClicks / Math.max(events.length, 1), window }
+        { user_id: userId, feature_name: 'rational_clicks', value: faqClicks / Math.max(events.length, 1), time_window }
       );
 
       // Exploration vs Routine (N vs S, P)
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       const explorationIndex = uniquePages / Math.max(events.length, 1);
 
       features.push(
-        { user_id: userId, feature_name: 'exploration_index', value: explorationIndex, window }
+        { user_id: userId, feature_name: 'exploration_index', value: explorationIndex, time_window }
       );
 
       // Decision Latency (J vs P, T vs F)
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       if (firstView && firstPurchase) {
         const latency = (new Date(firstPurchase.timestamp).getTime() - new Date(firstView.timestamp).getTime()) / 1000;
         features.push(
-          { user_id: userId, feature_name: 'decision_latency', value: latency, window }
+          { user_id: userId, feature_name: 'decision_latency', value: latency, time_window }
         );
       }
     }
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabase
       .from('personality_features')
       .upsert(features.map((f) => ({ ...f, computed_at: new Date().toISOString() })), {
-        onConflict: 'user_id,feature_name,window',
+        onConflict: 'user_id,feature_name,time_window',
       });
 
     if (insertError) throw insertError;
