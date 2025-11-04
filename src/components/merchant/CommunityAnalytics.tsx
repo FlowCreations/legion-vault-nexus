@@ -90,10 +90,10 @@ export function CommunityAnalytics() {
 
   const latestData = analytics[0];
   const tierData = latestData ? [
-    { name: 'Free', value: latestData.tier_free, color: 'hsl(var(--muted))' },
-    { name: 'Rebels', value: latestData.tier_rebels, color: 'hsl(var(--chart-1))' },
-    { name: 'Outlaws', value: latestData.tier_outlaws, color: 'hsl(var(--chart-2))' },
-    { name: 'Legionnaires', value: latestData.tier_legionnaires, color: 'hsl(var(--chart-3))' },
+    { name: 'Free', value: latestData.tier_free, color: '#9CA3AF' },
+    { name: 'Rebels', value: latestData.tier_rebels, color: '#EF4444' }, // red-500
+    { name: 'Outlaws', value: latestData.tier_outlaws, color: '#A855F7' }, // purple-500
+    { name: 'Legionnaires', value: latestData.tier_legionnaires, color: '#F59E0B' }, // amber-500
   ].filter(d => d.value > 0) : [];
 
   const growthData = analytics.slice(0, 7).reverse().map(d => ({
