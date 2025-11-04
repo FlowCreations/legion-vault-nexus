@@ -311,7 +311,7 @@ export const GlobalReachMap = () => {
       navigate('/merchant', {
         state: {
           activeTab: 'community',
-          selectedUserId: selectedMember.id,
+          selectedUserId: selectedMember.user_id,
         },
       });
     }
