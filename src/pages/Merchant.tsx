@@ -169,10 +169,16 @@ const Merchant = memo(() => {
               Analytics
             </TabsTrigger>
             <TabsTrigger 
-              value="community"
+              value="content"
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
-              Community
+              Content
+            </TabsTrigger>
+            <TabsTrigger 
+              value="marketing"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Marketing
             </TabsTrigger>
             <TabsTrigger 
               value="livestream"
@@ -191,18 +197,6 @@ const Merchant = memo(() => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Intelligence
-            </TabsTrigger>
-            <TabsTrigger 
-              value="content"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Content
-            </TabsTrigger>
-            <TabsTrigger 
-              value="marketing"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Marketing
             </TabsTrigger>
           </TabsList>
 
