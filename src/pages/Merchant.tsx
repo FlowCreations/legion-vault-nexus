@@ -74,16 +74,15 @@ const Merchant = memo(() => {
     const state = window.history.state?.usr;
     if (state?.activeTab) {
       setActiveTab(state.activeTab);
-      // If navigating to community, set to members sub-tab
-      if (state.activeTab === 'community') {
-        setTimeout(() => {
-          const membersTabButton = document.querySelector('[value="members"]') as HTMLButtonElement;
-          membersTabButton?.click();
-        }, 100);
-      }
     }
     if (state?.selectedUserId) {
       setSelectedUserId(state.selectedUserId);
+      // Clear the navigation state after setting it
+      window.history.replaceState({}, document.title);
+      // Clear selectedUserId after a delay to allow the component to use it
+      setTimeout(() => {
+        setSelectedUserId(null);
+      }, 3000);
     }
   }, []);
 
