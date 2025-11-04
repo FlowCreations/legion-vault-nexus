@@ -1,43 +1,48 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense, memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Activity, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AIChat } from "@/components/merchant/AIChat";
-import MusicUpload from "@/components/MusicUpload";
-import { MusicManager } from "@/components/merchant/MusicManager";
-import { TopTracks } from "@/components/merchant/TopTracks";
-import { Geography } from "@/components/merchant/Geography";
-import { Demographics } from "@/components/merchant/Demographics";
-import { EarningsOverview } from "@/components/merchant/EarningsOverview";
-import { CreateCampaigns } from "@/components/merchant/CreateCampaigns";
-import { PlatformOverview } from "@/components/merchant/analytics/PlatformOverview";
-import { PlatformDistribution } from "@/components/merchant/analytics/PlatformDistribution";
-import { EngagementTimeline } from "@/components/merchant/analytics/EngagementTimeline";
-import { PlatformCards } from "@/components/merchant/analytics/PlatformCards";
-import { BuildFunnel } from "@/components/merchant/BuildFunnel";
-import { Partnerships } from "@/components/merchant/Partnerships";
-import { LiveStreamManager } from "@/components/merchant/LiveStreamManager";
-import { LiveStreamEventManager } from "@/components/merchant/LiveStreamEventManager";
-import { PersonalityOverview } from "@/components/merchant/intelligence/PersonalityOverview";
-import { MemberPersonalityTable } from "@/components/merchant/intelligence/MemberPersonalityTable";
-import { NBAQueue } from "@/components/merchant/intelligence/NBAQueue";
-import FunnelOverview from "@/components/merchant/FunnelOverview";
-import { DistributorIntegration } from "@/components/merchant/DistributorIntegration";
-import { ContentLab } from "@/components/merchant/ContentLab";
-import { EmailMarketing } from "@/components/merchant/EmailMarketing";
-import { SocialTracking } from "@/components/merchant/SocialTracking";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDistanceToNow } from "date-fns";
-import AdminDashboard from "./AdminDashboard";
-import VideoManager from "./VideoManager";
-import { SeedCoordinatesButton } from "@/components/merchant/SeedCoordinatesButton";
-import { ViberateSyncButton } from "@/components/merchant/ViberateSyncButton";
-import { TourManager } from "@/components/merchant/TourManager";
-const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(module => ({ default: module.CommunityMembers })));
+
+// Lazy load ALL heavy components for maximum performance
+const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
+const MusicUpload = lazy(() => import("@/components/MusicUpload"));
+const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
+const TopTracks = lazy(() => import("@/components/merchant/TopTracks").then(m => ({ default: m.TopTracks })));
+const Geography = lazy(() => import("@/components/merchant/Geography").then(m => ({ default: m.Geography })));
+const Demographics = lazy(() => import("@/components/merchant/Demographics").then(m => ({ default: m.Demographics })));
+const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview").then(m => ({ default: m.EarningsOverview })));
+const CreateCampaigns = lazy(() => import("@/components/merchant/CreateCampaigns").then(m => ({ default: m.CreateCampaigns })));
+const PlatformOverview = lazy(() => import("@/components/merchant/analytics/PlatformOverview").then(m => ({ default: m.PlatformOverview })));
+const PlatformDistribution = lazy(() => import("@/components/merchant/analytics/PlatformDistribution").then(m => ({ default: m.PlatformDistribution })));
+const EngagementTimeline = lazy(() => import("@/components/merchant/analytics/EngagementTimeline").then(m => ({ default: m.EngagementTimeline })));
+const PlatformCards = lazy(() => import("@/components/merchant/analytics/PlatformCards").then(m => ({ default: m.PlatformCards })));
+const BuildFunnel = lazy(() => import("@/components/merchant/BuildFunnel").then(m => ({ default: m.BuildFunnel })));
+const Partnerships = lazy(() => import("@/components/merchant/Partnerships").then(m => ({ default: m.Partnerships })));
+const LiveStreamManager = lazy(() => import("@/components/merchant/LiveStreamManager").then(m => ({ default: m.LiveStreamManager })));
+const LiveStreamEventManager = lazy(() => import("@/components/merchant/LiveStreamEventManager").then(m => ({ default: m.LiveStreamEventManager })));
+const PersonalityOverview = lazy(() => import("@/components/merchant/intelligence/PersonalityOverview").then(m => ({ default: m.PersonalityOverview })));
+const MemberPersonalityTable = lazy(() => import("@/components/merchant/intelligence/MemberPersonalityTable").then(m => ({ default: m.MemberPersonalityTable })));
+const NBAQueue = lazy(() => import("@/components/merchant/intelligence/NBAQueue").then(m => ({ default: m.NBAQueue })));
+const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview"));
+const DistributorIntegration = lazy(() => import("@/components/merchant/DistributorIntegration").then(m => ({ default: m.DistributorIntegration })));
+const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
+const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
+const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
+const AdminDashboard = lazy(() => import("./AdminDashboard"));
+const VideoManager = lazy(() => import("./VideoManager"));
+const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
+const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
+const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(m => ({ default: m.CommunityMembers })));
+
+// Loading component for Suspense fallback
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+  </div>
+);
 
 interface AnalyticsData {
   events: number;
@@ -53,7 +58,7 @@ interface AnalyticsData {
   };
 }
 
-const Merchant = () => {
+const Merchant = memo(() => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -75,8 +80,7 @@ const Merchant = () => {
     }
   }, []);
 
-
-  const getDemoData = (): AnalyticsData => ({
+  const getDemoData = useCallback((): AnalyticsData => ({
     events: 15847,
     analytics: 3421,
     superFans: 234,
@@ -110,13 +114,39 @@ const Merchant = () => {
         "Chicago, IL": { fans: 256, superFans: 16, revenue: "$6,890" }
       }
     }
-  });
+  }), []);
 
-  const loadAnalytics = async () => {
-    // Always show demo data for now
+  const loadAnalytics = useCallback(async () => {
     setAnalyticsData(getDemoData());
-  };
+  }, [getDemoData]);
 
+  const handleRefreshData = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // Sync Viberate data in the background
+      const { error: viberateError } = await supabase.functions.invoke('sync-viberate');
+      if (viberateError) {
+        console.error('Viberate sync error:', viberateError);
+      }
+      
+      // Reload analytics
+      await loadAnalytics();
+      
+      toast({
+        title: "Data refreshed",
+        description: "Analytics and Viberate data have been synchronized",
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh failed",
+        description: "Unable to refresh data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadAnalytics, toast]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,17 +207,18 @@ const Merchant = () => {
 
           <TabsContent value="analytics" className="space-y-6">
             <div className="flex justify-end gap-3">
-              <ViberateSyncButton />
-              <SeedCoordinatesButton />
+              <Suspense fallback={<div className="h-10 w-10"></div>}>
+                <SeedCoordinatesButton />
+              </Suspense>
               <Button 
-                onClick={loadAnalytics} 
+                onClick={handleRefreshData} 
                 disabled={refreshing}
                 variant="outline"
               >
                 {refreshing ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                    Refreshing...
+                    Syncing Data...
                   </>
                 ) : (
                   <>
@@ -209,32 +240,51 @@ const Merchant = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
               <div className="space-y-8">
-                {/* Earnings - Full Width */}
-                <EarningsOverview />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <EarningsOverview />
+                </Suspense>
                 
-                {/* Geography - Full Width Below Earnings */}
-                <Geography />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Geography />
+                </Suspense>
 
-                <TopTracks period="7days" />
-                <Demographics />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <TopTracks period="7days" />
+                </Suspense>
                 
-                {/* New Analytics Components Below */}
-                <PlatformOverview />
-                <PlatformCards />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Demographics />
+                </Suspense>
+                
+                <Suspense fallback={<LoadingSpinner />}>
+                  <PlatformOverview />
+                </Suspense>
+                
+                <Suspense fallback={<LoadingSpinner />}>
+                  <PlatformCards />
+                </Suspense>
                 
                 <div className="grid gap-6 md:grid-cols-2">
-                  <PlatformDistribution />
-                  <EngagementTimeline />
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PlatformDistribution />
+                  </Suspense>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <EngagementTimeline />
+                  </Suspense>
                 </div>
 
-                <DistributorIntegration />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <DistributorIntegration />
+                </Suspense>
               </div>
             </div>
 
               {showChat && (
                 <div className="lg:col-span-1">
                   <div className="sticky top-24">
-                    <AIChat />
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AIChat />
+                    </Suspense>
                   </div>
                 </div>
               )}
@@ -253,22 +303,34 @@ const Merchant = () => {
               </TabsList>
               
               <TabsContent value="videos">
-                <VideoManager />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <VideoManager />
+                </Suspense>
               </TabsContent>
               <TabsContent value="music">
-                <MusicUpload />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <MusicUpload />
+                </Suspense>
               </TabsContent>
               <TabsContent value="music-manager">
-                <MusicManager />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <MusicManager />
+                </Suspense>
               </TabsContent>
               <TabsContent value="livestreams">
-                <LiveStreamEventManager />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <LiveStreamEventManager />
+                </Suspense>
               </TabsContent>
               <TabsContent value="tour">
-                <TourManager />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <TourManager />
+                </Suspense>
               </TabsContent>
               <TabsContent value="lab">
-                <ContentLab />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ContentLab />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </TabsContent>
@@ -283,16 +345,24 @@ const Merchant = () => {
               </TabsList>
               
               <TabsContent value="campaigns">
-                <CreateCampaigns />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CreateCampaigns />
+                </Suspense>
               </TabsContent>
               <TabsContent value="funnels">
-                <BuildFunnel />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <BuildFunnel />
+                </Suspense>
               </TabsContent>
               <TabsContent value="email">
-                <EmailMarketing />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <EmailMarketing />
+                </Suspense>
               </TabsContent>
               <TabsContent value="social">
-                <SocialTracking />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <SocialTracking />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </TabsContent>
@@ -305,38 +375,54 @@ const Merchant = () => {
               </TabsList>
               
               <TabsContent value="members">
-                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div></div>}>
+                <Suspense fallback={<LoadingSpinner />}>
                   <CommunityMembers />
                 </Suspense>
               </TabsContent>
               
               <TabsContent value="activity">
-                <AdminDashboard selectedUserId={selectedUserId} />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AdminDashboard selectedUserId={selectedUserId} />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </TabsContent>
 
           <TabsContent value="intelligence" className="space-y-6">
-            <PersonalityOverview />
-            <NBAQueue />
-            <MemberPersonalityTable />
+            <Suspense fallback={<LoadingSpinner />}>
+              <PersonalityOverview />
+            </Suspense>
+            <Suspense fallback={<LoadingSpinner />}>
+              <NBAQueue />
+            </Suspense>
+            <Suspense fallback={<LoadingSpinner />}>
+              <MemberPersonalityTable />
+            </Suspense>
           </TabsContent>
 
         <TabsContent value="funnels">
-          <FunnelOverview />
+          <Suspense fallback={<LoadingSpinner />}>
+            <FunnelOverview />
+          </Suspense>
         </TabsContent>
 
           <TabsContent value="partnerships">
-            <Partnerships />
+            <Suspense fallback={<LoadingSpinner />}>
+              <Partnerships />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="livestream">
-            <LiveStreamManager />
+            <Suspense fallback={<LoadingSpinner />}>
+              <LiveStreamManager />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
-};
+});
+
+Merchant.displayName = "Merchant";
 
 export default Merchant;
