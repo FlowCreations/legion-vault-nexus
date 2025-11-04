@@ -40,6 +40,7 @@ export const GlobalReachMap = () => {
       );
 
       console.log('Loaded members for map:', validMembers.length);
+      console.log('First few members:', validMembers.slice(0, 3));
       setMembers(validMembers);
       setLoading(false);
     }
