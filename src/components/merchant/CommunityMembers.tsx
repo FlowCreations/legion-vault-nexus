@@ -72,8 +72,8 @@ export function CommunityMembers() {
     // Filter by tier
     if (tierFilter !== "all") {
       filtered = filtered.filter(member => {
-        const memberTier = member.membership_tier || member.tier || "FREE";
-        return memberTier === tierFilter;
+        const memberTier = (member.membership_tier || member.tier || "FREE").toLowerCase();
+        return memberTier.includes(tierFilter.toLowerCase());
       });
     }
 
