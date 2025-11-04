@@ -148,10 +148,15 @@ serve(async (req) => {
             const profileData = {
               heartbeat_member_id: member.id,
               display_name: member.name || member.email?.split('@')[0] || 'Unknown Member',
+              email: member.email || null,
+              full_name: member.full_name || member.name || null,
               avatar_url: member.profile_picture || null,
               bio: member.bio || null,
               location: member.location || null,
               tier: tier,
+              membership_tier: tier,
+              // Additional Heartbeat fields
+              last_active_at: member.last_active_at || member.last_seen_at || null,
               // Timestamps
               created_at: member.created_at || new Date().toISOString(),
               // Make visible in Community Hub

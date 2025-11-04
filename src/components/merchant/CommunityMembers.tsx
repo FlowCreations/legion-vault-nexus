@@ -14,7 +14,10 @@ interface CommunityMember {
   user_id: string | null;
   heartbeat_member_id: string | null;
   display_name: string;
+  email: string | null;
+  full_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
   location: string | null;
   tier: string | null;
   membership_tier: string | null;
@@ -167,7 +170,7 @@ export function CommunityMembers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member</TableHead>
+                  <TableHead className="w-[300px]">Member</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Tier</TableHead>
                   <TableHead>Status</TableHead>
@@ -185,7 +188,7 @@ export function CommunityMembers() {
                 ) : (
                   filteredMembers.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell>
+                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={member.avatar_url || undefined} />
@@ -193,11 +196,16 @@ export function CommunityMembers() {
                               {member.display_name?.charAt(0).toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="font-medium">{member.display_name || "Anonymous"}</p>
-                            <p className="text-xs text-muted-foreground">
-                              ID: {(member.user_id || member.heartbeat_member_id || 'unknown').slice(0, 8)}...
+                          <div className="max-w-[200px]">
+                            <p className="font-medium truncate">{member.display_name || "Anonymous"}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {member.email || member.full_name || `ID: ${(member.user_id || member.heartbeat_member_id || 'unknown').slice(0, 8)}...`}
                             </p>
+                            {member.bio && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {member.bio}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
