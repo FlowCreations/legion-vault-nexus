@@ -337,7 +337,7 @@ export default function Videos() {
                 <div className="flex flex-col items-start gap-3">
                   <Button 
                     size="lg" 
-                    className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 text-sm rounded-lg shadow-lg transition-all"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-sm rounded-lg shadow-lg gold-glow transition-all"
                     onClick={() => navigate('/subscribe')}
                   >
                     Accept Free Trial
@@ -366,7 +366,7 @@ export default function Videos() {
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <Button 
-              className="w-full bg-white hover:bg-gray-100 text-black font-semibold"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gold-glow"
               onClick={() => navigate('/subscribe')}
             >
               Start 7-Day Free Trial
@@ -375,7 +375,7 @@ export default function Videos() {
               Already subscribed?{" "}
               <button 
                 onClick={() => navigate('/auth')}
-                className="text-white hover:underline font-medium"
+                className="text-primary hover:underline font-medium"
               >
                 Sign In
               </button>
@@ -544,8 +544,8 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
                     <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
                       hoveredId === item.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                     }`}>
-                      <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
-                        <Play className="w-6 h-6 text-black ml-1" />
+                      <div className="w-12 h-12 bg-primary/95 rounded-full flex items-center justify-center gold-glow">
+                        <Play className="w-6 h-6 text-primary-foreground ml-1 fill-primary-foreground" />
                       </div>
                     </div>
 
