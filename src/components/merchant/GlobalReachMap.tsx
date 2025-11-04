@@ -73,12 +73,13 @@ export const GlobalReachMap = () => {
     };
   }, [filteredMembers]);
 
-  // Fetch full member details
-  const fetchMemberDetails = async (memberId: string) => {
+  // Fetch full member details by name and location
+  const fetchMemberDetails = async (name: string, city: string, region: string, country: string) => {
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
-      .eq('user_id', memberId)
+      .eq('display_name', name)
+      .limit(1)
       .single();
     
     if (error || !data) {
@@ -244,10 +245,14 @@ export const GlobalReachMap = () => {
         if (!e.features?.[0] || !map.current) return;
 
         const props = e.features[0].properties;
-        console.log('Clicked marker properties:', props);
         
-        // Fetch full member details
-        const memberDetails = await fetchMemberDetails(props.id);
+        // Fetch full member details using name and location
+        const memberDetails = await fetchMemberDetails(
+          props.name,
+          props.city,
+          props.region,
+          props.country
+        );
         if (memberDetails) {
           setSelectedMember(memberDetails);
           setShowMemberDialog(true);
