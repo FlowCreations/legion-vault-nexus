@@ -28,7 +28,11 @@ interface CommunityMember {
   total_spend: number;
 }
 
-export function CommunityMembers() {
+interface CommunityMembersProps {
+  selectedUserId?: string | null;
+}
+
+export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +50,23 @@ export function CommunityMembers() {
   useEffect(() => {
     filterMembers();
   }, [searchQuery, tierFilter, members]);
+
+  // Scroll to selected user if provided
+  useEffect(() => {
+    if (selectedUserId && members.length > 0) {
+      setTimeout(() => {
+        const memberRow = document.querySelector(`[data-user-id="${selectedUserId}"]`);
+        if (memberRow) {
+          memberRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight the row temporarily
+          memberRow.classList.add('bg-primary/20');
+          setTimeout(() => {
+            memberRow.classList.remove('bg-primary/20');
+          }, 2000);
+        }
+      }, 300);
+    }
+  }, [selectedUserId, members]);
 
   const loadMembers = async (pageNum = 0) => {
     try {
@@ -212,7 +233,11 @@ export function CommunityMembers() {
                   </TableRow>
                 ) : (
                   filteredMembers.map((member) => (
-                    <TableRow key={member.id}>
+                    <TableRow 
+                      key={member.id} 
+                      data-user-id={member.user_id}
+                      className="transition-colors duration-500"
+                    >
                        <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">

@@ -74,6 +74,13 @@ const Merchant = memo(() => {
     const state = window.history.state?.usr;
     if (state?.activeTab) {
       setActiveTab(state.activeTab);
+      // If navigating to community, set to members sub-tab
+      if (state.activeTab === 'community') {
+        setTimeout(() => {
+          const membersTabButton = document.querySelector('[value="members"]') as HTMLButtonElement;
+          membersTabButton?.click();
+        }, 100);
+      }
     }
     if (state?.selectedUserId) {
       setSelectedUserId(state.selectedUserId);
@@ -374,7 +381,7 @@ const Merchant = memo(() => {
               
               <TabsContent value="members">
                 <Suspense fallback={<LoadingSpinner />}>
-                  <CommunityMembers />
+                  <CommunityMembers selectedUserId={selectedUserId} />
                 </Suspense>
               </TabsContent>
               
