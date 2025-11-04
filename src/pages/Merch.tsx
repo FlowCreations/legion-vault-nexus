@@ -61,6 +61,7 @@ export default function Merch() {
   const [sortBy, setSortBy] = useState<"newest" | "price-low" | "price-high">("newest");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewSelectedSize, setQuickViewSelectedSize] = useState<string | null>(null);
   const [shopifyProducts, setShopifyProducts] = useState<ShopifyProduct[]>([]);
   const addItem = useCartStore(state => state.addItem);
 
@@ -254,6 +255,70 @@ export default function Merch() {
 
   const handleCustomizerClose = () => {
     setSelectedProduct(null);
+  };
+
+  const handleQuickViewAddToCart = (product: Product, selectedSize: string | null) => {
+    trackEvent('add_to_cart', {
+      id: product.id,
+      name: product.title,
+      category: product.category,
+      price: product.base_price,
+      size: selectedSize
+    });
+
+    // Create a Shopify-compatible product structure
+    const mockShopifyProduct: ShopifyProduct = {
+      node: {
+        id: product.id,
+        title: product.title,
+        description: product.description || '',
+        handle: product.title.toLowerCase().replace(/\s+/g, '-'),
+        priceRange: {
+          minVariantPrice: {
+            amount: product.base_price.toString(),
+            currencyCode: 'USD'
+          }
+        },
+        images: {
+          edges: product.image_url ? [{
+            node: {
+              url: product.image_url,
+              altText: product.title
+            }
+          }] : []
+        },
+        variants: {
+          edges: [{
+            node: {
+              id: `gid://shopify/ProductVariant/${product.id}`,
+              title: selectedSize || 'Default',
+              price: {
+                amount: product.base_price.toString(),
+                currencyCode: 'USD'
+              },
+              availableForSale: true,
+              selectedOptions: selectedSize ? [{ name: 'Size', value: selectedSize }] : []
+            }
+          }]
+        },
+        options: []
+      }
+    };
+    
+    const variant = mockShopifyProduct.node.variants.edges[0].node;
+    
+    addItem({
+      product: mockShopifyProduct,
+      variantId: variant.id,
+      variantTitle: variant.title,
+      price: variant.price,
+      quantity: 1,
+      selectedOptions: variant.selectedOptions
+    });
+    
+    toast.success(`${product.title}${selectedSize ? ` (${selectedSize})` : ''} added to cart!`);
+    setQuickViewProduct(null);
+    setQuickViewSelectedSize(null);
   };
 
   const handlePurchaseSuccess = () => {
@@ -528,7 +593,14 @@ export default function Merch() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">{quickViewProduct.title}</h2>
-                <Button variant="ghost" size="icon" onClick={() => setQuickViewProduct(null)}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    setQuickViewProduct(null);
+                    setQuickViewSelectedSize(null);
+                  }}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </div>
@@ -546,33 +618,30 @@ export default function Merch() {
                   <p className="text-muted-foreground">{quickViewProduct.description}</p>
                   <div className="text-3xl font-bold">${quickViewProduct.base_price.toFixed(2)}</div>
                   {quickViewProduct.variants && quickViewProduct.variants.length > 0 && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Available Sizes</label>
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Select Size</label>
                       <div className="flex flex-wrap gap-2">
                         {quickViewProduct.variants.map((variant) => (
-                          <div key={variant.id} className="px-3 py-2 border rounded-lg text-sm bg-muted/50 font-medium">
+                          <Button
+                            key={variant.id}
+                            variant={quickViewSelectedSize === variant.name ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setQuickViewSelectedSize(variant.name)}
+                            className="min-w-[60px]"
+                          >
                             {variant.name}
-                          </div>
+                          </Button>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Select size in the customizer
-                      </p>
                     </div>
                   )}
                   <Button 
-                    className="w-full border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase" 
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" 
                     size="lg"
-                    variant="outline"
-                    onClick={() => {
-                      setQuickViewProduct(null);
-                      handleAddToCart(quickViewProduct);
-                    }}
+                    disabled={quickViewProduct.variants && quickViewProduct.variants.length > 0 && !quickViewSelectedSize}
+                    onClick={() => handleQuickViewAddToCart(quickViewProduct, quickViewSelectedSize)}
                   >
-                    {quickViewProduct.variants && quickViewProduct.variants.length > 0 
-                      ? 'Select Size & Add to Cart'
-                      : 'Add to Cart'
-                    }
+                    Add to Cart
                   </Button>
                 </div>
               </div>
