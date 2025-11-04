@@ -3390,9 +3390,11 @@ export type Database = {
           community_engagement_score: number | null
           created_at: string | null
           display_name: string | null
+          email: string | null
           era_current: number | null
           era_label: string | null
           external_ids: Json | null
+          full_name: string | null
           gender: string | null
           heartbeat_member_id: string | null
           id: string
@@ -3427,9 +3429,11 @@ export type Database = {
           community_engagement_score?: number | null
           created_at?: string | null
           display_name?: string | null
+          email?: string | null
           era_current?: number | null
           era_label?: string | null
           external_ids?: Json | null
+          full_name?: string | null
           gender?: string | null
           heartbeat_member_id?: string | null
           id?: string
@@ -3464,9 +3468,11 @@ export type Database = {
           community_engagement_score?: number | null
           created_at?: string | null
           display_name?: string | null
+          email?: string | null
           era_current?: number | null
           era_label?: string | null
           external_ids?: Json | null
+          full_name?: string | null
           gender?: string | null
           heartbeat_member_id?: string | null
           id?: string

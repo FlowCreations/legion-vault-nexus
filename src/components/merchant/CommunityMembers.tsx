@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface CommunityMember {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  heartbeat_member_id: string | null;
   display_name: string;
   avatar_url: string | null;
   location: string | null;
@@ -195,7 +196,7 @@ export function CommunityMembers() {
                           <div>
                             <p className="font-medium">{member.display_name || "Anonymous"}</p>
                             <p className="text-xs text-muted-foreground">
-                              ID: {member.user_id.slice(0, 8)}...
+                              ID: {(member.user_id || member.heartbeat_member_id || 'unknown').slice(0, 8)}...
                             </p>
                           </div>
                         </div>

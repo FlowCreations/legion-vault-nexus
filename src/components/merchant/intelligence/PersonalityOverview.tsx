@@ -1,9 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { PersonalityProfile } from "@/types/personality";
+import { Sparkles, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface PersonalityStats {
   totalProfiles: number;
@@ -44,10 +47,37 @@ export const PersonalityOverview = () => {
     },
   });
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchStats();
   }, []);
+
+  const generatePersonalities = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('auto-generate-personalities');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Generated ${data.generated} personality profiles for Heartbeat members`,
+      });
+
+      fetchStats();
+    } catch (error) {
+      console.error('Error generating personalities:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate personality profiles",
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -117,10 +147,27 @@ export const PersonalityOverview = () => {
           <CardTitle>Personality Intelligence</CardTitle>
           <CardDescription>No personality data yet</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Start collecting personality data by having members complete the survey on the merch page.
+            Generate personality profiles for your Heartbeat members to enable AI-powered engagement.
           </p>
+          <Button 
+            onClick={generatePersonalities} 
+            disabled={generating}
+            className="w-full"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating Profiles...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate Personality Profiles
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
     );
@@ -135,8 +182,27 @@ export const PersonalityOverview = () => {
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Personality Intelligence</CardTitle>
-          <CardDescription>Member personality insights</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Personality Intelligence</CardTitle>
+              <CardDescription>Member personality insights</CardDescription>
+            </div>
+            <Button 
+              onClick={generatePersonalities} 
+              disabled={generating}
+              size="sm"
+              variant="outline"
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Update
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

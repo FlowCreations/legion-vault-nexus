@@ -35,7 +35,7 @@ export const NBAQueue = () => {
         .from("next_best_actions" as any)
         .select(`
           *,
-          user_profiles!inner(email, full_name)
+          user_profiles!inner(email, full_name, display_name, heartbeat_member_id)
         `)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -216,7 +216,10 @@ export const NBAQueue = () => {
                           <div className="flex items-center gap-2">
                             <ChannelIcon className="h-4 w-4 text-primary" />
                             <span className="font-semibold">
-                              {(nba as any).user_profiles?.email || "Unknown User"}
+                              {(nba as any).user_profiles?.email || 
+                               (nba as any).user_profiles?.display_name || 
+                               (nba as any).user_profiles?.heartbeat_member_id?.slice(0, 8) || 
+                               "Unknown User"}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
