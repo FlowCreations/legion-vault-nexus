@@ -455,7 +455,17 @@ export default function Merch() {
           {!loading && sortedProducts.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {sortedProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden group relative">
+                <Card 
+                  key={product.id} 
+                  className="overflow-hidden group relative cursor-pointer"
+                  onClick={() => {
+                    if (product.variants && product.variants.length > 0) {
+                      setSelectedProduct(product);
+                    } else {
+                      handleAddToCart(product);
+                    }
+                  }}
+                >
                   <div className="relative aspect-square overflow-hidden bg-white">
                     {product.image_url ? (
                       <img
@@ -487,7 +497,10 @@ export default function Merch() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => setQuickViewProduct(product)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickViewProduct(product);
+                        }}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Quick View
@@ -499,14 +512,6 @@ export default function Merch() {
                     <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{product.description}</p>
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-base sm:text-lg">${product.base_price.toFixed(2)}</span>
-                      <Button 
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddToCart(product)}
-                        className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
-                      >
-                        Add to Cart
-                      </Button>
                     </div>
                   </div>
                 </Card>
