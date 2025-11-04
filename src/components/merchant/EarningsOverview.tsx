@@ -26,10 +26,10 @@ const monthsData: MonthData[] = [
     month: "October 2025",
     totalEarnings: 95300,
     sales: {
-      albums: 982,
-      merch: 833,
-      tickets: 474,
-      community: 177,
+      albums: 37929,  // 39.8% of 95,300
+      merch: 32211,   // 33.8% of 95,300
+      tickets: 18298, // 19.2% of 95,300
+      community: 6862, // 7.2% of 95,300
     },
   },
   {
@@ -55,12 +55,12 @@ const monthsData: MonthData[] = [
 ];
 
 const dailySalesData = {
-  today: 2466,
-  yesterday: 2350,
-  "7days": 16800,
-  "14days": 32500,
-  "thismonth": 95300,
-  "30days": 89400,
+  today: 2466,        // Albums: $982 + Merch: $833 + Tickets: $474 + Community: $177
+  yesterday: 2580,
+  "7days": 17262,     // $2,466 × 7
+  "14days": 34524,    // $2,466 × 14
+  "thismonth": 95300, // Monthly total
+  "30days": 95300,    // Same as this month
   alltime: 487500,
 };
 
