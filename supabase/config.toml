@@ -71,3 +71,9 @@ verify_jwt = true
 
 [functions.cleanup-stale-streams]
 verify_jwt = false
+
+[functions.generate-oracle-insight]
+verify_jwt = true
+
+[functions.generate-epiphany-insight]
+verify_jwt = true
