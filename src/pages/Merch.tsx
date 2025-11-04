@@ -92,6 +92,10 @@ export default function Merch() {
         .eq('available', true);
 
       if (error) throw error;
+      
+      // Log to debug variant loading
+      console.log('Loaded products with variants:', data?.slice(0, 2));
+      
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -173,6 +177,12 @@ export default function Merch() {
 
 
   const handleAddToCart = async (product: Product) => {
+    console.log('handleAddToCart called with product:', { 
+      title: product.title, 
+      hasVariants: !!product.variants, 
+      variantCount: product.variants?.length 
+    });
+    
     trackEvent('add_to_cart', {
       id: product.id,
       name: product.title,
@@ -182,9 +192,12 @@ export default function Merch() {
 
     // For products with variants, open customizer
     if (product.variants && product.variants.length > 0) {
+      console.log('Opening customizer with variants:', product.variants);
       setSelectedProduct(product);
       return;
     }
+    
+    console.log('No variants, adding directly to cart');
     
     // Create a Shopify-compatible product structure from Supabase product
     const mockShopifyProduct: ShopifyProduct = {
