@@ -89,6 +89,24 @@ export const PlatformOverview = () => {
             <Radio className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Spotify</p>
+              <h3 className="text-3xl font-bold mt-2">{formatNumber(metrics.spotify.followers)}</h3>
+              <p className="text-sm mt-1 flex items-center gap-1">
+                <TrendingUp className="h-4 w-4 text-success" />
+                <span className="text-success">
+                  {formatPercentage((metrics.spotify.followersChange1m / (metrics.spotify.followers - metrics.spotify.followersChange1m)) * 100)}
+                </span>
+                <span className="text-muted-foreground">this month</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{formatNumber(metrics.spotify.monthlyListeners)} listeners</p>
+            </div>
+            <span className="text-4xl">🎵</span>
+          </div>
+        </Card>
       </div>
     </div>
   );

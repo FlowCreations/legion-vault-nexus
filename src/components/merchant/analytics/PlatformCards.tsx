@@ -22,8 +22,8 @@ export const PlatformCards = () => {
   }, []);
 
   if (loading) {
-    return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-      {[...Array(5)].map((_, i) => (
+    return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
         <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
       ))}
     </div>;
@@ -32,14 +32,6 @@ export const PlatformCards = () => {
   if (!metrics) return null;
 
   const platforms = [
-    {
-      name: 'Spotify',
-      icon: '🎵',
-      followers: metrics.spotify.followers,
-      change: metrics.spotify.followersChange1m,
-      changePercent: (metrics.spotify.followersChange1m / (metrics.spotify.followers - metrics.spotify.followersChange1m)) * 100,
-      metric: `${formatNumber(metrics.spotify.monthlyListeners)} listeners`,
-    },
     {
       name: 'Instagram',
       icon: '📸',
@@ -75,7 +67,7 @@ export const PlatformCards = () => {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {platforms.map((platform) => (
         <Card key={platform.name} className="p-4">
           <div className="flex items-center justify-between mb-2">
