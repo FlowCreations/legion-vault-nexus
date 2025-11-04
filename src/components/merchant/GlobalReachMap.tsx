@@ -145,11 +145,12 @@ export const GlobalReachMap = () => {
     setIsPaused(newPausedState);
     userPausedRef.current = newPausedState;
     
+    // Immediately stop/start rotation
     if (newPausedState) {
-      // Paused - stop rotation
+      // Paused - stop rotation immediately
       isInteractingRef.current = true;
     } else {
-      // Playing - resume rotation
+      // Playing - resume rotation immediately
       isInteractingRef.current = false;
     }
   };
@@ -362,10 +363,20 @@ export const GlobalReachMap = () => {
         {/* Pause/Play Button */}
         <button
           onClick={toggleSpin}
-          className="absolute top-4 left-4 z-10 w-10 h-10 flex items-center justify-center bg-black/60 border border-white/20 rounded-lg hover:bg-black/80 hover:border-blue-500 transition-all text-white text-sm"
-          title={isPaused ? 'Play Globe' : 'Pause Globe'}
+          className="absolute top-4 left-4 z-10 px-4 py-2 flex items-center gap-2 bg-black/60 border border-white/20 rounded-lg hover:bg-black/80 hover:border-blue-500 transition-all text-white text-sm font-medium"
+          title={isPaused ? 'Resume Rotation' : 'Pause Rotation'}
         >
-          {isPaused ? '▶' : '❚❚'}
+          {isPaused ? (
+            <>
+              <span className="text-lg">▶</span>
+              <span>Play</span>
+            </>
+          ) : (
+            <>
+              <span className="text-lg">❚❚</span>
+              <span>Pause</span>
+            </>
+          )}
         </button>
 
         {/* Member count badge - positioned to cover bottom left */}
