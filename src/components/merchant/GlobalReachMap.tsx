@@ -55,22 +55,26 @@ export const GlobalReachMap = () => {
 
   // Convert to GeoJSON with correct [lng, lat] order
   const geojson = useMemo(() => {
+    const features = filteredMembers.map((m) => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [m.lng!, m.lat!], // CRITICAL: [lng, lat] order
+      },
+      properties: {
+        id: m.id,
+        name: m.displayName,
+        city: m.city || '',
+        region: m.region || '',
+        country: m.country || '',
+      },
+    }));
+    
+    console.log('Creating GeoJSON with features:', features.length);
+    
     return {
       type: 'FeatureCollection' as const,
-      features: filteredMembers.map((m) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [m.lng!, m.lat!], // CRITICAL: [lng, lat] order
-        },
-        properties: {
-          id: m.id,
-          name: m.displayName,
-          city: m.city || '',
-          region: m.region || '',
-          country: m.country || '',
-        },
-      })),
+      features,
     };
   }, [filteredMembers]);
 
@@ -286,16 +290,25 @@ export const GlobalReachMap = () => {
 
   // Update source data when members change
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current) {
+      console.log('Map not initialized yet');
+      return;
+    }
 
     // Wait for style to be loaded before updating source
     const updateSource = () => {
-      if (!map.current || !map.current.isStyleLoaded()) return;
+      if (!map.current || !map.current.isStyleLoaded()) {
+        console.log('Map style not loaded yet');
+        return;
+      }
 
       const source = map.current.getSource('clients');
       if (source && source.type === 'geojson') {
         console.log('Updating map with members:', geojson.features.length);
+        console.log('Sample feature:', geojson.features[0]);
         source.setData(geojson);
+      } else {
+        console.log('Source not found or not geojson type');
       }
     };
 
