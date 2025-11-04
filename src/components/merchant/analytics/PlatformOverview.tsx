@@ -66,17 +66,6 @@ export const PlatformOverview = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Viberate Global Rank</p>
-              <h3 className="text-3xl font-bold mt-2">#{metrics.rank.toLocaleString()}</h3>
-              <p className="text-sm text-muted-foreground mt-1">Top 0.1% of artists</p>
-            </div>
-            <Hash className="h-8 w-8 text-muted-foreground" />
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
               <p className="text-sm text-muted-foreground">Monthly Listeners</p>
               <h3 className="text-3xl font-bold mt-2">{formatNumber(metrics.spotify.monthlyListeners)}</h3>
               <p className="text-sm mt-1 flex items-center gap-1">

@@ -24,12 +24,12 @@ interface MonthData {
 const monthsData: MonthData[] = [
   {
     month: "October 2025",
-    totalEarnings: 21300,
+    totalEarnings: 95300,
     sales: {
-      albums: 8500,
-      merch: 7200,
-      tickets: 4100,
-      community: 1500,
+      albums: 29500,
+      merch: 25000,
+      tickets: 14200,
+      community: 5300,
     },
   },
   {
