@@ -11,7 +11,7 @@ const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ de
 const MusicUpload = lazy(() => import("@/components/MusicUpload"));
 const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
 const TopTracks = lazy(() => import("@/components/merchant/TopTracks").then(m => ({ default: m.TopTracks })));
-const Geography = lazy(() => import("@/components/merchant/Geography").then(m => ({ default: m.Geography })));
+import { Geography } from "@/components/merchant/Geography";
 const Demographics = lazy(() => import("@/components/merchant/Demographics").then(m => ({ default: m.Demographics })));
 const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview").then(m => ({ default: m.EarningsOverview })));
 const CreateCampaigns = lazy(() => import("@/components/merchant/CreateCampaigns").then(m => ({ default: m.CreateCampaigns })));
@@ -244,9 +244,7 @@ const Merchant = memo(() => {
                   <EarningsOverview />
                 </Suspense>
                 
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Geography />
-                </Suspense>
+                <Geography />
 
                 <Suspense fallback={<LoadingSpinner />}>
                   <TopTracks period="7days" />
