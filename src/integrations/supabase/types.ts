@@ -3417,7 +3417,7 @@ export type Database = {
           total_spend: number | null
           tunepipe_subscriber_id: string | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           watch_time: number | null
         }
         Insert: {
@@ -3454,7 +3454,7 @@ export type Database = {
           total_spend?: number | null
           tunepipe_subscriber_id?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           watch_time?: number | null
         }
         Update: {
@@ -3491,7 +3491,7 @@ export type Database = {
           total_spend?: number | null
           tunepipe_subscriber_id?: string | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           watch_time?: number | null
         }
         Relationships: []
