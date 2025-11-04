@@ -54,14 +54,41 @@ const monthsData: MonthData[] = [
   },
 ];
 
+const DAILY_RATE = 3176.67;
+const dailyBreakdown = {
+  albums: 1205.00,
+  merch: 980.00,
+  tickets: 635.00,
+  community: 356.67,
+};
+
 const dailySalesData = {
-  today: 2466,        // Albums: $982 + Merch: $833 + Tickets: $474 + Community: $177
-  yesterday: 2580,
-  "7days": 17262,     // $2,466 × 7
-  "14days": 34524,    // $2,466 × 14
-  "thismonth": 95300, // Monthly total
-  "30days": 95300,    // Same as this month
+  today: DAILY_RATE,
+  yesterday: DAILY_RATE,
+  "7days": DAILY_RATE * 7,      // $22,236.69
+  "14days": DAILY_RATE * 14,    // $44,473.38
+  "thismonth": 95300,            // Monthly total
+  "30days": 95300,               // 30 days
   alltime: 487500,
+};
+
+const getPeriodMultiplier = (period: keyof typeof dailySalesData): number => {
+  switch (period) {
+    case "today":
+    case "yesterday":
+      return 1;
+    case "7days":
+      return 7;
+    case "14days":
+      return 14;
+    case "thismonth":
+    case "30days":
+      return 30;
+    case "alltime":
+      return 153.5; // Roughly 487500 / 3176.67
+    default:
+      return 1;
+  }
 };
 
 export const EarningsOverview = () => {
@@ -69,6 +96,15 @@ export const EarningsOverview = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<keyof typeof dailySalesData>("today");
   
   const currentData = monthsData.find(m => m.month === selectedMonth) || monthsData[0];
+  
+  // Calculate sales breakdown based on selected period
+  const periodMultiplier = getPeriodMultiplier(selectedPeriod);
+  const periodSales = {
+    albums: Math.round(dailyBreakdown.albums * periodMultiplier * 100) / 100,
+    merch: Math.round(dailyBreakdown.merch * periodMultiplier * 100) / 100,
+    tickets: Math.round(dailyBreakdown.tickets * periodMultiplier * 100) / 100,
+    community: Math.round(dailyBreakdown.community * periodMultiplier * 100) / 100,
+  };
 
   const handleDownload = () => {
     const csvContent = `Earnings Report - ${selectedMonth}\n\nTotal Earnings,$${currentData.totalEarnings.toLocaleString()}\n\nSales Breakdown:\nAlbums,$${currentData.sales.albums.toLocaleString()}\nMerch,$${currentData.sales.merch.toLocaleString()}\nTickets,$${currentData.sales.tickets.toLocaleString()}\nCommunity,$${currentData.sales.community.toLocaleString()}`;
@@ -161,7 +197,7 @@ export const EarningsOverview = () => {
             <CardContent className="p-8 text-center">
               <Music className="h-12 w-12 mx-auto mb-4" />
               <h3 className="font-bold text-xl mb-2">Albums</h3>
-              <p className="text-4xl font-bold">${currentData.sales.albums.toLocaleString()}</p>
+              <p className="text-4xl font-bold">${periodSales.albums.toLocaleString()}</p>
             </CardContent>
           </Card>
 
@@ -169,7 +205,7 @@ export const EarningsOverview = () => {
             <CardContent className="p-8 text-center">
               <ShoppingBag className="h-12 w-12 mx-auto mb-4" />
               <h3 className="font-bold text-xl mb-2">Merch</h3>
-              <p className="text-4xl font-bold">${currentData.sales.merch.toLocaleString()}</p>
+              <p className="text-4xl font-bold">${periodSales.merch.toLocaleString()}</p>
             </CardContent>
           </Card>
 
@@ -177,7 +213,7 @@ export const EarningsOverview = () => {
             <CardContent className="p-8 text-center">
               <Ticket className="h-12 w-12 mx-auto mb-4" />
               <h3 className="font-bold text-xl mb-2">Tickets</h3>
-              <p className="text-4xl font-bold">${currentData.sales.tickets.toLocaleString()}</p>
+              <p className="text-4xl font-bold">${periodSales.tickets.toLocaleString()}</p>
             </CardContent>
           </Card>
 
@@ -185,7 +221,7 @@ export const EarningsOverview = () => {
             <CardContent className="p-8 text-center">
               <Users className="h-12 w-12 mx-auto mb-4" />
               <h3 className="font-bold text-xl mb-2">Community</h3>
-              <p className="text-4xl font-bold">${currentData.sales.community.toLocaleString()}</p>
+              <p className="text-4xl font-bold">${periodSales.community.toLocaleString()}</p>
             </CardContent>
           </Card>
         </div>
