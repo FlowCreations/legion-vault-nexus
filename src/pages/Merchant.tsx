@@ -158,11 +158,6 @@ const Merchant = memo(() => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 mt-20 max-w-7xl">
         <div className="mb-8">
-          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-            <p className="text-sm text-center">
-              <span className="font-semibold">Live Data</span> - Real-time analytics from Viberate, Tunepipe, and platform APIs • Last updated: {new Date().toLocaleDateString()}
-            </p>
-          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -172,6 +167,30 @@ const Merchant = memo(() => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Analytics
+            </TabsTrigger>
+            <TabsTrigger 
+              value="community"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Community
+            </TabsTrigger>
+            <TabsTrigger 
+              value="livestream"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Live Studio
+            </TabsTrigger>
+            <TabsTrigger 
+              value="partnerships"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Partnerships
+            </TabsTrigger>
+            <TabsTrigger 
+              value="intelligence"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              Intelligence
             </TabsTrigger>
             <TabsTrigger 
               value="content"
@@ -184,30 +203,6 @@ const Merchant = memo(() => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Marketing
-            </TabsTrigger>
-            <TabsTrigger 
-              value="community"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Community
-            </TabsTrigger>
-            <TabsTrigger 
-              value="intelligence"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Intelligence
-            </TabsTrigger>
-            <TabsTrigger 
-              value="partnerships"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Partnerships
-            </TabsTrigger>
-            <TabsTrigger 
-              value="livestream"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
-            >
-              Live Studio
             </TabsTrigger>
           </TabsList>
 
