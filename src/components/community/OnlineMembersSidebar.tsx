@@ -20,74 +20,6 @@ interface OnlineMembersSidebarProps {
   onMemberClick: (member: { id: string; name: string; avatar: string }) => void;
 }
 
-// Mock online/offline members for demo
-const mockMembers: OnlineMember[] = [
-  {
-    user_id: "mock_1",
-    display_name: "Sarah Johnson",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-    tier: "Legion Elite",
-    last_active_at: new Date().toISOString(),
-    is_online: true
-  },
-  {
-    user_id: "mock_2",
-    display_name: "Mike Chen",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
-    tier: "Legion Member",
-    last_active_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    is_online: false
-  },
-  {
-    user_id: "mock_3",
-    display_name: "Emily Rodriguez",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily",
-    tier: "Legion Elite",
-    last_active_at: new Date().toISOString(),
-    is_online: true
-  },
-  {
-    user_id: "mock_4",
-    display_name: "David Kim",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=david",
-    tier: "Legion VIP",
-    last_active_at: new Date().toISOString(),
-    is_online: true
-  },
-  {
-    user_id: "mock_5",
-    display_name: "Jessica Martinez",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jessica",
-    tier: "Free Member",
-    last_active_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    is_online: false
-  },
-  {
-    user_id: "mock_6",
-    display_name: "Robert Taylor",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=robert",
-    tier: "Legion Member",
-    last_active_at: new Date().toISOString(),
-    is_online: true
-  },
-  {
-    user_id: "mock_7",
-    display_name: "Amanda White",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=amanda",
-    tier: "Legion VIP",
-    last_active_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    is_online: false
-  },
-  {
-    user_id: "mock_8",
-    display_name: "Chris Anderson",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=chris",
-    tier: "Legion Elite",
-    last_active_at: new Date().toISOString(),
-    is_online: true
-  }
-];
-
 export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProps) => {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
   const [allMembers, setAllMembers] = useState<OnlineMember[]>([]);
@@ -97,11 +29,11 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
     initializePresence();
     fetchOnlineMembers();
 
-    // Update own presence every 30 seconds
-    const presenceInterval = setInterval(updatePresence, 30000);
+    // Update own presence every 60 seconds (reduced from 30s)
+    const presenceInterval = setInterval(updatePresence, 60000);
 
-    // Fetch online members every 60 seconds
-    const fetchInterval = setInterval(fetchOnlineMembers, 60000);
+    // Fetch online members every 2 minutes (reduced from 60s)
+    const fetchInterval = setInterval(fetchOnlineMembers, 120000);
 
     // Subscribe to realtime changes
     const channel = supabase
@@ -169,24 +101,21 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
       .eq('is_online', true)
       .gte('last_active_at', fiveMinutesAgo)
       .order('last_active_at', { ascending: false })
-      .limit(50);
+      .limit(20); // Reduced from 50 to 20 for better performance
 
-    let realMembers = (data || []) as OnlineMember[];
+    let members = (data || []) as OnlineMember[];
     
     // Filter out current user
     if (user) {
-      realMembers = realMembers.filter(m => m.user_id !== user.id);
+      members = members.filter(m => m.user_id !== user.id);
     }
     
-    // Combine real members with mock members
-    const combined = [...realMembers, ...mockMembers];
-    
-    // Split into online and offline
-    const online = combined.filter(m => m.is_online);
-    const offline = combined.filter(m => !m.is_online);
+    // Split into online and offline (no mock members)
+    const online = members.filter(m => m.is_online);
+    const offline = members.filter(m => !m.is_online);
     
     setOnlineMembers(online);
-    setAllMembers(combined);
+    setAllMembers(members);
   };
 
   const handleMemberClick = (member: OnlineMember) => {

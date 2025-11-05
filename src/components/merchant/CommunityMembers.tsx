@@ -1,13 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, Loader2 } from "lucide-react";
+import { Search, Users, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface CommunityMember {
@@ -33,19 +34,28 @@ interface CommunityMembersProps {
 
 export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   const [members, setMembers] = useState<CommunityMember[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
+  
+  const ITEMS_PER_PAGE = 50;
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to first page on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadMembers();
-  }, []);
-
-  useEffect(() => {
-    filterMembers();
-  }, [searchQuery, tierFilter, members]);
+  }, [currentPage, debouncedSearch, tierFilter]);
 
   // Scroll to selected user if provided
   useEffect(() => {
@@ -59,46 +69,52 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
     }
   }, [selectedUserId, members]);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalCount);
+
   const loadMembers = async () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      // Build query with filters and pagination
+      let query = supabase
         .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+
+      // Apply search filter
+      if (debouncedSearch) {
+        query = query.or(
+          `display_name.ilike.%${debouncedSearch}%,location.ilike.%${debouncedSearch}%`
+        );
+      }
+
+      // Apply tier filter
+      if (tierFilter !== "all") {
+        query = query.or(
+          `membership_tier.ilike.%${tierFilter}%,tier.ilike.%${tierFilter}%`
+        );
+      }
+
+      // Apply pagination
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
 
       setMembers(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error loading members:', error);
       toast({ title: "Error loading members", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterMembers = () => {
-    let filtered = [...members];
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(member =>
-        member.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.location?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filter by tier
-    if (tierFilter !== "all") {
-      filtered = filtered.filter(member => {
-        const memberTier = (member.membership_tier || member.tier || "FREE").toLowerCase();
-        return memberTier.includes(tierFilter.toLowerCase());
-      });
-    }
-
-    setFilteredMembers(filtered);
   };
 
   const getTierBadge = (tier: string | null) => {
@@ -155,7 +171,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                 Community Members
               </CardTitle>
               <CardDescription>
-                {filteredMembers.length} of {members.length} members
+                Showing {members.length > 0 ? startItem : 0}-{endItem} of {totalCount} members
               </CardDescription>
             </div>
           </div>
@@ -200,14 +216,14 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.length === 0 ? (
+                {members.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No members found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredMembers.map((member) => (
+                  members.map((member) => (
                     <TableRow 
                       key={member.id} 
                       data-user-id={member.user_id}
@@ -252,6 +268,35 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <div className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || loading}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || loading}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
