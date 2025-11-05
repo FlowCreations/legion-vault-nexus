@@ -260,23 +260,7 @@ const Merchant = memo(() => {
                   </Suspense>
                   
                   <Suspense fallback={<LoadingSpinner />}>
-                    <Geography />
-                  </Suspense>
-
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <TopTracks period="7days" />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Demographics />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
                     <PlatformOverview />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <PlatformCards />
                   </Suspense>
                   
                   <div className="grid gap-6 md:grid-cols-2">
@@ -287,9 +271,17 @@ const Merchant = memo(() => {
                       <EngagementTimeline />
                     </Suspense>
                   </div>
-
+                  
                   <Suspense fallback={<LoadingSpinner />}>
-                    <DistributorIntegration />
+                    <TopTracks period="7days" />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Demographics />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Geography />
                   </Suspense>
                 </div>
               </div>

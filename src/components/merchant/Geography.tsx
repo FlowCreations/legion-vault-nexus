@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { GlobalReachMap } from "./GlobalReachMap";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
@@ -11,41 +11,27 @@ export const Geography = () => {
   const [memberCount, setMemberCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Check if we have members that need geocoding - but don't block render
-  useEffect(() => {
-    let mounted = true;
-    
-    async function checkGeocoding() {
-      try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .not('location', 'is', null)
-          .is('latitude', null);
-        
-        if (!mounted) return;
-        
-        if (error) {
-          console.error('Error checking geocoding:', error);
-          return;
-        }
-        
-        const count = data?.length || 0;
-        setMemberCount(count);
-        setNeedsGeocoding(count > 0);
-      } catch (error) {
-        console.error('Error in checkGeocoding:', error);
+  // Don't auto-check on mount - only when user requests it
+  const checkGeocoding = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .not('location', 'is', null)
+        .is('latitude', null);
+      
+      if (error) {
+        console.error('Error checking geocoding:', error);
+        return;
       }
+      
+      const count = data?.length || 0;
+      setMemberCount(count);
+      setNeedsGeocoding(count > 0);
+    } catch (error) {
+      console.error('Error in checkGeocoding:', error);
     }
-    
-    // Delay the check to not block initial render
-    const timer = setTimeout(() => checkGeocoding(), 1000);
-    
-    return () => {
-      mounted = false;
-      clearTimeout(timer);
-    };
-  }, [refreshKey]);
+  }, []);
 
   const handleGeocode = async () => {
     try {
