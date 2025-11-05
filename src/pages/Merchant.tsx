@@ -12,7 +12,7 @@ const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ de
 const MusicUpload = lazy(() => import("@/components/MusicUpload"));
 const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
 const TopTracks = lazy(() => import("@/components/merchant/TopTracks").then(m => ({ default: m.TopTracks })));
-import { Geography } from "@/components/merchant/Geography";
+const Geography = lazy(() => import("@/components/merchant/Geography").then(m => ({ default: m.Geography })));
 const Demographics = lazy(() => import("@/components/merchant/Demographics").then(m => ({ default: m.Demographics })));
 const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview").then(m => ({ default: m.EarningsOverview })));
 const CreateCampaigns = lazy(() => import("@/components/merchant/CreateCampaigns").then(m => ({ default: m.CreateCampaigns })));
@@ -79,11 +79,6 @@ const Merchant = memo(() => {
   });
 
   useEffect(() => {
-    // Only load analytics for the analytics tab
-    if (activeTab === "analytics") {
-      loadAnalytics();
-    }
-    
     // Check for navigation state only once on mount
     const state = window.history.state?.usr;
     if (state?.activeTab) {
@@ -98,7 +93,7 @@ const Merchant = memo(() => {
         setSelectedUserId(null);
       }, 3000);
     }
-  }, [activeTab]);
+  }, []); // Only run on mount
 
   // Memoize demo data to prevent recreation on every render
   const getDemoData = useMemo((): AnalyticsData => ({
@@ -138,11 +133,9 @@ const Merchant = memo(() => {
   }), []);
 
   const loadAnalytics = useCallback(async () => {
-    // Only load if not already loaded
-    if (!analyticsData) {
-      setAnalyticsData(getDemoData);
-    }
-  }, [analyticsData, getDemoData]);
+    // Load demo data immediately (it's just static data)
+    setAnalyticsData(getDemoData);
+  }, [getDemoData]);
 
   const handleRefreshData = useCallback(async () => {
     setRefreshing(true);
@@ -268,7 +261,9 @@ const Merchant = memo(() => {
                     <EarningsOverview />
                   </Suspense>
                   
-                  <Geography />
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Geography />
+                  </Suspense>
 
                   <Suspense fallback={<LoadingSpinner />}>
                     <TopTracks period="7days" />
