@@ -1516,6 +1516,51 @@ export type Database = {
         }
         Relationships: []
       }
+      events_archive: {
+        Row: {
+          archived_at: string | null
+          click_latency_ms: number | null
+          content_id: string | null
+          created_at: string | null
+          duration_sec: number | null
+          id: string
+          member_id: string | null
+          meta: Json | null
+          sentiment: number | null
+          ts: string
+          type: Database["public"]["Enums"]["event_type"]
+          value: number | null
+        }
+        Insert: {
+          archived_at?: string | null
+          click_latency_ms?: number | null
+          content_id?: string | null
+          created_at?: string | null
+          duration_sec?: number | null
+          id: string
+          member_id?: string | null
+          meta?: Json | null
+          sentiment?: number | null
+          ts: string
+          type: Database["public"]["Enums"]["event_type"]
+          value?: number | null
+        }
+        Update: {
+          archived_at?: string | null
+          click_latency_ms?: number | null
+          content_id?: string | null
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          member_id?: string | null
+          meta?: Json | null
+          sentiment?: number | null
+          ts?: string
+          type?: Database["public"]["Enums"]["event_type"]
+          value?: number | null
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           created_at: string | null
@@ -3736,6 +3781,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_old_events: { Args: never; Returns: number }
       compute_community_analytics: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
       has_role: {

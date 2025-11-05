@@ -70,7 +70,7 @@ export const Geography = () => {
           </Button>
         )}
       </div>
-      <GlobalReachMap key={refreshKey} />
+      <GlobalReachMap />
     </div>
   );
 };
