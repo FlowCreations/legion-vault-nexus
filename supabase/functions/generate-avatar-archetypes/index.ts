@@ -11,10 +11,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    console.log('Starting avatar generation...');
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!Deno.env.get('SUPABASE_URL'),
+      hasServiceKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+      hasLovableKey: !!Deno.env.get('LOVABLE_API_KEY')
+    });
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error(`Missing environment variables: URL=${!!supabaseUrl}, KEY=${!!supabaseKey}`);
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
