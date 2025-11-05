@@ -391,6 +391,12 @@ const Merchant = memo(() => {
           {activeTab === "intelligence" && (
             <TabsContent value="intelligence" className="space-y-6">
               <Suspense fallback={<LoadingSpinner />}>
+                <OracleInsight />
+              </Suspense>
+              <Suspense fallback={<LoadingSpinner />}>
+                <EpiphanyInsight />
+              </Suspense>
+              <Suspense fallback={<LoadingSpinner />}>
                 <AvatarArchetypes />
               </Suspense>
             </TabsContent>
