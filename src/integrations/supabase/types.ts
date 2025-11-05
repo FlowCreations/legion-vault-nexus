@@ -637,6 +637,63 @@ export type Database = {
           },
         ]
       }
+      avatar_archetypes: {
+        Row: {
+          avatar_name: string
+          behavioral_patterns: Json | null
+          confidence_score: number | null
+          conversion_predictions: Json | null
+          core_demographic: Json | null
+          created_at: string | null
+          cultural_symbolic_affinities: Json | null
+          description: string | null
+          emotional_energy_profile: Json | null
+          experiential_aspirational: Json | null
+          id: string
+          member_count: number | null
+          predictive_signals: Json | null
+          psychographic_personality: Json | null
+          socioeconomic_context: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_name: string
+          behavioral_patterns?: Json | null
+          confidence_score?: number | null
+          conversion_predictions?: Json | null
+          core_demographic?: Json | null
+          created_at?: string | null
+          cultural_symbolic_affinities?: Json | null
+          description?: string | null
+          emotional_energy_profile?: Json | null
+          experiential_aspirational?: Json | null
+          id?: string
+          member_count?: number | null
+          predictive_signals?: Json | null
+          psychographic_personality?: Json | null
+          socioeconomic_context?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_name?: string
+          behavioral_patterns?: Json | null
+          confidence_score?: number | null
+          conversion_predictions?: Json | null
+          core_demographic?: Json | null
+          created_at?: string | null
+          cultural_symbolic_affinities?: Json | null
+          description?: string | null
+          emotional_energy_profile?: Json | null
+          experiential_aspirational?: Json | null
+          id?: string
+          member_count?: number | null
+          predictive_signals?: Json | null
+          psychographic_personality?: Json | null
+          socioeconomic_context?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       brand_partnerships: {
         Row: {
           artist_id: string

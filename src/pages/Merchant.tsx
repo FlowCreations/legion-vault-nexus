@@ -24,10 +24,7 @@ const BuildFunnel = lazy(() => import("@/components/merchant/BuildFunnel").then(
 const Partnerships = lazy(() => import("@/components/merchant/Partnerships").then(m => ({ default: m.Partnerships })));
 const LiveStreamManager = lazy(() => import("@/components/merchant/LiveStreamManager").then(m => ({ default: m.LiveStreamManager })));
 const LiveStreamEventManager = lazy(() => import("@/components/merchant/LiveStreamEventManager").then(m => ({ default: m.LiveStreamEventManager })));
-const CoreDemographics = lazy(() => import("@/components/merchant/intelligence/CoreDemographics").then(m => ({ default: m.CoreDemographics })));
-const PersonalityOverview = lazy(() => import("@/components/merchant/intelligence/PersonalityOverview").then(m => ({ default: m.PersonalityOverview })));
-const MemberPersonalityTable = lazy(() => import("@/components/merchant/intelligence/MemberPersonalityTable").then(m => ({ default: m.MemberPersonalityTable })));
-const NBAQueue = lazy(() => import("@/components/merchant/intelligence/NBAQueue").then(m => ({ default: m.NBAQueue })));
+const AvatarArchetypes = lazy(() => import("@/components/merchant/intelligence/AvatarArchetypes"));
 const OracleInsight = lazy(() => import("@/components/merchant/intelligence/OracleInsight").then(m => ({ default: m.OracleInsight })));
 const EpiphanyInsight = lazy(() => import("@/components/merchant/intelligence/EpiphanyInsight").then(m => ({ default: m.EpiphanyInsight })));
 const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview"));
@@ -416,19 +413,13 @@ const Merchant = memo(() => {
           {activeTab === "intelligence" && (
             <TabsContent value="intelligence" className="space-y-6">
               <Suspense fallback={<LoadingSpinner />}>
-                <CoreDemographics />
-              </Suspense>
-              <Suspense fallback={<LoadingSpinner />}>
                 <OracleInsight />
               </Suspense>
               <Suspense fallback={<LoadingSpinner />}>
                 <EpiphanyInsight />
               </Suspense>
               <Suspense fallback={<LoadingSpinner />}>
-                <PersonalityOverview />
-              </Suspense>
-              <Suspense fallback={<LoadingSpinner />}>
-                <MemberPersonalityTable />
+                <AvatarArchetypes />
               </Suspense>
             </TabsContent>
           )}
