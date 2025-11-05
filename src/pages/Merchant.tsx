@@ -253,43 +253,21 @@ const Merchant = memo(() => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
-                <div className="space-y-8">
+              <div className="space-y-8">
+                <Suspense fallback={<LoadingSpinner />}>
+                  <EarningsOverview />
+                </Suspense>
+                
+                <Suspense fallback={<LoadingSpinner />}>
+                  <PlatformOverview />
+                </Suspense>
+                
+                <div className="grid gap-6 md:grid-cols-2">
                   <Suspense fallback={<LoadingSpinner />}>
-                    <EarningsOverview />
+                    <PlatformDistribution />
                   </Suspense>
-                  
                   <Suspense fallback={<LoadingSpinner />}>
-                    <Geography />
-                  </Suspense>
-
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <TopTracks period="7days" />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Demographics />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <PlatformOverview />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <PlatformCards />
-                  </Suspense>
-                  
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <PlatformDistribution />
-                    </Suspense>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <EngagementTimeline />
-                    </Suspense>
-                  </div>
-
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <DistributorIntegration />
+                    <EngagementTimeline />
                   </Suspense>
                 </div>
               </div>
@@ -412,12 +390,6 @@ const Merchant = memo(() => {
 
           {activeTab === "intelligence" && (
             <TabsContent value="intelligence" className="space-y-6">
-              <Suspense fallback={<LoadingSpinner />}>
-                <OracleInsight />
-              </Suspense>
-              <Suspense fallback={<LoadingSpinner />}>
-                <EpiphanyInsight />
-              </Suspense>
               <Suspense fallback={<LoadingSpinner />}>
                 <AvatarArchetypes />
               </Suspense>
