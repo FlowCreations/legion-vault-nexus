@@ -253,21 +253,43 @@ const Merchant = memo(() => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="space-y-8">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <EarningsOverview />
-                </Suspense>
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <PlatformOverview />
-                </Suspense>
-                
-                <div className="grid gap-6 md:grid-cols-2">
+              <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
+                <div className="space-y-8">
                   <Suspense fallback={<LoadingSpinner />}>
-                    <PlatformDistribution />
+                    <EarningsOverview />
                   </Suspense>
+                  
                   <Suspense fallback={<LoadingSpinner />}>
-                    <EngagementTimeline />
+                    <Geography />
+                  </Suspense>
+
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <TopTracks period="7days" />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Demographics />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PlatformOverview />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PlatformCards />
+                  </Suspense>
+                  
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <PlatformDistribution />
+                    </Suspense>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <EngagementTimeline />
+                    </Suspense>
+                  </div>
+
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <DistributorIntegration />
                   </Suspense>
                 </div>
               </div>
