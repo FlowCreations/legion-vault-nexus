@@ -11,21 +11,40 @@ export const Geography = () => {
   const [memberCount, setMemberCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Check if we have members that need geocoding
+  // Check if we have members that need geocoding - but don't block render
   useEffect(() => {
+    let mounted = true;
+    
     async function checkGeocoding() {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .not('location', 'is', null)
-        .is('latitude', null);
-      
-      const count = data?.length || 0;
-      setMemberCount(count);
-      setNeedsGeocoding(count > 0);
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .not('location', 'is', null)
+          .is('latitude', null);
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Error checking geocoding:', error);
+          return;
+        }
+        
+        const count = data?.length || 0;
+        setMemberCount(count);
+        setNeedsGeocoding(count > 0);
+      } catch (error) {
+        console.error('Error in checkGeocoding:', error);
+      }
     }
     
-    checkGeocoding();
+    // Delay the check to not block initial render
+    const timer = setTimeout(() => checkGeocoding(), 1000);
+    
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
   }, [refreshKey]);
 
   const handleGeocode = async () => {
