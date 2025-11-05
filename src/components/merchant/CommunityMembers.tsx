@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Users, Loader2 } from "lucide-react";
@@ -38,9 +37,6 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const MEMBERS_PER_PAGE = 50;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,50 +54,29 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
         const memberRow = document.querySelector(`[data-user-id="${selectedUserId}"]`);
         if (memberRow) {
           memberRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Highlight the row temporarily
-          memberRow.classList.add('bg-primary/20');
-          setTimeout(() => {
-            memberRow.classList.remove('bg-primary/20');
-          }, 2000);
         }
       }, 300);
     }
   }, [selectedUserId, members]);
 
-  const loadMembers = async (pageNum = 0) => {
+  const loadMembers = async () => {
     try {
       setLoading(true);
       
-      const from = pageNum * MEMBERS_PER_PAGE;
-      const to = from + MEMBERS_PER_PAGE - 1;
-      
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      if (pageNum === 0) {
-        setMembers(data || []);
-      } else {
-        setMembers(prev => [...prev, ...(data || [])]);
-      }
-      
-      setHasMore((count || 0) > (pageNum + 1) * MEMBERS_PER_PAGE);
+      setMembers(data || []);
     } catch (error) {
       console.error('Error loading members:', error);
       toast({ title: "Error loading members", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    loadMembers(nextPage);
   };
 
   const filterMembers = () => {
@@ -211,10 +186,10 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
             </Select>
           </div>
 
-          {/* Members Table */}
-          <div className="border rounded-lg">
+          {/* Members Table - Optimized with React.memo */}
+          <div className="border rounded-lg max-h-[600px] overflow-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
                   <TableHead className="w-[300px]">Member</TableHead>
                   <TableHead>Location</TableHead>
@@ -236,9 +211,9 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                     <TableRow 
                       key={member.id} 
                       data-user-id={member.user_id}
-                      className="transition-colors duration-500"
+                      className={member.user_id === selectedUserId ? 'bg-primary/20' : ''}
                     >
-                       <TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={member.avatar_url || undefined} />
@@ -249,13 +224,8 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                           <div className="max-w-[200px]">
                             <p className="font-medium truncate">{member.display_name || "Anonymous"}</p>
                             <p className="text-xs text-muted-foreground truncate">
-                              {member.email || member.full_name || `ID: ${(member.user_id || member.heartbeat_member_id || 'unknown').slice(0, 8)}...`}
+                              {member.email || member.full_name}
                             </p>
-                            {member.bio && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {member.bio}
-                              </p>
-                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -283,13 +253,6 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
             </Table>
           </div>
         </CardContent>
-        {hasMore && !loading && (
-          <div className="p-4 border-t flex justify-center">
-            <Button onClick={loadMore} variant="outline">
-              Load More Members
-            </Button>
-          </div>
-        )}
       </Card>
     </div>
   );

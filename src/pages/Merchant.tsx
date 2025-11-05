@@ -208,219 +208,236 @@ const Merchant = memo(() => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="flex justify-end gap-3">
-              <Suspense fallback={<div className="h-10 w-10"></div>}>
-                <SeedCoordinatesButton />
-              </Suspense>
-              <Button 
-                onClick={handleRefreshData} 
-                disabled={refreshing}
-                variant="outline"
-              >
-                {refreshing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                    Syncing Data...
-                  </>
-                ) : (
-                  <>
-                    <Activity className="mr-2 h-4 w-4" />
-                    Refresh Data
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                onClick={() => setShowChat(!showChat)}
-                className="bg-gradient-gold"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                {showChat ? "Hide" : "Show"} AI Assistant
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
-              <div className="space-y-8">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <EarningsOverview />
+          {/* Conditional Tab Rendering - Only render active tab */}
+          {activeTab === "analytics" && (
+            <TabsContent value="analytics" className="space-y-6">
+              <div className="flex justify-end gap-3">
+                <Suspense fallback={<div className="h-10 w-10"></div>}>
+                  <SeedCoordinatesButton />
                 </Suspense>
+                <Button 
+                  onClick={handleRefreshData} 
+                  disabled={refreshing}
+                  variant="outline"
+                >
+                  {refreshing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                      Syncing Data...
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="mr-2 h-4 w-4" />
+                      Refresh Data
+                    </>
+                  )}
+                </Button>
                 
-                <Geography />
-
-                <Suspense fallback={<LoadingSpinner />}>
-                  <TopTracks period="7days" />
-                </Suspense>
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Demographics />
-                </Suspense>
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <PlatformOverview />
-                </Suspense>
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <PlatformCards />
-                </Suspense>
-                
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <PlatformDistribution />
-                  </Suspense>
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <EngagementTimeline />
-                  </Suspense>
-                </div>
-
-                <Suspense fallback={<LoadingSpinner />}>
-                  <DistributorIntegration />
-                </Suspense>
+                <Button 
+                  onClick={() => setShowChat(!showChat)}
+                  className="bg-gradient-gold"
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  {showChat ? "Hide" : "Show"} AI Assistant
+                </Button>
               </div>
-            </div>
 
-              {showChat && (
-                <div className="lg:col-span-1">
-                  <div className="sticky top-24">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
+                <div className="space-y-8">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <EarningsOverview />
+                  </Suspense>
+                  
+                  <Geography />
+
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <TopTracks period="7days" />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Demographics />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PlatformOverview />
+                  </Suspense>
+                  
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PlatformCards />
+                  </Suspense>
+                  
+                  <div className="grid gap-6 md:grid-cols-2">
                     <Suspense fallback={<LoadingSpinner />}>
-                      <AIChat />
+                      <PlatformDistribution />
+                    </Suspense>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <EngagementTimeline />
                     </Suspense>
                   </div>
+
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <DistributorIntegration />
+                  </Suspense>
                 </div>
-              )}
-            </div>
-          </TabsContent>
+              </div>
 
-          <TabsContent value="content">
-            <Tabs defaultValue="videos" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="videos">Videos</TabsTrigger>
-                <TabsTrigger value="music">Music Upload</TabsTrigger>
-                <TabsTrigger value="music-manager">Music Manager</TabsTrigger>
-                <TabsTrigger value="livestreams">Live Events</TabsTrigger>
-                <TabsTrigger value="tour">Tour Manager</TabsTrigger>
-                <TabsTrigger value="lab">Content Lab</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="videos">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <VideoManager />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="music">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <MusicUpload />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="music-manager">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <MusicManager />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="livestreams">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <LiveStreamEventManager />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="tour">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <TourManager />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="lab">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <ContentLab />
-                </Suspense>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
+                {showChat && (
+                  <div className="lg:col-span-1">
+                    <div className="sticky top-24">
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <AIChat />
+                      </Suspense>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          )}
 
-          <TabsContent value="marketing">
-            <Tabs defaultValue="campaigns" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-                <TabsTrigger value="funnels">Funnels</TabsTrigger>
-                <TabsTrigger value="email">Email</TabsTrigger>
-                <TabsTrigger value="social">Social</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="campaigns">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <CreateCampaigns />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="funnels">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <BuildFunnel />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="email">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <EmailMarketing />
-                </Suspense>
-              </TabsContent>
-              <TabsContent value="social">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <SocialTracking />
-                </Suspense>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
+          {activeTab === "content" && (
+            <TabsContent value="content">
+              <Tabs defaultValue="videos" className="space-y-6">
+                <TabsList>
+                  <TabsTrigger value="videos">Videos</TabsTrigger>
+                  <TabsTrigger value="music">Music Upload</TabsTrigger>
+                  <TabsTrigger value="music-manager">Music Manager</TabsTrigger>
+                  <TabsTrigger value="livestreams">Live Events</TabsTrigger>
+                  <TabsTrigger value="tour">Tour Manager</TabsTrigger>
+                  <TabsTrigger value="lab">Content Lab</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="videos">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <VideoManager />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="music">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <MusicUpload />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="music-manager">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <MusicManager />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="livestreams">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <LiveStreamEventManager />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="tour">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <TourManager />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="lab">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ContentLab />
+                  </Suspense>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+          )}
 
-          <TabsContent value="community">
-            <Tabs defaultValue="members" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="members">Community Members</TabsTrigger>
-                <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="members">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <CommunityMembers selectedUserId={selectedUserId} />
-                </Suspense>
-              </TabsContent>
-              
-              <TabsContent value="activity">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <AdminDashboard selectedUserId={selectedUserId} />
-                </Suspense>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
+          {activeTab === "marketing" && (
+            <TabsContent value="marketing">
+              <Tabs defaultValue="campaigns" className="space-y-6">
+                <TabsList>
+                  <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                  <TabsTrigger value="funnels">Funnels</TabsTrigger>
+                  <TabsTrigger value="email">Email</TabsTrigger>
+                  <TabsTrigger value="social">Social</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="campaigns">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <CreateCampaigns />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="funnels">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <BuildFunnel />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="email">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <EmailMarketing />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="social">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <SocialTracking />
+                  </Suspense>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+          )}
 
-          <TabsContent value="intelligence" className="space-y-6">
-            <Suspense fallback={<LoadingSpinner />}>
-              <OracleInsight />
-            </Suspense>
-            <Suspense fallback={<LoadingSpinner />}>
-              <EpiphanyInsight />
-            </Suspense>
-            <Suspense fallback={<LoadingSpinner />}>
-              <PersonalityOverview />
-            </Suspense>
-            <Suspense fallback={<LoadingSpinner />}>
-              <MemberPersonalityTable />
-            </Suspense>
-          </TabsContent>
+          {activeTab === "community" && (
+            <TabsContent value="community">
+              <Tabs defaultValue="members" className="space-y-6">
+                <TabsList>
+                  <TabsTrigger value="members">Community Members</TabsTrigger>
+                  <TabsTrigger value="activity">Activity Feed</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="members">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <CommunityMembers selectedUserId={selectedUserId} />
+                  </Suspense>
+                </TabsContent>
+                
+                <TabsContent value="activity">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminDashboard selectedUserId={selectedUserId} />
+                  </Suspense>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+          )}
 
-        <TabsContent value="funnels">
-          <Suspense fallback={<LoadingSpinner />}>
-            <FunnelOverview />
-          </Suspense>
-        </TabsContent>
+          {activeTab === "intelligence" && (
+            <TabsContent value="intelligence" className="space-y-6">
+              <Suspense fallback={<LoadingSpinner />}>
+                <OracleInsight />
+              </Suspense>
+              <Suspense fallback={<LoadingSpinner />}>
+                <EpiphanyInsight />
+              </Suspense>
+              <Suspense fallback={<LoadingSpinner />}>
+                <PersonalityOverview />
+              </Suspense>
+              <Suspense fallback={<LoadingSpinner />}>
+                <MemberPersonalityTable />
+              </Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="partnerships">
-            <Suspense fallback={<LoadingSpinner />}>
-              <Partnerships />
-            </Suspense>
-          </TabsContent>
+          {activeTab === "funnels" && (
+            <TabsContent value="funnels">
+              <Suspense fallback={<LoadingSpinner />}>
+                <FunnelOverview />
+              </Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="livestream">
-            <Suspense fallback={<LoadingSpinner />}>
-              <LiveStreamManager />
-            </Suspense>
-          </TabsContent>
+          {activeTab === "partnerships" && (
+            <TabsContent value="partnerships">
+              <Suspense fallback={<LoadingSpinner />}>
+                <Partnerships />
+              </Suspense>
+            </TabsContent>
+          )}
+
+          {activeTab === "livestream" && (
+            <TabsContent value="livestream">
+              <Suspense fallback={<LoadingSpinner />}>
+                <LiveStreamManager />
+              </Suspense>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
