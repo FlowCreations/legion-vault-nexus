@@ -1,10 +1,11 @@
-import { useEffect, useState, lazy, Suspense, memo, useCallback } from "react";
+import { useEffect, useState, lazy, Suspense, memo, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Activity, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 
 // Lazy load ALL heavy components for maximum performance
 const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
@@ -69,10 +70,21 @@ const Merchant = memo(() => {
   const [activeTab, setActiveTab] = useState("analytics");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
+  // Performance tracking
+  usePerformanceTracking('Merchant', {
+    trackRender: true,
+    trackAPI: true,
+    trackMemory: true,
+    memoryInterval: 15000,
+  });
+
   useEffect(() => {
-    loadAnalytics();
+    // Only load analytics for the analytics tab
+    if (activeTab === "analytics") {
+      loadAnalytics();
+    }
     
-    // Check for navigation state
+    // Check for navigation state only once on mount
     const state = window.history.state?.usr;
     if (state?.activeTab) {
       setActiveTab(state.activeTab);
@@ -86,9 +98,10 @@ const Merchant = memo(() => {
         setSelectedUserId(null);
       }, 3000);
     }
-  }, []);
+  }, [activeTab]);
 
-  const getDemoData = useCallback((): AnalyticsData => ({
+  // Memoize demo data to prevent recreation on every render
+  const getDemoData = useMemo((): AnalyticsData => ({
     events: 15847,
     analytics: 3421,
     superFans: 234,
@@ -125,20 +138,26 @@ const Merchant = memo(() => {
   }), []);
 
   const loadAnalytics = useCallback(async () => {
-    setAnalyticsData(getDemoData());
-  }, [getDemoData]);
+    // Only load if not already loaded
+    if (!analyticsData) {
+      setAnalyticsData(getDemoData);
+    }
+  }, [analyticsData, getDemoData]);
 
   const handleRefreshData = useCallback(async () => {
     setRefreshing(true);
     try {
-      // Sync Viberate data in the background
-      const { error: viberateError } = await supabase.functions.invoke('sync-viberate');
-      if (viberateError) {
-        console.error('Viberate sync error:', viberateError);
+      // Run sync in parallel with analytics reload
+      const [viberateResult] = await Promise.allSettled([
+        supabase.functions.invoke('sync-viberate'),
+      ]);
+      
+      if (viberateResult.status === 'rejected') {
+        console.error('Viberate sync error:', viberateResult.reason);
       }
       
-      // Reload analytics
-      await loadAnalytics();
+      // Force reload analytics data
+      setAnalyticsData(getDemoData);
       
       toast({
         title: "Data refreshed",
@@ -154,7 +173,7 @@ const Merchant = memo(() => {
     } finally {
       setRefreshing(false);
     }
-  }, [loadAnalytics, toast]);
+  }, [getDemoData, toast]);
 
   return (
     <div className="min-h-screen bg-background">
