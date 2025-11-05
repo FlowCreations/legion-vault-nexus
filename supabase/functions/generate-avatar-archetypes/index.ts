@@ -21,19 +21,19 @@ Deno.serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('Fetching member data for avatar generation...');
+    console.log('Fetching comprehensive member data for deep avatar generation...');
 
-    // Fetch comprehensive member data
+    // Fetch ALL member data for comprehensive analysis
     const { data: profiles } = await supabase
       .from('user_profiles')
       .select('*')
-      .limit(1000);
+      .limit(5000);
 
     const { data: events } = await supabase
       .from('events')
       .select('*')
-      .order('ts', { ascending: false })
-      .limit(5000);
+      .order('created_at', { ascending: false })
+      .limit(10000);
 
     const { data: personalities } = await supabase
       .from('personality_profiles')
@@ -42,36 +42,112 @@ Deno.serve(async (req) => {
     const { data: purchases } = await supabase
       .from('funnel_conversions')
       .select('*')
-      .limit(1000);
+      .limit(2000);
 
-    console.log(`Analyzing ${profiles?.length || 0} profiles, ${events?.length || 0} events, ${personalities?.length || 0} personalities`);
+    console.log(`Analyzing ${profiles?.length || 0} profiles, ${events?.length || 0} events, ${personalities?.length || 0} personalities, ${purchases?.length || 0} purchases`);
 
-    // Prepare analysis data
+    // Deep behavioral analysis
+    const memberBehaviors = profiles?.map(profile => {
+      const userEvents = events?.filter(e => e.member_id === profile.user_id) || [];
+      const userPurchases = purchases?.filter(p => p.user_id === profile.user_id) || [];
+      const userPersonality = personalities?.find(p => p.user_id === profile.user_id);
+
+      return {
+        // Demographics
+        tier: profile.tier || profile.membership_tier || 'free',
+        location: profile.location,
+        country: profile.country,
+        region: profile.region,
+        created_at: profile.created_at,
+        
+        // Engagement metrics
+        watch_time: profile.watch_time || 0,
+        listen_time: profile.listen_time || 0,
+        total_engagement_time: (profile.watch_time || 0) + (profile.listen_time || 0),
+        last_active: profile.last_active_at || profile.last_login,
+        is_active: profile.is_online || (profile.last_active_at && new Date(profile.last_active_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+        
+        // Behavioral patterns
+        event_count: userEvents.length,
+        event_types: userEvents.reduce((acc, e) => {
+          acc[e.type] = (acc[e.type] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        
+        // Purchase behavior
+        purchase_count: userPurchases.length,
+        total_spent: userPurchases.reduce((sum, p) => sum + (p.amount || 0), 0),
+        purchase_types: userPurchases.map(p => p.product_type).filter(Boolean),
+        
+        // Personality
+        mbti: userPersonality?.mbti_type,
+        personality_traits: userPersonality,
+      };
+    }) || [];
+
+    // Aggregate insights
     const analysisData = {
-      profileCount: profiles?.length || 0,
-      eventCount: events?.length || 0,
-      personalityCount: personalities?.length || 0,
-      purchaseCount: purchases?.length || 0,
+      total_members: profiles?.length || 0,
       
-      // Sample data (anonymized)
-      sampleProfiles: profiles?.slice(0, 50).map(p => ({
-        tier: p.tier,
-        location: p.location,
-        created_at: p.created_at,
-        is_online: p.is_online,
-        membership_tier: p.membership_tier,
-      })),
+      // Activity distribution
+      active_members: memberBehaviors.filter(m => m.is_active).length,
+      engagement_distribution: {
+        high: memberBehaviors.filter(m => m.total_engagement_time > 300).length, // 5+ hours
+        medium: memberBehaviors.filter(m => m.total_engagement_time > 60 && m.total_engagement_time <= 300).length,
+        low: memberBehaviors.filter(m => m.total_engagement_time <= 60).length,
+      },
       
-      eventTypes: events?.reduce((acc, e) => {
+      // Tier distribution
+      tier_breakdown: memberBehaviors.reduce((acc, m) => {
+        const tier = m.tier?.toLowerCase() || 'free';
+        acc[tier] = (acc[tier] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      
+      // Geographic insights
+      top_locations: profiles?.reduce((acc, p) => {
+        if (p.location) acc[p.location] = (acc[p.location] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      
+      top_countries: profiles?.reduce((acc, p) => {
+        if (p.country) acc[p.country] = (acc[p.country] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      
+      // Event patterns
+      event_type_distribution: events?.reduce((acc, e) => {
         acc[e.type] = (acc[e.type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
       
-      mbtiDistribution: personalities?.reduce((acc, p) => {
-        const type = p.mbti_type || 'Unknown';
-        acc[type] = (acc[type] || 0) + 1;
+      // Personality distribution
+      mbti_distribution: personalities?.reduce((acc, p) => {
+        if (p.mbti_type) acc[p.mbti_type] = (acc[p.mbti_type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
+      
+      // Purchase patterns
+      total_revenue: memberBehaviors.reduce((sum, m) => sum + m.total_spent, 0),
+      avg_purchase_value: memberBehaviors.filter(m => m.purchase_count > 0).length > 0
+        ? memberBehaviors.reduce((sum, m) => sum + m.total_spent, 0) / memberBehaviors.filter(m => m.purchase_count > 0).length
+        : 0,
+      buyers_count: memberBehaviors.filter(m => m.purchase_count > 0).length,
+      
+      // Sample detailed profiles (for AI to understand patterns)
+      sample_behaviors: memberBehaviors
+        .sort((a, b) => b.total_engagement_time - a.total_engagement_time)
+        .slice(0, 100)
+        .map(m => ({
+          tier: m.tier,
+          engagement_minutes: m.total_engagement_time,
+          events: Object.keys(m.event_types).length,
+          purchases: m.purchase_count,
+          spent: m.total_spent,
+          mbti: m.mbti,
+          location: m.location,
+          active: m.is_active,
+        })),
     };
 
     // Call Claude Sonnet 4.5 to generate avatars
@@ -196,11 +272,41 @@ Return ONLY a valid JSON array of avatars. Each avatar must follow this EXACT st
           },
           {
             role: 'user',
-            content: `Analyze this audience data and generate 4-6 distinct avatar archetypes:
+            content: `Analyze this REAL audience data to generate 4-6 distinct, data-driven avatar archetypes:
 
-${JSON.stringify(analysisData, null, 2)}
+TOTAL AUDIENCE: ${analysisData.total_members} members
+ACTIVE MEMBERS: ${analysisData.active_members}
 
-Generate avatars that represent the true diversity and depth of this audience. Make them actionable for marketing and engagement. Return ONLY the JSON array, no other text.`
+ENGAGEMENT DISTRIBUTION:
+- High engagement (5+ hours): ${analysisData.engagement_distribution.high} members
+- Medium engagement (1-5 hours): ${analysisData.engagement_distribution.medium} members  
+- Low engagement (<1 hour): ${analysisData.engagement_distribution.low} members
+
+TIER BREAKDOWN: ${JSON.stringify(analysisData.tier_breakdown)}
+
+TOP LOCATIONS: ${JSON.stringify(Object.entries(analysisData.top_locations || {}).slice(0, 10))}
+
+EVENT PATTERNS: ${JSON.stringify(analysisData.event_type_distribution)}
+
+MBTI DISTRIBUTION: ${JSON.stringify(analysisData.mbti_distribution)}
+
+PURCHASE BEHAVIOR:
+- Total buyers: ${analysisData.buyers_count}
+- Total revenue: $${analysisData.total_revenue}
+- Average purchase value: $${analysisData.avg_purchase_value.toFixed(2)}
+
+TOP 100 MEMBER PATTERNS:
+${JSON.stringify(analysisData.sample_behaviors.slice(0, 20), null, 2)}
+
+Based on this REAL data, identify the natural clusters and segments in the audience. Create avatars that represent actual patterns you see - not generic personas. Each avatar should:
+
+1. Represent a real segment you can identify in the data
+2. Have accurate member counts based on the data
+3. Reflect actual behavioral, geographic, and engagement patterns
+4. Include realistic conversion predictions based on their behavior
+5. Be immediately actionable for targeted marketing
+
+Return ONLY the JSON array of 4-6 avatars, no other text. Make them rich, specific, and grounded in this data.`
           }
         ],
         temperature: 0.7,
