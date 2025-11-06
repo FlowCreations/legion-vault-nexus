@@ -182,5 +182,75 @@
       "description": "Descarga nuestro EP exclusivo gratuito y experimenta el sonido de Sons of Legion",
       "button": "Descargar EP Gratis"
     }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "Bienvenido al Portal SØL",
+      "enter": "Entra al Portal SØL",
+      "subtitle": "Transmite contenido exclusivo y experimenta la música como nunca antes.",
+      "acceptFreeTrial": "Aceptar Prueba Gratis",
+      "freeTrialNote": "7 días gratis, luego elige tu suscripción"
+    },
+    "dialog": {
+      "title": "Suscríbete para Ver",
+      "description": "Obtén acceso instantáneo a videos exclusivos, música y contenido.",
+      "startFreeTrial": "Iniciar Prueba Gratis de 7 Días",
+      "alreadySubscribed": "¿Ya estás suscrito?",
+      "signIn": "Iniciar Sesión"
+    },
+    "rows": {
+      "musicVideos": "Videos Musicales",
+      "favorites": "Favoritos",
+      "performances": "Actuaciones",
+      "behindTheScenes": "Detrás de Escena",
+      "documentary": "Documental"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "Reproducir",
+      "shuffle": "Aleatorio"
+    },
+    "sections": {
+      "topTracks": "Mejores Canciones",
+      "title": "TÍTULO",
+      "artist": "ARTISTA",
+      "album": "ÁLBUM",
+      "time": "DURACIÓN"
+    },
+    "toast": {
+      "linkCopied": "¡Enlace copiado al portapapeles!",
+      "unableToCopy": "No se puede copiar",
+      "copyManually": "Por favor copia el enlace manualmente"
+    }
+  },
+  "merch": {
+    "topBar": "Mercancía Oficial de Sons of Legion",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "Buscar productos...",
+    "categories": {
+      "apparel": "Ropa",
+      "accessories": "Accesorios",
+      "music": "Música",
+      "prints": "Impresiones"
+    },
+    "hero": {
+      "slide1": {
+        "title": "Nuevos Lanzamientos Musicales",
+        "subtitle": "Transmite nuestros últimos álbumes y sencillos"
+      },
+      "slide2": {
+        "title": "Colección de Vinilos",
+        "subtitle": "Posee la música en vinilo premium"
+      },
+      "slide3": {
+        "title": "Ropa Exclusiva",
+        "subtitle": "Viste la Legión con orgullo"
+      }
+    },
+    "section": {
+      "title": "EQUIPO DE LA LEGIÓN"
+    }
   }
 }

@@ -182,5 +182,75 @@
       "description": "Laden Sie unsere exklusive kostenlose EP herunter und erleben Sie den Sound von Sons of Legion",
       "button": "Kostenlose EP herunterladen"
     }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "Willkommen im SØL Portal",
+      "enter": "Betreten Sie das SØL Portal",
+      "subtitle": "Streamen Sie exklusive Inhalte und erleben Sie die Musik wie nie zuvor.",
+      "acceptFreeTrial": "Kostenlose Testversion akzeptieren",
+      "freeTrialNote": "7 Tage kostenlos, dann wählen Sie Ihr Abonnement"
+    },
+    "dialog": {
+      "title": "Abonnieren zum Ansehen",
+      "description": "Erhalten Sie sofortigen Zugang zu exklusiven Videos, Musik und Inhalten.",
+      "startFreeTrial": "7-tägige kostenlose Testversion starten",
+      "alreadySubscribed": "Bereits abonniert?",
+      "signIn": "Anmelden"
+    },
+    "rows": {
+      "musicVideos": "Musikvideos",
+      "favorites": "Favoriten",
+      "performances": "Auftritte",
+      "behindTheScenes": "Hinter den Kulissen",
+      "documentary": "Dokumentation"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "Abspielen",
+      "shuffle": "Zufällig"
+    },
+    "sections": {
+      "topTracks": "Top-Titel",
+      "title": "TITEL",
+      "artist": "KÜNSTLER",
+      "album": "ALBUM",
+      "time": "DAUER"
+    },
+    "toast": {
+      "linkCopied": "Link in Zwischenablage kopiert!",
+      "unableToCopy": "Kopieren nicht möglich",
+      "copyManually": "Bitte kopieren Sie den Link manuell"
+    }
+  },
+  "merch": {
+    "topBar": "Offizielles Sons of Legion Merchandise",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "Produkte suchen...",
+    "categories": {
+      "apparel": "Kleidung",
+      "accessories": "Zubehör",
+      "music": "Musik",
+      "prints": "Drucke"
+    },
+    "hero": {
+      "slide1": {
+        "title": "Neue Musikveröffentlichungen",
+        "subtitle": "Streamen Sie unsere neuesten Alben und Singles"
+      },
+      "slide2": {
+        "title": "Vinyl-Kollektion",
+        "subtitle": "Besitzen Sie die Musik auf Premium-Vinyl"
+      },
+      "slide3": {
+        "title": "Exklusive Kleidung",
+        "subtitle": "Tragen Sie die Legion mit Stolz"
+      }
+    },
+    "section": {
+      "title": "LEGION-AUSRÜSTUNG"
+    }
   }
 }

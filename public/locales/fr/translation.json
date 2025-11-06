@@ -174,13 +174,83 @@
   "about": {
     "title": "SONS OF LEGION",
     "intro": "Juste deux gars de côtés opposés du pays qui se sont croisés et ont choisi de marcher sur la même route.",
-    "description1": "Sons of Legion est un groupe dynamique mélangeant l'énergie brute du rock, la profondeur émotionnelle du blues et l'attrait intemporel de la musique soul. Avec un style qui marie la rudesse avec la classe sophistiquée, ils canalisent une ambiance rappelant les PLUS GRANDS groupes du passé.",
-    "description2": "Reconnus pour leurs performances puissantes et leurs paroles convaincantes, Sons of Legion ont captivé des audiences du monde entier. Leur musique, avec des titres phares comme \"Brand New Day\", \"Power\" et \"Firestarter\", a accumulé plus de 55 millions de streams et est diffusée sur des plateformes majeures comme ESPN, les publicités Dodge Ram, Netflix et NBC.",
-    "featuredTitle": "PRÉSENTÉ SUR",
+    "description1": "Sons of Legion est un groupe dynamique mélangeant l'énergie brute du rock, la profondeur émotionnelle du blues et l'attrait intemporel de la musique soul. Avec un style qui marie la rudesse brute à la classe sophistiquée, ils canalisent une ambiance qui rappelle les PLUS GRANDS groupes du passé.",
+    "description2": "Reconnus pour leurs performances puissantes et leurs paroles convaincantes, Sons of Legion ont captivé des publics du monde entier. Leur musique, avec des titres phares comme \"Brand New Day\", \"Power\" et \"Firestarter\", a accumulé plus de 55 millions de streams et est présentée sur des plateformes majeures comme ESPN, les publicités Dodge Ram, Netflix et NBC.",
+    "featuredTitle": "EN VEDETTE SUR",
     "cta": {
       "title": "Obtenez Notre Album Gratuit",
       "description": "Téléchargez notre EP exclusif gratuit et découvrez le son de Sons of Legion",
       "button": "Télécharger l'EP Gratuit"
+    }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "Bienvenue au Portail SØL",
+      "enter": "Entrez dans le Portail SØL",
+      "subtitle": "Diffusez du contenu exclusif et découvrez la musique comme jamais auparavant.",
+      "acceptFreeTrial": "Accepter l'Essai Gratuit",
+      "freeTrialNote": "7 jours gratuits, puis choisissez votre abonnement"
+    },
+    "dialog": {
+      "title": "Abonnez-vous pour Regarder",
+      "description": "Obtenez un accès instantané aux vidéos, à la musique et au contenu exclusifs.",
+      "startFreeTrial": "Commencer l'Essai Gratuit de 7 Jours",
+      "alreadySubscribed": "Déjà abonné?",
+      "signIn": "Se Connecter"
+    },
+    "rows": {
+      "musicVideos": "Vidéoclips",
+      "favorites": "Favoris",
+      "performances": "Performances",
+      "behindTheScenes": "Dans les Coulisses",
+      "documentary": "Documentaire"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "Jouer",
+      "shuffle": "Aléatoire"
+    },
+    "sections": {
+      "topTracks": "Meilleurs Titres",
+      "title": "TITRE",
+      "artist": "ARTISTE",
+      "album": "ALBUM",
+      "time": "DURÉE"
+    },
+    "toast": {
+      "linkCopied": "Lien copié dans le presse-papiers!",
+      "unableToCopy": "Impossible de copier",
+      "copyManually": "Veuillez copier le lien manuellement"
+    }
+  },
+  "merch": {
+    "topBar": "Marchandise Officielle Sons of Legion",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "Rechercher des produits...",
+    "categories": {
+      "apparel": "Vêtements",
+      "accessories": "Accessoires",
+      "music": "Musique",
+      "prints": "Impressions"
+    },
+    "hero": {
+      "slide1": {
+        "title": "Nouvelles Sorties Musicales",
+        "subtitle": "Diffusez nos derniers albums et singles"
+      },
+      "slide2": {
+        "title": "Collection Vinyle",
+        "subtitle": "Possédez la musique sur vinyle premium"
+      },
+      "slide3": {
+        "title": "Vêtements Exclusifs",
+        "subtitle": "Portez la Légion avec fierté"
+      }
+    },
+    "section": {
+      "title": "ÉQUIPEMENT DE LA LÉGION"
     }
   }
 }

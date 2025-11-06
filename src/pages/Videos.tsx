@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
+import { useTranslation } from "react-i18next";
 
 interface VideoItem {
   id: string;
@@ -34,6 +35,7 @@ interface VideoItem {
 
 export default function Videos() {
   const { trackEvent } = useEventTracking();
+  const { t } = useTranslation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [heroVideoUrl, setHeroVideoUrl] = useState<string>("");
   const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
@@ -316,23 +318,19 @@ export default function Videos() {
             {isAuthenticated ? (
               <>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
-                  Welcome to the SØL Portal
+                  {t('videos.hero.welcome')}
                 </h1>
                 <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
-                  Stream exclusive content and experience the{" "}
-                  <br className="hidden sm:inline" />
-                  music like never before.
+                  {t('videos.hero.subtitle')}
                 </p>
               </>
             ) : (
               <>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
-                  Enter the SØL Portal
+                  {t('videos.hero.enter')}
                 </h1>
                 <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
-                  Stream exclusive content and experience the{" "}
-                  <br className="hidden sm:inline" />
-                  music like never before.
+                  {t('videos.hero.subtitle')}
                 </p>
                 <div className="flex flex-col items-start gap-3">
                   <Button 
@@ -340,10 +338,10 @@ export default function Videos() {
                     className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-sm rounded-lg shadow-lg gold-glow transition-all"
                     onClick={() => navigate('/subscribe')}
                   >
-                    Accept Free Trial
+                    {t('videos.hero.acceptFreeTrial')}
                   </Button>
                   <p className="text-xs text-gray-300">
-                    7 days free, then pick your subscription
+                    {t('videos.hero.freeTrialNote')}
                   </p>
                 </div>
               </>
@@ -358,10 +356,10 @@ export default function Videos() {
         <DialogContent className="sm:max-w-md bg-black/95 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white">
-              Subscribe to Watch
+              {t('videos.dialog.title')}
             </DialogTitle>
             <DialogDescription className="text-gray-300">
-              Get instant access to exclusive videos, music, and content.
+              {t('videos.dialog.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
@@ -369,15 +367,15 @@ export default function Videos() {
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gold-glow"
               onClick={() => navigate('/subscribe')}
             >
-              Start 7-Day Free Trial
+              {t('videos.dialog.startFreeTrial')}
             </Button>
             <p className="text-center text-sm text-gray-400">
-              Already subscribed?{" "}
+              {t('videos.dialog.alreadySubscribed')}{" "}
               <button 
                 onClick={() => navigate('/auth')}
                 className="text-primary hover:underline font-medium"
               >
-                Sign In
+                {t('videos.dialog.signIn')}
               </button>
             </p>
           </div>
@@ -416,7 +414,7 @@ export default function Videos() {
 
         {/* Music Videos Row - FREE */}
         <ContentRow
-          title="Music Videos"
+          title={t('videos.rows.musicVideos')}
           items={musicVideos}
           aspectRatio="landscape"
           hoveredId={hoveredId}
@@ -427,7 +425,7 @@ export default function Videos() {
         {/* Favorites - Only show if user has favorites */}
         {favorites.length > 0 && (
           <ContentRow
-            title="Favorites"
+            title={t('videos.rows.favorites')}
             items={favorites}
             aspectRatio="landscape"
             hoveredId={hoveredId}
@@ -438,7 +436,7 @@ export default function Videos() {
 
         {/* Performances Row */}
         <ContentRow
-          title="Performances"
+          title={t('videos.rows.performances')}
           items={performances}
           aspectRatio="portrait"
           hoveredId={hoveredId}
@@ -448,7 +446,7 @@ export default function Videos() {
 
         {/* BTS Row */}
         <ContentRow
-          title="Behind The Scenes"
+          title={t('videos.rows.behindTheScenes')}
           items={behindTheScenes}
           aspectRatio="portrait"
           hoveredId={hoveredId}
@@ -458,7 +456,7 @@ export default function Videos() {
 
         {/* Documentary Row */}
         <ContentRow
-          title="Documentary"
+          title={t('videos.rows.documentary')}
           items={documentary}
           aspectRatio="landscape"
           hoveredId={hoveredId}

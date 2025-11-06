@@ -35,9 +35,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTranslation } from "react-i18next";
 
 export default function Music() {
   const { trackEvent } = useEventTracking();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentTrack, isPlaying, setPlaylist, setCurrentTrack, setIsPlaying, togglePlayPause, toggleLike, isLiked, likedTracks } = useMusicPlayer();
   const { isPurchased, purchaseAlbum, purchasedAlbums } = usePurchases();
@@ -201,11 +203,11 @@ export default function Music() {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast({ title: "Link copied to clipboard!" });
+      toast({ title: t('music.toast.linkCopied') });
     } catch (err) {
       toast({ 
-        title: "Unable to copy", 
-        description: "Please copy the link manually",
+        title: t('music.toast.unableToCopy'), 
+        description: t('music.toast.copyManually'),
         variant: "destructive" 
       });
     }
@@ -306,7 +308,7 @@ export default function Music() {
         {/* Hero Content */}
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 lg:px-12 pb-8">
           <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
-            Sons of Legion
+            {t('music.hero.title')}
           </h1>
           
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -319,7 +321,7 @@ export default function Music() {
               }}
             >
               <Play className="w-5 h-5 mr-2 fill-black" />
-              Play
+              {t('music.hero.play')}
             </Button>
             <Button 
               size="lg" 
@@ -328,7 +330,7 @@ export default function Music() {
               onClick={handleShuffle}
             >
               <Shuffle className="w-5 h-5 mr-2" />
-              Shuffle
+              {t('music.hero.shuffle')}
             </Button>
             <Button 
               variant="outline" 
@@ -369,9 +371,9 @@ export default function Music() {
         {/* Top Tracks */}
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Top Tracks</h2>
+            <h2 className="text-2xl font-bold">{t('music.sections.topTracks')}</h2>
             <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              View all
+              {t('common.viewAll')}
             </Button>
           </div>
 
@@ -380,10 +382,10 @@ export default function Music() {
             <div className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] md:grid-cols-[auto_auto_1fr_1fr_1fr_auto_auto_auto] gap-4 px-4 pb-2 text-sm text-muted-foreground border-b border-border">
               <div className="w-10"></div>
               <div className="w-10"></div>
-              <div>TITLE</div>
-              <div className="hidden md:block">ARTIST</div>
-              <div className="hidden md:block">ALBUM</div>
-              <div>TIME</div>
+              <div>{t('music.sections.title')}</div>
+              <div className="hidden md:block">{t('music.sections.artist')}</div>
+              <div className="hidden md:block">{t('music.sections.album')}</div>
+              <div>{t('music.sections.time')}</div>
               <div className="w-10"></div>
               <div className="w-10"></div>
             </div>

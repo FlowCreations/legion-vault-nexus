@@ -35,6 +35,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useTranslation } from "react-i18next";
 
 interface Product {
   id: string;
@@ -52,6 +53,7 @@ interface Product {
 
 export default function Merch() {
   const { trackEvent } = useEventTracking();
+  const { t } = useTranslation();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('merch');
   const [activeCategory, setActiveCategory] = useState("apparel");
   const [products, setProducts] = useState<Product[]>([]);
@@ -332,7 +334,7 @@ export default function Merch() {
       <div className="bg-background-dark border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
-            <span className="font-medium">Official Sons of Legion Merchandise</span>
+            <span className="font-medium">{t('merch.topBar')}</span>
           </div>
         </div>
       </div>
@@ -346,7 +348,7 @@ export default function Merch() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t('merch.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -356,7 +358,7 @@ export default function Merch() {
             {/* Logo/Title - Absolutely centered */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider whitespace-nowrap">
-                SONS OF LEGION
+                {t('merch.title')}
               </h1>
             </div>
 
@@ -370,25 +372,25 @@ export default function Merch() {
                 </SheetTrigger>
                 <SheetContent>
                   <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
+                    <SheetTitle>{t('common.filters')}</SheetTitle>
                   </SheetHeader>
                   <div className="space-y-6 py-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Sort By</label>
+                      <label className="text-sm font-medium">{t('common.sortBy')}</label>
                       <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="newest">Newest</SelectItem>
-                          <SelectItem value="price-low">Price: Low to High</SelectItem>
-                          <SelectItem value="price-high">Price: High to Low</SelectItem>
+                          <SelectItem value="newest">{t('common.newest')}</SelectItem>
+                          <SelectItem value="price-low">{t('common.priceLowToHigh')}</SelectItem>
+                          <SelectItem value="price-high">{t('common.priceHighToLow')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
-                        Price Range: ${priceRange[0]} - ${priceRange[1]}
+                        {t('common.priceRange')}: ${priceRange[0]} - ${priceRange[1]}
                       </label>
                       <Slider
                         value={priceRange}
@@ -494,7 +496,7 @@ export default function Merch() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-wide text-muted-foreground">
-              LEGION GEAR
+              {t('merch.section.title')}
             </h2>
             <p className="text-sm text-muted-foreground">
               {sortedProducts.length} {sortedProducts.length === 1 ? 'product' : 'products'}

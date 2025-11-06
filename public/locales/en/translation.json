@@ -182,5 +182,75 @@
       "description": "Download our exclusive free EP and experience the Sons of Legion sound",
       "button": "Download Free EP"
     }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "Welcome to the SØL Portal",
+      "enter": "Enter the SØL Portal",
+      "subtitle": "Stream exclusive content and experience the music like never before.",
+      "acceptFreeTrial": "Accept Free Trial",
+      "freeTrialNote": "7 days free, then pick your subscription"
+    },
+    "dialog": {
+      "title": "Subscribe to Watch",
+      "description": "Get instant access to exclusive videos, music, and content.",
+      "startFreeTrial": "Start 7-Day Free Trial",
+      "alreadySubscribed": "Already subscribed?",
+      "signIn": "Sign In"
+    },
+    "rows": {
+      "musicVideos": "Music Videos",
+      "favorites": "Favorites",
+      "performances": "Performances",
+      "behindTheScenes": "Behind The Scenes",
+      "documentary": "Documentary"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "Play",
+      "shuffle": "Shuffle"
+    },
+    "sections": {
+      "topTracks": "Top Tracks",
+      "title": "TITLE",
+      "artist": "ARTIST",
+      "album": "ALBUM",
+      "time": "TIME"
+    },
+    "toast": {
+      "linkCopied": "Link copied to clipboard!",
+      "unableToCopy": "Unable to copy",
+      "copyManually": "Please copy the link manually"
+    }
+  },
+  "merch": {
+    "topBar": "Official Sons of Legion Merchandise",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "Search products...",
+    "categories": {
+      "apparel": "Apparel",
+      "accessories": "Accessories",
+      "music": "Music",
+      "prints": "Prints"
+    },
+    "hero": {
+      "slide1": {
+        "title": "New Music Drops",
+        "subtitle": "Stream our latest albums and singles"
+      },
+      "slide2": {
+        "title": "Vinyl Collection",
+        "subtitle": "Own the music on premium vinyl"
+      },
+      "slide3": {
+        "title": "Exclusive Apparel",
+        "subtitle": "Wear the Legion with pride"
+      }
+    },
+    "section": {
+      "title": "LEGION GEAR"
+    }
   }
 }
