@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "首页",
+    "music": "音乐",
+    "videos": "视频",
+    "shows": "演出",
+    "merch": "商品",
+    "about": "关于",
+    "community": "社区",
+    "contact": "联系",
+    "signIn": "登录",
+    "profile": "个人资料",
+    "upgradePlan": "升级计划",
+    "account": "账户",
+    "orders": "订单",
+    "security": "安全",
+    "logOut": "登出"
+  },
+  "footer": {
+    "about": "关于",
+    "contact": "联系",
+    "terms": "条款",
+    "privacy": "隐私",
+    "copyright": "© 2024 版权所有"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功"
+  }
+}

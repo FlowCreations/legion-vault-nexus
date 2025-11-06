@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "music": "الموسيقى",
+    "videos": "الفيديوهات",
+    "shows": "العروض",
+    "merch": "المنتجات",
+    "about": "حول",
+    "community": "المجتمع",
+    "contact": "اتصل بنا",
+    "signIn": "تسجيل الدخول",
+    "profile": "الملف الشخصي",
+    "upgradePlan": "ترقية الخطة",
+    "account": "الحساب",
+    "orders": "الطلبات",
+    "security": "الأمان",
+    "logOut": "تسجيل الخروج"
+  },
+  "footer": {
+    "about": "حول",
+    "contact": "اتصل بنا",
+    "terms": "الشروط",
+    "privacy": "الخصوصية",
+    "copyright": "© 2024 جميع الحقوق محفوظة"
+  },
+  "common": {
+    "loading": "جار التحميل...",
+    "error": "خطأ",
+    "success": "نجح"
+  }
+}

@@ -1,12 +1,12 @@
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
 
 interface TranslatedTextProps {
-  children: string;
+  i18nKey: string;
   className?: string;
 }
 
-export function TranslatedText({ children, className }: TranslatedTextProps) {
-  const translatedText = useTranslation(children);
+export function TranslatedText({ i18nKey, className }: TranslatedTextProps) {
+  const { t } = useTranslation();
   
-  return <span className={className}>{translatedText}</span>;
+  return <span className={className}>{t(i18nKey)}</span>;
 }

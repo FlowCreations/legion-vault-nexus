@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "Home",
+    "music": "Music",
+    "videos": "Videos",
+    "shows": "Shows",
+    "merch": "Merch",
+    "about": "About",
+    "community": "Community",
+    "contact": "Contact",
+    "signIn": "Sign In",
+    "profile": "Profile",
+    "upgradePlan": "Upgrade Plan",
+    "account": "Account",
+    "orders": "Orders",
+    "security": "Security",
+    "logOut": "Log Out"
+  },
+  "footer": {
+    "about": "About",
+    "contact": "Contact",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "copyright": "© 2024 All rights reserved"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}

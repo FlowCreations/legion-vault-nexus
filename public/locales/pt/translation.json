@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "Início",
+    "music": "Música",
+    "videos": "Vídeos",
+    "shows": "Shows",
+    "merch": "Mercadoria",
+    "about": "Sobre",
+    "community": "Comunidade",
+    "contact": "Contato",
+    "signIn": "Entrar",
+    "profile": "Perfil",
+    "upgradePlan": "Atualizar Plano",
+    "account": "Conta",
+    "orders": "Pedidos",
+    "security": "Segurança",
+    "logOut": "Sair"
+  },
+  "footer": {
+    "about": "Sobre",
+    "contact": "Contato",
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "copyright": "© 2024 Todos os direitos reservados"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso"
+  }
+}

@@ -25,12 +25,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TranslatedText } from "@/components/TranslatedText";
 
 const navItems = [
-  { name: "Videos", path: "/videos", icon: Film },
-  { name: "Music", path: "/music", icon: Music },
-  { name: "Merch", path: "/merch", icon: ShoppingBag },
-  { name: "Shows", path: "/shows", icon: Calendar },
-  { name: "Live Studio", path: "/live", icon: Radio },
-  { name: "Community", path: "/community", icon: Users },
+  { name: "nav.videos", path: "/videos", icon: Film },
+  { name: "nav.music", path: "/music", icon: Music },
+  { name: "nav.merch", path: "/merch", icon: ShoppingBag },
+  { name: "nav.shows", path: "/shows", icon: Calendar },
+  { name: "nav.community", path: "/community", icon: Users },
 ];
 
 export const Navigation = () => {
@@ -109,7 +108,7 @@ export const Navigation = () => {
                 >
                   <Icon className="w-4 h-4" />
                   <span className="font-medium">
-                    <TranslatedText>{item.name}</TranslatedText>
+                    <TranslatedText i18nKey={item.name} />
                   </span>
                   {isActive && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-gold rounded-full" />
@@ -127,7 +126,7 @@ export const Navigation = () => {
               <Link to="/auth">
                 <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
                   <LogIn className="w-4 h-4" />
-                  <TranslatedText>Sign In</TranslatedText>
+                  <TranslatedText i18nKey="nav.signIn" />
                 </Button>
               </Link>
             ) : (
@@ -169,34 +168,34 @@ export const Navigation = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <User className="mr-2 h-4 w-4" />
-                    <TranslatedText>Profile</TranslatedText>
+                    <TranslatedText i18nKey="nav.profile" />
                   </DropdownMenuItem>
                   
                   {!isSubscribed && (
                     <DropdownMenuItem onClick={() => navigate("/subscribe")}>
                       <Crown className="mr-2 h-4 w-4 text-primary" />
                       <span className="text-primary font-medium">
-                        <TranslatedText>Upgrade Plan</TranslatedText>
+                        <TranslatedText i18nKey="nav.upgradePlan" />
                       </span>
                     </DropdownMenuItem>
                   )}
                   
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Settings className="mr-2 h-4 w-4" />
-                    <TranslatedText>Account</TranslatedText>
+                    <TranslatedText i18nKey="nav.account" />
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Package className="mr-2 h-4 w-4" />
-                    <TranslatedText>Orders</TranslatedText>
+                    <TranslatedText i18nKey="nav.orders" />
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Shield className="mr-2 h-4 w-4" />
-                    <TranslatedText>Security</TranslatedText>
+                    <TranslatedText i18nKey="nav.security" />
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <TranslatedText>Log Out</TranslatedText>
+                    <TranslatedText i18nKey="nav.logOut" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -229,7 +228,7 @@ export const Navigation = () => {
                     >
                       <Icon className="w-4 h-4" />
                       <span className="text-sm font-medium">
-                        <TranslatedText>{item.name}</TranslatedText>
+                        <TranslatedText i18nKey={item.name} />
                       </span>
                     </Link>
                   );
@@ -257,16 +256,16 @@ export const Navigation = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <User className="mr-2 h-4 w-4" />
-                      <TranslatedText>Profile</TranslatedText>
+                      <TranslatedText i18nKey="nav.profile" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <ShoppingBag className="mr-2 h-4 w-4" />
-                      <TranslatedText>Orders</TranslatedText>
+                      <TranslatedText i18nKey="nav.orders" />
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      <TranslatedText>Log Out</TranslatedText>
+                      <TranslatedText i18nKey="nav.logOut" />
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
