@@ -3,11 +3,14 @@ import App from "./App.tsx";
 import "./index.css";
 import { AuthProvider } from "./providers/AuthProvider";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 createRoot(document.getElementById("root")!).render(
   <AuthProvider>
     <SubscriptionProvider>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </SubscriptionProvider>
   </AuthProvider>
 );

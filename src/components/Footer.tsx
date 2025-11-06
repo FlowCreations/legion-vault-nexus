@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 export const Footer = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -71,6 +72,11 @@ export const Footer = () => {
           <p className="text-sm text-muted-foreground">
             © 2025 Sons of Legion. All rights reserved.
           </p>
+        </div>
+        
+        {/* Language Selector */}
+        <div className="flex justify-center mt-6 pt-6 border-t border-border/30">
+          <LanguageSelector />
         </div>
       </div>
     </footer>
