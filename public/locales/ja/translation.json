@@ -21,11 +21,166 @@
     "contact": "お問い合わせ",
     "terms": "利用規約",
     "privacy": "プライバシー",
-    "copyright": "© 2024 無断転載禁止"
+    "copyright": "© 2025 Sons of Legion. 無断転載禁止"
   },
   "common": {
     "loading": "読み込み中...",
     "error": "エラー",
-    "success": "成功"
+    "success": "成功",
+    "subscribe": "購読する",
+    "play": "再生",
+    "shuffle": "シャッフル",
+    "favorites": "お気に入り",
+    "share": "共有",
+    "addToCart": "カートに追加",
+    "viewAll": "すべて表示",
+    "shopNow": "今すぐ購入",
+    "searchProducts": "製品を検索...",
+    "filters": "フィルター",
+    "sortBy": "並べ替え",
+    "newest": "最新",
+    "priceLowToHigh": "価格：安い順",
+    "priceHighToLow": "価格：高い順",
+    "priceRange": "価格帯"
+  },
+  "home": {
+    "hero": {
+      "poweredBy": "JRNYによって提供",
+      "subtitle": "ロック、ソウル、ブルースの力強い融合で、生のエネルギーと忘れられない音楽を提供します。アーティストが所有するプラットフォームですべてを体験してください。",
+      "startWatching": "視聴を開始",
+      "getFreeAlbum": "無料アルバムを入手",
+      "exploreMusic": "音楽を探索"
+    },
+    "features": {
+      "title": "あなたを待っているもの",
+      "subtitle": "真のファンのために設計された完全なエコシステムに浸りましょう",
+      "premiumVideos": {
+        "title": "プレミアム動画",
+        "description": "Apple TVに触発された体験で、独占シリーズ、ミュージックビデオ、ドキュメンタリーを驚くべき品質で視聴します。"
+      },
+      "fullAlbums": {
+        "title": "完全アルバムとシングル",
+        "description": "詳細なクレジット、歌詞、コラボレーターのストーリーを備えた美しいインターフェースで完全なアルバムをストリーミングします。"
+      },
+      "vipCommunity": {
+        "title": "VIPコミュニティ",
+        "description": "他のファンとつながり、バッジを獲得し、アーティストとの会話やイベントへの独占アクセスを取得します。"
+      }
+    },
+    "tiers": {
+      "title": "レギオンに参加",
+      "popular": "人気",
+      "perMonth": "月額",
+      "freeTrial": "7日間無料トライアル",
+      "rebels": {
+        "name": "反逆者",
+        "price": "$10",
+        "subtitle": "最初から私たちと一緒にいた人のために。",
+        "feature1": "舞台裏のコンテンツと独占アップデート",
+        "feature2": "レギオンコミュニティへのエントリー — バンドや他のファンとつながる",
+        "feature3": "すべてのプライベートオンラインコンサートの無制限リプレイ"
+      },
+      "outlaws": {
+        "name": "無法者",
+        "price": "$25",
+        "subtitle": "もっと欲しい献身的なファンのために。",
+        "feature1": "反逆者のすべて",
+        "feature2": "バンドとの月次ライブビデオハングアウト",
+        "feature3": "金庫内のすべての曲への完全ストリーミングアクセス",
+        "feature4": "ファン投票部隊に参加 — 次にリリースするものを選ぶのを手伝う"
+      },
+      "legionnaires": {
+        "name": "レギオン兵",
+        "price": "$50",
+        "subtitle": "すべてのアクセスを望むダイハードファンのために。",
+        "feature1": "無法者のすべて",
+        "feature2": "バンドとの月次仮想スタジオセッション",
+        "feature3": "すべての曲への完全ストリーミングアクセス",
+        "feature4": "無料のLEGIONシャツ（3か月後に発送）",
+        "feature5": "すべてのグッズが15％オフ"
+      }
+    }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "SØLポータルへようこそ",
+      "enter": "SØLポータルに入る",
+      "subtitle": "独占コンテンツをストリーミングし、これまでにない音楽体験をお楽しみください。",
+      "acceptFreeTrial": "無料トライアルを受け入れる",
+      "freeTrialNote": "7日間無料、その後サブスクリプションを選択"
+    },
+    "dialog": {
+      "title": "視聴するには購読",
+      "description": "独占動画、音楽、コンテンツへの即座のアクセスを取得します。",
+      "startFreeTrial": "7日間無料トライアルを開始",
+      "alreadySubscribed": "すでに購読していますか？",
+      "signIn": "サインイン"
+    },
+    "rows": {
+      "musicVideos": "ミュージックビデオ",
+      "favorites": "お気に入り",
+      "performances": "パフォーマンス",
+      "behindTheScenes": "舞台裏",
+      "documentary": "ドキュメンタリー"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "再生",
+      "shuffle": "シャッフル"
+    },
+    "sections": {
+      "topTracks": "トップトラック",
+      "title": "タイトル",
+      "artist": "アーティスト",
+      "album": "アルバム",
+      "time": "時間"
+    },
+    "toast": {
+      "linkCopied": "リンクをクリップボードにコピーしました！",
+      "unableToCopy": "コピーできません",
+      "copyManually": "リンクを手動でコピーしてください"
+    }
+  },
+  "merch": {
+    "topBar": "Sons of Legion 公式グッズ",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "製品を検索...",
+    "categories": {
+      "apparel": "アパレル",
+      "accessories": "アクセサリー",
+      "music": "音楽",
+      "prints": "プリント"
+    },
+    "hero": {
+      "slide1": {
+        "title": "新しい音楽リリース",
+        "subtitle": "最新のアルバムとシングルをストリーミング"
+      },
+      "slide2": {
+        "title": "ビニールコレクション",
+        "subtitle": "プレミアムビニールで音楽を所有"
+      },
+      "slide3": {
+        "title": "独占アパレル",
+        "subtitle": "誇りを持ってレギオンを着用"
+      }
+    },
+    "section": {
+      "title": "レギオンギア"
+    }
+  },
+  "about": {
+    "title": "SONS OF LEGION",
+    "intro": "国の反対側から来た二人の男が偶然出会い、同じ道を歩むことを選んだだけです。",
+    "description1": "Sons of Legionは、ロックの生のエネルギー、ブルースのソウルフルな深さ、そしてソウルミュージックの時代を超越した魅力を融合させたダイナミックなバンドです。荒々しいグリットと洗練されたクラスを組み合わせたスタイルで、過去の偉大なバンドを彷彿とさせる雰囲気を醸し出しています。",
+    "description2": "強力なパフォーマンスと説得力のある歌詞で知られるSons of Legionは、世界中の観客を魅了してきました。「Brand New Day」、「Power」、「Firestarter」などの目玉トラックを含む彼らの音楽は、5500万以上のストリーミングを獲得し、ESPN、ダッジラムコマーシャル、Netflix、NBCなどの主要プラットフォームでフィーチャーされています。",
+    "featuredTitle": "特集",
+    "cta": {
+      "title": "無料アルバムを入手",
+      "description": "独占無料EPをダウンロードして、Sons of Legionのサウンドを体験してください",
+      "button": "無料EPをダウンロード"
+    }
   }
 }

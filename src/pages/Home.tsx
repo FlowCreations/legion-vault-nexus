@@ -297,9 +297,9 @@ export default function Home() {
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {memberTiers.map((tier) => (
+            {memberTiers.map((tier, index) => (
               <div
-                key={tier.name}
+                key={index}
                 className={`rounded-2xl p-8 border transition-all duration-300 ${
                   tier.featured
                     ? 'bg-gradient-to-br from-card to-card-hover border-primary shadow-glow scale-105'
@@ -312,19 +312,19 @@ export default function Home() {
                   </div>
                 )}
                 
-                <h3 className="font-serif text-2xl font-bold mb-2">{tier.name}</h3>
+                <h3 className="font-serif text-2xl font-bold mb-2">{t(tier.nameKey)}</h3>
                 <div className="text-3xl font-bold mb-1">
-                  {tier.price}
+                  {t(tier.priceKey)}
                 </div>
                 <div className="text-sm text-foreground/70 font-medium mb-1">{t('home.tiers.perMonth')}</div>
                 <div className="text-xs text-primary font-semibold mb-4">{t('home.tiers.freeTrial')}</div>
                 
-                <p className="text-sm font-semibold mb-4">{tier.subtitle}</p>
+                <p className="text-sm font-semibold mb-4">{t(tier.subtitleKey)}</p>
                 
                 <ul className="space-y-3 mb-8">
-                  {tier.features.map((feature, idx) => (
+                  {tier.featureKeys.map((featureKey, idx) => (
                     <li key={idx} className="text-sm text-foreground/80 font-medium">
-                      {feature}
+                      {t(featureKey)}
                     </li>
                   ))}
                 </ul>
@@ -332,10 +332,10 @@ export default function Home() {
                 <Button 
                   className={tier.featured ? 'w-full bg-gradient-gold hover:shadow-glow' : 'w-full'}
                   variant={tier.featured ? 'default' : 'outline'}
-                  onClick={() => handleSubscribe(tier.name)}
-                  disabled={loadingTier === tier.name}
+                  onClick={() => handleSubscribe(t(tier.nameKey))}
+                  disabled={loadingTier === t(tier.nameKey)}
                 >
-                  {loadingTier === tier.name ? (
+                  {loadingTier === t(tier.nameKey) ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       {t('common.loading')}
@@ -377,38 +377,41 @@ const features = [
 
 const memberTiers = [
   {
-    name: "Rebels",
+    nameKey: "home.tiers.rebels.name",
     price: "$10",
-    subtitle: "For those who've been with us from the beginning.",
-    features: [
-      "Behind-the-scenes content and exclusive updates",
-      "Entry to The Legion community — connect with the band and other fans",
-      "Unlimited replays of all private online concerts",
+    priceKey: "home.tiers.rebels.price",
+    subtitleKey: "home.tiers.rebels.subtitle",
+    featureKeys: [
+      "home.tiers.rebels.feature1",
+      "home.tiers.rebels.feature2",
+      "home.tiers.rebels.feature3",
     ],
     featured: false,
   },
   {
-    name: "Outlaws",
+    nameKey: "home.tiers.outlaws.name",
     price: "$25",
-    subtitle: "For the dedicated fans who want more.",
-    features: [
-      "Everything in Rebels",
-      "Monthly live video hangout with the band",
-      "Full streaming access to all songs in the vault",
-      "Join the Fan Voting Squad — help choose what we release next",
+    priceKey: "home.tiers.outlaws.price",
+    subtitleKey: "home.tiers.outlaws.subtitle",
+    featureKeys: [
+      "home.tiers.outlaws.feature1",
+      "home.tiers.outlaws.feature2",
+      "home.tiers.outlaws.feature3",
+      "home.tiers.outlaws.feature4",
     ],
     featured: true,
   },
   {
-    name: "Legionnaires",
+    nameKey: "home.tiers.legionnaires.name",
     price: "$50",
-    subtitle: "For the die-hards who want all-access.",
-    features: [
-      "Everything in Outlaws",
-      "Monthly virtual studio session with the band",
-      "Full streaming access to all songs",
-      "Free LEGION. shirt (ships after 3 months)",
-      "15% off all merch",
+    priceKey: "home.tiers.legionnaires.price",
+    subtitleKey: "home.tiers.legionnaires.subtitle",
+    featureKeys: [
+      "home.tiers.legionnaires.feature1",
+      "home.tiers.legionnaires.feature2",
+      "home.tiers.legionnaires.feature3",
+      "home.tiers.legionnaires.feature4",
+      "home.tiers.legionnaires.feature5",
     ],
     featured: false,
   },

@@ -21,11 +21,166 @@
     "contact": "연락처",
     "terms": "약관",
     "privacy": "개인정보",
-    "copyright": "© 2024 모든 권리 보유"
+    "copyright": "© 2025 Sons of Legion. 모든 권리 보유"
   },
   "common": {
     "loading": "로딩 중...",
     "error": "오류",
-    "success": "성공"
+    "success": "성공",
+    "subscribe": "구독",
+    "play": "재생",
+    "shuffle": "셔플",
+    "favorites": "즐겨찾기",
+    "share": "공유",
+    "addToCart": "장바구니에 추가",
+    "viewAll": "전체 보기",
+    "shopNow": "지금 쇼핑",
+    "searchProducts": "제품 검색...",
+    "filters": "필터",
+    "sortBy": "정렬 기준",
+    "newest": "최신",
+    "priceLowToHigh": "가격: 낮은순",
+    "priceHighToLow": "가격: 높은순",
+    "priceRange": "가격 범위"
+  },
+  "home": {
+    "hero": {
+      "poweredBy": "JRNY 제공",
+      "subtitle": "록, 소울, 블루스의 강력한 블렌드로 강렬한 에너지와 잊을 수 없는 음악을 선사합니다. 아티스트 소유 플랫폼에서 모든 것을 경험하세요.",
+      "startWatching": "시청 시작",
+      "getFreeAlbum": "무료 앨범 받기",
+      "exploreMusic": "음악 탐색"
+    },
+    "features": {
+      "title": "당신을 기다리는 것",
+      "subtitle": "진정한 팬을 위해 설계된 완전한 생태계에 빠져보세요",
+      "premiumVideos": {
+        "title": "프리미엄 비디오",
+        "description": "Apple TV에서 영감을 받은 경험으로 독점 시리즈, 뮤직 비디오, 다큐멘터리를 놀라운 품질로 시청하세요."
+      },
+      "fullAlbums": {
+        "title": "전체 앨범 및 싱글",
+        "description": "아름다운 인터페이스에서 상세한 크레딧, 가사 및 협력자 스토리와 함께 전체 앨범을 스트리밍하세요."
+      },
+      "vipCommunity": {
+        "title": "VIP 커뮤니티",
+        "description": "다른 팬들과 연결하고, 배지를 획득하며, 아티스트 대화 및 이벤트에 대한 독점 액세스를 받으세요."
+      }
+    },
+    "tiers": {
+      "title": "군단에 가입",
+      "popular": "인기",
+      "perMonth": "월",
+      "freeTrial": "7일 무료 체험",
+      "rebels": {
+        "name": "반란군",
+        "price": "$10",
+        "subtitle": "처음부터 우리와 함께한 분들을 위해.",
+        "feature1": "비하인드 씬 콘텐츠 및 독점 업데이트",
+        "feature2": "군단 커뮤니티 입장 — 밴드 및 다른 팬들과 연결",
+        "feature3": "모든 비공개 온라인 콘서트의 무제한 재생"
+      },
+      "outlaws": {
+        "name": "무법자",
+        "price": "$25",
+        "subtitle": "더 많은 것을 원하는 헌신적인 팬을 위해.",
+        "feature1": "반란군의 모든 것",
+        "feature2": "밴드와 월간 라이브 비디오 만남",
+        "feature3": "금고의 모든 노래에 대한 전체 스트리밍 액세스",
+        "feature4": "팬 투표 대원 가입 — 다음에 출시할 것을 선택하는 데 도움"
+      },
+      "legionnaires": {
+        "name": "군단병",
+        "price": "$50",
+        "subtitle": "모든 액세스를 원하는 열성 팬을 위해.",
+        "feature1": "무법자의 모든 것",
+        "feature2": "밴드와 월간 가상 스튜디오 세션",
+        "feature3": "모든 노래에 대한 전체 스트리밍 액세스",
+        "feature4": "무료 LEGION 셔츠 (3개월 후 배송)",
+        "feature5": "모든 상품 15% 할인"
+      }
+    }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "SØL 포털에 오신 것을 환영합니다",
+      "enter": "SØL 포털 입장",
+      "subtitle": "독점 콘텐츠를 스트리밍하고 음악을 전에 없던 방식으로 경험하세요.",
+      "acceptFreeTrial": "무료 체험 수락",
+      "freeTrialNote": "7일 무료, 그 다음 구독 선택"
+    },
+    "dialog": {
+      "title": "시청하려면 구독",
+      "description": "독점 비디오, 음악 및 콘텐츠에 즉시 액세스하세요.",
+      "startFreeTrial": "7일 무료 체험 시작",
+      "alreadySubscribed": "이미 구독하셨나요?",
+      "signIn": "로그인"
+    },
+    "rows": {
+      "musicVideos": "뮤직 비디오",
+      "favorites": "즐겨찾기",
+      "performances": "공연",
+      "behindTheScenes": "비하인드 씬",
+      "documentary": "다큐멘터리"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "재생",
+      "shuffle": "셔플"
+    },
+    "sections": {
+      "topTracks": "인기 트랙",
+      "title": "제목",
+      "artist": "아티스트",
+      "album": "앨범",
+      "time": "시간"
+    },
+    "toast": {
+      "linkCopied": "링크가 클립보드에 복사되었습니다!",
+      "unableToCopy": "복사할 수 없음",
+      "copyManually": "링크를 수동으로 복사하세요"
+    }
+  },
+  "merch": {
+    "topBar": "Sons of Legion 공식 상품",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "제품 검색...",
+    "categories": {
+      "apparel": "의류",
+      "accessories": "액세서리",
+      "music": "음악",
+      "prints": "프린트"
+    },
+    "hero": {
+      "slide1": {
+        "title": "새로운 음악 출시",
+        "subtitle": "최신 앨범 및 싱글 스트리밍"
+      },
+      "slide2": {
+        "title": "바이닐 컬렉션",
+        "subtitle": "프리미엄 바이닐로 음악 소유"
+      },
+      "slide3": {
+        "title": "독점 의류",
+        "subtitle": "자부심을 가지고 군단을 착용"
+      }
+    },
+    "section": {
+      "title": "군단 기어"
+    }
+  },
+  "about": {
+    "title": "SONS OF LEGION",
+    "intro": "나라 반대편에서 온 두 명의 남자가 우연히 만나 같은 길을 걷기로 선택했습니다.",
+    "description1": "Sons of Legion은 록의 강렬한 에너지, 블루스의 소울풀한 깊이, 그리고 소울 음악의 시대를 초월한 매력을 혼합한 역동적인 밴드입니다. 거친 그릿과 세련된 클래스를 결합한 스타일로 과거의 위대한 밴드를 연상시키는 분위기를 연출합니다.",
+    "description2": "강력한 퍼포먼스와 설득력 있는 가사로 유명한 Sons of Legion은 전 세계 관객을 사로잡았습니다. \"Brand New Day\", \"Power\", \"Firestarter\"와 같은 주요 트랙을 포함한 그들의 음악은 5,500만 이상의 스트리밍을 기록했으며 ESPN, 닷지 램 광고, Netflix, NBC와 같은 주요 플랫폼에 소개되었습니다.",
+    "featuredTitle": "소개된 곳",
+    "cta": {
+      "title": "무료 앨범 받기",
+      "description": "독점 무료 EP를 다운로드하고 Sons of Legion의 사운드를 경험하세요",
+      "button": "무료 EP 다운로드"
+    }
   }
 }

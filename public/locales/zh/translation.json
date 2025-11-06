@@ -21,11 +21,166 @@
     "contact": "联系",
     "terms": "条款",
     "privacy": "隐私",
-    "copyright": "© 2024 版权所有"
+    "copyright": "© 2025 Sons of Legion. 版权所有"
   },
   "common": {
     "loading": "加载中...",
     "error": "错误",
-    "success": "成功"
+    "success": "成功",
+    "subscribe": "订阅",
+    "play": "播放",
+    "shuffle": "随机播放",
+    "favorites": "收藏",
+    "share": "分享",
+    "addToCart": "加入购物车",
+    "viewAll": "查看全部",
+    "shopNow": "立即购买",
+    "searchProducts": "搜索产品...",
+    "filters": "筛选",
+    "sortBy": "排序方式",
+    "newest": "最新",
+    "priceLowToHigh": "价格：从低到高",
+    "priceHighToLow": "价格：从高到低",
+    "priceRange": "价格范围"
+  },
+  "home": {
+    "hero": {
+      "poweredBy": "由 JRNY 提供支持",
+      "subtitle": "摇滚、灵魂和蓝调的强大融合，带来原始能量和难忘的音乐。在一个艺术家拥有的平台上体验这一切。",
+      "startWatching": "开始观看",
+      "getFreeAlbum": "获取我们的免费专辑",
+      "exploreMusic": "探索音乐"
+    },
+    "features": {
+      "title": "等待您的内容",
+      "subtitle": "沉浸在为真正粉丝设计的完整生态系统中",
+      "premiumVideos": {
+        "title": "高级视频",
+        "description": "以令人惊叹的质量观看独家系列、音乐视频和纪录片，享受受 Apple TV 启发的体验。"
+      },
+      "fullAlbums": {
+        "title": "完整专辑和单曲",
+        "description": "在精美的界面中流式传输完整专辑，包含详细的制作人员名单、歌词和合作者故事。"
+      },
+      "vipCommunity": {
+        "title": "VIP 社区",
+        "description": "与其他粉丝联系，赚取徽章，并获得与艺术家对话和活动的独家访问权限。"
+      }
+    },
+    "tiers": {
+      "title": "加入军团",
+      "popular": "热门",
+      "perMonth": "每月",
+      "freeTrial": "7天免费试用",
+      "rebels": {
+        "name": "反叛者",
+        "price": "$10",
+        "subtitle": "献给从一开始就与我们同在的人。",
+        "feature1": "幕后内容和独家更新",
+        "feature2": "进入军团社区 — 与乐队和其他粉丝联系",
+        "feature3": "所有私人在线音乐会的无限重播"
+      },
+      "outlaws": {
+        "name": "亡命之徒",
+        "price": "$25",
+        "subtitle": "献给想要更多的忠实粉丝。",
+        "feature1": "反叛者的所有内容",
+        "feature2": "与乐队每月直播视频聚会",
+        "feature3": "完全访问保险库中的所有歌曲流媒体",
+        "feature4": "加入粉丝投票小组 — 帮助选择我们接下来发布的内容"
+      },
+      "legionnaires": {
+        "name": "军团成员",
+        "price": "$50",
+        "subtitle": "献给想要全方位访问的铁杆粉丝。",
+        "feature1": "亡命之徒的所有内容",
+        "feature2": "与乐队每月虚拟录音室会话",
+        "feature3": "完全访问所有歌曲流媒体",
+        "feature4": "免费 LEGION 衬衫（3个月后发货）",
+        "feature5": "所有商品 15% 折扣"
+      }
+    }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "欢迎来到 SØL 门户",
+      "enter": "进入 SØL 门户",
+      "subtitle": "流式传输独家内容，以前所未有的方式体验音乐。",
+      "acceptFreeTrial": "接受免费试用",
+      "freeTrialNote": "7天免费，然后选择您的订阅"
+    },
+    "dialog": {
+      "title": "订阅观看",
+      "description": "即时访问独家视频、音乐和内容。",
+      "startFreeTrial": "开始 7 天免费试用",
+      "alreadySubscribed": "已经订阅？",
+      "signIn": "登录"
+    },
+    "rows": {
+      "musicVideos": "音乐视频",
+      "favorites": "收藏",
+      "performances": "表演",
+      "behindTheScenes": "幕后",
+      "documentary": "纪录片"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "播放",
+      "shuffle": "随机播放"
+    },
+    "sections": {
+      "topTracks": "热门曲目",
+      "title": "标题",
+      "artist": "艺术家",
+      "album": "专辑",
+      "time": "时长"
+    },
+    "toast": {
+      "linkCopied": "链接已复制到剪贴板！",
+      "unableToCopy": "无法复制",
+      "copyManually": "请手动复制链接"
+    }
+  },
+  "merch": {
+    "topBar": "Sons of Legion 官方商品",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "搜索产品...",
+    "categories": {
+      "apparel": "服装",
+      "accessories": "配饰",
+      "music": "音乐",
+      "prints": "印刷品"
+    },
+    "hero": {
+      "slide1": {
+        "title": "新音乐发布",
+        "subtitle": "流式传输我们最新的专辑和单曲"
+      },
+      "slide2": {
+        "title": "黑胶唱片收藏",
+        "subtitle": "拥有高级黑胶唱片上的音乐"
+      },
+      "slide3": {
+        "title": "独家服装",
+        "subtitle": "骄傲地穿着军团"
+      }
+    },
+    "section": {
+      "title": "军团装备"
+    }
+  },
+  "about": {
+    "title": "SONS OF LEGION",
+    "intro": "只是来自国家两端的两个家伙，恰好相遇并选择走同一条路。",
+    "description1": "Sons of Legion 是一支充满活力的乐队，融合了摇滚的原始能量、蓝调的灵魂深度和灵魂音乐的永恒魅力。他们的风格将粗犷的勇气与精致的品位相结合，营造出一种让人想起过去最伟大乐队的氛围。",
+    "description2": "Sons of Legion 以其强大的表演和引人入胜的歌词而闻名，吸引了全球观众。他们的音乐，包括"Brand New Day"、"Power"和"Firestarter"等杰出曲目，已获得超过 5500 万次流媒体播放，并出现在 ESPN、道奇公羊广告、Netflix 和 NBC 等主要平台上。",
+    "featuredTitle": "特色平台",
+    "cta": {
+      "title": "获取我们的免费专辑",
+      "description": "下载我们独家的免费 EP 并体验 Sons of Legion 的声音",
+      "button": "下载免费 EP"
+    }
   }
 }
