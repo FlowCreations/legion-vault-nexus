@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TranslatedText } from "@/components/TranslatedText";
 
 const navItems = [
   { name: "Videos", path: "/videos", icon: Film },
@@ -107,7 +108,9 @@ export const Navigation = () => {
                   )}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="font-medium">{item.name}</span>
+                  <span className="font-medium">
+                    <TranslatedText>{item.name}</TranslatedText>
+                  </span>
                   {isActive && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-gold rounded-full" />
                   )}
@@ -124,7 +127,7 @@ export const Navigation = () => {
               <Link to="/auth">
                 <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
                   <LogIn className="w-4 h-4" />
-                  Sign In
+                  <TranslatedText>Sign In</TranslatedText>
                 </Button>
               </Link>
             ) : (
@@ -166,32 +169,34 @@ export const Navigation = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    <TranslatedText>Profile</TranslatedText>
                   </DropdownMenuItem>
                   
                   {!isSubscribed && (
                     <DropdownMenuItem onClick={() => navigate("/subscribe")}>
                       <Crown className="mr-2 h-4 w-4 text-primary" />
-                      <span className="text-primary font-medium">Upgrade Plan</span>
+                      <span className="text-primary font-medium">
+                        <TranslatedText>Upgrade Plan</TranslatedText>
+                      </span>
                     </DropdownMenuItem>
                   )}
                   
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Settings className="mr-2 h-4 w-4" />
-                    Account
+                    <TranslatedText>Account</TranslatedText>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Package className="mr-2 h-4 w-4" />
-                    Orders
+                    <TranslatedText>Orders</TranslatedText>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <Shield className="mr-2 h-4 w-4" />
-                    Security
+                    <TranslatedText>Security</TranslatedText>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Log Out
+                    <TranslatedText>Log Out</TranslatedText>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -223,7 +228,9 @@ export const Navigation = () => {
                       )}
                     >
                       <Icon className="w-4 h-4" />
-                      <span className="text-sm font-medium">{item.name}</span>
+                      <span className="text-sm font-medium">
+                        <TranslatedText>{item.name}</TranslatedText>
+                      </span>
                     </Link>
                   );
                 })}
@@ -250,16 +257,16 @@ export const Navigation = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      <TranslatedText>Profile</TranslatedText>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <ShoppingBag className="mr-2 h-4 w-4" />
-                      Orders
+                      <TranslatedText>Orders</TranslatedText>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Log Out
+                      <TranslatedText>Log Out</TranslatedText>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
