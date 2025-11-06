@@ -15,6 +15,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QuickSignupDialog } from "@/components/QuickSignupDialog";
+import { useTranslation } from "react-i18next";
 
 // Mapping of tier names to Stripe price IDs
 const TIER_PRICE_IDS: Record<string, string> = {
@@ -24,6 +25,7 @@ const TIER_PRICE_IDS: Record<string, string> = {
 };
 
 export default function Home() {
+  const { t } = useTranslation();
   const { trackEvent } = useEventTracking();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('other');
   const { progress, loading } = useMilestoneProgress();
@@ -199,12 +201,11 @@ export default function Home() {
 
           <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-card/50 backdrop-blur-sm border border-primary/20 mb-6 animate-fade-in">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-muted-foreground">Powered by JRNY</span>
+            <span className="text-sm text-muted-foreground">{t('home.hero.poweredBy')}</span>
           </div>
 
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in text-balance">
-            A powerhouse blend of rock, soul, and blues delivering raw energy and unforgettable music. 
-            Experience it all in one artist owned platform.
+            {t('home.hero.subtitle')}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in mb-12">
@@ -216,7 +217,7 @@ export default function Home() {
             >
               <Link to="/videos">
                 <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                Start Watching
+                {t('home.hero.startWatching')}
               </Link>
             </Button>
             <Button 
@@ -228,7 +229,7 @@ export default function Home() {
             >
               <Link to="/free-ep">
                 <Sparkles className="w-5 h-5 mr-2" />
-                Get Our Free Album
+                {t('home.hero.getFreeAlbum')}
               </Link>
             </Button>
             <Button 
@@ -239,7 +240,7 @@ export default function Home() {
               onClick={() => trackEvent('view_product', { category: 'music', source: 'hero_cta' })}
             >
               <Link to="/music">
-                Explore Music
+                {t('home.hero.exploreMusic')}
               </Link>
             </Button>
           </div>
@@ -252,17 +253,17 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-serif text-4xl sm:text-5xl font-bold mb-4">
-              What Awaits You
+              {t('home.features.title')}
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Immerse yourself in a complete ecosystem designed for true fans
+              {t('home.features.subtitle')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <Link
-                key={feature.title}
+                key={feature.titleKey}
                 to={feature.link}
                 className="group relative bg-card hover:bg-card-hover rounded-2xl p-8 border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-cosmic overflow-hidden"
                 style={{ animationDelay: `${index * 100}ms` }}
@@ -275,11 +276,11 @@ export default function Home() {
                   </div>
                   
                   <h3 className="font-serif text-2xl font-bold mb-3 group-hover:text-primary transition-colors">
-                    {feature.title}
+                    {t(feature.titleKey)}
                   </h3>
                   
                   <p className="text-muted-foreground leading-relaxed">
-                    {feature.description}
+                    {t(feature.descriptionKey)}
                   </p>
                 </div>
               </Link>
@@ -292,7 +293,7 @@ export default function Home() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card/30">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-8 text-center">
-            Join the Legion
+            {t('home.tiers.title')}
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -307,7 +308,7 @@ export default function Home() {
               >
                 {tier.featured && (
                   <div className="mb-4 inline-block px-3 py-1 bg-primary/20 text-primary border border-primary/30 rounded-full text-xs font-semibold">
-                    Popular
+                    {t('home.tiers.popular')}
                   </div>
                 )}
                 
@@ -315,8 +316,8 @@ export default function Home() {
                 <div className="text-3xl font-bold mb-1">
                   {tier.price}
                 </div>
-                <div className="text-sm text-foreground/70 font-medium mb-1">per month</div>
-                <div className="text-xs text-primary font-semibold mb-4">7-day free trial</div>
+                <div className="text-sm text-foreground/70 font-medium mb-1">{t('home.tiers.perMonth')}</div>
+                <div className="text-xs text-primary font-semibold mb-4">{t('home.tiers.freeTrial')}</div>
                 
                 <p className="text-sm font-semibold mb-4">{tier.subtitle}</p>
                 
@@ -337,10 +338,10 @@ export default function Home() {
                   {loadingTier === tier.name ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Loading...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    "Subscribe"
+                    t('common.subscribe')
                   )}
                 </Button>
               </div>
@@ -352,22 +353,23 @@ export default function Home() {
   );
 }
 
+// Features are now translated dynamically in the component
 const features = [
   {
-    title: "Premium Videos",
-    description: "Watch exclusive series, music videos, and documentaries in stunning quality with an Apple TV-inspired experience.",
+    titleKey: "home.features.premiumVideos.title",
+    descriptionKey: "home.features.premiumVideos.description",
     icon: Play,
     link: "/videos",
   },
   {
-    title: "Full Albums & Singles",
-    description: "Stream complete albums with detailed credits, lyrics, and collaborator stories in a beautiful interface.",
+    titleKey: "home.features.fullAlbums.title",
+    descriptionKey: "home.features.fullAlbums.description",
     icon: Sparkles,
     link: "/music",
   },
   {
-    title: "VIP Community",
-    description: "Connect with fellow fans, earn badges, and get exclusive access to artist conversations and events.",
+    titleKey: "home.features.vipCommunity.title",
+    descriptionKey: "home.features.vipCommunity.description",
     icon: Sparkles,
     link: "/community",
   },

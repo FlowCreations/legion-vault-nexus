@@ -5,8 +5,10 @@ import solLogo from "@/assets/sol-logo.png";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useTranslation } from "react-i18next";
 
 export const Footer = () => {
+  const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -42,16 +44,16 @@ export const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           <div className="flex items-center space-x-6 text-sm text-muted-foreground">
             <Link to="/about" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              About
+              {t('footer.about')}
             </Link>
             <Link to="/contact" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              Contact
+              {t('footer.contact')}
             </Link>
             <Link to="/terms" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              Terms
+              {t('footer.terms')}
             </Link>
             <Link to="/privacy" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              Privacy
+              {t('footer.privacy')}
             </Link>
           </div>
           
@@ -70,7 +72,7 @@ export const Footer = () => {
           )}
           
           <p className="text-sm text-muted-foreground">
-            © 2025 Sons of Legion. All rights reserved.
+            {t('footer.copyright')}
           </p>
         </div>
         

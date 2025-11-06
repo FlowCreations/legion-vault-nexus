@@ -21,11 +21,166 @@
     "contact": "Contact",
     "terms": "Conditions",
     "privacy": "Confidentialité",
-    "copyright": "© 2024 Tous droits réservés"
+    "copyright": "© 2025 Sons of Legion. Tous droits réservés."
   },
   "common": {
     "loading": "Chargement...",
     "error": "Erreur",
-    "success": "Succès"
+    "success": "Succès",
+    "subscribe": "S'abonner",
+    "play": "Lire",
+    "shuffle": "Aléatoire",
+    "favorites": "Favoris",
+    "share": "Partager",
+    "addToCart": "Ajouter au Panier",
+    "viewAll": "Voir tout",
+    "shopNow": "ACHETER MAINTENANT",
+    "searchProducts": "Rechercher des produits...",
+    "filters": "Filtres",
+    "sortBy": "Trier Par",
+    "newest": "Plus Récent",
+    "priceLowToHigh": "Prix: Bas à Élevé",
+    "priceHighToLow": "Prix: Élevé à Bas",
+    "priceRange": "Gamme de Prix"
+  },
+  "home": {
+    "hero": {
+      "poweredBy": "Propulsé par JRNY",
+      "subtitle": "Un mélange puissant de rock, soul et blues offrant une énergie brute et une musique inoubliable. Découvrez tout sur une plateforme appartenant à l'artiste.",
+      "startWatching": "Commencer à Regarder",
+      "getFreeAlbum": "Obtenir Notre Album Gratuit",
+      "exploreMusic": "Explorer la Musique"
+    },
+    "features": {
+      "title": "Ce Qui Vous Attend",
+      "subtitle": "Plongez dans un écosystème complet conçu pour les vrais fans",
+      "premiumVideos": {
+        "title": "Vidéos Premium",
+        "description": "Regardez des séries exclusives, des clips musicaux et des documentaires en qualité époustouflante avec une expérience inspirée d'Apple TV."
+      },
+      "fullAlbums": {
+        "title": "Albums et Singles Complets",
+        "description": "Diffusez des albums complets avec des crédits détaillés, des paroles et des histoires de collaborateurs dans une belle interface."
+      },
+      "vipCommunity": {
+        "title": "Communauté VIP",
+        "description": "Connectez-vous avec d'autres fans, gagnez des badges et obtenez un accès exclusif aux conversations avec les artistes et aux événements."
+      }
+    },
+    "tiers": {
+      "title": "Rejoignez la Légion",
+      "popular": "Populaire",
+      "perMonth": "par mois",
+      "freeTrial": "7 jours d'essai gratuit",
+      "rebels": {
+        "name": "Rebelles",
+        "price": "$10",
+        "subtitle": "Pour ceux qui sont avec nous depuis le début.",
+        "feature1": "Contenu en coulisses et mises à jour exclusives",
+        "feature2": "Accès à la communauté The Legion — connectez-vous avec le groupe et d'autres fans",
+        "feature3": "Rediffusions illimitées de tous les concerts en ligne privés"
+      },
+      "outlaws": {
+        "name": "Hors-la-loi",
+        "price": "$25",
+        "subtitle": "Pour les fans dévoués qui en veulent plus.",
+        "feature1": "Tout dans Rebelles",
+        "feature2": "Rencontre vidéo mensuelle en direct avec le groupe",
+        "feature3": "Accès complet en streaming à toutes les chansons dans le coffre-fort",
+        "feature4": "Rejoignez l'équipe de vote des fans — aidez à choisir ce que nous sortirons ensuite"
+      },
+      "legionnaires": {
+        "name": "Légionnaires",
+        "price": "$50",
+        "subtitle": "Pour les inconditionnels qui veulent un accès complet.",
+        "feature1": "Tout dans Hors-la-loi",
+        "feature2": "Session virtuelle mensuelle en studio avec le groupe",
+        "feature3": "Accès complet en streaming à toutes les chansons",
+        "feature4": "T-shirt LEGION gratuit (livré après 3 mois)",
+        "feature5": "15% de réduction sur toutes les marchandises"
+      }
+    }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "Bienvenue au Portail SØL",
+      "enter": "Entrez dans le Portail SØL",
+      "subtitle": "Diffusez du contenu exclusif et découvrez la musique comme jamais auparavant.",
+      "acceptFreeTrial": "Accepter l'Essai Gratuit",
+      "freeTrialNote": "7 jours gratuits, puis choisissez votre abonnement"
+    },
+    "dialog": {
+      "title": "Abonnez-vous pour Regarder",
+      "description": "Obtenez un accès instantané aux vidéos exclusives, à la musique et au contenu.",
+      "startFreeTrial": "Commencer l'Essai Gratuit de 7 Jours",
+      "alreadySubscribed": "Déjà abonné ?",
+      "signIn": "Se connecter"
+    },
+    "rows": {
+      "musicVideos": "Clips Musicaux",
+      "favorites": "Favoris",
+      "performances": "Performances",
+      "behindTheScenes": "Dans les Coulisses",
+      "documentary": "Documentaire"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "Lire",
+      "shuffle": "Aléatoire"
+    },
+    "sections": {
+      "topTracks": "Meilleurs Titres",
+      "title": "TITRE",
+      "artist": "ARTISTE",
+      "album": "ALBUM",
+      "time": "DURÉE"
+    },
+    "toast": {
+      "linkCopied": "Lien copié dans le presse-papiers !",
+      "unableToCopy": "Impossible de copier",
+      "copyManually": "Veuillez copier le lien manuellement"
+    }
+  },
+  "merch": {
+    "topBar": "Marchandise Officielle de Sons of Legion",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "Rechercher des produits...",
+    "categories": {
+      "apparel": "Vêtements",
+      "accessories": "Accessoires",
+      "music": "Musique",
+      "prints": "Impressions"
+    },
+    "hero": {
+      "slide1": {
+        "title": "Nouvelles Sorties Musicales",
+        "subtitle": "Diffusez nos derniers albums et singles"
+      },
+      "slide2": {
+        "title": "Collection de Vinyles",
+        "subtitle": "Possédez la musique sur vinyle premium"
+      },
+      "slide3": {
+        "title": "Vêtements Exclusifs",
+        "subtitle": "Portez la Légion avec fierté"
+      }
+    },
+    "section": {
+      "title": "ÉQUIPEMENT DE LA LÉGION"
+    }
+  },
+  "about": {
+    "title": "SONS OF LEGION",
+    "intro": "Juste deux gars de côtés opposés du pays qui se sont croisés et ont choisi de marcher sur la même route.",
+    "description1": "Sons of Legion est un groupe dynamique mélangeant l'énergie brute du rock, la profondeur émotionnelle du blues et l'attrait intemporel de la musique soul. Avec un style qui marie la rudesse avec la classe sophistiquée, ils canalisent une ambiance rappelant les PLUS GRANDS groupes du passé.",
+    "description2": "Reconnus pour leurs performances puissantes et leurs paroles convaincantes, Sons of Legion ont captivé des audiences du monde entier. Leur musique, avec des titres phares comme \"Brand New Day\", \"Power\" et \"Firestarter\", a accumulé plus de 55 millions de streams et est diffusée sur des plateformes majeures comme ESPN, les publicités Dodge Ram, Netflix et NBC.",
+    "featuredTitle": "PRÉSENTÉ SUR",
+    "cta": {
+      "title": "Obtenez Notre Album Gratuit",
+      "description": "Téléchargez notre EP exclusif gratuit et découvrez le son de Sons of Legion",
+      "button": "Télécharger l'EP Gratuit"
+    }
   }
 }

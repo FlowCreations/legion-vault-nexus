@@ -21,11 +21,166 @@
     "contact": "Contact",
     "terms": "Terms",
     "privacy": "Privacy",
-    "copyright": "© 2024 All rights reserved"
+    "copyright": "© 2025 Sons of Legion. All rights reserved."
   },
   "common": {
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "subscribe": "Subscribe",
+    "play": "Play",
+    "shuffle": "Shuffle",
+    "favorites": "Favorites",
+    "share": "Share",
+    "addToCart": "Add to Cart",
+    "viewAll": "View all",
+    "shopNow": "SHOP NOW",
+    "searchProducts": "Search products...",
+    "filters": "Filters",
+    "sortBy": "Sort By",
+    "newest": "Newest",
+    "priceLowToHigh": "Price: Low to High",
+    "priceHighToLow": "Price: High to Low",
+    "priceRange": "Price Range"
+  },
+  "home": {
+    "hero": {
+      "poweredBy": "Powered by JRNY",
+      "subtitle": "A powerhouse blend of rock, soul, and blues delivering raw energy and unforgettable music. Experience it all in one artist owned platform.",
+      "startWatching": "Start Watching",
+      "getFreeAlbum": "Get Our Free Album",
+      "exploreMusic": "Explore Music"
+    },
+    "features": {
+      "title": "What Awaits You",
+      "subtitle": "Immerse yourself in a complete ecosystem designed for true fans",
+      "premiumVideos": {
+        "title": "Premium Videos",
+        "description": "Watch exclusive series, music videos, and documentaries in stunning quality with an Apple TV-inspired experience."
+      },
+      "fullAlbums": {
+        "title": "Full Albums & Singles",
+        "description": "Stream complete albums with detailed credits, lyrics, and collaborator stories in a beautiful interface."
+      },
+      "vipCommunity": {
+        "title": "VIP Community",
+        "description": "Connect with fellow fans, earn badges, and get exclusive access to artist conversations and events."
+      }
+    },
+    "tiers": {
+      "title": "Join the Legion",
+      "popular": "Popular",
+      "perMonth": "per month",
+      "freeTrial": "7-day free trial",
+      "rebels": {
+        "name": "Rebels",
+        "price": "$10",
+        "subtitle": "For those who've been with us from the beginning.",
+        "feature1": "Behind-the-scenes content and exclusive updates",
+        "feature2": "Entry to The Legion community — connect with the band and other fans",
+        "feature3": "Unlimited replays of all private online concerts"
+      },
+      "outlaws": {
+        "name": "Outlaws",
+        "price": "$25",
+        "subtitle": "For the dedicated fans who want more.",
+        "feature1": "Everything in Rebels",
+        "feature2": "Monthly live video hangout with the band",
+        "feature3": "Full streaming access to all songs in the vault",
+        "feature4": "Join the Fan Voting Squad — help choose what we release next"
+      },
+      "legionnaires": {
+        "name": "Legionnaires",
+        "price": "$50",
+        "subtitle": "For the die-hards who want all-access.",
+        "feature1": "Everything in Outlaws",
+        "feature2": "Monthly virtual studio session with the band",
+        "feature3": "Full streaming access to all songs",
+        "feature4": "Free LEGION. shirt (ships after 3 months)",
+        "feature5": "15% off all merch"
+      }
+    }
+  },
+  "videos": {
+    "hero": {
+      "welcome": "Welcome to the SØL Portal",
+      "enter": "Enter the SØL Portal",
+      "subtitle": "Stream exclusive content and experience the music like never before.",
+      "acceptFreeTrial": "Accept Free Trial",
+      "freeTrialNote": "7 days free, then pick your subscription"
+    },
+    "dialog": {
+      "title": "Subscribe to Watch",
+      "description": "Get instant access to exclusive videos, music, and content.",
+      "startFreeTrial": "Start 7-Day Free Trial",
+      "alreadySubscribed": "Already subscribed?",
+      "signIn": "Sign In"
+    },
+    "rows": {
+      "musicVideos": "Music Videos",
+      "favorites": "Favorites",
+      "performances": "Performances",
+      "behindTheScenes": "Behind The Scenes",
+      "documentary": "Documentary"
+    }
+  },
+  "music": {
+    "hero": {
+      "title": "Sons of Legion",
+      "play": "Play",
+      "shuffle": "Shuffle"
+    },
+    "sections": {
+      "topTracks": "Top Tracks",
+      "title": "TITLE",
+      "artist": "ARTIST",
+      "album": "ALBUM",
+      "time": "TIME"
+    },
+    "toast": {
+      "linkCopied": "Link copied to clipboard!",
+      "unableToCopy": "Unable to copy",
+      "copyManually": "Please copy the link manually"
+    }
+  },
+  "merch": {
+    "topBar": "Official Sons of Legion Merchandise",
+    "title": "SONS OF LEGION",
+    "searchPlaceholder": "Search products...",
+    "categories": {
+      "apparel": "Apparel",
+      "accessories": "Accessories",
+      "music": "Music",
+      "prints": "Prints"
+    },
+    "hero": {
+      "slide1": {
+        "title": "New Music Drops",
+        "subtitle": "Stream our latest albums and singles"
+      },
+      "slide2": {
+        "title": "Vinyl Collection",
+        "subtitle": "Own the music on premium vinyl"
+      },
+      "slide3": {
+        "title": "Exclusive Apparel",
+        "subtitle": "Wear the Legion with pride"
+      }
+    },
+    "section": {
+      "title": "LEGION GEAR"
+    }
+  },
+  "about": {
+    "title": "SONS OF LEGION",
+    "intro": "Just two guys from opposite sides of the country that happened to cross paths and chose to walk down the same road.",
+    "description1": "Sons of Legion is a dynamic band blending the raw energy of rock, the soulful depth of blues, and the timeless appeal of soul music. With a style that marries rugged grit with sophisticated class, they channel a vibe reminiscent of the GREATEST bands of the past.",
+    "description2": "Renowned for their powerful performances and compelling lyrics, Sons of Legion have captivated audiences worldwide. Their music, featuring standout tracks like \"Brand New Day,\" \"Power,\" and \"Firestarter,\" has garnered over 55 million streams and is featured on major platforms like ESPN, Dodge Ram commercials, Netflix, and NBC.",
+    "featuredTitle": "AS FEATURED ON",
+    "cta": {
+      "title": "Get Our Free Album",
+      "description": "Download our exclusive free EP and experience the Sons of Legion sound",
+      "button": "Download Free EP"
+    }
   }
 }
