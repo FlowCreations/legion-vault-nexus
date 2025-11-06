@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'system',
