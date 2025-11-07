@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,10 +8,16 @@ import { RefreshCw } from 'lucide-react';
 
 export const HeartbeatToggle = () => {
   const { toast } = useToast();
-  const { enabled, loading } = useFeatureFlag('enable_heartbeat_integration');
+  const { enabled: dbEnabled, loading } = useFeatureFlag('enable_heartbeat_integration');
+  const [enabled, setEnabled] = useState(dbEnabled);
   const [updating, setUpdating] = useState(false);
 
+  useEffect(() => {
+    setEnabled(dbEnabled);
+  }, [dbEnabled]);
+
   const handleToggle = async (checked: boolean) => {
+    setEnabled(checked); // Optimistic update
     setUpdating(true);
     try {
       const { error } = await supabase
@@ -29,6 +35,7 @@ export const HeartbeatToggle = () => {
       });
     } catch (error) {
       console.error('Error toggling heartbeat:', error);
+      setEnabled(!checked); // Revert on error
       toast({
         title: 'Error',
         description: 'Failed to update Heartbeat integration',
