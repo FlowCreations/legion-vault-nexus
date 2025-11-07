@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { GlobalReachMap } from "./GlobalReachMap";
+import { GlobeRealtime } from "./GlobeRealtime";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +75,7 @@ export const Geography = () => {
           </Button>
         )}
       </div>
-      <GlobalReachMap />
+      <GlobeRealtime />
     </div>
   );
 };
