@@ -269,3 +269,5 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
     </>
   );
 };
+
+export default GlobeRealtime;
