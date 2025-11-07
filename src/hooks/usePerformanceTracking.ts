@@ -16,9 +16,11 @@ export const usePerformanceTracking = (componentName: string, options = {
   trackMemory: true,
   memoryInterval: 10000, // 10 seconds
 }) => {
-  const renderTracking = options.trackRender ? useRenderTracking(componentName) : null;
-  const apiTracking = options.trackAPI ? useAPILatency() : null;
-  const memoryTracking = options.trackMemory ? useMemoryTracking(options.memoryInterval) : null;
+  // Only track in development
+  const isDev = process.env.NODE_ENV === 'development';
+  const renderTracking = isDev && options.trackRender ? useRenderTracking(componentName) : null;
+  const apiTracking = isDev && options.trackAPI ? useAPILatency() : null;
+  const memoryTracking = isDev && options.trackMemory ? useMemoryTracking(options.memoryInterval) : null;
 
   const generateReport = (): PerformanceReport => {
     return {
