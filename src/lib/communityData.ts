@@ -11,6 +11,29 @@ export type CommunityMemberPoint = {
 };
 
 /**
+ * Check if Heartbeat integration is enabled
+ */
+export async function isHeartbeatEnabled(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('flag_name', 'enable_heartbeat_integration')
+      .single();
+    
+    if (error) {
+      console.error('Error checking heartbeat flag:', error);
+      return false;
+    }
+    
+    return data?.enabled ?? false;
+  } catch (error) {
+    console.error('Failed to check heartbeat flag:', error);
+    return false;
+  }
+}
+
+/**
  * Fetches community members from the directory with their location data.
  * This uses the same data source as the community hub member directory.
  */

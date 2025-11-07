@@ -37,6 +37,7 @@ const VideoManager = lazy(() => import("./VideoManager"));
 const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
 const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
 const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(m => ({ default: m.CommunityMembers })));
+const HeartbeatToggle = lazy(() => import("@/components/merchant/HeartbeatToggle").then(m => ({ default: m.HeartbeatToggle })));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -381,24 +382,30 @@ const Merchant = memo(() => {
 
           {activeTab === "community" && (
             <TabsContent value="community">
-              <Tabs defaultValue="members" className="space-y-6">
-                <TabsList>
-                  <TabsTrigger value="members">Community Members</TabsTrigger>
-                  <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-                </TabsList>
+              <div className="space-y-6">
+                <Suspense fallback={<LoadingSpinner />}>
+                  <HeartbeatToggle />
+                </Suspense>
                 
-                <TabsContent value="members">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <CommunityMembers selectedUserId={selectedUserId} />
-                  </Suspense>
-                </TabsContent>
-                
-                <TabsContent value="activity">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <AdminDashboard selectedUserId={selectedUserId} />
-                  </Suspense>
-                </TabsContent>
-              </Tabs>
+                <Tabs defaultValue="members" className="space-y-6">
+                  <TabsList>
+                    <TabsTrigger value="members">Community Members</TabsTrigger>
+                    <TabsTrigger value="activity">Activity Feed</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="members">
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <CommunityMembers selectedUserId={selectedUserId} />
+                    </Suspense>
+                  </TabsContent>
+                  
+                  <TabsContent value="activity">
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AdminDashboard selectedUserId={selectedUserId} />
+                    </Suspense>
+                  </TabsContent>
+                </Tabs>
+              </div>
             </TabsContent>
           )}
 

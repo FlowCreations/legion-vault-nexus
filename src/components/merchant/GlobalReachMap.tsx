@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { fetchCommunityMembers, getTerritoryGroup, type CommunityMemberPoint } from '@/lib/communityData';
+import { fetchCommunityMembers, getTerritoryGroup, isHeartbeatEnabled, type CommunityMemberPoint } from '@/lib/communityData';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { MemberCard } from './MemberCard';
 import { useNavigate } from 'react-router-dom';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 type MemberWithTerritory = CommunityMemberPoint & {
   territoryGroup: 'america' | 'world';
@@ -20,6 +21,7 @@ export const GlobalReachMap = () => {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [showMemberDialog, setShowMemberDialog] = useState(false);
   const navigate = useNavigate();
+  const { enabled: heartbeatEnabled, loading: flagLoading } = useFeatureFlag('enable_heartbeat_integration');
   
   // Interaction state refs
   const isInteractingRef = useRef(false);
@@ -31,7 +33,17 @@ export const GlobalReachMap = () => {
   // Load community members on mount
   useEffect(() => {
     async function loadMembers() {
+      if (flagLoading) return; // Wait for flag to load
+      
       setLoading(true);
+      
+      if (!heartbeatEnabled) {
+        console.log('Heartbeat integration disabled');
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+
       const communityMembers = await fetchCommunityMembers();
       
       // Filter to only valid members with coordinates
@@ -46,7 +58,7 @@ export const GlobalReachMap = () => {
     }
 
     loadMembers();
-  }, []);
+  }, [heartbeatEnabled, flagLoading]);
 
   // Show all members globally
   const filteredMembers = useMemo(() => {
@@ -336,11 +348,24 @@ export const GlobalReachMap = () => {
     <div className="space-y-6">
       {/* Map Container */}
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
-        {loading && (
+        {(loading || flagLoading) && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E] z-20">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading community members...</p>
+              <p className="text-muted-foreground">
+                {flagLoading ? 'Initializing...' : 'Loading community members...'}
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {!loading && !flagLoading && !heartbeatEnabled && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E] z-20">
+            <div className="text-center max-w-md p-6">
+              <p className="text-muted-foreground mb-2">Heartbeat integration is disabled</p>
+              <p className="text-sm text-muted-foreground/70">
+                Enable it in the Community tab to view member locations
+              </p>
             </div>
           </div>
         )}
