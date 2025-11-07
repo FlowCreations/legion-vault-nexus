@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
+import { GlobeRealtime } from "./GlobeRealtime";
 
 export const Geography = () => {
   const [needsGeocoding, setNeedsGeocoding] = useState(false);
@@ -49,9 +49,9 @@ export const Geography = () => {
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-2xl font-bold">Global Reach</h3>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold">Global Reach</h2>
         {needsGeocoding && (
           <Button 
             onClick={handleGeocode}
@@ -66,9 +66,7 @@ export const Geography = () => {
           </Button>
         )}
       </div>
-      <p className="text-muted-foreground">
-        View your global community on the interactive map in the Community tab.
-      </p>
-    </Card>
+      <GlobeRealtime />
+    </div>
   );
 };
