@@ -127,7 +127,7 @@ export const useMembersGeojson = () => {
   useEffect(() => {
     fetchGeojson();
 
-    // Debounced real-time subscription - batch updates over 5 seconds
+    // Optimized real-time subscription - batch updates over 2 seconds
     let updateTimeout: NodeJS.Timeout;
     const pendingUpdates: any[] = [];
 
@@ -153,7 +153,7 @@ export const useMembersGeojson = () => {
           pendingUpdates.push(payload);
           
           clearTimeout(updateTimeout);
-          updateTimeout = setTimeout(processBatchUpdates, 5000);
+          updateTimeout = setTimeout(processBatchUpdates, 2000); // Reduced from 5s to 2s
         }
       )
       .subscribe();

@@ -60,7 +60,7 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=60' // Cache for 1 minute
+          'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
         } 
       },
     )
