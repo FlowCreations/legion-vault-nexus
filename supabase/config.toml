@@ -1,5 +1,14 @@
 project_id = "dlwyndcvnunvomgkbkhn"
 
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-community-unlock-email]
+verify_jwt = false
+
+[functions.process-scheduled-emails]
+verify_jwt = false
+
 [functions.livekit-token]
 verify_jwt = false
 
