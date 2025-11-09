@@ -27,6 +27,7 @@ const navItems = [
   { name: "Music", path: "/music", translationKey: "nav.music" },
   { name: "Merch", path: "/merch", translationKey: "nav.merch" },
   { name: "Shows", path: "/shows", translationKey: "nav.shows" },
+  { name: "Live Studio", path: "/live-studio", translationKey: "nav.liveStudio" },
   { name: "Community", path: "/community", translationKey: "nav.community" },
 ];
 
@@ -125,7 +126,7 @@ export const Navigation = () => {
                     {currentBadge === 'Founding Member' && (
                       <Crown className="absolute -top-1 -right-1 h-4 w-4 text-gold" />
                     )}
-                    {currentBadge && currentBadge !== 'Founding Member' && (
+                    {currentBadge && currentBadge !== 'Founding Member' && currentBadge !== 'none' && (
                       <Award className="absolute -top-1 -right-1 h-4 w-4 text-primary" />
                     )}
                   </Button>
@@ -213,7 +214,7 @@ export const Navigation = () => {
                       {currentBadge === 'Founding Member' && (
                         <Crown className="absolute -top-1 -right-1 h-4 w-4 text-gold" />
                       )}
-                      {currentBadge && currentBadge !== 'Founding Member' && (
+                      {currentBadge && currentBadge !== 'Founding Member' && currentBadge !== 'none' && (
                         <Award className="absolute -top-1 -right-1 h-4 w-4 text-primary" />
                       )}
                     </Button>

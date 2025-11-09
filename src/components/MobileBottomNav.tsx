@@ -7,6 +7,7 @@ const navItems = [
   { name: "Music", path: "/music", icon: Music },
   { name: "Merch", path: "/merch", icon: ShoppingBag },
   { name: "Shows", path: "/shows", icon: Calendar },
+  { name: "Live", path: "/live-studio", icon: Video },
   { name: "Community", path: "/community", icon: Users },
 ];
 
