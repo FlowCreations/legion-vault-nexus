@@ -359,18 +359,14 @@ export default function Profile() {
     try {
       setDeletingAccount(true);
       
-      // Delete user data from user_profiles
-      if (user) {
-        await supabase
-          .from('user_profiles')
-          .delete()
-          .eq('user_id', user.id);
-      }
-      
-      // Delete the auth user account
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      // Call edge function to delete user account
+      const { data, error } = await supabase.functions.invoke('delete-user-account');
       
       if (error) throw error;
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to delete account');
+      }
       
       toast({
         title: "Account Deleted",
