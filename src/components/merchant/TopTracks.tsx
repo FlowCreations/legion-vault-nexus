@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
-import { Music2, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Music2 } from "lucide-react";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import walkingOnTheEdge from "@/assets/walking-on-the-edge.jpg";
 import carolinaSingle from "@/assets/carolina-single.jpg";
-import { parseTopTracks, type TopTrackData } from "@/utils/analyticsDataParser";
+import { type TopTrackData } from "@/utils/analyticsDataParser";
+import { useTopTracks } from "@/hooks/useAnalyticsData";
+import { TopTracksSkeleton } from "./AnalyticsSkeleton";
 
 // Map track names to album images
 const trackImageMap: Record<string, string> = {
@@ -28,35 +30,17 @@ interface TopTracksProps {
 
 export const TopTracks = ({ period }: TopTracksProps) => {
   const [activeTab, setActiveTab] = useState<"7days" | "28days" | "alltime">(period);
-  const [tracks, setTracks] = useState<TopTrack[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error } = useTopTracks(activeTab);
 
-  useEffect(() => {
-    const loadTracksData = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const data = await parseTopTracks(activeTab);
-        
-        // Add images to tracks
-        const tracksWithImages = data.map(track => ({
-          ...track,
-          image: trackImageMap[track.title] || powerAlbum
-        }));
-
-        setTracks(tracksWithImages);
-      } catch (error) {
-        console.error('Error loading tracks data:', error);
-        setError('Failed to load track data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTracksData();
-  }, [activeTab]);
+  const tracks = useMemo(() => {
+    if (!data) return [];
+    
+    // Add images to tracks
+    return data.map(track => ({
+      ...track,
+      image: trackImageMap[track.title] || powerAlbum
+    }));
+  }, [data]);
 
   return (
     <div className="space-y-6">
@@ -98,13 +82,11 @@ export const TopTracks = ({ period }: TopTracksProps) => {
       </div>
 
       <div className="space-y-4">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+        {isLoading ? (
+          <TopTracksSkeleton />
         ) : error ? (
-          <div className="text-center py-12 text-red-400">
-            {error}
+          <div className="text-center py-12 text-destructive">
+            Failed to load track data
           </div>
         ) : (
           <>

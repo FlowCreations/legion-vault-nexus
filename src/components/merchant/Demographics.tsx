@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { parseAudienceDemographics } from "@/utils/analyticsDataParser";
+import { useDemographics } from "@/hooks/useAnalyticsData";
+import { DemographicsSkeleton } from "./AnalyticsSkeleton";
 
 interface DemographicStats {
   totalMembers: number;
@@ -9,22 +10,15 @@ interface DemographicStats {
 }
 
 export const Demographics = () => {
-  const [genderData, setGenderData] = useState<{ name: string; value: number; percentage: string; count: number }[]>([]);
-  const [ageData, setAgeData] = useState<any[]>([]);
-  const [stats, setStats] = useState<DemographicStats>({ totalMembers: 0, maleCount: 0, femaleCount: 0 });
-  const [loading, setLoading] = useState(true);
+  const { data: demographicsData, isLoading } = useDemographics();
 
-  useEffect(() => {
-    fetchDemographics();
-  }, []);
-
-  const fetchDemographics = async () => {
-    setLoading(true);
-    const demographicsData = await parseAudienceDemographics();
-    
-    if (demographicsData.length === 0) {
-      setLoading(false);
-      return;
+  const { genderData, stats, ageData } = useMemo(() => {
+    if (!demographicsData || demographicsData.length === 0) {
+      return {
+        genderData: [],
+        stats: { totalMembers: 0, maleCount: 0, femaleCount: 0 },
+        ageData: []
+      };
     }
 
     // Calculate total gender counts across all age groups
@@ -48,12 +42,11 @@ export const Demographics = () => {
       },
     ].filter(item => item.value > 0);
 
-    setGenderData(genderChartData);
-    setStats({
+    const statsData = {
       totalMembers: total,
       maleCount: totalMale,
       femaleCount: totalFemale,
-    });
+    };
 
     // Age chart data - stacked by gender
     const ageChartData = demographicsData.map(group => ({
@@ -62,17 +55,16 @@ export const Demographics = () => {
       Female: group.femaleCount,
     }));
 
-    setAgeData(ageChartData);
-    setLoading(false);
-  };
+    return { genderData: genderChartData, stats: statsData, ageData: ageChartData };
+  }, [demographicsData]);
 
   const COLORS = {
     Male: '#6C8BEF',
     Female: '#C68FE6',
   };
 
-  if (loading) {
-    return <div className="text-center text-gray-400 py-8">Loading demographics...</div>;
+  if (isLoading) {
+    return <DemographicsSkeleton />;
   }
 
   return (
