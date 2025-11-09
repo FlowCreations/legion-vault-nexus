@@ -27,9 +27,9 @@ const handler = async (req: Request): Promise<Response> => {
     const portalUrl = `${req.headers.get("origin") || "https://sonsoflegion.com"}/`;
 
     const emailResponse = await resend.emails.send({
-      from: "Sons of Legion <onboarding@resend.dev>",
+      from: "Sons of Legion <hello@sonsoflegion.com>",
       to: [email],
-      subject: "Welcome to your JRNY Portal",
+      subject: "🛡️ Welcome to Sons of Legion - Your Journey Begins",
       html: `
         <!DOCTYPE html>
         <html>
@@ -40,82 +40,210 @@ const handler = async (req: Request): Promise<Response> => {
               body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
                 line-height: 1.6;
-                color: #333;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+                background-color: #0a0a0a;
               }
               .container {
-                background-color: #ffffff;
-                border-radius: 8px;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 40px 20px;
+              }
+              .logo-container {
+                text-align: center;
+                margin-bottom: 40px;
+              }
+              .logo {
+                color: #f7c946;
+                font-size: 56px;
+                font-weight: bold;
+                margin: 0;
+                letter-spacing: 4px;
+              }
+              .logo-subtext {
+                color: #f7c946;
+                font-size: 14px;
+                letter-spacing: 4px;
+                margin: 10px 0 0 0;
+              }
+              .content {
+                background-color: #1a1a1a;
+                border-radius: 12px;
                 padding: 40px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                border: 1px solid #333;
               }
               h1 {
-                color: #1a1a1a;
-                font-size: 28px;
-                margin-bottom: 20px;
+                color: #ffffff;
+                font-size: 32px;
+                margin: 0 0 20px 0;
                 font-weight: bold;
               }
-              h2 {
-                color: #333;
-                font-size: 20px;
-                margin-top: 30px;
-                margin-bottom: 15px;
-              }
               p {
-                margin-bottom: 15px;
-                color: #555;
+                margin-bottom: 16px;
+                color: #cccccc;
+                font-size: 16px;
+              }
+              .greeting {
+                color: #f7c946;
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 24px;
+              }
+              .highlight {
+                color: #f7c946;
+                font-weight: bold;
+              }
+              .features {
+                background-color: #0a0a0a;
+                border-radius: 8px;
+                padding: 24px;
+                margin: 24px 0;
+                border: 1px solid #333;
+              }
+              .feature-item {
+                display: flex;
+                align-items: start;
+                margin-bottom: 16px;
+              }
+              .feature-icon {
+                color: #f7c946;
+                font-size: 24px;
+                margin-right: 12px;
+                min-width: 30px;
+              }
+              .feature-text {
+                color: #cccccc;
+                font-size: 15px;
+              }
+              .feature-title {
+                color: #ffffff;
+                font-weight: bold;
+                margin-bottom: 4px;
               }
               .cta-button {
                 display: inline-block;
-                padding: 14px 32px;
-                background: linear-gradient(135deg, #d4af37, #f4e5a1);
-                color: #1a1a1a;
+                padding: 16px 48px;
+                background: linear-gradient(135deg, #f7c946, #d4af37);
+                color: #0a0a0a;
                 text-decoration: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 font-weight: bold;
-                margin: 25px 0;
+                font-size: 18px;
+                margin: 30px 0;
                 text-align: center;
+              }
+              .cta-container {
+                text-align: center;
+              }
+              .community-unlock {
+                background-color: #2a2a2a;
+                border-left: 4px solid #f7c946;
+                padding: 20px;
+                margin: 24px 0;
+                border-radius: 4px;
+              }
+              .community-unlock p {
+                margin: 0;
+                color: #ffffff;
+                font-size: 15px;
               }
               .footer {
                 margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #e0e0e0;
-                font-size: 14px;
-                color: #888;
+                padding-top: 30px;
+                border-top: 1px solid #333;
                 text-align: center;
               }
               .signature {
-                margin-top: 30px;
-                font-style: italic;
-                color: #666;
+                color: #f7c946;
+                font-size: 20px;
+                font-weight: bold;
+                margin: 20px 0;
+              }
+              .footer-text {
+                font-size: 14px;
+                color: #888;
+              }
+              .footer-link {
+                color: #f7c946;
+                text-decoration: none;
               }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1>Welcome to your JRNY Portal</h1>
+              <div class="logo-container">
+                <div class="logo">SØL</div>
+                <div class="logo-subtext">SONS OF LEGION</div>
+              </div>
               
-              <p>Hey ${displayName},</p>
+              <div class="content">
+                <h1>Welcome to the Legion 🛡️</h1>
+                
+                <p class="greeting">Hey ${displayName},</p>
 
-              <h2>You're in.</h2>
+                <p>Your email is verified and your portal is now <span class="highlight">fully activated</span>.</p>
 
-              <p>Your portal is now open — and <strong>Power</strong> is unlocked for you to stream or download anytime.</p>
+                <p>You're officially part of the Sons of Legion community — a brotherhood united by music, purpose, and shared values.</p>
 
-              <p>Inside, you'll find the full music library, behind-the-scenes videos, and your own personal dashboard. There's even an AI guide in the corner if you need help finding your way.</p>
+                <div class="features">
+                  <div class="feature-item">
+                    <div class="feature-icon">🎵</div>
+                    <div class="feature-text">
+                      <div class="feature-title">Full Music Library</div>
+                      Stream or download all Sons of Legion music including exclusive tracks, albums, and unreleased content
+                    </div>
+                  </div>
+                  
+                  <div class="feature-item">
+                    <div class="feature-icon">🎬</div>
+                    <div class="feature-text">
+                      <div class="feature-title">Behind-the-Scenes Videos</div>
+                      Exclusive access to music videos, studio sessions, and personal stories from the journey
+                    </div>
+                  </div>
+                  
+                  <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">
+                      <div class="feature-title">Personal Dashboard</div>
+                      Track your journey, earn badges, and unlock rewards as you engage with the content
+                    </div>
+                  </div>
+                  
+                  <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-text">
+                      <div class="feature-title">AI Guide</div>
+                      Get help navigating the portal, finding content, and discovering new music instantly
+                    </div>
+                  </div>
+                  
+                  <div class="feature-item">
+                    <div class="feature-icon">🛍️</div>
+                    <div class="feature-text">
+                      <div class="feature-title">Exclusive Merch</div>
+                      Access limited-edition merchandise and apparel available only to Legion members
+                    </div>
+                  </div>
+                </div>
 
-              <p><strong>And here's the best part</strong> — after your first week inside, the Legion Community opens automatically. That's where you'll be able to chat and connect with other members from around the world.</p>
+                <div class="community-unlock">
+                  <p><strong>🔓 Community Access:</strong> After 7 days in the portal, you'll automatically unlock access to the Legion Community Hub — where you can connect with thousands of members from around the world, share your journey, and be part of something bigger.</p>
+                </div>
 
-              <a href="${portalUrl}" class="cta-button">Enter the Portal</a>
+                <div class="cta-container">
+                  <a href="${portalUrl}" class="cta-button">Enter Your Portal →</a>
+                </div>
 
-              <p>Welcome to The Journey.</p>
+                <p>This is more than music. This is <span class="highlight">The Journey</span>.</p>
 
-              <p class="signature">— Sons of Legion 🛡🔥🩸 #WeAreTheLegion</p>
-
-              <div class="footer">
-                © Sons of Legion | <a href="https://sonsoflegion.com" style="color: #d4af37;">sonsoflegion.com</a>
+                <div class="footer">
+                  <p class="signature">The SØL Team 🛡️🔥🩸</p>
+                  <p style="color: #888; font-style: italic; margin: 10px 0;">#WeAreTheLegion</p>
+                  <p class="footer-text">
+                    <a href="https://sonsoflegion.com" class="footer-link">sonsoflegion.com</a>
+                  </p>
+                </div>
               </div>
             </div>
           </body>
