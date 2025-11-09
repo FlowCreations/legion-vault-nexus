@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { Music2 } from "lucide-react";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
@@ -132,3 +132,5 @@ export const TopTracks = ({ period }: TopTracksProps) => {
     </div>
   );
 };
+
+export default memo(TopTracks);

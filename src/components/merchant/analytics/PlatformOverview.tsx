@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Music, Users, Radio, Hash } from "lucide-react";
 import { parseViberateProfile, formatNumber, formatPercentage } from "@/utils/analyticsDataParser";
@@ -111,3 +111,5 @@ export const PlatformOverview = () => {
     </div>
   );
 };
+
+export default memo(PlatformOverview);

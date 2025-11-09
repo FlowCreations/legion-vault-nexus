@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,3 +100,5 @@ export const Geography = () => {
     </div>
   );
 };
+
+export default memo(Geography);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { parseEngagementTimeline, formatNumber } from "@/utils/analyticsDataParser";
@@ -219,3 +219,5 @@ export const EngagementTimeline = () => {
     </Card>
   );
 };
+
+export default memo(EngagementTimeline);

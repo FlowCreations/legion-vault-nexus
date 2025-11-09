@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useDemographics } from "@/hooks/useAnalyticsData";
 import { DemographicsSkeleton } from "./AnalyticsSkeleton";
@@ -197,3 +197,5 @@ export const Demographics = () => {
     </div>
   );
 };
+
+export default memo(Demographics);

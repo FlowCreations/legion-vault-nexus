@@ -6,19 +6,20 @@ import { Activity, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
+import { ProgressiveLoader } from "@/components/merchant/ProgressiveLoader";
 
 // Lazy load ALL heavy components for maximum performance
 const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
 const MusicUpload = lazy(() => import("@/components/MusicUpload"));
 const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
-const TopTracks = lazy(() => import("@/components/merchant/TopTracks").then(m => ({ default: m.TopTracks })));
-const Geography = lazy(() => import("@/components/merchant/Geography").then(m => ({ default: m.Geography })));
-const Demographics = lazy(() => import("@/components/merchant/Demographics").then(m => ({ default: m.Demographics })));
-const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview").then(m => ({ default: m.EarningsOverview })));
+const TopTracks = lazy(() => import("@/components/merchant/TopTracks"));
+const Geography = lazy(() => import("@/components/merchant/Geography"));
+const Demographics = lazy(() => import("@/components/merchant/Demographics"));
+const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview"));
 const CreateCampaigns = lazy(() => import("@/components/merchant/CreateCampaigns").then(m => ({ default: m.CreateCampaigns })));
-const PlatformOverview = lazy(() => import("@/components/merchant/analytics/PlatformOverview").then(m => ({ default: m.PlatformOverview })));
-const PlatformDistribution = lazy(() => import("@/components/merchant/analytics/PlatformDistribution").then(m => ({ default: m.PlatformDistribution })));
-const EngagementTimeline = lazy(() => import("@/components/merchant/analytics/EngagementTimeline").then(m => ({ default: m.EngagementTimeline })));
+const PlatformOverview = lazy(() => import("@/components/merchant/analytics/PlatformOverview"));
+const PlatformDistribution = lazy(() => import("@/components/merchant/analytics/PlatformDistribution"));
+const EngagementTimeline = lazy(() => import("@/components/merchant/analytics/EngagementTimeline"));
 const PlatformCards = lazy(() => import("@/components/merchant/analytics/PlatformCards").then(m => ({ default: m.PlatformCards })));
 const BuildFunnel = lazy(() => import("@/components/merchant/BuildFunnel").then(m => ({ default: m.BuildFunnel })));
 const Partnerships = lazy(() => import("@/components/merchant/Partnerships").then(m => ({ default: m.Partnerships })));
@@ -257,34 +258,51 @@ const Merchant = memo(() => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
                 <div className="space-y-8">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <EarningsOverview />
-                  </Suspense>
-                  
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <PlatformOverview />
-                  </Suspense>
-                  
-                  <div className="grid gap-6 md:grid-cols-2">
+                  {/* IMMEDIATE PRIORITY - Load instantly */}
+                  <ProgressiveLoader priority="immediate">
                     <Suspense fallback={<LoadingSpinner />}>
-                      <PlatformDistribution />
+                      <EarningsOverview />
                     </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* HIGH PRIORITY - Load after 100ms */}
+                  <ProgressiveLoader priority="high" delay={100}>
                     <Suspense fallback={<LoadingSpinner />}>
-                      <EngagementTimeline />
+                      <PlatformOverview />
                     </Suspense>
-                  </div>
+                  </ProgressiveLoader>
                   
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <TopTracks period="7days" />
-                  </Suspense>
+                  {/* MEDIUM PRIORITY - Load when browser is idle (300-500ms) */}
+                  <ProgressiveLoader priority="medium" delay={300}>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <PlatformDistribution />
+                      </Suspense>
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <EngagementTimeline />
+                      </Suspense>
+                    </div>
+                  </ProgressiveLoader>
                   
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Demographics />
-                  </Suspense>
+                  {/* LOW PRIORITY - Load after medium components (1s) */}
+                  <ProgressiveLoader priority="low" delay={1000}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <TopTracks period="7days" />
+                    </Suspense>
+                  </ProgressiveLoader>
                   
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Geography />
-                  </Suspense>
+                  <ProgressiveLoader priority="low" delay={1200}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Demographics />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* IDLE PRIORITY - Load last, heavy 3D globe (2s) */}
+                  <ProgressiveLoader priority="idle" delay={2000}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Geography />
+                    </Suspense>
+                  </ProgressiveLoader>
                 </div>
               </div>
 

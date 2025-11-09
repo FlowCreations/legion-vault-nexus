@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from "recharts";
 import { parsePlatformDistribution, formatNumber } from "@/utils/analyticsDataParser";
@@ -198,3 +198,5 @@ export const PlatformDistribution = () => {
     </Card>
   );
 };
+
+export default memo(PlatformDistribution);
