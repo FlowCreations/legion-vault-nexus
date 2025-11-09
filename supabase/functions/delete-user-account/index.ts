@@ -31,28 +31,50 @@ serve(async (req) => {
       throw new Error('User not authenticated');
     }
 
-    // Create admin client to delete the user
+    console.log('Deleting account for user:', user.id);
+
+    // Create admin client to delete user data
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Delete user data from user_profiles first
-    const { error: profileError } = await supabaseAdmin
-      .from('user_profiles')
-      .delete()
-      .eq('user_id', user.id);
+    // Delete user data from all related tables
+    const tablesToClean = [
+      'user_milestones',
+      'milestone_progress',
+      'user_roles',
+      'events',
+      'affiliate_content_clicks',
+      'email_logs',
+      'cameo_requests',
+      'purchases',
+      'user_profiles'
+    ];
 
-    if (profileError) {
-      console.error('Error deleting user profile:', profileError);
+    for (const table of tablesToClean) {
+      const { error } = await supabaseAdmin
+        .from(table)
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error(`Error deleting from ${table}:`, error);
+        // Continue anyway - table might not exist or user might not have data there
+      } else {
+        console.log(`Deleted user data from ${table}`);
+      }
     }
 
-    // Delete the auth user
+    // Now delete the auth user
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 
     if (deleteError) {
-      throw deleteError;
+      console.error('Error deleting auth user:', deleteError);
+      throw new Error('Failed to delete user account');
     }
+
+    console.log('Successfully deleted user account:', user.id);
 
     return new Response(
       JSON.stringify({ success: true }),
