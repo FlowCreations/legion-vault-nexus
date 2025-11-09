@@ -1674,14 +1674,14 @@ export default function CommunityHub() {
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-base">{directMessageRecipient.name}</h3>
                     <Badge className="bg-primary/20 text-primary border-primary/30">
-                      {directMessageRecipient.id.startsWith('mock_') ? 
+                      {directMessageRecipient.id?.startsWith('mock_') ? 
                         mockProfiles.find(p => p.id === directMessageRecipient.id)?.tier || 'Member' 
                         : 'Legion Member'}
                     </Badge>
                   </div>
                   
                   <p className="text-sm text-muted-foreground mb-3">
-                    {directMessageRecipient.id.startsWith('mock_') 
+                    {directMessageRecipient.id?.startsWith('mock_') 
                       ? mockProfiles.find(p => p.id === directMessageRecipient.id)?.bio 
                       : "Part of The Legion community. Music enthusiast and supporter."}
                   </p>
@@ -1689,7 +1689,7 @@ export default function CommunityHub() {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {directMessageRecipient.id.startsWith('mock_') 
+                      {directMessageRecipient.id?.startsWith('mock_') 
                         ? mockProfiles.find(p => p.id === directMessageRecipient.id)?.location 
                         : 'Unknown'}
                     </div>
