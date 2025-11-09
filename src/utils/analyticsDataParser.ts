@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
 import { parse as dfParse, isValid } from 'date-fns';
+import { fetchWithCache } from './cacheHelper';
 import type {
   ViberateMetrics,
   AudienceMapData,
@@ -179,36 +180,39 @@ const parseViberateProfileFromCSV = async (): Promise<ViberateMetrics | null> =>
 };
 
 export const parseViberateProfile = async (): Promise<ViberateMetrics | null> => {
-  try {
-    // Import supabase client dynamically to avoid circular dependencies
-    const { supabase } = await import('@/integrations/supabase/client');
-    
-    // Fetch from live API via edge function
-    const { data, error } = await supabase.functions.invoke('get-viberate-metrics', {
-      body: { artist_id: 'sons-of-legion' }
-    });
+  return fetchWithCache('viberate-profile', async () => {
+    try {
+      // Import supabase client dynamically to avoid circular dependencies
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      // Fetch from live API via edge function
+      const { data, error } = await supabase.functions.invoke('get-viberate-metrics', {
+        body: { artist_id: 'sons-of-legion' }
+      });
 
-    if (error) {
-      console.warn('Live API fetch failed, falling back to CSV:', error);
+      if (error) {
+        console.warn('Live API fetch failed, falling back to CSV:', error);
+        return parseViberateProfileFromCSV();
+      }
+
+      if (!data?.metrics) {
+        console.warn('No metrics in API response, falling back to CSV');
+        return parseViberateProfileFromCSV();
+      }
+
+      return data.metrics as ViberateMetrics;
+    } catch (error) {
+      console.error('Error fetching Viberate profile:', error);
       return parseViberateProfileFromCSV();
     }
-
-    if (!data?.metrics) {
-      console.warn('No metrics in API response, falling back to CSV');
-      return parseViberateProfileFromCSV();
-    }
-
-    return data.metrics as ViberateMetrics;
-  } catch (error) {
-    console.error('Error fetching Viberate profile:', error);
-    return parseViberateProfileFromCSV();
-  }
+  });
 };
 
 export const parseAudienceMap = async (): Promise<AudienceMapData[]> => {
-  try {
-    const response = await fetch('/data/analytics/audience-map.csv');
-    const text = await response.text();
+  return fetchWithCache('audience-map', async () => {
+    try {
+      const response = await fetch('/data/analytics/audience-map.csv');
+      const text = await response.text();
     const lines = text.split('\n').filter(line => line.trim());
     
     if (lines.length < 2) return [];
@@ -243,21 +247,23 @@ export const parseAudienceMap = async (): Promise<AudienceMapData[]> => {
       });
     }
     
-    return data;
-  } catch (error) {
-    console.error('Error parsing audience map:', error);
-    return [];
-  }
+      return data;
+    } catch (error) {
+      console.error('Error parsing audience map:', error);
+      return [];
+    }
+  });
 };
 
 export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> => {
-  try {
-    const response = await fetch('/data/analytics/engagement-fanbase.csv');
-    if (!response.ok) {
-      console.error('Failed to fetch engagement-fanbase.csv:', response.statusText);
-      return [];
-    }
-    const csvText = await response.text();
+  return fetchWithCache('engagement-timeline', async () => {
+    try {
+      const response = await fetch('/data/analytics/engagement-fanbase.csv');
+      if (!response.ok) {
+        console.error('Failed to fetch engagement-fanbase.csv:', response.statusText);
+        return [];
+      }
+      const csvText = await response.text();
     
     return new Promise((resolve, reject) => {
       Papa.parse(csvText, {
@@ -316,16 +322,18 @@ export const parseEngagementTimeline = async (): Promise<DailyEngagementData[]> 
         }
       });
     });
-  } catch (error) {
-    console.error('❌ Error loading engagement timeline:', error);
-    return [];
-  }
+    } catch (error) {
+      console.error('❌ Error loading engagement timeline:', error);
+      return [];
+    }
+  });
 };
 
 export const parseWeeklyMetrics = async (): Promise<WeeklyMetricsData[]> => {
-  try {
-    const response = await fetch('/data/analytics/fanbase-metrics.csv');
-    const text = await response.text();
+  return fetchWithCache('weekly-metrics', async () => {
+    try {
+      const response = await fetch('/data/analytics/fanbase-metrics.csv');
+      const text = await response.text();
     const lines = text.split('\n').filter(line => line.trim());
     
     if (lines.length < 2) return [];
@@ -347,21 +355,23 @@ export const parseWeeklyMetrics = async (): Promise<WeeklyMetricsData[]> => {
       });
     }
     
-    return data;
-  } catch (error) {
-    console.error('Error parsing weekly metrics:', error);
-    return [];
-  }
+      return data;
+    } catch (error) {
+      console.error('Error parsing weekly metrics:', error);
+      return [];
+    }
+  });
 };
 
 export const parsePlatformDistribution = async (): Promise<PlatformDistributionData[]> => {
-  try {
-    const response = await fetch('/data/analytics/fanbase-total-distribution.csv');
-    if (!response.ok) {
-      console.error('Failed to fetch fanbase-total-distribution.csv:', response.statusText);
-      return [];
-    }
-    const csvText = await response.text();
+  return fetchWithCache('platform-distribution', async () => {
+    try {
+      const response = await fetch('/data/analytics/fanbase-total-distribution.csv');
+      if (!response.ok) {
+        console.error('Failed to fetch fanbase-total-distribution.csv:', response.statusText);
+        return [];
+      }
+      const csvText = await response.text();
     
     return new Promise((resolve, reject) => {
       Papa.parse(csvText, {
@@ -413,10 +423,11 @@ export const parsePlatformDistribution = async (): Promise<PlatformDistributionD
         }
       });
     });
-  } catch (error) {
-    console.error('❌ Error parsing platform distribution:', error);
-    return [];
-  }
+    } catch (error) {
+      console.error('❌ Error parsing platform distribution:', error);
+      return [];
+    }
+  });
 };
 
 export const calculateGrowthMetrics = (viberate: ViberateMetrics | null): GrowthMetrics[] => {

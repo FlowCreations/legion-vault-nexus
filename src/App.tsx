@@ -60,20 +60,13 @@ const App = () => {
   useAgent({ enabled: true, checkInterval: 5 });
 
   useEffect(() => {
-    // Skip if already initialized in this session
-    if (pixelInitialized.current) {
-      console.log('[App] Pixel initialization already attempted');
-      return;
-    }
-    
+    // Only run once per session using ref
+    if (pixelInitialized.current) return;
     pixelInitialized.current = true;
 
-    // Initialize Meta Pixel on app mount for ALL visitors
+    // Initialize Meta Pixel on app mount
     const initializeTracking = async () => {
       try {
-        console.log('[App] Querying for Meta Pixel config...');
-        
-        // Get any configured pixel (merchant's pixel tracks all visitors)
         const { data, error } = await supabase
           .from("social_credentials")
           .select("credential_metadata, browser_events_enabled")
@@ -84,32 +77,13 @@ const App = () => {
           .limit(1)
           .maybeSingle();
 
-        console.log('[App] Query result:', { data, error });
-
-        if (error) {
-          console.error("[App] Error loading pixel config:", error);
-          return;
-        }
-
-        if (!data) {
-          console.log("[App] No Meta Pixel configured");
-          return;
-        }
+        if (error || !data) return;
 
         const metadata = data.credential_metadata as any;
         const pixelId = metadata?.pixel_id;
         
-        console.log('[App] Pixel ID found:', pixelId);
-
         if (pixelId) {
-          console.log('[App] Calling initMetaPixel...');
-          initMetaPixel(pixelId, () => {
-            console.log('[App] Pixel ready callback fired');
-          });
-          
-          setTimeout(() => {
-            console.log('[App] After initMetaPixel, window.fbq exists:', !!window.fbq);
-          }, 1000);
+          initMetaPixel(pixelId);
         }
       } catch (error) {
         console.error("[App] Error initializing Meta Pixel:", error);
@@ -117,7 +91,8 @@ const App = () => {
     };
 
     initializeTracking();
-  }, []);
+  }, []); // Empty deps array - only run on mount
+
 
   return (
     <QueryClientProvider client={queryClient}>
