@@ -72,11 +72,11 @@ export const Navigation = () => {
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
           {!isHomePage && (
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center flex-shrink-0">
               <img
                 src="/lovable-uploads/1a5ce5e3-8e93-4d34-a75e-26ee0856e5b7.png"
                 alt="Sons of Legion"
-                className="h-12 w-auto"
+                className="h-12 w-auto object-contain"
               />
             </Link>
           )}
@@ -169,11 +169,11 @@ export const Navigation = () => {
         {/* Mobile navigation - Simplified top bar */}
         <div className="md:hidden">
           <div className="flex items-center justify-between px-4 py-3">
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center flex-shrink-0">
               <img
                 src="/lovable-uploads/1a5ce5e3-8e93-4d34-a75e-26ee0856e5b7.png"
                 alt="Sons of Legion"
-                className="h-8 w-auto"
+                className="h-8 w-auto object-contain"
               />
             </Link>
 
