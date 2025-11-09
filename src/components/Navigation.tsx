@@ -27,7 +27,7 @@ const navItems = [
   { name: "Music", path: "/music", translationKey: "nav.music" },
   { name: "Merch", path: "/merch", translationKey: "nav.merch" },
   { name: "Shows", path: "/shows", translationKey: "nav.shows" },
-  { name: "Live Studio", path: "/live-studio", translationKey: "nav.liveStudio" },
+  { name: "Live Studio", path: "/live-studio" },
   { name: "Community", path: "/community", translationKey: "nav.community" },
 ];
 
@@ -95,7 +95,7 @@ export const Navigation = () => {
                       : "hover:bg-muted"
                   }`}
                 >
-                  <TranslatedText i18nKey={item.translationKey} />
+                  {item.translationKey ? <TranslatedText i18nKey={item.translationKey} /> : item.name}
                 </Link>
               );
             })}

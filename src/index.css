@@ -110,7 +110,7 @@ All colors MUST be HSL.
   
   .focus-lift:hover,
   .focus-lift:focus {
-    transform: translateY(-2px) scale(1.03);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-gold-glow);
   }
 
