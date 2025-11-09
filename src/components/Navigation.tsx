@@ -21,6 +21,7 @@ import { TranslatedText } from "@/components/TranslatedText";
 import { toast } from "sonner";
 import { Crown, Award } from "lucide-react";
 import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
+import logoImage from "@/assets/sol-logo-new.png";
 
 const navItems = [
   { name: "Videos", path: "/videos", translationKey: "nav.videos" },
@@ -75,7 +76,7 @@ export const Navigation = () => {
           {!isHomePage && (
             <Link to="/" className="flex items-center flex-shrink-0">
               <img
-                src="/lovable-uploads/1a5ce5e3-8e93-4d34-a75e-26ee0856e5b7.png"
+                src={logoImage}
                 alt="Sons of Legion"
                 className="h-12 w-auto object-contain"
               />
@@ -172,7 +173,7 @@ export const Navigation = () => {
           <div className="flex items-center justify-between px-4 py-3">
             <Link to="/" className="flex items-center flex-shrink-0">
               <img
-                src="/lovable-uploads/1a5ce5e3-8e93-4d34-a75e-26ee0856e5b7.png"
+                src={logoImage}
                 alt="Sons of Legion"
                 className="h-8 w-auto object-contain"
               />
