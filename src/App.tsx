@@ -119,7 +119,7 @@ const App = () => {
           <Route path="/community" element={<CommunityHub />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
-          <Route path="/live" element={<LiveStudio />} />
+          <Route path="/live-studio" element={<LiveStudio />} />
           <Route path="/community-hub" element={<CommunityHub />} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
           <Route path="/free-ep" element={<FreeEP />} />
