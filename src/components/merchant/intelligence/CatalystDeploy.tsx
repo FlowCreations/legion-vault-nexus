@@ -58,7 +58,7 @@ export const CatalystDeploy = () => {
             style={{
               background: loading ? undefined : 'linear-gradient(to right, #3b82f6, #2563eb)',
             }}
-            className="text-white hover:brightness-110 shadow-lg"
+            className="text-white hover:brightness-110 shadow-lg w-48"
           >
             {loading ? (
               <>

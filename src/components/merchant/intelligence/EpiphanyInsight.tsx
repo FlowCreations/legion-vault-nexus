@@ -46,7 +46,7 @@ export const EpiphanyInsight = () => {
             style={{
               background: loading ? undefined : 'linear-gradient(to right, #ec4899, #db2777)',
             }}
-            className="text-white hover:brightness-110 shadow-lg"
+            className="text-white hover:brightness-110 shadow-lg w-48"
           >
             {loading ? (
               <>
