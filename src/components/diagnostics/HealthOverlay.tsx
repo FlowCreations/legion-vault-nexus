@@ -14,18 +14,14 @@ export const HealthOverlay = () => {
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
 
-  // Don't render anything if user is not an admin
-  if (!isAdmin) {
-    return null;
-  }
-
   useEffect(() => {
+    if (!isAdmin) return; // Skip initialization if not admin
     const debugEnabled = localStorage.getItem("debug:health") === "1";
     setIsVisible(debugEnabled);
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !isAdmin) return;
 
     const unsubscribe = diagnosticsStore.subscribe((event) => {
       setEvents((prev) => [...prev.slice(-19), event]);
@@ -61,7 +57,7 @@ export const HealthOverlay = () => {
       cancelAnimationFrame(rafId);
       clearInterval(memoryInterval);
     };
-  }, [isVisible]);
+  }, [isVisible, isAdmin]);
 
   const handleExport = () => {
     const json = diagnosticsStore.export();
@@ -79,6 +75,11 @@ export const HealthOverlay = () => {
     setIsVisible(newState);
     localStorage.setItem("debug:health", newState ? "1" : "0");
   };
+
+  // Don't render anything if user is not an admin
+  if (!isAdmin) {
+    return null;
+  }
 
   if (!isVisible) {
     return (
