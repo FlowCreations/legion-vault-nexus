@@ -2006,6 +2006,36 @@ export type Database = {
         }
         Relationships: []
       }
+      livestream_reactions: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          reaction_type: string
+          session_id: string | null
+          timestamp_seconds: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          reaction_type: string
+          session_id?: string | null
+          timestamp_seconds: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          reaction_type?: string
+          session_id?: string | null
+          timestamp_seconds?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       livestream_signals: {
         Row: {
           created_at: string | null

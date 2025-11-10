@@ -5,13 +5,15 @@ import { Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createPeerConnection } from "@/utils/webrtcHelper";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { LiveReactions } from "./LiveReactions";
 
 interface LiveViewerProps {
   eventId: string;
   streamUrl?: string;
+  streamStartTime?: Date;
 }
 
-export const LiveViewer = ({ eventId, streamUrl }: LiveViewerProps) => {
+export const LiveViewer = ({ eventId, streamUrl, streamStartTime }: LiveViewerProps) => {
   const [viewerCount, setViewerCount] = useState(0);
   const [isLive, setIsLive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -239,6 +241,13 @@ export const LiveViewer = ({ eventId, streamUrl }: LiveViewerProps) => {
             {viewerCount}
           </Badge>
         </div>
+
+        {/* Reaction Buttons */}
+        {isLive && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+            <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+          </div>
+        )}
       </div>
     </Card>
   );
