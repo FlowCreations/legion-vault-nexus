@@ -40,6 +40,8 @@ const TourManager = lazy(() => import("@/components/merchant/TourManager").then(
 const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(m => ({ default: m.CommunityMembers })));
 const HeartbeatToggle = lazy(() => import("@/components/merchant/HeartbeatToggle").then(m => ({ default: m.HeartbeatToggle })));
 const GlobeRealtime = lazy(() => import("@/components/merchant/GlobeRealtime"));
+const MostTalkedAbout = lazy(() => import("@/components/merchant/MostTalkedAbout").then(m => ({ default: m.MostTalkedAbout })));
+const DataInsights = lazy(() => import("@/components/merchant/DataInsights").then(m => ({ default: m.DataInsights })));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -287,6 +289,12 @@ const Merchant = memo(() => {
                   {/* LOW PRIORITY - Load after medium components (1s) */}
                   <ProgressiveLoader priority="low" delay={1000}>
                     <Suspense fallback={<LoadingSpinner />}>
+                      <MostTalkedAbout />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  <ProgressiveLoader priority="low" delay={1000}>
+                    <Suspense fallback={<LoadingSpinner />}>
                       <TopTracks period="7days" />
                     </Suspense>
                   </ProgressiveLoader>
@@ -436,6 +444,9 @@ const Merchant = memo(() => {
 
           {activeTab === "intelligence" && (
             <TabsContent value="intelligence" className="space-y-6">
+              <Suspense fallback={<LoadingSpinner />}>
+                <DataInsights />
+              </Suspense>
               <Suspense fallback={<LoadingSpinner />}>
                 <OracleInsight />
               </Suspense>
