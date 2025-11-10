@@ -2919,6 +2919,66 @@ export type Database = {
         }
         Relationships: []
       }
+      ptp_behavior_log: {
+        Row: {
+          behavior_key: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          points_awarded: number
+          user_id: string | null
+        }
+        Insert: {
+          behavior_key: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          points_awarded: number
+          user_id?: string | null
+        }
+        Update: {
+          behavior_key?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          points_awarded?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ptp_behavior_weights: {
+        Row: {
+          behavior_key: string
+          behavior_name: string
+          created_at: string | null
+          description: string | null
+          id: string
+          tier: string
+          weight: number
+          zone: string
+        }
+        Insert: {
+          behavior_key: string
+          behavior_name: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          tier: string
+          weight: number
+          zone: string
+        }
+        Update: {
+          behavior_key?: string
+          behavior_name?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          tier?: string
+          weight?: number
+          zone?: string
+        }
+        Relationships: []
+      }
       response_queue: {
         Row: {
           actual_send_time: string | null
@@ -3773,6 +3833,7 @@ export type Database = {
           gender: string | null
           heartbeat_member_id: string | null
           id: string
+          inactive_days: number | null
           intro_answers: Json | null
           is_online: boolean | null
           is_public: boolean | null
@@ -3781,6 +3842,7 @@ export type Database = {
           last_active_at: string | null
           last_livestream_reaction: string | null
           last_login: string | null
+          last_login_date: string | null
           latitude: number | null
           listen_time: number | null
           livestream_claps_sent: number | null
@@ -3788,6 +3850,7 @@ export type Database = {
           livestream_hearts_sent: number | null
           livestream_reaction_count: number | null
           location: string | null
+          login_streak: number | null
           longitude: number | null
           membership_tier: string | null
           mrr: number | null
@@ -3797,6 +3860,7 @@ export type Database = {
           purchase_history: Json | null
           real_name: string | null
           tier: string | null
+          total_sessions: number | null
           total_spend: number | null
           tunepipe_subscriber_id: string | null
           updated_at: string | null
@@ -3818,6 +3882,7 @@ export type Database = {
           gender?: string | null
           heartbeat_member_id?: string | null
           id?: string
+          inactive_days?: number | null
           intro_answers?: Json | null
           is_online?: boolean | null
           is_public?: boolean | null
@@ -3826,6 +3891,7 @@ export type Database = {
           last_active_at?: string | null
           last_livestream_reaction?: string | null
           last_login?: string | null
+          last_login_date?: string | null
           latitude?: number | null
           listen_time?: number | null
           livestream_claps_sent?: number | null
@@ -3833,6 +3899,7 @@ export type Database = {
           livestream_hearts_sent?: number | null
           livestream_reaction_count?: number | null
           location?: string | null
+          login_streak?: number | null
           longitude?: number | null
           membership_tier?: string | null
           mrr?: number | null
@@ -3842,6 +3909,7 @@ export type Database = {
           purchase_history?: Json | null
           real_name?: string | null
           tier?: string | null
+          total_sessions?: number | null
           total_spend?: number | null
           tunepipe_subscriber_id?: string | null
           updated_at?: string | null
@@ -3863,6 +3931,7 @@ export type Database = {
           gender?: string | null
           heartbeat_member_id?: string | null
           id?: string
+          inactive_days?: number | null
           intro_answers?: Json | null
           is_online?: boolean | null
           is_public?: boolean | null
@@ -3871,6 +3940,7 @@ export type Database = {
           last_active_at?: string | null
           last_livestream_reaction?: string | null
           last_login?: string | null
+          last_login_date?: string | null
           latitude?: number | null
           listen_time?: number | null
           livestream_claps_sent?: number | null
@@ -3878,6 +3948,7 @@ export type Database = {
           livestream_hearts_sent?: number | null
           livestream_reaction_count?: number | null
           location?: string | null
+          login_streak?: number | null
           longitude?: number | null
           membership_tier?: string | null
           mrr?: number | null
@@ -3887,6 +3958,7 @@ export type Database = {
           purchase_history?: Json | null
           real_name?: string | null
           tier?: string | null
+          total_sessions?: number | null
           total_spend?: number | null
           tunepipe_subscriber_id?: string | null
           updated_at?: string | null

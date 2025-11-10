@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { computePTP } from './computePTP.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,13 +71,13 @@ async function computeScores(supabaseClient: any, memberId: string) {
   const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const last14Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-  // Fetch events for this member
+  // Fetch events for this member (from user_events table, not events)
   const { data: events } = await supabaseClient
-    .from('events')
+    .from('user_events')
     .select('*')
-    .eq('member_id', memberId)
-    .gte('ts', last30Days.toISOString())
-    .order('ts', { ascending: false });
+    .eq('user_id', memberId)
+    .gte('created_at', last30Days.toISOString())
+    .order('created_at', { ascending: false });
 
   const { data: profile } = await supabaseClient
     .from('user_profiles')
@@ -85,74 +86,102 @@ async function computeScores(supabaseClient: any, memberId: string) {
     .single();
 
   // Compute ERA components
-  const c1 = computeSequenceConsistency(events || []);
-  const c2 = computeTimeSpentEngagement(events || [], profile);
-  const c3 = computeEmotionalTriggerMapping(events || []);
-  const c4 = computeDwellStickiness(events || []);
-  const c5 = computeEmotionalPolarity(events || []);
-  const c6 = computeLoyaltyRewards(profile);
+  const sequenceConsistency = computeSequenceConsistency(events || []);
+  const timeSpentEngagement = computeTimeSpentEngagement(events || [], profile);
+  const emotionalTriggerMapping = computeEmotionalTriggerMapping(events || []);
+  const dwellStickiness = computeDwellStickiness(events || []);
+  const emotionalPolarity = computeEmotionalPolarity(events || []);
+  const loyaltyRewards = computeLoyaltyRewards(profile);
 
   const eraScore = Math.round(
-    ERA_WEIGHTS.sequence_consistency * c1 +
-    ERA_WEIGHTS.time_spent_engagement * c2 +
-    ERA_WEIGHTS.emotional_trigger_mapping * c3 +
-    ERA_WEIGHTS.dwell_stickiness * c4 +
-    ERA_WEIGHTS.emotional_polarity * c5 +
-    ERA_WEIGHTS.loyalty_rewards * c6
+    ERA_WEIGHTS.sequence_consistency * sequenceConsistency +
+    ERA_WEIGHTS.time_spent_engagement * timeSpentEngagement +
+    ERA_WEIGHTS.emotional_trigger_mapping * emotionalTriggerMapping +
+    ERA_WEIGHTS.dwell_stickiness * dwellStickiness +
+    ERA_WEIGHTS.emotional_polarity * emotionalPolarity +
+    ERA_WEIGHTS.loyalty_rewards * loyaltyRewards
   );
 
   const era = Math.max(1, Math.min(10, Math.round(eraScore / 10)));
   const eraLabel = getERALabel(era);
 
-  // Compute PTP
-  const recentEvents = events?.filter((e: any) => 
-    new Date(e.ts) >= last14Days
-  ) || [];
+  // Compute PTP using new weighted model
+  const ptpResult = await computePTP(supabaseClient, memberId, events || [], profile);
+  const ptp = ptpResult.score;
+  const ptpStatus = ptpResult.status;
+  const ptpZone = ptpResult.zone;
   
-  const ptp = computePTP(recentEvents, era, profile);
-  const ptpStatus = getPTPStatus(ptp);
-
-  // Store scores
-  const today = now.toISOString().split('T')[0];
-  await supabaseClient
+  // Store daily scores
+  const { error: dailyError } = await supabaseClient
     .from('era_ptp_scores_daily')
     .upsert({
       member_id: memberId,
-      date: today,
-      era,
-      ptp,
-      era_components: { c1, c2, c3, c4, c5, c6 },
-      ptp_components: { recent_engagement: recentEvents.length },
-      updated_at: now.toISOString()
+      date: new Date().toISOString().split('T')[0],
+      era: Math.round(era),
+      ptp: Math.round(ptp),
+      era_components: {
+        sequenceConsistency,
+        timeSpentEngagement,
+        emotionalTriggerMapping,
+        dwellStickiness,
+        emotionalPolarity,
+        loyaltyRewards
+      },
+      ptp_components: {
+        zone: ptpZone,
+        totalBehaviors: ptpResult.behaviors.length,
+        behaviorBreakdown: ptpResult.behaviors
+      }
     }, {
       onConflict: 'member_id,date'
     });
-
-  // Update profile
-  await supabaseClient
+  
+  if (dailyError) throw dailyError;
+  
+  // Log individual behaviors
+  for (const behavior of ptpResult.behaviors) {
+    await supabaseClient
+      .from('ptp_behavior_log')
+      .insert({
+        user_id: memberId,
+        behavior_key: behavior.behavior_key,
+        points_awarded: behavior.weight,
+        metadata: {
+          count: behavior.count || 1,
+          tier: behavior.tier
+        }
+      });
+  }
+  
+  // Update user profile with current scores
+  const { error: profileError } = await supabaseClient
     .from('user_profiles')
     .update({
-      era_current: era,
-      ptp_current: ptp,
+      era: Math.round(era),
+      ptp: Math.round(ptp),
       era_label: eraLabel,
       ptp_status: ptpStatus
     })
     .eq('user_id', memberId);
-
-  return { era, ptp, eraLabel, ptpStatus };
+  
+  if (profileError) throw profileError;
+  
+  console.log(`Computed scores for ${memberId}: ERA=${era}, PTP=${ptp} (${ptpZone})`);
+  
+  return { era: Math.round(era), ptp: Math.round(ptp) };
 }
 
 function computeSequenceConsistency(events: any[]): number {
   const completionEvents = events.filter(e => 
-    e.type === 'watch_complete' || e.type === 'listen_complete'
+    e.event_type === 'video_watch' || e.event_type === 'music_listen'
   );
   return Math.min(100, (completionEvents.length / Math.max(1, events.length)) * 150);
 }
 
 function computeTimeSpentEngagement(events: any[], profile: any): number {
-  const totalMinutes = (profile?.watch_time || 0) + (profile?.listen_time || 0);
+  const totalMinutes = ((profile?.watch_time || 0) + (profile?.listen_time || 0)) / 60;
   const engagementEvents = events.filter(e => 
-    ['reaction', 'comment'].includes(e.type)
+    ['reaction', 'comment_post', 'like'].includes(e.event_type)
   ).length;
   return Math.min(100, (totalMinutes / 60) + (engagementEvents * 5));
 }
@@ -160,9 +189,9 @@ function computeTimeSpentEngagement(events: any[], profile: any): number {
 function computeEmotionalTriggerMapping(events: any[]): number {
   let score = 0;
   for (let i = 0; i < events.length - 1; i++) {
-    if ((events[i].type === 'watch_complete' || events[i].type === 'listen_complete') &&
-        (events[i + 1].type === 'add_to_cart' || events[i + 1].type === 'purchase')) {
-      const timeDiff = new Date(events[i].ts).getTime() - new Date(events[i + 1].ts).getTime();
+    if ((events[i].event_type === 'video_watch' || events[i].event_type === 'music_listen') &&
+        (events[i + 1].event_type === 'add_to_cart' || events[i + 1].event_type === 'purchase_completed')) {
+      const timeDiff = new Date(events[i].created_at).getTime() - new Date(events[i + 1].created_at).getTime();
       const hoursDiff = Math.abs(timeDiff) / (1000 * 60 * 60);
       if (hoursDiff <= 48) score += 20;
     }
@@ -171,21 +200,18 @@ function computeEmotionalTriggerMapping(events: any[]): number {
 }
 
 function computeDwellStickiness(events: any[]): number {
-  const avgLatency = events
-    .filter(e => e.click_latency_ms)
-    .reduce((sum, e) => sum + (e.click_latency_ms || 0), 0) / Math.max(1, events.length);
+  const sessionEvents = events.filter(e => e.event_type === 'session_end' && e.event_data?.duration);
+  if (sessionEvents.length === 0) return 50;
   
-  const sessionLengths = events.map(e => e.duration_sec || 0);
-  const avgSession = sessionLengths.reduce((a, b) => a + b, 0) / Math.max(1, sessionLengths.length);
-  
-  return Math.min(100, (avgSession / 60) * 2 + (1000 / Math.max(100, avgLatency)) * 10);
+  const avgSession = sessionEvents.reduce((sum, e) => sum + (e.event_data?.duration || 0), 0) / sessionEvents.length;
+  return Math.min(100, (avgSession / 60) * 2);
 }
 
 function computeEmotionalPolarity(events: any[]): number {
-  const sentimentEvents = events.filter(e => e.sentiment !== null && e.sentiment !== undefined);
+  const sentimentEvents = events.filter(e => e.event_data?.sentiment !== null && e.event_data?.sentiment !== undefined);
   if (sentimentEvents.length === 0) return 50;
   
-  const avgSentiment = sentimentEvents.reduce((sum, e) => sum + (e.sentiment || 0), 0) / sentimentEvents.length;
+  const avgSentiment = sentimentEvents.reduce((sum, e) => sum + (e.event_data?.sentiment || 0), 0) / sentimentEvents.length;
   return Math.min(100, ((avgSentiment + 1) / 2) * 100);
 }
 
@@ -195,47 +221,9 @@ function computeLoyaltyRewards(profile: any): number {
   return Math.min(100, (totalSpend / 100) + (mrr * 10));
 }
 
-function computePTP(recentEvents: any[], era: number, profile: any): number {
-  let score = 0;
-  const now = new Date();
-  const halfLife = 72 * 60 * 60 * 1000; // 72 hours in ms
-
-  for (const event of recentEvents) {
-    const age = now.getTime() - new Date(event.ts).getTime();
-    const decay = Math.exp(-age / halfLife);
-    
-    let eventWeight = 0;
-    if (event.type === 'watch_complete' || event.type === 'listen_complete') {
-      eventWeight = (event.sentiment || 0.5) * 15;
-    } else if (event.type === 'add_to_cart') {
-      eventWeight = 25;
-    } else if (event.type === 'page_view' && event.content_id?.includes('product')) {
-      eventWeight = 10;
-    }
-
-    // 48-hour window boost
-    if (age <= 48 * 60 * 60 * 1000) {
-      eventWeight *= 1.25;
-    }
-
-    score += eventWeight * decay;
-  }
-
-  // ERA momentum boost
-  score += (era - 5) * 5;
-
-  return Math.max(0, Math.min(100, Math.round(score)));
-}
-
 function getERALabel(era: number): string {
   if (era <= 3) return 'Discover';
   if (era <= 6) return 'Engage';
   if (era <= 8) return 'Invest';
   return 'Loyal';
-}
-
-function getPTPStatus(ptp: number): string {
-  if (ptp < 40) return 'Cold';
-  if (ptp < 70) return 'Warm';
-  return 'Hot';
 }

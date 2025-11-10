@@ -21,7 +21,31 @@ const ALLOWED_EVENT_TYPES = [
   'show_view',
   'chat_interaction',
   'subscribe',
-  'add_to_cart'
+  'add_to_cart',
+  'login',
+  'session_start',
+  'session_end',
+  'favorites_add',
+  'email_open',
+  'email_click',
+  'comment_post',
+  'like',
+  'reaction',
+  'share',
+  'rsvp_livestream',
+  'attend_livestream',
+  'cart_abandon',
+  'checkout_view',
+  'product_hover',
+  'download_track',
+  'watch_countdown',
+  'profile_complete',
+  'mobile_visit',
+  'desktop_visit',
+  'merch_detail_view',
+  'ticket_click',
+  'bio_view',
+  'poll_participate'
 ];
 
 const MAX_EVENT_DATA_SIZE = 10000; // 10KB max for event data
