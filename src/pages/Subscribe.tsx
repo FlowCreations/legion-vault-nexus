@@ -97,11 +97,16 @@ export default function Subscribe() {
         sonnerToast.success("Opening checkout...", { id: "checkout" });
         // Open in new tab for faster perceived performance
         window.open(data.url, '_blank');
+        // Clear loading state
+        setLoadingTier(null);
+        // Dismiss toast after a moment
+        setTimeout(() => sonnerToast.dismiss("checkout"), 1500);
       } else {
         throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
       console.error('[Subscribe] Checkout error:', error);
+      sonnerToast.dismiss("checkout");
       toast({
         variant: "destructive",
         title: "Error",

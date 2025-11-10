@@ -106,11 +106,16 @@ export default function Home() {
         toast.success("Opening checkout...", { id: "checkout" });
         // Open in new tab for faster perceived performance
         window.open(data.url, '_blank');
+        // Clear loading state
+        setLoadingTier(null);
+        // Dismiss toast after a moment
+        setTimeout(() => toast.dismiss("checkout"), 1500);
       } else {
         throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
       console.error('[Home] Checkout error:', error);
+      toast.dismiss("checkout");
       toast.error(error.message || "Failed to start checkout process");
       setLoadingTier(null);
     }
