@@ -174,8 +174,11 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const handleMixerReady = () => {
     console.log('[Broadcaster] AudioMixer signaled READY');
+    mixerReadyRef.current = true;
     setMixerReady(true);
   };
+  
+  const mixerReadyRef = useRef(false);
 
   const handleProcessedAnalyser = (analyser: AnalyserNode) => {
     console.log('[Broadcaster] Received processed analyser for diagnostics');
@@ -249,15 +252,16 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       // STEP 3: Wait for AudioMixer to signal ready
       console.log('[Broadcaster] Waiting for AudioMixer initialization...');
+      mixerReadyRef.current = false;
       setMixerReady(false);
       const mixerTimeout = 5000;
       const mixerStartTime = Date.now();
 
-      while (!mixerReady && Date.now() - mixerStartTime < mixerTimeout) {
+      while (!mixerReadyRef.current && Date.now() - mixerStartTime < mixerTimeout) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      if (!mixerReady) {
+      if (!mixerReadyRef.current) {
         throw new Error('Audio mixer failed to initialize. Please try again.');
       }
       
@@ -347,12 +351,29 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const stopPreview = () => {
-    console.log('[Broadcaster] Stopping preview (keeping AudioContext alive)');
+    console.log('[Broadcaster] Stopping preview - turning off camera and cleaning up');
+    
+    // Turn off camera tracks
+    if (videoTrackRef.current) {
+      videoTrackRef.current.stop();
+      videoTrackRef.current = null;
+    }
+    
+    // Stop any raw video streams
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getVideoTracks().forEach(track => {
+        console.log('[Broadcaster] Stopping video track:', track.label);
+        track.stop();
+      });
+      videoRef.current.srcObject = null;
+    }
     
     if (sourceNode) {
       sourceNode.disconnect();
     }
     setAudioLevel(0);
+    mixerReadyRef.current = false;
     setMixerReady(false);
     setStatus('idle');
   };
@@ -456,7 +477,10 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       room.on(RoomEvent.Connected, () => {
         console.log('[Broadcaster] Connected to room');
+        // Force immediate state update to show live buttons
         setStatus('live');
+        // Force a re-render
+        setTimeout(() => setStatus('live'), 0);
       });
 
       room.on(RoomEvent.Disconnected, () => {
