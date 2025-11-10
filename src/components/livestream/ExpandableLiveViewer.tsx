@@ -6,16 +6,18 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Maximize2, DollarSign, Share2 } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
+import { LiveReactions } from './LiveReactions';
 import { toast } from 'sonner';
 
 type Props = { 
   eventId: string;
+  streamStartTime?: Date;
   onTip?: () => void;
   onShare?: () => void;
   showExternalControls?: boolean;
 };
 
-export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalControls = false }: Props) {
+export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare, showExternalControls = false }: Props) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -270,6 +272,13 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
               </div>
             )}
           </div>
+
+          {/* Live Reactions Overlay */}
+          {status === 'connected' && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+              <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+            </div>
+          )}
         </div>
 
         {/* External Controls - Only show if enabled */}
@@ -342,6 +351,13 @@ export function ExpandableLiveViewer({ eventId, onTip, onShare, showExternalCont
                   Share
                 </Button>
               </div>
+
+              {/* Live Reactions Overlay - Expanded View */}
+              {status === 'connected' && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                  <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                </div>
+              )}
             </div>
             
             {/* Live Chat Sidebar */}

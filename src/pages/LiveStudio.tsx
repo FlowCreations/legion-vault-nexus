@@ -42,6 +42,7 @@ export default function LiveStudio() {
     seconds: "60"
   });
   const [liveEventId, setLiveEventId] = useState<string | null>(null);
+  const [streamStartTime, setStreamStartTime] = useState<Date | undefined>(undefined);
   const [isViewingLive, setIsViewingLive] = useState(false);
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
 
@@ -128,7 +129,7 @@ export default function LiveStudio() {
     console.log('[LiveStudio] Checking for live streams...');
     const { data, error } = await supabase
       .from('livestream_events')
-      .select('id, status, title')
+      .select('id, status, title, stream_start_time')
       .eq('status', 'live')
       .maybeSingle();
     
@@ -137,9 +138,11 @@ export default function LiveStudio() {
     if (data) {
       console.log('[LiveStudio] Found live event:', data);
       setLiveEventId(data.id);
+      setStreamStartTime(data.stream_start_time ? new Date(data.stream_start_time) : undefined);
     } else {
       console.log('[LiveStudio] No live events found');
       setLiveEventId(null);
+      setStreamStartTime(undefined);
     }
   };
 
@@ -365,7 +368,11 @@ export default function LiveStudio() {
               <div className="relative">
                 <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
                   {liveEventId && isViewingLive ? (
-                    <ExpandableLiveViewer eventId={liveEventId} showExternalControls />
+                    <ExpandableLiveViewer 
+                      eventId={liveEventId} 
+                      streamStartTime={streamStartTime}
+                      showExternalControls 
+                    />
                   ) : (
                     <div className="relative aspect-video">
                       <img 

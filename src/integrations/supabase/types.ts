@@ -1963,6 +1963,7 @@ export type Database = {
           scheduled_start: string
           status: string | null
           stream_key: string | null
+          stream_start_time: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string | null
@@ -1981,6 +1982,7 @@ export type Database = {
           scheduled_start: string
           status?: string | null
           stream_key?: string | null
+          stream_start_time?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
@@ -1999,6 +2001,7 @@ export type Database = {
           scheduled_start?: string
           status?: string | null
           stream_key?: string | null
+          stream_start_time?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
