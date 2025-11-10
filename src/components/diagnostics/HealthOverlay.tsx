@@ -3,14 +3,21 @@ import { diagnosticsStore, DiagnosticEvent } from "@/diagnostics/diagnosticsStor
 import { X, Download, Activity, AlertCircle, Zap, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
 
 export const HealthOverlay = () => {
+  const { isAdmin } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [events, setEvents] = useState<DiagnosticEvent[]>([]);
   const [fps, setFps] = useState(60);
   const [memoryUsage, setMemoryUsage] = useState(0);
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
+
+  // Don't render anything if user is not an admin
+  if (!isAdmin) {
+    return null;
+  }
 
   useEffect(() => {
     const debugEnabled = localStorage.getItem("debug:health") === "1";
@@ -77,8 +84,8 @@ export const HealthOverlay = () => {
     return (
       <button
         onClick={handleToggle}
-        className="fixed bottom-4 right-4 z-[9999] bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-        title="Show diagnostics"
+        className="fixed bottom-4 left-4 z-[9999] bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+        title="Show diagnostics (Admin only)"
       >
         <Activity className="w-5 h-5" />
       </button>
@@ -124,7 +131,7 @@ export const HealthOverlay = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] w-96 bg-card border border-border rounded-lg shadow-xl">
+    <div className="fixed bottom-4 left-4 z-[9999] w-96 bg-card border border-border rounded-lg shadow-xl">
       <div className="flex items-center justify-between p-3 border-b border-border bg-muted/50">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-primary" />
