@@ -32,10 +32,7 @@ export const EpiphanyInsight = () => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-2xl flex items-center gap-2">
-              <div className="relative">
-                <Heart className="h-6 w-6 text-amber-500" />
-                <Zap className="h-3 w-3 text-amber-300 absolute -top-1 -right-1" />
-              </div>
+              <span className="text-2xl">💡</span>
               Epiphany
             </CardTitle>
             <CardDescription className="mt-2">

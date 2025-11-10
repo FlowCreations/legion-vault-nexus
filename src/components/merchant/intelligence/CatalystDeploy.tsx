@@ -44,7 +44,7 @@ export const CatalystDeploy = () => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-2xl flex items-center gap-2">
-              <Rocket className="h-6 w-6 text-emerald-500" />
+              <span className="text-2xl">🚀</span>
               Catalyst
             </CardTitle>
             <CardDescription className="mt-2">

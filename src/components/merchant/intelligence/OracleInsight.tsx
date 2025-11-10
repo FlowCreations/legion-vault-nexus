@@ -32,7 +32,7 @@ export const OracleInsight = () => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-2xl flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
+              <span className="text-2xl">✨</span>
               Oracle
             </CardTitle>
             <CardDescription className="mt-2">
