@@ -242,6 +242,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
             id="compact-video"
             autoPlay 
             playsInline
+            muted={false}
             controls
             className="w-full rounded-2xl border bg-black aspect-video shadow-xl" 
           />
@@ -315,14 +316,15 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
       {/* Expanded View Dialog */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
         <DialogContent className="max-w-[95vw] h-[90vh] p-0">
-          <div className="grid grid-cols-[1fr_400px] h-full gap-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] h-full gap-0">
             {/* Video Player */}
             <div className="relative bg-black flex items-center justify-center">
               <video 
                 ref={expandedVideoRef}
                 id="expanded-video"
                 autoPlay 
-                playsInline 
+                playsInline
+                muted={false}
                 controls
                 className="w-full h-full" 
               />
@@ -361,8 +363,13 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
             </div>
             
             {/* Live Chat Sidebar */}
-            <div className="border-l bg-background flex flex-col h-full">
-              <LiveChat eventId={eventId} onTipRequest={handleTip} />
+            <div className="border-l lg:border-l bg-background flex flex-col h-full min-h-0">
+              <div className="px-4 py-3 border-b bg-muted/30">
+                <h3 className="font-semibold text-sm">Live Chat</h3>
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <LiveChat eventId={eventId} onTipRequest={handleTip} />
+              </div>
             </div>
           </div>
         </DialogContent>

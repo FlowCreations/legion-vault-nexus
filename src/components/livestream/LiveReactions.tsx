@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -95,17 +95,14 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
           variant="outline"
           onClick={() => handleReaction('heart')}
           className={cn(
-            "gap-2 bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all",
-            reactionAnimation === 'heart' && "scale-110 bg-primary/20 border-primary/60"
+            "gap-2 bg-background/80 backdrop-blur-sm border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 transition-all",
+            reactionAnimation === 'heart' && "scale-110 bg-red-500/20 border-red-500/70"
           )}
         >
           <Heart 
-            className={cn(
-              "w-5 h-5 transition-all",
-              reactionAnimation === 'heart' ? "fill-red-500 text-red-500" : "text-primary"
-            )} 
+            className="w-5 h-5 fill-red-500 text-red-500 transition-all" 
           />
-          <span className="text-sm font-medium">Love it</span>
+          <span className="text-sm font-medium text-red-500">Love it</span>
         </Button>
 
         <Button
@@ -117,12 +114,7 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
             reactionAnimation === 'clap' && "scale-110 bg-primary/20 border-primary/60"
           )}
         >
-          <Sparkles 
-            className={cn(
-              "w-5 h-5 transition-all",
-              reactionAnimation === 'clap' ? "text-primary" : "text-primary"
-            )} 
-          />
+          <span className="text-2xl transition-all">👏</span>
           <span className="text-sm font-medium">Applause</span>
         </Button>
       </div>

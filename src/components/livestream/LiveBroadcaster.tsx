@@ -86,11 +86,18 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
       
-      // Resume audio context - required for browser autoplay policy
+      // CRITICAL: Resume audio context - required for browser autoplay policy
+      // This MUST be called after user interaction (Start Preview button)
       if (ctx.state === 'suspended') {
         console.log('[Broadcaster] Resuming suspended AudioContext...');
         await ctx.resume();
         console.log('[Broadcaster] AudioContext resumed, new state:', ctx.state);
+      }
+      
+      // Double-check context is running
+      if (ctx.state !== 'running') {
+        console.error('[Broadcaster] AudioContext not running after resume attempt:', ctx.state);
+        throw new Error('AudioContext failed to start - please click Start Preview again');
       }
       
       const source = ctx.createMediaStreamSource(rawStream);
