@@ -58,7 +58,7 @@ const createPasswordResetEmailHtml = (resetLink: string, userEmail: string) => `
     
     <div class="footer">
       <p class="footer-brand">
-        The SØL Team 🛡️🔥🩸
+        Sons of Legion 🛡️🔥🩸
       </p>
       <p>
         <a href="https://sonsoflegion.com" class="footer-link">
@@ -124,7 +124,7 @@ const createEmailConfirmationHtml = (confirmLink: string, userEmail: string) => 
     
     <div class="footer">
       <p class="footer-brand">
-        The SØL Team 🛡️🔥🩸
+        Sons of Legion 🛡️🔥🩸
       </p>
       <p>
         <a href="https://sonsoflegion.com" class="footer-link">
