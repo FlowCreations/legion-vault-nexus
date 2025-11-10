@@ -84,6 +84,8 @@ export default function Subscribe() {
     try {
       const priceId = TIER_PRICE_IDS[tierName];
       
+      sonnerToast.loading("Creating checkout session...", { id: "checkout" });
+      
       // Call with embedded: false to get hosted checkout URL
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId, embedded: false }
@@ -92,8 +94,9 @@ export default function Subscribe() {
       if (error) throw error;
 
       if (data?.url) {
-        // Redirect directly to Stripe hosted checkout
-        window.location.href = data.url;
+        sonnerToast.success("Opening checkout...", { id: "checkout" });
+        // Open in new tab for faster perceived performance
+        window.open(data.url, '_blank');
       } else {
         throw new Error('No checkout URL returned');
       }
