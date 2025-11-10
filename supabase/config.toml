@@ -9,6 +9,12 @@ verify_jwt = false
 [functions.send-subscription-welcome]
 verify_jwt = false
 
+[functions.send-renewal-reminder]
+verify_jwt = false
+
+[functions.check-upcoming-renewals]
+verify_jwt = false
+
 [functions.verify-checkout-session]
 verify_jwt = false
 
