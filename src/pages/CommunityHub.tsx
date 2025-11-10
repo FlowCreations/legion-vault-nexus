@@ -797,8 +797,8 @@ export default function CommunityHub() {
   }
 
   return (
-    <div className="relative pt-20">
-      <div className="min-h-screen bg-background">
+    <div className="relative">
+      <div className="min-h-screen bg-background pt-16">
       {/* Header */}
       <header className="sticky top-16 z-40 border-b bg-card px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
