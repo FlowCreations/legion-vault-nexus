@@ -74,20 +74,6 @@ export const CatalystDeploy = () => {
           </Button>
         </div>
       </CardHeader>
-      
-      {!summary && !loading && (
-        <CardContent>
-          <div className="text-center py-8 space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-4">
-              <Zap className="h-8 w-8 text-emerald-500" />
-            </div>
-            <h3 className="text-lg font-semibold">Ready to Deploy</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Press the button above to analyze your entire fanbase and deploy personalized campaigns based on Oracle predictions and Epiphany insights.
-            </p>
-          </div>
-        </CardContent>
-      )}
 
       {summary && (
         <CardContent className="space-y-6">
