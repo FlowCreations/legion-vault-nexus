@@ -278,6 +278,13 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
+                  {/* GLOBE - Second position, still low priority due to 3D performance */}
+                  <ProgressiveLoader priority="low" delay={1000}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Geography />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
                   {/* MEDIUM PRIORITY - Load when browser is idle (300-500ms) */}
                   <ProgressiveLoader priority="medium" delay={300}>
                     <div className="grid gap-6 md:grid-cols-2">
@@ -306,13 +313,6 @@ const Merchant = memo(() => {
                   <ProgressiveLoader priority="low" delay={1200}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Demographics />
-                    </Suspense>
-                  </ProgressiveLoader>
-                  
-                  {/* IDLE PRIORITY - Load last, heavy 3D globe (2s) */}
-                  <ProgressiveLoader priority="idle" delay={2000}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <Geography />
                     </Suspense>
                   </ProgressiveLoader>
                 </div>
