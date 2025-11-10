@@ -47,6 +47,7 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session;
       
       console.log("Processing checkout session:", session.id);
+      console.log("Session mode:", session.mode);
 
       // Initialize Supabase client
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -113,26 +114,52 @@ serve(async (req) => {
 
       console.log("Purchase recorded:", purchase.id);
 
-      // Trigger purchase confirmation email
-      const { error: emailError } = await supabase.functions.invoke("send-purchase-confirmation", {
-        body: {
-          purchaseId: purchase.id,
-          email: customerEmail,
-          customerName: customerName,
-          productName: productName,
-          productType: productType,
-          productId: productId,
-          amountTotal: amountTotal,
-          currency: currency,
-          orderNumber: session.id.slice(-8).toUpperCase(),
-        },
-      });
+      // Trigger appropriate email based on session mode
+      if (session.mode === "subscription") {
+        // Handle subscription - get subscription details
+        const subscriptionId = session.subscription as string;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        
+        const { error: emailError } = await supabase.functions.invoke("send-subscription-welcome", {
+          body: {
+            email: customerEmail,
+            customerName: customerName,
+            subscriptionId: subscriptionId,
+            planName: subscription.items.data[0].price.nickname || "Premium Membership",
+            amountTotal: amountTotal,
+            currency: currency,
+            billingInterval: subscription.items.data[0].price.recurring?.interval || "month",
+            currentPeriodEnd: subscription.current_period_end,
+            orderNumber: session.id.slice(-8).toUpperCase(),
+          },
+        });
 
-      if (emailError) {
-        console.error("Error sending confirmation email:", emailError);
-        // Don't fail the webhook if email fails
+        if (emailError) {
+          console.error("Error sending subscription welcome email:", emailError);
+        } else {
+          console.log("Subscription welcome email triggered for:", customerEmail);
+        }
       } else {
-        console.log("Confirmation email triggered for:", customerEmail);
+        // Handle one-time purchase
+        const { error: emailError } = await supabase.functions.invoke("send-purchase-confirmation", {
+          body: {
+            purchaseId: purchase.id,
+            email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            productType: productType,
+            productId: productId,
+            amountTotal: amountTotal,
+            currency: currency,
+            orderNumber: session.id.slice(-8).toUpperCase(),
+          },
+        });
+
+        if (emailError) {
+          console.error("Error sending confirmation email:", emailError);
+        } else {
+          console.log("Confirmation email triggered for:", customerEmail);
+        }
       }
 
       return new Response(JSON.stringify({ received: true, purchaseId: purchase.id }), {
