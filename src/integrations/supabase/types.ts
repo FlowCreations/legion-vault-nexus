@@ -694,6 +694,90 @@ export type Database = {
         }
         Relationships: []
       }
+      behavioral_data_snapshots: {
+        Row: {
+          avg_content_consumed_minutes: number | null
+          avg_era_score: number | null
+          avg_ptp_score: number | null
+          avg_session_duration_sec: number | null
+          cart_abandonments: number | null
+          cart_additions: number | null
+          created_at: string | null
+          discover_count: number | null
+          engage_count: number | null
+          era_calculation_details: Json | null
+          high_ptp_count: number | null
+          id: string
+          invest_count: number | null
+          journey_transitions: Json | null
+          loyal_count: number | null
+          ptp_calculation_details: Json | null
+          purchases: number | null
+          snapshot_date: string
+          top_discussed_topics: Json | null
+          top_search_terms: Json | null
+          total_comments: number | null
+          total_messages: number | null
+          total_searches: number | null
+          total_shares: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_content_consumed_minutes?: number | null
+          avg_era_score?: number | null
+          avg_ptp_score?: number | null
+          avg_session_duration_sec?: number | null
+          cart_abandonments?: number | null
+          cart_additions?: number | null
+          created_at?: string | null
+          discover_count?: number | null
+          engage_count?: number | null
+          era_calculation_details?: Json | null
+          high_ptp_count?: number | null
+          id?: string
+          invest_count?: number | null
+          journey_transitions?: Json | null
+          loyal_count?: number | null
+          ptp_calculation_details?: Json | null
+          purchases?: number | null
+          snapshot_date?: string
+          top_discussed_topics?: Json | null
+          top_search_terms?: Json | null
+          total_comments?: number | null
+          total_messages?: number | null
+          total_searches?: number | null
+          total_shares?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_content_consumed_minutes?: number | null
+          avg_era_score?: number | null
+          avg_ptp_score?: number | null
+          avg_session_duration_sec?: number | null
+          cart_abandonments?: number | null
+          cart_additions?: number | null
+          created_at?: string | null
+          discover_count?: number | null
+          engage_count?: number | null
+          era_calculation_details?: Json | null
+          high_ptp_count?: number | null
+          id?: string
+          invest_count?: number | null
+          journey_transitions?: Json | null
+          loyal_count?: number | null
+          ptp_calculation_details?: Json | null
+          purchases?: number | null
+          snapshot_date?: string
+          top_discussed_topics?: Json | null
+          top_search_terms?: Json | null
+          total_comments?: number | null
+          total_messages?: number | null
+          total_searches?: number | null
+          total_shares?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       brand_partnerships: {
         Row: {
           artist_id: string
@@ -2940,6 +3024,42 @@ export type Database = {
           sent?: boolean | null
           sent_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      search_queries: {
+        Row: {
+          clicked_result_id: string | null
+          created_at: string | null
+          id: string
+          query_text: string
+          result_clicked: boolean | null
+          results_count: number | null
+          search_context: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_result_id?: string | null
+          created_at?: string | null
+          id?: string
+          query_text: string
+          result_clicked?: boolean | null
+          results_count?: number | null
+          search_context?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_result_id?: string | null
+          created_at?: string | null
+          id?: string
+          query_text?: string
+          result_clicked?: boolean | null
+          results_count?: number | null
+          search_context?: string | null
+          session_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
