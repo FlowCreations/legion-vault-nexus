@@ -992,6 +992,175 @@ export type Database = {
           },
         ]
       }
+      catalyst_campaigns: {
+        Row: {
+          campaign_type: string
+          created_at: string | null
+          id: string
+          max_sends_per_user: number | null
+          message_template: string
+          offer_type: string | null
+          offer_value: Json | null
+          priority: number | null
+          status: string | null
+          target_segment: string
+          trigger_conditions: Json
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_type: string
+          created_at?: string | null
+          id?: string
+          max_sends_per_user?: number | null
+          message_template: string
+          offer_type?: string | null
+          offer_value?: Json | null
+          priority?: number | null
+          status?: string | null
+          target_segment: string
+          trigger_conditions?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_type?: string
+          created_at?: string | null
+          id?: string
+          max_sends_per_user?: number | null
+          message_template?: string
+          offer_type?: string | null
+          offer_value?: Json | null
+          priority?: number | null
+          status?: string | null
+          target_segment?: string
+          trigger_conditions?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      catalyst_executions: {
+        Row: {
+          campaign_id: string | null
+          channel: string
+          clicked_at: string | null
+          conversion_value: number | null
+          converted_at: string | null
+          created_at: string | null
+          era_score: number | null
+          id: string
+          message_sent: string | null
+          metadata: Json | null
+          opened_at: string | null
+          ptp_score: number | null
+          scheduled_for: string | null
+          segment: string | null
+          sent_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel: string
+          clicked_at?: string | null
+          conversion_value?: number | null
+          converted_at?: string | null
+          created_at?: string | null
+          era_score?: number | null
+          id?: string
+          message_sent?: string | null
+          metadata?: Json | null
+          opened_at?: string | null
+          ptp_score?: number | null
+          scheduled_for?: string | null
+          segment?: string | null
+          sent_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel?: string
+          clicked_at?: string | null
+          conversion_value?: number | null
+          converted_at?: string | null
+          created_at?: string | null
+          era_score?: number | null
+          id?: string
+          message_sent?: string | null
+          metadata?: Json | null
+          opened_at?: string | null
+          ptp_score?: number | null
+          scheduled_for?: string | null
+          segment?: string | null
+          sent_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalyst_executions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "catalyst_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalyst_performance: {
+        Row: {
+          avg_conversion_value: number | null
+          campaign_id: string | null
+          click_rate: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          open_rate: number | null
+          total_clicked: number | null
+          total_converted: number | null
+          total_opened: number | null
+          total_revenue: number | null
+          total_sent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_conversion_value?: number | null
+          campaign_id?: string | null
+          click_rate?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          open_rate?: number | null
+          total_clicked?: number | null
+          total_converted?: number | null
+          total_opened?: number | null
+          total_revenue?: number | null
+          total_sent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_conversion_value?: number | null
+          campaign_id?: string | null
+          click_rate?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          open_rate?: number | null
+          total_clicked?: number | null
+          total_converted?: number | null
+          total_opened?: number | null
+          total_revenue?: number | null
+          total_sent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalyst_performance_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "catalyst_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chatbot_templates: {
         Row: {
           active: boolean | null
@@ -2242,6 +2411,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      match_matrix_scores: {
+        Row: {
+          behavioral_score: number | null
+          epiphany_score: number | null
+          id: string
+          last_updated: string | null
+          oracle_score: number | null
+          recommended_actions: Json | null
+          segment: string | null
+          total_match_score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          behavioral_score?: number | null
+          epiphany_score?: number | null
+          id?: string
+          last_updated?: string | null
+          oracle_score?: number | null
+          recommended_actions?: Json | null
+          segment?: string | null
+          total_match_score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          behavioral_score?: number | null
+          epiphany_score?: number | null
+          id?: string
+          last_updated?: string | null
+          oracle_score?: number | null
+          recommended_actions?: Json | null
+          segment?: string | null
+          total_match_score?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       merchant_notifications: {
         Row: {

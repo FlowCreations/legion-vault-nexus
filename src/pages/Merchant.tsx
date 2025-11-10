@@ -28,6 +28,10 @@ const LiveStreamEventManager = lazy(() => import("@/components/merchant/LiveStre
 const AvatarArchetypes = lazy(() => import("@/components/merchant/intelligence/AvatarArchetypes"));
 const OracleInsight = lazy(() => import("@/components/merchant/intelligence/OracleInsight").then(m => ({ default: m.OracleInsight })));
 const EpiphanyInsight = lazy(() => import("@/components/merchant/intelligence/EpiphanyInsight").then(m => ({ default: m.EpiphanyInsight })));
+const CatalystDeploy = lazy(() => import("@/components/merchant/intelligence/CatalystDeploy").then(m => ({ default: m.CatalystDeploy })));
+const IntelligenceFlowDiagram = lazy(() => import("@/components/merchant/intelligence/IntelligenceFlowDiagram").then(m => ({ default: m.IntelligenceFlowDiagram })));
+const MatchMatrix = lazy(() => import("@/components/merchant/intelligence/MatchMatrix").then(m => ({ default: m.MatchMatrix })));
+const CatalystHistory = lazy(() => import("@/components/merchant/intelligence/CatalystHistory").then(m => ({ default: m.CatalystHistory })));
 const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview"));
 const DistributorIntegration = lazy(() => import("@/components/merchant/DistributorIntegration").then(m => ({ default: m.DistributorIntegration })));
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
@@ -447,12 +451,31 @@ const Merchant = memo(() => {
               <Suspense fallback={<LoadingSpinner />}>
                 <DataInsights />
               </Suspense>
+              
               <Suspense fallback={<LoadingSpinner />}>
                 <OracleInsight />
               </Suspense>
+              
               <Suspense fallback={<LoadingSpinner />}>
                 <EpiphanyInsight />
               </Suspense>
+              
+              <Suspense fallback={<LoadingSpinner />}>
+                <CatalystDeploy />
+              </Suspense>
+
+              <Suspense fallback={<LoadingSpinner />}>
+                <IntelligenceFlowDiagram />
+              </Suspense>
+
+              <Suspense fallback={<LoadingSpinner />}>
+                <MatchMatrix />
+              </Suspense>
+
+              <Suspense fallback={<LoadingSpinner />}>
+                <CatalystHistory />
+              </Suspense>
+              
               <Suspense fallback={<LoadingSpinner />}>
                 <AvatarArchetypes />
               </Suspense>
