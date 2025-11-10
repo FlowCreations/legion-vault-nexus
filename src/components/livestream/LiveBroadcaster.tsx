@@ -32,7 +32,10 @@ export function LiveBroadcaster({ eventId }: Props) {
   const [sourceNode, setSourceNode] = useState<MediaStreamAudioSourceNode | null>(null);
   const [rawAudioStream, setRawAudioStream] = useState<MediaStream | null>(null);
   const [audioReady, setAudioReady] = useState(false);
+  const [mixerReady, setMixerReady] = useState(false);
+  const [rawMicStream, setRawMicStream] = useState<MediaStream | null>(null);
   const processedAudioStreamRef = useRef<MediaStream | null>(null);
+  const rawAudioAnalyserRef = useRef<AnalyserNode | null>(null);
 
   useEffect(() => {
     requestPermissionsAndLoadDevices();
@@ -87,14 +90,12 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
       
       // CRITICAL: Resume audio context - required for browser autoplay policy
-      // This MUST be called after user interaction (Start Preview button)
       if (ctx.state === 'suspended') {
         console.log('[Broadcaster] Resuming suspended AudioContext...');
         await ctx.resume();
         console.log('[Broadcaster] AudioContext resumed, new state:', ctx.state);
       }
       
-      // Double-check context is running
       if (ctx.state !== 'running') {
         console.error('[Broadcaster] AudioContext not running after resume attempt:', ctx.state);
         throw new Error('AudioContext failed to start - please click Start Preview again');
@@ -102,47 +103,76 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       const source = ctx.createMediaStreamSource(rawStream);
 
-      // Test raw audio directly
-      const testAnalyser = ctx.createAnalyser();
-      testAnalyser.fftSize = 256;
-      source.connect(testAnalyser);
+      // Create PERSISTENT raw audio analyser for continuous monitoring
+      const rawAnalyser = ctx.createAnalyser();
+      rawAnalyser.fftSize = 256;
+      rawAnalyser.smoothingTimeConstant = 0.8;
+      rawAnalyser.minDecibels = -100;
+      rawAnalyser.maxDecibels = -30;
+      rawAudioAnalyserRef.current = rawAnalyser;
       
-      // Check for audio after 500ms
-      setTimeout(() => {
-        const testData = new Uint8Array(testAnalyser.frequencyBinCount);
-        testAnalyser.getByteFrequencyData(testData);
-        const maxValue = Math.max(...testData);
-        const hasAudio = testData.some(v => v > 0);
-        console.log('[Broadcaster] Raw mic test:', {
-          hasAudio,
-          maxValue,
-          avgValue: testData.reduce((a, b) => a + b) / testData.length
-        });
-        testAnalyser.disconnect();
-      }, 500);
+      // Connect raw source to analyser (for monitoring) - this doesn't interfere with AudioMixer
+      source.connect(rawAnalyser);
+      
+      // Test raw audio signal detection
+      console.log('[Broadcaster] Testing raw audio signal...');
+      let audioDetected = false;
+      const maxWaitTime = 3000;
+      const startTime = Date.now();
+      
+      while (!audioDetected && Date.now() - startTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        const testData = new Uint8Array(rawAnalyser.frequencyBinCount);
+        rawAnalyser.getByteTimeDomainData(testData);
+        
+        // Calculate RMS to detect actual signal
+        let sum = 0;
+        for (let i = 0; i < testData.length; i++) {
+          const normalized = (testData[i] - 128) / 128;
+          sum += normalized * normalized;
+        }
+        const rms = Math.sqrt(sum / testData.length);
+        
+        console.log('[Broadcaster] Raw audio RMS:', rms.toFixed(4));
+        
+        if (rms > 0.01) {
+          audioDetected = true;
+          console.log('[Broadcaster] Raw audio signal DETECTED!');
+        }
+      }
+      
+      if (!audioDetected) {
+        console.warn('[Broadcaster] No raw audio signal detected - check microphone!');
+        throw new Error('No audio signal detected. Please check your microphone and try again.');
+      }
 
+      setAudioReady(true);
       setAudioContext(ctx);
       setSourceNode(source);
 
       console.log('[Broadcaster] Audio processing setup complete:', {
         contextState: ctx.state,
         sampleRate: ctx.sampleRate,
-        hasSource: !!source
+        hasSource: !!source,
+        audioDetected
       });
       
     } catch (err) {
       console.error('[Broadcaster] Audio processing setup failed:', err);
+      throw err;
     }
   };
 
   const handleProcessedStream = (processedStream: MediaStream) => {
     console.log('[Broadcaster] Received processed audio stream from mixer:', processedStream.id);
-    // Store the processed stream for LiveKit to use
     processedAudioStreamRef.current = processedStream;
-    // Update the raw audio stream state with the PROCESSED stream
-    // This ensures MicrophoneMeter gets a fresh stream it can read from
-    setRawAudioStream(processedStream);
-    console.log('[Broadcaster] Updated visualization stream to processed output');
+    console.log('[Broadcaster] Processed stream stored for LiveKit');
+  };
+
+  const handleMixerReady = () => {
+    console.log('[Broadcaster] AudioMixer signaled READY');
+    setMixerReady(true);
   };
 
   const handleAudioLevel = (left: number, right: number) => {
@@ -203,40 +233,45 @@ export function LiveBroadcaster({ eventId }: Props) {
       const audioStream = new MediaStream(rawStream.getAudioTracks());
       console.log('[Broadcaster] Created audio stream for processing:', audioStream.id);
       
-      // Setup audio processing - the processed stream will be set via handleProcessedStream callback
-      await setupAudioProcessing(audioStream);
-      console.log('[Broadcaster] Audio processing initialized, waiting for processed stream from AudioMixer');
-
-      // STEP 3: Wait for audio signal confirmation
-      console.log('[Broadcaster] Waiting for audio signal...');
-      let audioDetected = false;
-      const maxWaitTime = 2000;
-      const startTime = Date.now();
-
-      while (!audioDetected && Date.now() - startTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        if (audioLevel > 0) {
-          audioDetected = true;
-          console.log('[Broadcaster] Audio signal confirmed:', audioLevel);
-        }
-      }
-
-      if (!audioDetected) {
-        console.warn('[Broadcaster] No audio signal detected yet - microphone might be muted or quiet');
-      }
-
-      setAudioReady(true);
-
-      // STEP 4: Create LiveKit tracks for broadcasting
-      // Get the actual device IDs from the active tracks
-      const actualVideoId = rawStream.getVideoTracks()[0]?.getSettings().deviceId;
+      // Store raw mic stream for visualization during device selection
+      setRawMicStream(audioStream);
       
-      // Wait a moment for processed audio to be available
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Setup audio processing - this will test raw audio and set audioReady
+      await setupAudioProcessing(audioStream);
+      console.log('[Broadcaster] Audio processing initialized, waiting for AudioMixer to be ready');
+
+      // STEP 3: Wait for AudioMixer to signal ready
+      console.log('[Broadcaster] Waiting for AudioMixer initialization...');
+      setMixerReady(false);
+      const mixerTimeout = 5000;
+      const mixerStartTime = Date.now();
+
+      while (!mixerReady && Date.now() - mixerStartTime < mixerTimeout) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      if (!mixerReady) {
+        throw new Error('Audio mixer failed to initialize. Please try again.');
+      }
+      
+      console.log('[Broadcaster] AudioMixer ready!');
+
+      // STEP 4: Wait for processed stream
+      const streamTimeout = 2000;
+      const streamStartTime = Date.now();
+      
+      while (!processedAudioStreamRef.current && Date.now() - streamStartTime < streamTimeout) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       if (!processedAudioStreamRef.current) {
         throw new Error('Processed audio stream not ready');
       }
+      
+      console.log('[Broadcaster] Processed audio stream confirmed');
+
+      // STEP 5: Create LiveKit tracks for broadcasting
+      const actualVideoId = rawStream.getVideoTracks()[0]?.getSettings().deviceId;
       
       console.log('[Broadcaster] Using processed audio stream for LiveKit');
       
@@ -307,11 +342,11 @@ export function LiveBroadcaster({ eventId }: Props) {
   const stopPreview = () => {
     console.log('[Broadcaster] Stopping preview (keeping AudioContext alive)');
     
-    // Disconnect audio nodes but keep AudioContext alive
     if (sourceNode) {
       sourceNode.disconnect();
     }
     setAudioLevel(0);
+    setMixerReady(false);
     setStatus('idle');
   };
 
@@ -327,10 +362,19 @@ export function LiveBroadcaster({ eventId }: Props) {
       audioTrackRef.current = null;
     }
     
-    // Stop raw audio stream tracks
     if (rawAudioStream) {
       rawAudioStream.getTracks().forEach(track => track.stop());
       setRawAudioStream(null);
+    }
+    
+    if (rawMicStream) {
+      rawMicStream.getTracks().forEach(track => track.stop());
+      setRawMicStream(null);
+    }
+    
+    if (rawAudioAnalyserRef.current) {
+      rawAudioAnalyserRef.current.disconnect();
+      rawAudioAnalyserRef.current = null;
     }
     
     if (sourceNode) {
@@ -338,13 +382,15 @@ export function LiveBroadcaster({ eventId }: Props) {
       setSourceNode(null);
     }
     if (audioContext) {
-      audioContext.close(); // Only close AudioContext on full cleanup
+      audioContext.close();
       setAudioContext(null);
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     setAudioLevel(0);
+    setAudioReady(false);
+    setMixerReady(false);
     setStatus('idle');
   };
 
@@ -574,7 +620,7 @@ export function LiveBroadcaster({ eventId }: Props) {
           {/* Real-time Microphone Test */}
           <div className="space-y-2">
             <Label>Live Microphone Level</Label>
-            <MicrophoneMeter stream={rawAudioStream} />
+            <MicrophoneMeter stream={rawMicStream} />
           </div>
 
           <Button onClick={startPreview} className="w-full">
@@ -643,6 +689,7 @@ export function LiveBroadcaster({ eventId }: Props) {
               sourceNode={sourceNode}
               onProcessedStream={handleProcessedStream}
               onAudioLevel={handleAudioLevel}
+              onReady={handleMixerReady}
             />
           )}
 

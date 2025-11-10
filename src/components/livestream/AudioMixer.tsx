@@ -13,9 +13,10 @@ interface AudioMixerProps {
   sourceNode: MediaStreamAudioSourceNode | null;
   onProcessedStream?: (stream: MediaStream) => void;
   onAudioLevel?: (left: number, right: number) => void;
+  onReady?: () => void;
 }
 
-export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel }: AudioMixerProps) => {
+export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady }: AudioMixerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
@@ -256,6 +257,12 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         onProcessedStream(destination.stream);
       }
       
+      // Signal that mixer is ready
+      console.log('[AudioMixer] Audio chain fully initialized');
+      if (onReady) {
+        onReady();
+      }
+      
       // Initial audio check
       setTimeout(() => {
         const testArray = new Uint8Array(analyser.frequencyBinCount);
@@ -317,7 +324,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     } catch (error) {
       console.error('[AudioMixer] Setup error:', error);
     }
-  }, [audioContext, sourceNode, onProcessedStream, onAudioLevel]);
+  }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady]);
 
   // Effect 2: Update node parameters (runs when controls change)
   useEffect(() => {
