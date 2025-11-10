@@ -3656,11 +3656,17 @@ export type Database = {
           intro_answers: Json | null
           is_online: boolean | null
           is_public: boolean | null
+          is_super_fan: boolean | null
           jrny_member_id: string | null
           last_active_at: string | null
+          last_livestream_reaction: string | null
           last_login: string | null
           latitude: number | null
           listen_time: number | null
+          livestream_claps_sent: number | null
+          livestream_engagement_score: number | null
+          livestream_hearts_sent: number | null
+          livestream_reaction_count: number | null
           location: string | null
           longitude: number | null
           membership_tier: string | null
@@ -3695,11 +3701,17 @@ export type Database = {
           intro_answers?: Json | null
           is_online?: boolean | null
           is_public?: boolean | null
+          is_super_fan?: boolean | null
           jrny_member_id?: string | null
           last_active_at?: string | null
+          last_livestream_reaction?: string | null
           last_login?: string | null
           latitude?: number | null
           listen_time?: number | null
+          livestream_claps_sent?: number | null
+          livestream_engagement_score?: number | null
+          livestream_hearts_sent?: number | null
+          livestream_reaction_count?: number | null
           location?: string | null
           longitude?: number | null
           membership_tier?: string | null
@@ -3734,11 +3746,17 @@ export type Database = {
           intro_answers?: Json | null
           is_online?: boolean | null
           is_public?: boolean | null
+          is_super_fan?: boolean | null
           jrny_member_id?: string | null
           last_active_at?: string | null
+          last_livestream_reaction?: string | null
           last_login?: string | null
           latitude?: number | null
           listen_time?: number | null
+          livestream_claps_sent?: number | null
+          livestream_engagement_score?: number | null
+          livestream_hearts_sent?: number | null
+          livestream_reaction_count?: number | null
           location?: string | null
           longitude?: number | null
           membership_tier?: string | null
@@ -3957,6 +3975,7 @@ export type Database = {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
       }
+      recalculate_all_livestream_engagement: { Args: never; Returns: undefined }
       set_tenant_context: { Args: { _tenant_id: string }; Returns: undefined }
       track_affiliate_content_click: {
         Args: {
