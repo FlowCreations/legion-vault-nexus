@@ -46,17 +46,20 @@ export const EpiphanyInsight = () => {
             onClick={triggerEpiphany}
             disabled={loading}
             size="lg"
-            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg"
+            style={{
+              background: loading ? undefined : 'linear-gradient(to right, #ec4899, #db2777)',
+            }}
+            className="text-white hover:brightness-110 shadow-lg"
           >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Channeling...
+                Reflecting...
               </>
             ) : (
               <>
-                <Zap className="mr-2 h-4 w-4" />
-                Trigger Epiphany
+                <span className="mr-2 text-lg">💡</span>
+                Epiphany
               </>
             )}
           </Button>

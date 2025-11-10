@@ -43,7 +43,10 @@ export const OracleInsight = () => {
             onClick={triggerOracle}
             disabled={loading}
             size="lg"
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+            style={{
+              background: loading ? undefined : 'linear-gradient(to right, #10b981, #059669)',
+            }}
+            className="text-white hover:brightness-110 shadow-lg"
           >
             {loading ? (
               <>
@@ -52,8 +55,8 @@ export const OracleInsight = () => {
               </>
             ) : (
               <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Trigger Oracle
+                <span className="mr-2 text-lg">✨</span>
+                Oracle
               </>
             )}
           </Button>

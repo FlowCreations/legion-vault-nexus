@@ -55,7 +55,10 @@ export const CatalystDeploy = () => {
             onClick={deployCatalyst}
             disabled={loading}
             size="lg"
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg"
+            style={{
+              background: loading ? undefined : 'linear-gradient(to right, #3b82f6, #2563eb)',
+            }}
+            className="text-white hover:brightness-110 shadow-lg"
           >
             {loading ? (
               <>
@@ -64,8 +67,8 @@ export const CatalystDeploy = () => {
               </>
             ) : (
               <>
-                <Zap className="mr-2 h-4 w-4" />
-                Deploy Catalyst
+                <span className="mr-2 text-lg">🚀</span>
+                Catalyst
               </>
             )}
           </Button>
