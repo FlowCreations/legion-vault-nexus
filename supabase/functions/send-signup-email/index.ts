@@ -31,14 +31,9 @@ const createSignupEmailHtml = (firstName: string) => `
           
           <!-- Header with Logo -->
           <tr>
-            <td style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #0a0a0a; font-size: 32px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">
-                SØL
-              </h1>
-              <p style="margin: 8px 0 0; color: #1a1a1a; font-size: 14px; font-weight: 600; letter-spacing: 1px;">
-                SONS OF LEGION
-              </p>
-            </td>
+             <td style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); padding: 40px 30px; text-align: center;">
+               <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
+             </td>
           </tr>
 
           <!-- Main Content -->

@@ -94,6 +94,9 @@ END:VCALENDAR`;
 </head>
 <body>
   <div class="container">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
+    </div>
     <div class="header">Thanks for RSVPing!</div>
     <div class="event-section">
       <h2 class="event-title">${eventDetails.title}</h2>

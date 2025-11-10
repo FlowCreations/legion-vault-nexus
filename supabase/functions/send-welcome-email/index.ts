@@ -172,8 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="logo-container">
-                <div class="logo">SØL</div>
-                <div class="logo-subtext">SONS OF LEGION</div>
+                <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
               </div>
               
               <div class="content">

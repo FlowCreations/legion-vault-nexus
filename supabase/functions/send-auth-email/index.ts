@@ -33,8 +33,7 @@ const createPasswordResetEmailHtml = (resetLink: string, userEmail: string) => `
 <body>
   <div class="container">
     <div class="logo-container">
-      <h1 class="logo">SØL</h1>
-      <p class="logo-subtext">SONS OF LEGION</p>
+      <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
     </div>
     
     <h2 class="header">Reset Your Password</h2>
@@ -96,8 +95,7 @@ const createEmailConfirmationHtml = (confirmLink: string, userEmail: string) => 
 <body>
   <div class="container">
     <div class="logo-container">
-      <h1 class="logo">SØL</h1>
-      <p class="logo-subtext">SONS OF LEGION</p>
+      <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
     </div>
     
     <h2 class="header">Welcome to the Sons of Legion!</h2>
