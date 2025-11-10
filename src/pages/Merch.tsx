@@ -340,7 +340,7 @@ export default function Merch() {
       </div>
 
       {/* Header */}
-      <header className="bg-background border-b border-border sticky top-20 z-40 relative">
+      <header className="bg-background border-b border-border sticky top-[73px] z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Search */}
