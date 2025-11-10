@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw, Calendar as CalendarIcon, Trash2, AlertTriangle } from "lucide-react";
+import { PurchaseHistory } from "@/components/profile/PurchaseHistory";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -772,15 +773,7 @@ export default function Profile() {
           </TabsContent>
 
           <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order History</CardTitle>
-                <CardDescription>View your past orders and purchases</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-center py-8">No orders yet</p>
-              </CardContent>
-            </Card>
+            <PurchaseHistory />
           </TabsContent>
 
           <TabsContent value="security">
