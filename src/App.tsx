@@ -11,6 +11,9 @@ import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
 import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import { useAgent } from "./hooks/useAgent";
+import { useDiagnostics } from "./hooks/useDiagnostics";
+import { ErrorBoundary } from "./diagnostics/ErrorBoundary";
+import { HealthOverlay } from "./components/diagnostics/HealthOverlay";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SubscriptionGate } from "./components/SubscriptionGate";
 import { TIERS } from "./config/subscriptions";
@@ -57,6 +60,9 @@ const queryClient = new QueryClient();
 const App = () => {
   const pixelInitialized = useRef(false);
   
+  // Initialize diagnostics monitoring
+  useDiagnostics();
+  
   // Initialize Agent
   useAgent({ enabled: true, checkInterval: 5 });
 
@@ -96,11 +102,12 @@ const App = () => {
 
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
         <Navigation />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -144,9 +151,11 @@ const App = () => {
         <Footer />
         <FloatingChatbot />
         <GlobalMusicPlayer />
+        <HealthOverlay />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+</ErrorBoundary>
   );
 };
 

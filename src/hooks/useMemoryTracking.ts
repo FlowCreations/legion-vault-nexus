@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { diagnosticsStore } from '@/diagnostics/diagnosticsStore';
 
 interface MemoryMetrics {
   usedJSHeapSize: number;
@@ -44,6 +45,13 @@ export const useMemoryTracking = (intervalMs = 5000) => {
       // Warn if memory usage is high (>80%)
       if (metrics.usagePercentage > 80) {
         console.warn(`[Performance] High memory usage: ${metrics.usagePercentage.toFixed(2)}%`);
+        diagnosticsStore.add({
+          type: 'log',
+          ts: performance.now(),
+          level: 'warn',
+          message: 'High memory usage',
+          data: { usagePercentage: metrics.usagePercentage.toFixed(2) }
+        });
       }
     };
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { diagnosticsStore } from '@/diagnostics/diagnosticsStore';
 
 interface RenderMetrics {
   componentName: string;
@@ -32,6 +33,13 @@ export const useRenderTracking = (componentName: string) => {
     // Log slow renders (>16ms = below 60fps)
     if (renderTime > 16) {
       console.warn(`[Performance] Slow render detected: ${componentName} took ${renderTime.toFixed(2)}ms`);
+      diagnosticsStore.add({
+        type: 'log',
+        ts: performance.now(),
+        level: 'warn',
+        message: `Slow render: ${componentName}`,
+        data: { renderTime: renderTime.toFixed(2) }
+      });
     }
 
     startTime.current = performance.now();
