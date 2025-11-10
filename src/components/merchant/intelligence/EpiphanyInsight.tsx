@@ -27,7 +27,7 @@ export const EpiphanyInsight = () => {
   };
 
   return (
-    <Card className="border-2 border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-background">
+    <Card className="border-2 bg-gradient-to-br from-pink-500/10 to-background" style={{ borderColor: '#ec489933' }}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

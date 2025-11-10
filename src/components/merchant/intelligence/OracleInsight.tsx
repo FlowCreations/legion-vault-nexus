@@ -27,7 +27,7 @@ export const OracleInsight = () => {
   };
 
   return (
-    <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+    <Card className="border-2 bg-gradient-to-br from-emerald-500/10 to-background" style={{ borderColor: '#10b98133' }}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

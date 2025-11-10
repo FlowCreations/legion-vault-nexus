@@ -39,7 +39,7 @@ export const CatalystDeploy = () => {
   };
 
   return (
-    <Card className="border-2 border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-background">
+    <Card className="border-2 bg-gradient-to-br from-blue-500/10 to-background" style={{ borderColor: '#3b82f633' }}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
