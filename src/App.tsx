@@ -36,6 +36,7 @@ import CommunityHub from "./pages/CommunityHub";
 import AdminDashboard from "./pages/AdminDashboard";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
 import FreeEP from "./pages/FreeEP";
+import VerifyEmail from "./pages/VerifyEmail";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -123,6 +124,7 @@ const App = () => {
           <Route path="/community-hub" element={<CommunityHub />} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
           <Route path="/free-ep" element={<FreeEP />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />

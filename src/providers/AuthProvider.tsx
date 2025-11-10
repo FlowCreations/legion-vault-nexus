@@ -177,20 +177,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
       
-      // Send branded signup email immediately
+      // Send custom branded verification email
       if (data?.user) {
         const firstName = email.split('@')[0];
         try {
-          await supabase.functions.invoke('send-signup-email', {
+          await supabase.functions.invoke('generate-email-verification', {
             body: {
               userId: data.user.id,
               email: email,
               firstName: firstName
             }
           });
-          console.log('[AUTH] Branded signup email sent');
+          console.log('[AUTH] Custom verification email sent');
         } catch (emailError) {
-          console.error('[AUTH] Failed to send branded signup email:', emailError);
+          console.error('[AUTH] Failed to send verification email:', emailError);
           // Don't fail signup if email fails
         }
       }
@@ -198,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if email confirmation is required
       if (data?.user && !data.session) {
         toast.success('Welcome to Sons of Legion!', {
-          description: 'Check your email for a verification link. You\'ll receive a branded welcome email shortly.',
+          description: 'Check your email for a verification link to complete your signup.',
           duration: 8000,
         });
       } else {

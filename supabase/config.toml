@@ -92,3 +92,9 @@ verify_jwt = true
 
 [functions.generate-epiphany-insight]
 verify_jwt = true
+
+[functions.generate-email-verification]
+verify_jwt = false
+
+[functions.verify-email-token]
+verify_jwt = false
