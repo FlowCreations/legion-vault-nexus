@@ -20,6 +20,9 @@ export function GlobalMusicPlayer() {
 
     console.log('Loading track:', currentTrack.title, currentTrack.url);
 
+    // Reset playback position to start
+    audio.currentTime = 0;
+    
     // Set new source
     audio.src = currentTrack.url;
     
@@ -42,6 +45,8 @@ export function GlobalMusicPlayer() {
 
     const handleLoadedMetadata = () => {
       console.log('Metadata loaded, duration:', audio.duration);
+      // Reset to start after metadata loads
+      audio.currentTime = 0;
     };
 
     const handleCanPlay = () => {
