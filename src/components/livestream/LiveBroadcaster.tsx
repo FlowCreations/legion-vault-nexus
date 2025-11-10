@@ -9,6 +9,7 @@ import { Video, VideoOff, Mic, MicOff, Play, Volume2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { AudioMixer } from './AudioMixer';
 import { MicrophoneMeter } from './MicrophoneMeter';
+import { AudioDiagnostics } from './AudioDiagnostics';
 
 type Props = { eventId: string };
 
@@ -36,6 +37,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   const [rawMicStream, setRawMicStream] = useState<MediaStream | null>(null);
   const processedAudioStreamRef = useRef<MediaStream | null>(null);
   const rawAudioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
 
   useEffect(() => {
     requestPermissionsAndLoadDevices();
@@ -173,6 +175,11 @@ export function LiveBroadcaster({ eventId }: Props) {
   const handleMixerReady = () => {
     console.log('[Broadcaster] AudioMixer signaled READY');
     setMixerReady(true);
+  };
+
+  const handleProcessedAnalyser = (analyser: AnalyserNode) => {
+    console.log('[Broadcaster] Received processed analyser for diagnostics');
+    processedAudioAnalyserRef.current = analyser;
   };
 
   const handleAudioLevel = (left: number, right: number) => {
@@ -690,6 +697,18 @@ export function LiveBroadcaster({ eventId }: Props) {
               onProcessedStream={handleProcessedStream}
               onAudioLevel={handleAudioLevel}
               onReady={handleMixerReady}
+              onProcessedAnalyser={handleProcessedAnalyser}
+            />
+          )}
+
+          {/* Audio Diagnostics Panel */}
+          {(status === 'preview' || status === 'live' || status === 'connecting') && (
+            <AudioDiagnostics
+              audioContext={audioContext}
+              rawAudioAnalyser={rawAudioAnalyserRef.current}
+              processedAudioAnalyser={processedAudioAnalyserRef.current}
+              room={roomRef.current}
+              status={status}
             />
           )}
 
