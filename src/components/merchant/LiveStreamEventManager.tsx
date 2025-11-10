@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Plus, Edit2, Trash2, Video } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, Clock, Plus, Edit2, Trash2, Video, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { LiveReactionAnalytics } from "./LiveReactionAnalytics";
 
 type LiveStreamEvent = {
   id: string;
@@ -28,6 +30,7 @@ export function LiveStreamEventManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LiveStreamEvent | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -209,55 +212,85 @@ export function LiveStreamEventManager() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {events.map((event) => (
-            <Card key={event.id} className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-xl font-bold">{event.title}</h3>
-                    {getStatusBadge(event.status || 'scheduled')}
-                    {getAccessBadge(event.access_type || 'free')}
-                  </div>
-                  
-                  {event.description && (
-                    <p className="text-muted-foreground mb-4">{event.description}</p>
-                  )}
+        <Tabs defaultValue="events" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="analytics" disabled={!selectedEventId}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Reaction Analytics
+            </TabsTrigger>
+          </TabsList>
 
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      <span>{format(new Date(event.scheduled_start), 'MMMM d, yyyy')}</span>
+          <TabsContent value="events" className="mt-6">
+            <div className="grid gap-4">
+              {events.map((event) => (
+                <Card 
+                  key={event.id} 
+                  className={`p-6 cursor-pointer transition-all ${
+                    selectedEventId === event.id ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => setSelectedEventId(event.id)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-xl font-bold">{event.title}</h3>
+                        {getStatusBadge(event.status || 'scheduled')}
+                        {getAccessBadge(event.access_type || 'free')}
+                      </div>
+                      
+                      {event.description && (
+                        <p className="text-muted-foreground mb-4">{event.description}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-primary" />
+                          <span>{format(new Date(event.scheduled_start), 'MMMM d, yyyy')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-primary" />
+                          <span>{format(new Date(event.scheduled_start), 'h:mm a zzz')}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      <span>{format(new Date(event.scheduled_start), 'h:mm a zzz')}</span>
+
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleEdit(event)}
+                        disabled={event.status === 'live'}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleDelete(event.id)}
+                        disabled={event.status === 'live'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                </div>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEdit(event)}
-                    disabled={event.status === 'live'}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleDelete(event.id)}
-                    disabled={event.status === 'live'}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+          <TabsContent value="analytics" className="mt-6">
+            {selectedEventId ? (
+              <LiveReactionAnalytics eventId={selectedEventId} />
+            ) : (
+              <Card className="p-12 text-center">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No event selected</h3>
+                <p className="text-muted-foreground">Select an event to view reaction analytics</p>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Create/Edit Dialog */}
