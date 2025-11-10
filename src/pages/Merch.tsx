@@ -330,15 +330,6 @@ export default function Merch() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <div className="bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
-            <span className="font-medium">{t('merch.topBar')}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Header */}
       <header className="bg-background sticky top-[73px] z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
