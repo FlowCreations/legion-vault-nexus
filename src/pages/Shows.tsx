@@ -62,12 +62,6 @@ export default function Shows() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-[73px] z-40 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        </div>
-      </header>
-
       {/* Hero Image */}
       <section className="relative aspect-[16/9] sm:aspect-[2/1] bg-background-dark overflow-hidden">
         <img 
