@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.verify-checkout-session]
 verify_jwt = false
 
+[functions.generate-receipt]
+verify_jwt = true
+
 [functions.send-auth-email]
 verify_jwt = false
 

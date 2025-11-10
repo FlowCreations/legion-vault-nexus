@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Download, Music, Package, Calendar, DollarSign, Mail, User } from "lucide-react";
+import { Loader2, Download, Music, Package, Calendar, DollarSign, Mail, User, FileText } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Purchase {
@@ -92,6 +92,50 @@ export function PurchaseHistory() {
       toast({
         title: "Coming Soon",
         description: "Download functionality for this product is coming soon!",
+      });
+    }
+  };
+
+  const handleDownloadReceipt = async (purchaseId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to download receipts",
+        });
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-receipt`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ purchaseId }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate receipt');
+      }
+
+      const html = await response.text();
+      const receiptWindow = window.open('', '_blank');
+      if (receiptWindow) {
+        receiptWindow.document.write(html);
+        receiptWindow.document.close();
+      }
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate receipt",
       });
     }
   };
@@ -202,13 +246,23 @@ export function PurchaseHistory() {
                     
                     <div className="flex flex-col gap-2">
                       {purchase.status === 'completed' && (
-                        <Button 
-                          onClick={() => handleDownload(purchase)}
-                          className="bg-gradient-gold hover:shadow-glow w-full md:w-auto"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          {purchase.product_type === 'album' ? 'Listen Now' : 'View Order'}
-                        </Button>
+                        <>
+                          <Button 
+                            onClick={() => handleDownload(purchase)}
+                            className="bg-gradient-gold hover:shadow-glow w-full md:w-auto"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            {purchase.product_type === 'album' ? 'Listen Now' : 'View Order'}
+                          </Button>
+                          <Button 
+                            onClick={() => handleDownloadReceipt(purchase.id)}
+                            variant="outline"
+                            className="w-full md:w-auto"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Download Receipt
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -263,13 +317,22 @@ export function PurchaseHistory() {
                   </TableCell>
                   <TableCell className="text-right">
                     {purchase.status === 'completed' && (
-                      <Button 
-                        size="sm"
-                        onClick={() => handleDownload(purchase)}
-                        variant="ghost"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          size="sm"
+                          onClick={() => handleDownload(purchase)}
+                          variant="ghost"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => handleDownloadReceipt(purchase.id)}
+                          variant="ghost"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
