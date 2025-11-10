@@ -63,7 +63,7 @@ export default function Shows() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-[73px] z-40 bg-background border-b border-border">
+      <header className="sticky top-[73px] z-40 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         </div>
       </header>
@@ -79,7 +79,7 @@ export default function Shows() {
       </section>
 
       {/* Photo Gallery Promo */}
-      <section className="bg-background border-b border-border">
+      <section className="bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col md:flex-row gap-6 items-center">
             {/* Gallery Images */}
