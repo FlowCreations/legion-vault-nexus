@@ -3184,6 +3184,60 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          amount_total: number
+          created_at: string | null
+          currency: string | null
+          customer_name: string | null
+          email: string
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          product_name: string
+          product_type: string
+          status: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_total: number
+          created_at?: string | null
+          currency?: string | null
+          customer_name?: string | null
+          email: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          product_name: string
+          product_type: string
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_total?: number
+          created_at?: string | null
+          currency?: string | null
+          customer_name?: string | null
+          email?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          product_name?: string
+          product_type?: string
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       response_queue: {
         Row: {
           actual_send_time: string | null

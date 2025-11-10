@@ -77,6 +77,10 @@ serve(async (req) => {
 
     console.log('Creating checkout for:', { albumId, albumTitle, price });
 
+    // Get user email and name for the confirmation email
+    const userEmail = user?.email;
+    const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       line_items: [
@@ -96,10 +100,17 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/music/success?album=${albumId}`,
-      cancel_url: `${req.headers.get('origin')}/music`,
+      success_url: `${req.headers.get('origin')}/purchase-success?album=${albumId}`,
+      cancel_url: `${req.headers.get('origin')}/music/album/${albumId}`,
+      customer_email: userEmail,
       metadata: {
         albumId,
+        product_type: 'album',
+        product_id: albumId,
+        product_name: albumTitle,
+        user_id: user?.id || '',
+        email: userEmail || '',
+        customer_name: userName || '',
       },
     });
 
