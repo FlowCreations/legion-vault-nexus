@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import solLogo from "@/assets/sol-logo-new.png";
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -34,9 +35,9 @@ export default function VerifyEmail() {
           
           toast.success("Email verified! Welcome to Sons of Legion");
           
-          // Redirect to home after 3 seconds
+          // Redirect to auth/login after 3 seconds
           setTimeout(() => {
-            navigate("/");
+            navigate("/auth");
           }, 3000);
         } else {
           setStatus("error");
@@ -57,10 +58,11 @@ export default function VerifyEmail() {
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent tracking-[0.2em] mb-2">
-            SØL
-          </h1>
-          <p className="text-primary text-sm tracking-[0.3em]">SONS OF LEGION</p>
+          <img 
+            src={solLogo} 
+            alt="Sons of Legion Logo" 
+            className="w-48 mx-auto"
+          />
         </div>
 
         {/* Status Card */}

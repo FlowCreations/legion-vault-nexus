@@ -28,13 +28,8 @@ const createVerificationEmailHtml = (firstName: string, verificationUrl: string)
   <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);">
     
     <!-- Header with Logo -->
-    <div style="text-align: center; padding: 40px 20px 20px;">
-      <div style="background: linear-gradient(135deg, #D4AF37 0%, #F4E5B8 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 42px; font-weight: bold; letter-spacing: 4px;">
-        SØL
-      </div>
-      <div style="color: #D4AF37; font-size: 14px; letter-spacing: 2px; margin-top: 8px;">
-        SONS OF LEGION
-      </div>
+    <div style="text-align: center; padding: 40px 20px 20px; background: linear-gradient(135deg, #D4AF37 0%, #F4E5B8 50%, #D4AF37 100%);">
+      <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
     </div>
 
     <!-- Main Content -->
