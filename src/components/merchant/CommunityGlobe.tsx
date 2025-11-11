@@ -109,12 +109,12 @@ export default function CommunityGlobe() {
     return () => map.remove();
   }, []);
 
-  // Update data when members or activeTab changes
+  // Update data when members change (removed activeTab dependency since we're showing all)
   useEffect(() => {
     if (mapLoadedRef.current && members.length > 0) {
       updatePoints();
     }
-  }, [members, activeTab]);
+  }, [members]);
 
   function addLayers() {
     if (!mapRef.current) return;
@@ -255,7 +255,6 @@ export default function CommunityGlobe() {
   function updatePoints() {
     console.log("🟣 updatePoints() called");
     console.log("🟣 members.length:", members.length);
-    console.log("🟣 activeTab:", activeTab);
     console.log("🟣 mapLoadedRef.current:", mapLoadedRef.current);
     
     if (!mapRef.current || !mapRef.current.getSource("community")) {
@@ -263,43 +262,73 @@ export default function CommunityGlobe() {
       return;
     }
 
-    const filtered = members.filter((m) => m.regionGroup === activeTab);
-    console.log(`🟢 Filtered for "${activeTab}":`, filtered.length, "members");
+    // SIMPLIFIED: Show ALL members (no filtering by region)
+    console.log(`🟢 Showing ALL members:`, members.length);
     
-    if (filtered.length > 0) {
-      console.log("📍 First filtered member:", filtered[0]);
+    if (members.length > 0) {
+      console.log("📍 First member:", members[0]);
     }
 
-    // Calculate engagement score for each member
-    const geojson: GeoJSON.FeatureCollection = {
-      type: "FeatureCollection",
-      features: filtered.map((m) => {
-        const engagement = 
-          (m.watch_time || 0) + 
-          (m.listen_time || 0) + 
-          ((m.livestream_engagement_score || 0) * 10);
-        
-        return {
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [Number(m.longitude), Number(m.latitude)] },
-          properties: {
-            id: m.id,
-            name: m.display_name ?? "Unknown",
-            location: m.location ?? "",
-            engagement: engagement,
-            tier: m.tier || "free"
-          }
-        };
-      })
+    // Add a hardcoded test point (Nashville) to verify map rendering
+    const testPoint = {
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [-86.7816, 36.1627] },
+      properties: {
+        id: "test-point",
+        name: "TEST POINT - Nashville",
+        location: "Nashville, TN",
+        engagement: 100,
+        tier: "test"
+      }
     };
 
-    console.log("🌍 GeoJSON features:", geojson.features.length);
+    // Calculate engagement score for each member
+    const memberFeatures = members.map((m) => {
+      const engagement = 
+        (m.watch_time || 0) + 
+        (m.listen_time || 0) + 
+        ((m.livestream_engagement_score || 0) * 10);
+      
+      return {
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [Number(m.longitude), Number(m.latitude)] },
+        properties: {
+          id: m.id,
+          name: m.display_name ?? "Unknown",
+          location: m.location ?? "",
+          engagement: engagement,
+          tier: m.tier || "free"
+        }
+      };
+    });
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: [testPoint, ...memberFeatures] // Test point first for visibility
+    };
+
+    console.log("🌍 Total GeoJSON features:", geojson.features.length, "(1 test + " + members.length + " real)");
     if (geojson.features.length > 0) {
-      console.log("📍 First GeoJSON feature:", JSON.stringify(geojson.features[0], null, 2));
+      console.log("📍 First feature (test point):", JSON.stringify(geojson.features[0], null, 2));
+      if (geojson.features.length > 1) {
+        console.log("📍 Second feature (first member):", JSON.stringify(geojson.features[1], null, 2));
+      }
     }
 
     (mapRef.current.getSource("community") as mapboxgl.GeoJSONSource).setData(geojson);
     console.log("✅ GeoJSON data set on source");
+    
+    // Verify layer exists and is visible
+    const layer = mapRef.current.getLayer("community-points");
+    if (layer) {
+      const visibility = mapRef.current.getLayoutProperty("community-points", "visibility");
+      const paint = mapRef.current.getPaintProperty("community-points", "circle-radius");
+      console.log("✅ Layer 'community-points' exists");
+      console.log("📊 Layer visibility:", visibility);
+      console.log("📊 Circle radius config:", paint);
+    } else {
+      console.log("❌ Layer 'community-points' NOT FOUND!");
+    }
   }
 
   // Update layer visibility when heatmap toggle changes
@@ -361,13 +390,15 @@ export default function CommunityGlobe() {
     requestAnimationFrame(frame);
   }
 
-  const filteredCount = members.filter((m) => m.regionGroup === activeTab).length;
+  // Show total count (not filtering by region anymore)
+  const filteredCount = members.length;
 
   return (
     <div className="relative space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex gap-4">
-          <Button
+          {/* Temporarily hidden - showing ALL members for debugging */}
+          {/* <Button
             onClick={() => setActiveTab("america")}
             variant={activeTab === "america" ? "default" : "outline"}
           >
@@ -378,7 +409,8 @@ export default function CommunityGlobe() {
             variant={activeTab === "world" ? "default" : "outline"}
           >
             AROUND THE WORLD
-          </Button>
+          </Button> */}
+          <h3 className="text-lg font-semibold">Community Globe - All Members</h3>
         </div>
         
         <div className="flex items-center gap-4">
