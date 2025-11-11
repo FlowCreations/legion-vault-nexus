@@ -90,21 +90,16 @@ const Merchant = memo(() => {
   // });
 
   useEffect(() => {
-    // Check for navigation state only once on mount
     const state = window.history.state?.usr;
     if (state?.activeTab) {
       setActiveTab(state.activeTab);
+      window.history.replaceState({}, document.title);
     }
     if (state?.selectedUserId) {
       setSelectedUserId(state.selectedUserId);
-      // Clear the navigation state after setting it
-      window.history.replaceState({}, document.title);
-      // Clear selectedUserId after a delay to allow the component to use it
-      setTimeout(() => {
-        setSelectedUserId(null);
-      }, 3000);
+      setTimeout(() => setSelectedUserId(null), 3000);
     }
-  }, []); // Only run on mount
+  }, []);
 
   // Memoize demo data to prevent recreation on every render
   const getDemoData = useMemo((): AnalyticsData => ({
@@ -268,29 +263,25 @@ const Merchant = memo(() => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
                 <div className="space-y-8">
-                  {/* IMMEDIATE PRIORITY - Load instantly */}
                   <ProgressiveLoader priority="immediate">
                     <Suspense fallback={<LoadingSpinner />}>
                       <EarningsOverview />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* GLOBE - Second position as requested */}
-                  <ProgressiveLoader priority="high" delay={50}>
+                  <ProgressiveLoader priority="high" delay={20}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Geography />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Fanbase Stats */}
-                  <ProgressiveLoader priority="high" delay={100}>
+                  <ProgressiveLoader priority="high" delay={40}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <FanbaseStats />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Platform Distribution */}
-                  <ProgressiveLoader priority="high" delay={150}>
+                  <ProgressiveLoader priority="high" delay={60}>
                     <div className="grid gap-6 md:grid-cols-2">
                       <Suspense fallback={<LoadingSpinner />}>
                         <PlatformDistribution />
@@ -301,22 +292,19 @@ const Merchant = memo(() => {
                     </div>
                   </ProgressiveLoader>
                   
-                  {/* Demographics */}
-                  <ProgressiveLoader priority="medium" delay={200}>
+                  <ProgressiveLoader priority="medium" delay={80}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Demographics />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Most Talked About */}
-                  <ProgressiveLoader priority="medium" delay={250}>
+                  <ProgressiveLoader priority="medium" delay={100}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <MostTalkedAbout />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Top Tracks - Load last */}
-                  <ProgressiveLoader priority="low" delay={300}>
+                  <ProgressiveLoader priority="low" delay={120}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <TopTracks period="7days" />
                     </Suspense>

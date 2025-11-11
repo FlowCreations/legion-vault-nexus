@@ -3,11 +3,9 @@ import { AbandonedCartPopup } from "@/components/AbandonedCartPopup";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { initMetaPixel } from "@/lib/metaPixel";
-import { setQueryClient } from "@/diagnostics/performanceFixes";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
@@ -56,17 +54,12 @@ const Step10PortalOnboarding = lazy(() => import("./pages/funnel/Step10PortalOnb
 const Step11MerchUpsell = lazy(() => import("./pages/funnel/Step11MerchUpsell"));
 const Step12RewardsLoop = lazy(() => import("./pages/funnel/Step12RewardsLoop"));
 
-// Loading fallback component
+// Optimized loading fallback component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
   </div>
 );
-
-const queryClient = new QueryClient();
-
-// Initialize performance fixes with queryClient
-setQueryClient(queryClient);
 
 const App = () => {
   const pixelInitialized = useRef(false);
@@ -114,62 +107,60 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Navigation />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/profile" element={<ProtectedRoute requireAuth><Profile /></ProtectedRoute>} />
-                <Route path="/subscribe" element={<Subscribe />} />
-                <Route path="/videos" element={<Videos />} />
-                <Route path="/videos/manage" element={<ProtectedRoute requireAdmin><VideoManager /></ProtectedRoute>} />
-                <Route path="/music" element={<Music />} />
-                <Route path="/music/album/:albumId" element={<AlbumDetail />} />
-                <Route path="/music/favorites" element={<Favorites />} />
-                <Route path="/music/eps-singles" element={<EPsSingles />} />
-                <Route path="/song-credits" element={<SongCredits />} />
-                <Route path="/music/success" element={<PurchaseSuccess />} />
-                <Route path="/shows" element={<Shows />} />
-                <Route path="/shows/gallery" element={<Gallery />} />
-                <Route path="/community" element={<CommunityHub />} />
-                <Route path="/merch" element={<Merch />} />
-                <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
-                <Route path="/live-studio" element={<LiveStudio />} />
-                <Route path="/community-hub" element={<CommunityHub />} />
-                <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/free-ep" element={<FreeEP />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/funnel/step-1" element={<Step1LeadCapture />} />
-                <Route path="/funnel/step-2" element={<Step2ThankYou />} />
-                <Route path="/funnel/step-3" element={<Step3SalesPage />} />
-                <Route path="/funnel/step-5" element={<Step5Upsell />} />
-                <Route path="/funnel/step-6" element={<Step6Downsell1 />} />
-                <Route path="/funnel/step-9" element={<Step9ThankYouPurchase />} />
-                <Route path="/funnel/step-10" element={<Step10PortalOnboarding />} />
-                <Route path="/funnel/step-11" element={<Step11MerchUpsell />} />
-                <Route path="/funnel/step-12" element={<Step12RewardsLoop />} />
-                <Route path="/sales-sheets" element={<SalesSheets />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-            <Footer />
-            <FloatingChatbot />
-            <GlobalMusicPlayer />
-            <AbandonedCartPopup />
-            <HealthOverlay />
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-</ErrorBoundary>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Navigation />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<ProtectedRoute requireAuth><Profile /></ProtectedRoute>} />
+              <Route path="/subscribe" element={<Subscribe />} />
+              <Route path="/videos" element={<Videos />} />
+              <Route path="/videos/manage" element={<ProtectedRoute requireAdmin><VideoManager /></ProtectedRoute>} />
+              <Route path="/music" element={<Music />} />
+              <Route path="/music/album/:albumId" element={<AlbumDetail />} />
+              <Route path="/music/favorites" element={<Favorites />} />
+              <Route path="/music/eps-singles" element={<EPsSingles />} />
+              <Route path="/song-credits" element={<SongCredits />} />
+              <Route path="/music/success" element={<PurchaseSuccess />} />
+              <Route path="/shows" element={<Shows />} />
+              <Route path="/shows/gallery" element={<Gallery />} />
+              <Route path="/community" element={<CommunityHub />} />
+              <Route path="/merch" element={<Merch />} />
+              <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
+              <Route path="/live-studio" element={<LiveStudio />} />
+              <Route path="/community-hub" element={<CommunityHub />} />
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/free-ep" element={<FreeEP />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/funnel/step-1" element={<Step1LeadCapture />} />
+              <Route path="/funnel/step-2" element={<Step2ThankYou />} />
+              <Route path="/funnel/step-3" element={<Step3SalesPage />} />
+              <Route path="/funnel/step-5" element={<Step5Upsell />} />
+              <Route path="/funnel/step-6" element={<Step6Downsell1 />} />
+              <Route path="/funnel/step-9" element={<Step9ThankYouPurchase />} />
+              <Route path="/funnel/step-10" element={<Step10PortalOnboarding />} />
+              <Route path="/funnel/step-11" element={<Step11MerchUpsell />} />
+              <Route path="/funnel/step-12" element={<Step12RewardsLoop />} />
+              <Route path="/sales-sheets" element={<SalesSheets />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+          <Footer />
+          <FloatingChatbot />
+          <GlobalMusicPlayer />
+          <AbandonedCartPopup />
+          <HealthOverlay />
+        </BrowserRouter>
+      </TooltipProvider>
+    </ErrorBoundary>
   );
 };
 
