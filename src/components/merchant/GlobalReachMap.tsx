@@ -208,6 +208,34 @@ export default function GlobalReachMap({
 
         map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
+        // Auto-rotation setup
+        let userInteracting = false;
+        const secondsPerRevolution = 120; // 2 minutes per full rotation
+        const maxSpinZoom = 5;
+        const slowSpinZoom = 3;
+
+        function spinGlobe() {
+          const zoom = map.getZoom();
+          if (!userInteracting && zoom < maxSpinZoom) {
+            let distancePerSecond = 360 / secondsPerRevolution;
+            if (zoom > slowSpinZoom) {
+              const zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+              distancePerSecond *= zoomDif;
+            }
+            const center = map.getCenter();
+            center.lng -= distancePerSecond;
+            map.easeTo({ center, duration: 1000, easing: (n) => n });
+          }
+        }
+
+        // Pause rotation on user interaction
+        map.on('mousedown', () => { userInteracting = true; });
+        map.on('dragstart', () => { userInteracting = true; });
+        map.on('mouseup', () => { userInteracting = false; spinGlobe(); });
+        map.on('dragend', () => { userInteracting = false; spinGlobe(); });
+        map.on('touchend', () => { userInteracting = false; spinGlobe(); });
+        map.on('moveend', () => { spinGlobe(); });
+
         map.on("load", () => {
           console.log('✅ Mapbox loaded successfully');
           
@@ -321,6 +349,9 @@ export default function GlobalReachMap({
           map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
           map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
+
+          // Start globe rotation
+          spinGlobe();
         });
 
         const handleResize = () => map.resize();

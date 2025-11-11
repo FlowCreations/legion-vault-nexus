@@ -17,15 +17,24 @@ export const Geography = () => {
   const handleGeocode = async () => {
     try {
       setIsGeocoding(true);
-      const { data, error } = await supabase.functions.invoke('seed-member-coordinates');
       
-      if (error) throw error;
+      // Add 5 members at once
+      const promises = Array(5).fill(null).map(() => 
+        supabase.functions.invoke('seed-member-coordinates')
+      );
       
-      toast.success(`Successfully geocoded ${data.geocoded} member locations!`);
+      const results = await Promise.all(promises);
+      const totalGeocoded = results.reduce((sum, { data }) => sum + (data?.geocoded || 0), 0);
+      
+      if (results.some(r => r.error)) {
+        throw new Error('Some members failed to add');
+      }
+      
+      toast.success(`Successfully added ${totalGeocoded} new members to the map!`);
       setNeedsGeocoding(false);
     } catch (error) {
-      console.error('Error geocoding:', error);
-      toast.error('Failed to geocode member locations');
+      console.error('Error adding members:', error);
+      toast.error('Failed to add new members');
     } finally {
       setIsGeocoding(false);
     }
@@ -43,7 +52,7 @@ export const Geography = () => {
           className="gap-2"
         >
           <MapPin className="h-4 w-4" />
-          {isGeocoding ? "Adding member..." : "Add Random Member"}
+          {isGeocoding ? "Adding members..." : "Add 5 Random Members"}
         </Button>
       </div>
       <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>
