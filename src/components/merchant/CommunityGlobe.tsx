@@ -33,6 +33,7 @@ interface SelectedMember {
 export default function CommunityGlobe() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapLoadedRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<"america" | "world">("america");
   const [members, setMembers] = useState<Member[]>([]);
@@ -87,6 +88,13 @@ export default function CommunityGlobe() {
       });
 
       addLayers();
+      
+      mapLoadedRef.current = true;
+      
+      // Call updatePoints if members already loaded
+      if (members.length > 0) {
+        updatePoints();
+      }
     });
 
     return () => map.remove();
@@ -94,7 +102,9 @@ export default function CommunityGlobe() {
 
   // Update data when members or activeTab changes
   useEffect(() => {
-    updatePoints();
+    if (mapLoadedRef.current && members.length > 0) {
+      updatePoints();
+    }
   }, [members, activeTab]);
 
   function addLayers() {
@@ -246,7 +256,7 @@ export default function CommunityGlobe() {
         
         return {
           type: "Feature",
-          geometry: { type: "Point", coordinates: [m.longitude, m.latitude] },
+          geometry: { type: "Point", coordinates: [Number(m.longitude), Number(m.latitude)] },
           properties: {
             id: m.id,
             name: m.display_name ?? "Unknown",
