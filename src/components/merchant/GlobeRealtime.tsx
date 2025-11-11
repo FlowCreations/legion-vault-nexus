@@ -26,7 +26,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
     try {
       // Mapbox public token (safe to expose in client-side code)
-      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1Ijoic29va3oiLCJhIjoiY200MWU0bHIzMDA3YzJrcHl6Mm5kOWE1MSJ9.aKPVN1SrGiNFWPVe4q9-Nw';
+      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1Ijoic3VraGRldjg4IiwiYSI6ImNtaDB4eXQ5YjAyYmIya3B6bTl5dWt6YWMifQ.iue-jhG0kc_pYOV9vRNvzQ';
       
       console.log('🗺️ Initializing Mapbox with token:', mapboxgl.accessToken ? 'Token present' : 'No token');
       
