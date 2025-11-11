@@ -119,32 +119,37 @@ export default function GlobalReachMap({
         const { data, error } = await supabase.functions.invoke(membersEndpoint, { method: 'GET' });
         if (error) throw error;
         
-        console.log('✅ Received data:', data);
+        console.log('✅ Received raw data:', data);
         
         let membersData: Member[];
         if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
-          membersData = data.features.map((f: any) => ({
-            id: f.properties.user_id || f.properties.id,
-            name: f.properties.name || f.properties.display_name || 'Member',
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            city: f.properties.city || (f.properties.location?.split(',')[0]?.trim()) || '',
-            country: f.properties.country || '',
-            avatarUrl: f.properties.avatar_url || f.properties.avatarUrl,
-          }));
+          // Convert GeoJSON features to Member array
+          membersData = data.features
+            .filter((f: any) => {
+              const coords = f.geometry?.coordinates;
+              return coords && coords.length === 2 && 
+                     Number.isFinite(coords[0]) && Number.isFinite(coords[1]);
+            })
+            .map((f: any) => ({
+              id: f.properties.user_id || f.properties.id || Math.random().toString(),
+              name: f.properties.name || f.properties.display_name || 'Member',
+              lng: f.geometry.coordinates[0], // GeoJSON is [lng, lat]
+              lat: f.geometry.coordinates[1],
+              city: f.properties.city || (f.properties.location?.split(',')[0]?.trim()) || '',
+              country: f.properties.country || '',
+              avatarUrl: f.properties.avatar_url || f.properties.avatarUrl,
+            }));
+          
+          console.log('✅ Converted to members:', membersData.length, 'valid coordinates');
         } else if (Array.isArray(data)) {
           membersData = data;
         } else {
           throw new Error('Unexpected data format');
         }
         
-        if (!stopped && Array.isArray(membersData)) {
-          console.log('✅ Loaded members:', membersData.length);
-          setMembers((prev) => {
-            const byId = new Map<string, Member>(prev.map((m) => [m.id, m]));
-            for (const m of membersData) byId.set(m.id, m);
-            return Array.from(byId.values());
-          });
+        if (!stopped && Array.isArray(membersData) && membersData.length > 0) {
+          console.log('✅ Setting members:', membersData.length);
+          setMembers(membersData); // Replace all members with fresh data
         }
       } catch (err) {
         console.error('❌ Error polling members:', err);
@@ -403,11 +408,13 @@ export default function GlobalReachMap({
     const map = mapRef.current;
     if (!map) return;
     
+    console.log('🔄 Attempting to update map with members:', members.length);
+    
     if (!map.isStyleLoaded()) {
       const onLoad = () => {
         const src = map.getSource("members") as mapboxgl.GeoJSONSource;
         if (src) {
-          console.log('📍 Updating members:', featureCollection.features.length);
+          console.log('📍 Updating members on load:', featureCollection.features.length);
           src.setData(featureCollection);
         }
       };
@@ -417,14 +424,16 @@ export default function GlobalReachMap({
     
     const src = map.getSource("members") as mapboxgl.GeoJSONSource;
     if (src) {
-      console.log('📍 Updating members:', featureCollection.features.length);
+      console.log('📍 Updating members data:', featureCollection.features.length, 'features');
       src.setData(featureCollection);
+    } else {
+      console.warn('⚠️ Members source not found on map');
     }
 
-    if (autoFit && !hasFitOnce && members.length) {
+    if (autoFit && !hasFitOnce && members.length > 0) {
       const b = boundsFromMembers(members);
       if (b) {
-        console.log('🎯 Fitting bounds:', members.length, 'members');
+        console.log('🎯 Fitting bounds to', members.length, 'members');
         map.fitBounds(b, { padding, maxZoom: 6, duration: 700 });
         setHasFitOnce(true);
       }
@@ -501,10 +510,10 @@ export default function GlobalReachMap({
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
         <div ref={containerRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
         
-        {/* Pause/Play rotation control */}
+        {/* Pause/Play rotation control - bottom right */}
         <button
           onClick={toggleRotation}
-          className="absolute top-4 right-4 z-10 px-4 py-2 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm hover:bg-black/90 transition-colors"
+          className="absolute bottom-4 right-4 z-10 px-4 py-2 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm hover:bg-black/90 transition-colors font-medium"
         >
           {isRotating ? "⏸ Pause" : "▶ Play"}
         </button>
