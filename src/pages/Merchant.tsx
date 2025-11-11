@@ -13,6 +13,7 @@ const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ de
 const MusicUpload = lazy(() => import("@/components/MusicUpload"));
 const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
 const TopTracks = lazy(() => import("@/components/merchant/TopTracks"));
+const FanbaseStats = lazy(() => import("@/components/merchant/analytics/FanbaseStats"));
 const Geography = lazy(() => import("@/components/merchant/Geography"));
 const Demographics = lazy(() => import("@/components/merchant/Demographics"));
 const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview"));
@@ -282,6 +283,13 @@ const Merchant = memo(() => {
                   <ProgressiveLoader priority="low" delay={1000}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Geography />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* Fanbase Stats - Below Globe */}
+                  <ProgressiveLoader priority="high" delay={200}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <FanbaseStats />
                     </Suspense>
                   </ProgressiveLoader>
                   
