@@ -97,15 +97,26 @@ export default function LiveStudio() {
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const eventData = payload.new as any;
           if (eventData.status === 'live') {
-            console.log('[LiveStudio] Setting live event ID:', eventData.id);
+            console.log('[LiveStudio] Stream is now LIVE! Event ID:', eventData.id);
             setLiveEventId(eventData.id);
-          } else {
-            console.log('[LiveStudio] Event status changed to non-live, clearing');
+            setStreamStartTime(eventData.stream_start_time ? new Date(eventData.stream_start_time) : undefined);
+            toast.success("🔴 Stream is now LIVE!", {
+              description: "Click 'Join Stream' to watch now!"
+            });
+          } else if (eventData.status === 'scheduled' || eventData.status === 'ended') {
+            console.log('[LiveStudio] Stream ended or scheduled, clearing live event');
             setLiveEventId(null);
+            setStreamStartTime(undefined);
+            if (eventData.status === 'ended') {
+              toast.info("Stream has ended", {
+                description: "Thanks for watching!"
+              });
+            }
           }
         } else if (payload.eventType === 'DELETE') {
           console.log('[LiveStudio] Event deleted, clearing live event ID');
           setLiveEventId(null);
+          setStreamStartTime(undefined);
         }
       })
       .subscribe((status) => {
