@@ -43,31 +43,45 @@ export function LiveBroadcaster({ eventId }: Props) {
     requestPermissionsAndLoadDevices();
   }, []);
 
-  const requestPermissionsAndLoadDevices = async () => {
+  const requestPermissionsAndLoadDevices = async (requestPermission = false) => {
     try {
-      console.log('[Broadcaster] Loading device list...');
+      console.log('[Broadcaster] Loading device list...', { requestPermission });
+      
+      // Request permission first if needed
+      if (requestPermission) {
+        try {
+          const testStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+          console.log('[Broadcaster] Permission granted');
+          testStream.getTracks().forEach(track => track.stop());
+        } catch (err) {
+          console.error('[Broadcaster] Permission denied:', err);
+          throw new Error('Microphone and camera access denied. Please allow access in browser settings.');
+        }
+      }
+      
       const devices = await navigator.mediaDevices.enumerateDevices();
       
-      // Map devices with fallback IDs for devices without permission
+      // Only use real devices with proper labels (indicates permission granted)
       const videoDevices = devices
-        .filter(d => d.kind === 'videoinput')
-        .map((d, idx) => ({
+        .filter(d => d.kind === 'videoinput' && d.label)
+        .map(d => ({
           ...d,
-          deviceId: d.deviceId || `video-${idx}`,
-          label: d.label || `Camera ${idx + 1}`
+          deviceId: d.deviceId,
+          label: d.label
         }));
       
       const audioDevices = devices
-        .filter(d => d.kind === 'audioinput')
-        .map((d, idx) => ({
+        .filter(d => d.kind === 'audioinput' && d.label)
+        .map(d => ({
           ...d,
-          deviceId: d.deviceId || `audio-${idx}`,
-          label: d.label || `Microphone ${idx + 1}`
+          deviceId: d.deviceId,
+          label: d.label
         }));
       
       console.log('[Broadcaster] Found devices:', {
         cameras: videoDevices.length,
-        microphones: audioDevices.length
+        microphones: audioDevices.length,
+        devices: audioDevices.map(d => ({ id: d.deviceId, label: d.label }))
       });
       
       setCameras(videoDevices);
@@ -81,7 +95,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
     } catch (err) {
       console.error('[Broadcaster] Failed to load devices:', err);
-      setError('Failed to load device list');
+      throw err;
     }
   };
 
@@ -107,46 +121,56 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       // Create PERSISTENT raw audio analyser for continuous monitoring
       const rawAnalyser = ctx.createAnalyser();
-      rawAnalyser.fftSize = 256;
-      rawAnalyser.smoothingTimeConstant = 0.8;
-      rawAnalyser.minDecibels = -100;
-      rawAnalyser.maxDecibels = -30;
+      rawAnalyser.fftSize = 2048;
+      rawAnalyser.smoothingTimeConstant = 0.3;
+      rawAnalyser.minDecibels = -90;
+      rawAnalyser.maxDecibels = -10;
       rawAudioAnalyserRef.current = rawAnalyser;
       
       // Connect raw source to analyser (for monitoring) - this doesn't interfere with AudioMixer
       source.connect(rawAnalyser);
       
-      // Test raw audio signal detection
+      // Test raw audio signal detection with better algorithm
       console.log('[Broadcaster] Testing raw audio signal...');
       let audioDetected = false;
-      const maxWaitTime = 3000;
+      const maxWaitTime = 5000;
       const startTime = Date.now();
+      let maxRms = 0;
       
       while (!audioDetected && Date.now() - startTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        const testData = new Uint8Array(rawAnalyser.frequencyBinCount);
-        rawAnalyser.getByteTimeDomainData(testData);
+        const freqData = new Uint8Array(rawAnalyser.frequencyBinCount);
+        rawAnalyser.getByteFrequencyData(freqData);
         
-        // Calculate RMS to detect actual signal
+        // Calculate average frequency magnitude
         let sum = 0;
-        for (let i = 0; i < testData.length; i++) {
-          const normalized = (testData[i] - 128) / 128;
-          sum += normalized * normalized;
+        for (let i = 0; i < freqData.length; i++) {
+          sum += freqData[i];
         }
-        const rms = Math.sqrt(sum / testData.length);
+        const avg = sum / freqData.length;
+        const normalizedLevel = avg / 255;
         
-        console.log('[Broadcaster] Raw audio RMS:', rms.toFixed(4));
+        maxRms = Math.max(maxRms, normalizedLevel);
         
-        if (rms > 0.01) {
+        console.log('[Broadcaster] Audio level:', normalizedLevel.toFixed(4), 'max:', maxRms.toFixed(4));
+        
+        // More sensitive detection - any signal above 0.005 (0.5%)
+        if (normalizedLevel > 0.005) {
           audioDetected = true;
-          console.log('[Broadcaster] Raw audio signal DETECTED!');
+          console.log('[Broadcaster] ✅ Audio signal DETECTED!');
         }
       }
       
+      // If we detected ANY signal during the test period, consider it success
+      if (!audioDetected && maxRms > 0.002) {
+        console.log('[Broadcaster] ⚠️ Weak signal detected (max:', maxRms.toFixed(4), '), proceeding anyway');
+        audioDetected = true;
+      }
+      
       if (!audioDetected) {
-        console.warn('[Broadcaster] No raw audio signal detected - check microphone!');
-        throw new Error('No audio signal detected. Please check your microphone and try again.');
+        console.warn('[Broadcaster] ❌ No audio signal detected after', maxWaitTime, 'ms. Max level:', maxRms.toFixed(4));
+        throw new Error('No audio signal detected. Please speak into your microphone or check your settings.');
       }
 
       setAudioReady(true);
@@ -157,7 +181,8 @@ export function LiveBroadcaster({ eventId }: Props) {
         contextState: ctx.state,
         sampleRate: ctx.sampleRate,
         hasSource: !!source,
-        audioDetected
+        audioDetected,
+        maxLevel: maxRms.toFixed(4)
       });
       
     } catch (err) {
@@ -190,51 +215,64 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const startPreview = async () => {
-    if (!selectedCamera || !selectedMicrophone) {
-      setError('Please select both camera and microphone');
-      return;
-    }
-
     try {
       setError(undefined);
       setStatus('requesting-permission');
       console.log('[Broadcaster] Requesting camera and microphone access...');
 
-      // STEP 1: Request raw media streams (this triggers browser permission dialog)
-      // Use true for default device if we don't have real deviceIds yet
-      const useDefaultCamera = selectedCamera.startsWith('video-');
-      const useDefaultMic = selectedMicrophone.startsWith('audio-');
+      // STEP 1: Request permission and load devices with proper labels
+      await requestPermissionsAndLoadDevices(true);
       
+      // Wait a bit for state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check if we have valid devices now
+      if (cameras.length === 0 || microphones.length === 0) {
+        throw new Error('No camera or microphone found. Please connect devices and try again.');
+      }
+      
+      // Use the selected devices or fall back to first available
+      const cameraId = selectedCamera || cameras[0]?.deviceId;
+      const micId = selectedMicrophone || microphones[0]?.deviceId;
+      
+      if (!cameraId || !micId) {
+        throw new Error('Please select both camera and microphone');
+      }
+
+      console.log('[Broadcaster] Using devices:', {
+        camera: cameras.find(c => c.deviceId === cameraId)?.label,
+        microphone: microphones.find(m => m.deviceId === micId)?.label
+      });
+      
+      // STEP 2: Request raw media streams with specific device IDs
       const rawStream = await navigator.mediaDevices.getUserMedia({
-        audio: useDefaultMic ? true : {
-          deviceId: { exact: selectedMicrophone },
-          echoCancellation: true,
-          noiseSuppression: true,
+        audio: {
+          deviceId: { exact: micId },
+          echoCancellation: false,
+          noiseSuppression: false,
           autoGainControl: false,
           sampleRate: 48000,
           channelCount: 2
         },
-        video: useDefaultCamera ? true : {
-          deviceId: { exact: selectedCamera },
+        video: {
+          deviceId: { exact: cameraId },
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         }
       });
 
-      console.log('[Broadcaster] Permission granted! Stream tracks:', {
+      console.log('[Broadcaster] ✅ Stream acquired! Tracks:', {
         audio: rawStream.getAudioTracks().map(t => ({
           label: t.label,
           enabled: t.enabled,
-          readyState: t.readyState
+          readyState: t.readyState,
+          settings: t.getSettings()
         })),
         video: rawStream.getVideoTracks().map(t => ({
           label: t.label,
           enabled: t.enabled
         }))
       });
-
-      // Re-enumerate devices now that we have permission to get actual device IDs and labels
-      await requestPermissionsAndLoadDevices();
 
       // STEP 2: Initialize audio processing
       setStatus('initializing-audio');
@@ -616,43 +654,57 @@ export function LiveBroadcaster({ eventId }: Props) {
       {/* Device Selection */}
       {status === 'idle' && (
         <div className="space-y-4">
-          <div>
-            <Label>Camera</Label>
-            <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select camera" />
-              </SelectTrigger>
-              <SelectContent>
-                {cameras.map(cam => (
-                  <SelectItem key={cam.deviceId} value={cam.deviceId}>
-                    {cam.label || `Camera ${cam.deviceId.slice(0, 8)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {cameras.length === 0 && microphones.length === 0 && (
+            <Card className="p-4 bg-blue-50 border-blue-200">
+              <p className="text-sm text-blue-800">
+                Click "Start Preview" to grant camera and microphone access, then select your devices.
+              </p>
+            </Card>
+          )}
+          
+          {cameras.length > 0 && (
+            <div>
+              <Label>Camera</Label>
+              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select camera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cameras.map(cam => (
+                    <SelectItem key={cam.deviceId} value={cam.deviceId}>
+                      {cam.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          <div>
-            <Label>Microphone</Label>
-            <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select microphone" />
-              </SelectTrigger>
-              <SelectContent>
-                {microphones.map(mic => (
-                  <SelectItem key={mic.deviceId} value={mic.deviceId}>
-                    {mic.label || `Microphone ${mic.deviceId.slice(0, 8)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {microphones.length > 0 && (
+            <div>
+              <Label>Microphone</Label>
+              <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select microphone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {microphones.map(mic => (
+                    <SelectItem key={mic.deviceId} value={mic.deviceId}>
+                      {mic.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Real-time Microphone Test */}
-          <div className="space-y-2">
-            <Label>Live Microphone Level</Label>
-            <MicrophoneMeter stream={rawMicStream} />
-          </div>
+          {rawMicStream && (
+            <div className="space-y-2">
+              <Label>Live Microphone Level</Label>
+              <MicrophoneMeter stream={rawMicStream} />
+            </div>
+          )}
 
           <Button onClick={startPreview} className="w-full">
             <Play className="w-4 h-4 mr-2" />
