@@ -3,6 +3,8 @@ import { startErrorObservers } from '@/diagnostics/errorObservers';
 import { startLongTaskObserver } from '@/diagnostics/longTaskObserver';
 import { startEventLoopLagMonitor } from '@/diagnostics/eventLoopLag';
 import { startNetworkProxy } from '@/diagnostics/networkProxy';
+import { startPageLoadObserver } from '@/diagnostics/pageLoadObserver';
+import { startRouteChangeObserver } from '@/diagnostics/routeChangeObserver';
 
 export const useDiagnostics = () => {
   useEffect(() => {
@@ -19,6 +21,8 @@ export const useDiagnostics = () => {
       startLongTaskObserver(),
       startEventLoopLagMonitor(),
       startNetworkProxy(),
+      startPageLoadObserver(),
+      startRouteChangeObserver(),
     ];
 
     return () => {

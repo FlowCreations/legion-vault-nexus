@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -422,15 +419,32 @@ const handler = async (req: Request): Promise<Response> => {
       daysRemaining: data.daysRemaining 
     });
 
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY is required');
+    }
+
     const features = data.features.length > 0 ? data.features : getTierFeatures(data.planType);
     const { subject, html } = getEmailContent({ ...data, features });
 
-    const emailResponse = await resend.emails.send({
-      from: "Sons of Legion <onboarding@resend.dev>",
-      to: [data.email],
-      subject,
-      html,
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Sons of Legion <onboarding@resend.dev>',
+        to: [data.email],
+        subject,
+        html,
+      }),
     });
+
+    const emailResponse = await resendResponse.json();
+    const error = !resendResponse.ok ? new Error(emailResponse.message || 'Failed to send email') : null;
+
+    if (error) throw error;
 
     console.log('Trial expiration email sent successfully:', emailResponse);
 

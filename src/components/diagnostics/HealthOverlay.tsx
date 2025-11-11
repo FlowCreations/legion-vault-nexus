@@ -15,6 +15,8 @@ export const HealthOverlay = () => {
   const [fps, setFps] = useState(60);
   const [memoryUsage, setMemoryUsage] = useState(0);
   const [isFixing, setIsFixing] = useState(false);
+  const [lastPageLoad, setLastPageLoad] = useState<number | null>(null);
+  const [lastRouteChange, setLastRouteChange] = useState<number | null>(null);
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
 
@@ -29,6 +31,12 @@ export const HealthOverlay = () => {
 
     const unsubscribe = diagnosticsStore.subscribe((event) => {
       setEvents((prev) => [...prev.slice(-19), event]);
+      
+      if (event.type === 'pageload') {
+        setLastPageLoad(event.totalLoadTime);
+      } else if (event.type === 'routechange') {
+        setLastRouteChange(event.duration);
+      }
     });
 
     // FPS monitoring
@@ -88,7 +96,7 @@ export const HealthOverlay = () => {
     });
 
     try {
-      const results = await runQuickFix(fps, memoryUsage);
+      const results = await runQuickFix(fps, memoryUsage, lastPageLoad || undefined);
       const successful = results.filter(r => r.success);
       const failed = results.filter(r => !r.success);
 
@@ -117,7 +125,20 @@ export const HealthOverlay = () => {
     }
   };
 
-  const hasIssues = fps < 40 || memoryUsage > 60 || diagnosticsStore.getAll().length > 100;
+  const getPageLoadColor = () => {
+    if (!lastPageLoad) return 'text-muted-foreground';
+    if (lastPageLoad > 2000) return 'text-destructive';
+    if (lastPageLoad > 1000) return 'text-yellow-500';
+    return 'text-green-500';
+  };
+
+  const getRouteChangeColor = () => {
+    if (!lastRouteChange) return 'text-muted-foreground';
+    if (lastRouteChange > 500) return 'text-destructive';
+    return 'text-green-500';
+  };
+
+  const hasIssues = fps < 40 || memoryUsage > 60 || diagnosticsStore.getAll().length > 100 || (lastPageLoad && lastPageLoad > 2000);
 
   // Don't render anything if user is not an admin
   if (!isAdmin) {
@@ -142,6 +163,8 @@ export const HealthOverlay = () => {
       case "longtask": return <Zap className="w-4 h-4 text-yellow-500" />;
       case "lag": return <Activity className="w-4 h-4 text-orange-500" />;
       case "network": return <Network className="w-4 h-4 text-blue-500" />;
+      case "pageload": return <Activity className="w-4 h-4 text-primary" />;
+      case "routechange": return <Activity className="w-4 h-4 text-purple-500" />;
       default: return <Activity className="w-4 h-4 text-muted-foreground" />;
     }
   };
@@ -152,6 +175,8 @@ export const HealthOverlay = () => {
       case "longtask": return "text-yellow-500";
       case "lag": return "text-orange-500";
       case "network": return "text-blue-500";
+      case "pageload": return "text-primary";
+      case "routechange": return "text-purple-500";
       default: return "text-muted-foreground";
     }
   };
@@ -169,6 +194,10 @@ export const HealthOverlay = () => {
         return `${time} - ${event.method} ${event.url.substring(0, 50)}... ${event.durationMs?.toFixed(0)}ms ${event.status || 'ERR'}`;
       case "log":
         return `${time} - ${event.level.toUpperCase()}: ${event.message}`;
+      case "pageload":
+        return `${time} - Page load: ${event.url} (${event.totalLoadTime.toFixed(0)}ms)`;
+      case "routechange":
+        return `${time} - Route: ${event.from} → ${event.to} (${event.duration.toFixed(0)}ms)`;
       default:
         return `${time} - Unknown event`;
     }
@@ -193,7 +222,7 @@ export const HealthOverlay = () => {
 
       <div className="p-3 space-y-3">
         {/* Live Metrics */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div className="bg-background rounded p-2 text-center">
             <div className="text-xs text-muted-foreground">FPS</div>
             <div className={`text-lg font-bold ${fps < 30 ? 'text-destructive' : fps < 50 ? 'text-yellow-500' : 'text-green-500'}`}>
@@ -207,9 +236,15 @@ export const HealthOverlay = () => {
             </div>
           </div>
           <div className="bg-background rounded p-2 text-center">
-            <div className="text-xs text-muted-foreground">Events</div>
-            <div className="text-lg font-bold text-primary">
-              {diagnosticsStore.getAll().length}
+            <div className="text-xs text-muted-foreground">Page Load</div>
+            <div className={`text-sm font-bold ${getPageLoadColor()}`}>
+              {lastPageLoad ? `${lastPageLoad.toFixed(0)}ms` : 'N/A'}
+            </div>
+          </div>
+          <div className="bg-background rounded p-2 text-center">
+            <div className="text-xs text-muted-foreground">Route</div>
+            <div className={`text-sm font-bold ${getRouteChangeColor()}`}>
+              {lastRouteChange ? `${lastRouteChange.toFixed(0)}ms` : 'N/A'}
             </div>
           </div>
         </div>

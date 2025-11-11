@@ -159,9 +159,34 @@ export const getDiagnosticSummary = () => {
 };
 
 /**
+ * Optimize page load by clearing route caches
+ */
+function optimizePageLoad(): FixResult {
+  try {
+    const routeCacheKeys = Object.keys(sessionStorage).filter(key => 
+      key.startsWith('route-') || key.startsWith('page-')
+    );
+    
+    routeCacheKeys.forEach(key => sessionStorage.removeItem(key));
+    
+    return {
+      success: true,
+      message: `Cleared ${routeCacheKeys.length} route cache entries`,
+      details: routeCacheKeys.length > 0 ? 'Route caches cleared' : 'No route caches to clear'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Failed to clear route caches',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
  * Run all performance fixes based on current issues
  */
-export const runQuickFix = async (fps: number, memoryPercent: number): Promise<FixResult[]> => {
+export const runQuickFix = async (fps: number, memoryPercent: number, pageLoadTime?: number): Promise<FixResult[]> => {
   const results: FixResult[] = [];
   const summary = getDiagnosticSummary();
   
@@ -183,6 +208,11 @@ export const runQuickFix = async (fps: number, memoryPercent: number): Promise<F
     if (summary.totalEvents > 50) {
       results.push(clearOldDiagnosticEvents(20));
     }
+  }
+  
+  // If page load is slow, optimize
+  if (pageLoadTime && pageLoadTime > 2000) {
+    results.push(optimizePageLoad());
   }
   
   // Small delay to allow cleanup to process

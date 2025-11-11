@@ -36,6 +36,25 @@ export type DiagnosticEvent =
       level: LogLevel;
       message: string;
       data?: unknown;
+    }
+  | {
+      type: "pageload";
+      ts: number;
+      url: string;
+      dnsTime: number;
+      tcpTime: number;
+      requestTime: number;
+      domProcessingTime: number;
+      totalLoadTime: number;
+      fcp?: number;
+    }
+  | {
+      type: "routechange";
+      ts: number;
+      from: string;
+      to: string;
+      duration: number;
+      wasBlocking: boolean;
     };
 
 type Listener = (e: DiagnosticEvent) => void;
@@ -85,7 +104,9 @@ class DiagnosticsStore {
     const longTasks = this.events.filter(e => e.type === 'longtask').length;
     const lagEvents = this.events.filter(e => e.type === 'lag').length;
     const networkErrors = this.events.filter(e => e.type === 'network' && !e.ok).length;
-    return { errors, longTasks, lagEvents, networkErrors, total: this.events.length };
+    const slowPageLoads = this.events.filter(e => e.type === 'pageload' && e.totalLoadTime > 2000).length;
+    const slowRoutes = this.events.filter(e => e.type === 'routechange' && e.wasBlocking).length;
+    return { errors, longTasks, lagEvents, networkErrors, slowPageLoads, slowRoutes, total: this.events.length };
   }
 }
 
