@@ -3803,6 +3803,44 @@ export type Database = {
         }
         Relationships: []
       }
+      trial_email_logs: {
+        Row: {
+          created_at: string
+          email_type: string
+          id: string
+          plan_type: string
+          sent_at: string
+          subscription_id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          id?: string
+          plan_type: string
+          sent_at?: string
+          subscription_id: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          id?: string
+          plan_type?: string
+          sent_at?: string
+          subscription_id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_email_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_analytics: {
         Row: {
           ai_insights: Json | null
