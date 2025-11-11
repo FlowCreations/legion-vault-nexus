@@ -271,21 +271,28 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* HIGH PRIORITY - Load after 100ms */}
+                  {/* HIGH PRIORITY - Daily Sales */}
                   <ProgressiveLoader priority="high" delay={100}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <PlatformOverview />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* GLOBE - Second position, still low priority due to 3D performance */}
+                  {/* GLOBE - Second position */}
                   <ProgressiveLoader priority="low" delay={1000}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Geography />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* MEDIUM PRIORITY - Load when browser is idle (300-500ms) */}
+                  {/* Demographics - Third position */}
+                  <ProgressiveLoader priority="low" delay={1200}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Demographics />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* Platform Distribution - Fourth position */}
                   <ProgressiveLoader priority="medium" delay={300}>
                     <div className="grid gap-6 md:grid-cols-2">
                       <Suspense fallback={<LoadingSpinner />}>
@@ -297,22 +304,17 @@ const Merchant = memo(() => {
                     </div>
                   </ProgressiveLoader>
                   
-                  {/* LOW PRIORITY - Load after medium components (1s) */}
+                  {/* Most Talked About - Fifth position */}
                   <ProgressiveLoader priority="low" delay={1000}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <MostTalkedAbout />
                     </Suspense>
                   </ProgressiveLoader>
                   
+                  {/* Top Tracks - Sixth position */}
                   <ProgressiveLoader priority="low" delay={1000}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <TopTracks period="7days" />
-                    </Suspense>
-                  </ProgressiveLoader>
-                  
-                  <ProgressiveLoader priority="low" delay={1200}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <Demographics />
                     </Suspense>
                   </ProgressiveLoader>
                 </div>
