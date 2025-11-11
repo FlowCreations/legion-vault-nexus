@@ -20,6 +20,17 @@ interface AudioMixerProps {
 
 export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser }: AudioMixerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Refs for audio nodes - persist across renders for parameter updates
+  const lowShelfRef = useRef<BiquadFilterNode | null>(null);
+  const midPeakRef = useRef<BiquadFilterNode | null>(null);
+  const highShelfRef = useRef<BiquadFilterNode | null>(null);
+  const compressorRef = useRef<DynamicsCompressorNode | null>(null);
+  const limiterRef = useRef<DynamicsCompressorNode | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const reverbGainRef = useRef<GainNode | null>(null);
+  const dryGainRef = useRef<GainNode | null>(null);
+  
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
   const [midGain, setMidGain] = useState(0);
@@ -175,17 +186,20 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         lowShelf.type = 'lowshelf';
         lowShelf.frequency.value = 320;
         lowShelf.gain.value = lowGain;
+        lowShelfRef.current = lowShelf;
 
         midPeak = audioContext.createBiquadFilter();
         midPeak.type = 'peaking';
         midPeak.frequency.value = 1000;
         midPeak.Q.value = 1;
         midPeak.gain.value = midGain;
+        midPeakRef.current = midPeak;
 
         highShelf = audioContext.createBiquadFilter();
         highShelf.type = 'highshelf';
         highShelf.frequency.value = 3200;
         highShelf.gain.value = highGain;
+        highShelfRef.current = highShelf;
 
         // Compressor
         compressor = audioContext.createDynamicsCompressor();
@@ -194,6 +208,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         compressor.attack.value = attack;
         compressor.release.value = release;
         compressor.knee.value = knee;
+        compressorRef.current = compressor;
 
         // Limiter
         limiter = audioContext.createDynamicsCompressor();
@@ -202,6 +217,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         limiter.attack.value = 0.001;
         limiter.release.value = 0.1;
         limiter.knee.value = 0;
+        limiterRef.current = limiter;
 
         // Reverb
         const convolver = audioContext.createConvolver();
@@ -209,6 +225,8 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         const dryGain = audioContext.createGain();
         reverbGain.gain.value = reverbMix / 100;
         dryGain.gain.value = 1 - (reverbMix / 100);
+        reverbGainRef.current = reverbGain;
+        dryGainRef.current = dryGain;
 
         const impulseLength = audioContext.sampleRate * 2;
         const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
@@ -223,6 +241,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         // Master gain
         master = audioContext.createGain();
         master.gain.value = masterGain;
+        masterGainRef.current = master;
 
         // Detect mono vs stereo input
         const channelCount = sourceNode.channelCount;
@@ -436,11 +455,50 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     };
   }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser]);
 
-  // Effect 2: Update node parameters (runs when controls change)
+  // Effect 2: Update node parameters in real-time (runs when controls change)
   useEffect(() => {
-    // This effect intentionally left minimal to avoid recreating the entire chain
-    // All parameter updates are handled by the nodes created in Effect 1
-  }, [lowGain, midGain, highGain, compressorEnabled, threshold, ratio, attack, release, knee, limiterEnabled, limiterThreshold, masterGain, reverbMix]);
+    if (!lowShelfRef.current || !midPeakRef.current || !highShelfRef.current) {
+      return;
+    }
+    
+    // Update EQ parameters
+    lowShelfRef.current.gain.value = lowGain;
+    midPeakRef.current.gain.value = midGain;
+    highShelfRef.current.gain.value = highGain;
+    
+    // Update compressor parameters
+    if (compressorRef.current) {
+      compressorRef.current.threshold.value = threshold;
+      compressorRef.current.ratio.value = ratio;
+      compressorRef.current.attack.value = attack;
+      compressorRef.current.release.value = release;
+      compressorRef.current.knee.value = knee;
+    }
+    
+    // Update limiter threshold
+    if (limiterRef.current) {
+      limiterRef.current.threshold.value = limiterThreshold;
+    }
+    
+    // Update master gain
+    if (masterGainRef.current) {
+      masterGainRef.current.gain.value = masterGain;
+    }
+    
+    // Update reverb mix
+    if (reverbGainRef.current && dryGainRef.current) {
+      reverbGainRef.current.gain.value = reverbMix / 100;
+      dryGainRef.current.gain.value = 1 - (reverbMix / 100);
+    }
+    
+    console.log('[AudioMixer] ✅ Parameters updated:', { 
+      lowGain, midGain, highGain, 
+      threshold, ratio, attack, release, knee,
+      limiterThreshold, 
+      masterGain, 
+      reverbMix 
+    });
+  }, [lowGain, midGain, highGain, threshold, ratio, attack, release, knee, limiterThreshold, masterGain, reverbMix]);
 
   if (!audioContext || !sourceNode) {
     return (

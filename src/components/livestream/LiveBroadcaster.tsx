@@ -241,6 +241,7 @@ export function LiveBroadcaster({ eventId }: Props) {
     try {
       setError(undefined);
       setStatus('requesting-permission');
+      console.log('[Broadcaster] 🎬 Starting preview flow...');
       console.log('[Broadcaster] Requesting camera and microphone access...');
 
       // STEP 1: Request permission and reload devices with proper labels
@@ -316,7 +317,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Audio processing initialized, waiting for AudioMixer to be ready');
 
       // STEP 4: Wait for AudioMixer to signal ready
-      console.log('[Broadcaster] Waiting for AudioMixer initialization...');
+      console.log('[Broadcaster] ⏳ Waiting for AudioMixer initialization...');
       mixerReadyRef.current = false;
       setMixerReady(false);
       const mixerTimeout = 5000;
@@ -330,7 +331,7 @@ export function LiveBroadcaster({ eventId }: Props) {
         throw new Error('Audio mixer failed to initialize. Please try again.');
       }
       
-      console.log('[Broadcaster] AudioMixer ready!');
+      console.log('[Broadcaster] ✅ AudioMixer ready! Processing enabled.');
 
       // STEP 5: Wait for processed stream
       const streamTimeout = 2000;
@@ -349,7 +350,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       // STEP 6: Create LiveKit tracks for broadcasting
       const actualVideoId = videoStream.getVideoTracks()[0]?.getSettings().deviceId;
       
-      console.log('[Broadcaster] Using processed audio stream for LiveKit');
+      console.log('[Broadcaster] 🎵 Using processed audio stream for LiveKit (with EQ, compression, gain)');
       
       // Create video track with LiveKit
       const videoTracks = await createLocalTracks({
@@ -426,7 +427,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
 
       setStatus('preview');
-      console.log('[Broadcaster] Preview started successfully');
+      console.log('[Broadcaster] ✅ Preview started successfully with audio processing enabled');
     } catch (e: any) {
       console.error('[Broadcaster] Preview error:', e);
       let errorMessage = e.message || 'Failed to start preview';
