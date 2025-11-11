@@ -275,15 +275,22 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Fanbase Stats - Load quickly */}
+                  {/* GLOBE - Second position as requested */}
                   <ProgressiveLoader priority="high" delay={50}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Geography />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* Fanbase Stats */}
+                  <ProgressiveLoader priority="high" delay={100}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <FanbaseStats />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Platform Distribution - Load quickly */}
-                  <ProgressiveLoader priority="high" delay={100}>
+                  {/* Platform Distribution */}
+                  <ProgressiveLoader priority="high" delay={150}>
                     <div className="grid gap-6 md:grid-cols-2">
                       <Suspense fallback={<LoadingSpinner />}>
                         <PlatformDistribution />
@@ -292,13 +299,6 @@ const Merchant = memo(() => {
                         <EngagementTimeline />
                       </Suspense>
                     </div>
-                  </ProgressiveLoader>
-                  
-                  {/* GLOBE - Load after above-fold content */}
-                  <ProgressiveLoader priority="medium" delay={150}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <Geography />
-                    </Suspense>
                   </ProgressiveLoader>
                   
                   {/* Demographics */}

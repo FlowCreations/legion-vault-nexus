@@ -9,8 +9,6 @@ export const Geography = () => {
   const [needsGeocoding, setNeedsGeocoding] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [memberCount, setMemberCount] = useState(0);
-  const [shouldLoadGlobe, setShouldLoadGlobe] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const checkGeocoding = useCallback(async () => {
     try {
@@ -50,27 +48,9 @@ export const Geography = () => {
     }
   };
 
-  // Intersection Observer to only load globe when visible
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShouldLoadGlobe(true);
-          observer.disconnect(); // Only load once
-        }
-      },
-      { rootMargin: '200px' } // Start loading 200px before visible
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
 
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold">Global Reach</h2>
         {needsGeocoding && (
@@ -87,16 +67,7 @@ export const Geography = () => {
           </Button>
         )}
       </div>
-      {shouldLoadGlobe ? (
-        <GlobeRealtime />
-      ) : (
-        <div className="w-full h-[600px] rounded-lg border border-border bg-muted/20 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading globe...</p>
-          </div>
-        </div>
-      )}
+      <GlobeRealtime />
     </div>
   );
 };
