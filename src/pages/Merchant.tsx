@@ -47,7 +47,7 @@ const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoord
 const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
 const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(m => ({ default: m.CommunityMembers })));
 const HeartbeatToggle = lazy(() => import("@/components/merchant/HeartbeatToggle").then(m => ({ default: m.HeartbeatToggle })));
-const CommunityGlobe = lazy(() => import("@/components/merchant/CommunityGlobe"));
+
 const MostTalkedAbout = lazy(() => import("@/components/merchant/MostTalkedAbout").then(m => ({ default: m.MostTalkedAbout })));
 const DataInsights = lazy(() => import("@/components/merchant/DataInsights").then(m => ({ default: m.DataInsights })));
 
@@ -438,10 +438,6 @@ const Merchant = memo(() => {
               <div className="space-y-6">
                 <Suspense fallback={<LoadingSpinner />}>
                   <HeartbeatToggle />
-                </Suspense>
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <CommunityGlobe />
                 </Suspense>
                 
                 <Tabs defaultValue="members" className="space-y-6">
