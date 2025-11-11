@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export type Member = {
   id: string;
@@ -71,6 +72,8 @@ export default function GlobalReachMap({
   const [members, setMembers] = useState<Member[]>(membersProp);
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hoveredMember, setHoveredMember] = useState<Member | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
 
   // Fetch Mapbox token
   useEffect(() => {
@@ -381,6 +384,37 @@ export default function GlobalReachMap({
           map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
 
+          // Hover panel for unclustered points
+          map.on("mousemove", "unclustered-point", (e) => {
+            if (e.features && e.features.length > 0) {
+              const feature = e.features[0] as any;
+              const { properties } = feature;
+              
+              setHoveredMember({
+                id: properties.id || '',
+                name: properties.name || 'Member',
+                lat: properties.lat || 0,
+                lng: properties.lng || 0,
+                city: properties.city,
+                country: properties.country,
+                avatarUrl: properties.avatarUrl,
+              });
+              
+              // Get pixel position relative to the container
+              const canvas = map.getCanvas();
+              const rect = canvas.getBoundingClientRect();
+              setHoverPosition({
+                x: e.point.x,
+                y: e.point.y,
+              });
+            }
+          });
+
+          map.on("mouseleave", "unclustered-point", () => {
+            setHoveredMember(null);
+            setHoverPosition(null);
+          });
+
           // Start globe rotation
           spinGlobe();
         });
@@ -509,6 +543,49 @@ export default function GlobalReachMap({
       
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
         <div ref={containerRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
+        
+        {/* Hover Info Panel */}
+        <AnimatePresence>
+          {hoveredMember && hoverPosition && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute z-20 pointer-events-none"
+              style={{
+                left: `${hoverPosition.x + 16}px`,
+                top: `${hoverPosition.y - 60}px`,
+              }}
+            >
+              <div className="bg-black/90 backdrop-blur-md border border-[hsl(var(--primary))]/40 rounded-lg p-3 shadow-xl min-w-[200px]">
+                <div className="flex items-center gap-3">
+                  {hoveredMember.avatarUrl && (
+                    <img
+                      src={hoveredMember.avatarUrl}
+                      alt=""
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[hsl(var(--primary))]/50"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground text-sm truncate">
+                      {hoveredMember.name}
+                    </div>
+                    {(hoveredMember.city || hoveredMember.country) && (
+                      <div className="text-xs text-muted-foreground truncate">
+                        {[hoveredMember.city, hoveredMember.country].filter(Boolean).join(", ")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Small arrow pointing down */}
+                <div
+                  className="absolute left-4 -bottom-1 w-2 h-2 bg-black/90 border-r border-b border-[hsl(var(--primary))]/40 transform rotate-45"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Pause/Play rotation control - bottom right */}
         <button
