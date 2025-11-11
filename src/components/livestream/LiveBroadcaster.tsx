@@ -112,11 +112,14 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const setupAudioProcessing = async (rawStream: MediaStream) => {
     try {
-      const ctx = new AudioContext({ sampleRate: 48000 });
+      // Create AudioContext with proper initialization
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioContextClass({ sampleRate: 48000 });
       
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
       
       // CRITICAL: Resume audio context - required for browser autoplay policy
+      // This MUST be called from a user gesture (button click)
       if (ctx.state === 'suspended') {
         console.log('[Broadcaster] Resuming suspended AudioContext...');
         await ctx.resume();
@@ -124,64 +127,53 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
       
       if (ctx.state !== 'running') {
-        console.error('[Broadcaster] AudioContext not running after resume attempt:', ctx.state);
-        throw new Error('AudioContext failed to start - please click Start Preview again');
+        console.error('[Broadcaster] AudioContext not running:', ctx.state);
+        throw new Error('AudioContext failed to start. Click Start Preview again.');
       }
       
       const source = ctx.createMediaStreamSource(rawStream);
 
-      // Create PERSISTENT raw audio analyser for continuous monitoring
+      // Create analyzer for continuous monitoring
       const rawAnalyser = ctx.createAnalyser();
-      rawAnalyser.fftSize = 2048;
+      rawAnalyser.fftSize = 256;
       rawAnalyser.smoothingTimeConstant = 0.3;
       rawAnalyser.minDecibels = -90;
       rawAnalyser.maxDecibels = -10;
       rawAudioAnalyserRef.current = rawAnalyser;
       
-      // Connect raw source to analyser (for monitoring) - this doesn't interfere with AudioMixer
+      // Connect source to analyser
       source.connect(rawAnalyser);
       
-      // Test raw audio signal detection with better algorithm
-      console.log('[Broadcaster] Testing raw audio signal...');
+      // Test audio signal detection with better detection
+      console.log('[Broadcaster] Testing audio signal...');
       let audioDetected = false;
-      const maxWaitTime = 5000;
+      const maxWaitTime = 3000;
       const startTime = Date.now();
-      let maxRms = 0;
+      const bufferLength = rawAnalyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
       
       while (!audioDetected && Date.now() - startTime < maxWaitTime) {
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        const freqData = new Uint8Array(rawAnalyser.frequencyBinCount);
-        rawAnalyser.getByteFrequencyData(freqData);
+        rawAnalyser.getByteFrequencyData(dataArray);
         
         // Calculate average frequency magnitude
-        let sum = 0;
-        for (let i = 0; i < freqData.length; i++) {
-          sum += freqData[i];
-        }
-        const avg = sum / freqData.length;
-        const normalizedLevel = avg / 255;
+        const sum = dataArray.reduce((a, b) => a + b, 0);
+        const avg = sum / bufferLength;
         
-        maxRms = Math.max(maxRms, normalizedLevel);
+        console.log('[Broadcaster] Audio level:', avg.toFixed(2), '/255');
         
-        console.log('[Broadcaster] Audio level:', normalizedLevel.toFixed(4), 'max:', maxRms.toFixed(4));
-        
-        // More sensitive detection - any signal above 0.005 (0.5%)
-        if (normalizedLevel > 0.005) {
+        // Detect any signal above noise floor (> 5 is reasonable)
+        if (avg > 5) {
           audioDetected = true;
-          console.log('[Broadcaster] ✅ Audio signal DETECTED!');
+          console.log('[Broadcaster] ✅ Audio signal DETECTED! Level:', avg);
         }
-      }
-      
-      // If we detected ANY signal during the test period, consider it success
-      if (!audioDetected && maxRms > 0.002) {
-        console.log('[Broadcaster] ⚠️ Weak signal detected (max:', maxRms.toFixed(4), '), proceeding anyway');
-        audioDetected = true;
       }
       
       if (!audioDetected) {
-        console.warn('[Broadcaster] ❌ No audio signal detected after', maxWaitTime, 'ms. Max level:', maxRms.toFixed(4));
-        throw new Error('No audio signal detected. Please speak into your microphone or check your settings.');
+        console.warn('[Broadcaster] ⚠️ No audio detected after', maxWaitTime, 'ms');
+        // Don't throw error, just warn - user might be silent
+        console.log('[Broadcaster] Proceeding anyway - user might start speaking later');
       }
 
       setAudioReady(true);
@@ -191,9 +183,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Audio processing setup complete:', {
         contextState: ctx.state,
         sampleRate: ctx.sampleRate,
-        hasSource: !!source,
-        audioDetected,
-        maxLevel: maxRms.toFixed(4)
+        audioDetected
       });
       
     } catch (err) {
@@ -247,14 +237,25 @@ export function LiveBroadcaster({ eventId }: Props) {
       if (!cameraId || !micId) {
         throw new Error('No camera or microphone found. Please connect devices and try again.');
       }
-
+      
       console.log('[Broadcaster] Using devices:', {
         camera: currentCameras.find(c => c.deviceId === cameraId)?.label,
         microphone: currentMics.find(m => m.deviceId === micId)?.label
       });
       
-      // STEP 2: Request raw media streams with specific device IDs
-      const rawStream = await navigator.mediaDevices.getUserMedia({
+      // STEP 2: Request SEPARATE streams for video and audio
+      // This is critical - don't reuse the same stream for both preview and audio processing
+      console.log('[Broadcaster] Requesting video stream...');
+      const videoStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: cameraId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+      
+      console.log('[Broadcaster] Requesting audio stream...');
+      const audioStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           deviceId: { exact: micId },
           echoCancellation: false,
@@ -262,42 +263,37 @@ export function LiveBroadcaster({ eventId }: Props) {
           autoGainControl: false,
           sampleRate: 48000,
           channelCount: 2
-        },
-        video: {
-          deviceId: { exact: cameraId },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
         }
       });
 
-      console.log('[Broadcaster] ✅ Stream acquired! Tracks:', {
-        audio: rawStream.getAudioTracks().map(t => ({
+      console.log('[Broadcaster] ✅ Streams acquired!', {
+        video: videoStream.getVideoTracks().map(t => ({
           label: t.label,
           enabled: t.enabled,
           readyState: t.readyState,
-          settings: t.getSettings()
+          muted: t.muted
         })),
-        video: rawStream.getVideoTracks().map(t => ({
+        audio: audioStream.getAudioTracks().map(t => ({
           label: t.label,
-          enabled: t.enabled
+          enabled: t.enabled,
+          readyState: t.readyState,
+          muted: t.muted,
+          settings: t.getSettings()
         }))
       });
 
-      // STEP 2: Initialize audio processing
+      // STEP 3: Initialize audio processing with SEPARATE audio stream
       setStatus('initializing-audio');
-      console.log('[Broadcaster] Initializing audio processing...');
+      console.log('[Broadcaster] Initializing audio processing with dedicated audio stream...');
       
-      const audioStream = new MediaStream(rawStream.getAudioTracks());
-      console.log('[Broadcaster] Created audio stream for processing:', audioStream.id);
-      
-      // Store raw mic stream for visualization during device selection
+      // Store raw mic stream for visualization
       setRawMicStream(audioStream);
       
       // Setup audio processing - this will test raw audio and set audioReady
       await setupAudioProcessing(audioStream);
       console.log('[Broadcaster] Audio processing initialized, waiting for AudioMixer to be ready');
 
-      // STEP 3: Wait for AudioMixer to signal ready
+      // STEP 4: Wait for AudioMixer to signal ready
       console.log('[Broadcaster] Waiting for AudioMixer initialization...');
       mixerReadyRef.current = false;
       setMixerReady(false);
@@ -314,7 +310,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       console.log('[Broadcaster] AudioMixer ready!');
 
-      // STEP 4: Wait for processed stream
+      // STEP 5: Wait for processed stream
       const streamTimeout = 2000;
       const streamStartTime = Date.now();
       
@@ -328,8 +324,8 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       console.log('[Broadcaster] Processed audio stream confirmed');
 
-      // STEP 5: Create LiveKit tracks for broadcasting
-      const actualVideoId = rawStream.getVideoTracks()[0]?.getSettings().deviceId;
+      // STEP 6: Create LiveKit tracks for broadcasting
+      const actualVideoId = videoStream.getVideoTracks()[0]?.getSettings().deviceId;
       
       console.log('[Broadcaster] Using processed audio stream for LiveKit');
       
@@ -384,42 +380,68 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Preview started successfully');
     } catch (e: any) {
       console.error('[Broadcaster] Preview error:', e);
-      const errorMessage = e.message || 'Failed to start preview';
+      let errorMessage = e.message || 'Failed to start preview';
       
-      if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
-        setError('Camera/microphone access denied. Please allow access in your browser settings.');
-      } else {
-        setError(errorMessage);
+      if (e.name === 'NotAllowedError' || errorMessage.includes('Permission denied')) {
+        errorMessage = '🔒 Microphone/camera access blocked. Please enable permissions in browser settings.';
+      } else if (e.name === 'NotReadableError') {
+        errorMessage = '⚠️ Camera/microphone already in use by another application. Please close other apps and try again.';
+      } else if (e.name === 'NotFoundError') {
+        errorMessage = '❌ No camera or microphone found. Please connect devices and try again.';
       }
       
+      setError(errorMessage);
       setStatus('idle');
       setAudioReady(false);
     }
   };
 
   const stopPreview = () => {
-    console.log('[Broadcaster] Stopping preview - turning off camera and cleaning up');
+    console.log('[Broadcaster] Stopping preview - full cleanup');
     
-    // Turn off camera tracks
+    // Stop video tracks
     if (videoTrackRef.current) {
       videoTrackRef.current.stop();
       videoTrackRef.current = null;
     }
     
-    // Stop any raw video streams
+    // Stop raw video streams
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
-      stream.getVideoTracks().forEach(track => {
-        console.log('[Broadcaster] Stopping video track:', track.label);
+      stream.getTracks().forEach(track => {
+        console.log('[Broadcaster] Stopping track:', track.kind, track.label);
         track.stop();
       });
       videoRef.current.srcObject = null;
     }
     
+    // Stop raw mic stream
+    if (rawMicStream) {
+      rawMicStream.getTracks().forEach(track => {
+        console.log('[Broadcaster] Stopping raw mic track:', track.label);
+        track.stop();
+      });
+      setRawMicStream(null);
+    }
+    
+    // Disconnect audio processing
+    if (rawAudioAnalyserRef.current) {
+      rawAudioAnalyserRef.current.disconnect();
+      rawAudioAnalyserRef.current = null;
+    }
+    
     if (sourceNode) {
       sourceNode.disconnect();
+      setSourceNode(null);
     }
+    
+    if (audioContext) {
+      audioContext.close();
+      setAudioContext(null);
+    }
+    
     setAudioLevel(0);
+    setAudioReady(false);
     mixerReadyRef.current = false;
     setMixerReady(false);
     setStatus('idle');
