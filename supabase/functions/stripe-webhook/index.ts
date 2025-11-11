@@ -168,6 +168,56 @@ serve(async (req) => {
       });
     }
 
+    // Handle customer.subscription.deleted event (cancellation)
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      
+      console.log("Processing subscription cancellation:", subscription.id);
+
+      // Initialize Supabase client
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Get customer details
+      const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
+      const customerEmail = customer.email;
+      const customerName = customer.name || customer.email?.split('@')[0] || "Member";
+      
+      if (!customerEmail) {
+        console.error("No customer email found for subscription cancellation");
+        return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
+      }
+
+      // Get plan details
+      const planName = subscription.items.data[0].price.nickname || "Membership";
+      const cancelledAt = new Date(subscription.canceled_at! * 1000).toISOString();
+      const accessUntil = new Date(subscription.current_period_end * 1000).toISOString();
+
+      // Send cancellation confirmation email
+      const { error: emailError } = await supabase.functions.invoke("send-cancellation-confirmation", {
+        body: {
+          email: customerEmail,
+          customerName: customerName,
+          planName: planName,
+          cancelledAt: cancelledAt,
+          accessUntil: accessUntil,
+          cancellationReason: subscription.cancellation_details?.reason || undefined,
+        },
+      });
+
+      if (emailError) {
+        console.error("Error sending cancellation confirmation email:", emailError);
+      } else {
+        console.log("Cancellation confirmation email triggered for:", customerEmail);
+      }
+
+      return new Response(JSON.stringify({ received: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Return success for other event types
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
