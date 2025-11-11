@@ -1,16 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { diagnosticsStore, DiagnosticEvent } from "@/diagnostics/diagnosticsStore";
-import { X, Download, Activity, AlertCircle, Zap, Network } from "lucide-react";
+import { X, Download, Activity, AlertCircle, Zap, Network, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
+import { runQuickFix } from "@/diagnostics/performanceFixes";
+import { useToast } from "@/hooks/use-toast";
 
 export const HealthOverlay = () => {
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
   const [events, setEvents] = useState<DiagnosticEvent[]>([]);
   const [fps, setFps] = useState(60);
   const [memoryUsage, setMemoryUsage] = useState(0);
+  const [isFixing, setIsFixing] = useState(false);
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
 
@@ -75,6 +79,45 @@ export const HealthOverlay = () => {
     setIsVisible(newState);
     localStorage.setItem("debug:health", newState ? "1" : "0");
   };
+
+  const handleQuickFix = async () => {
+    setIsFixing(true);
+    toast({
+      title: "Running performance fixes...",
+      description: "Analyzing and optimizing your app",
+    });
+
+    try {
+      const results = await runQuickFix(fps, memoryUsage);
+      const successful = results.filter(r => r.success);
+      const failed = results.filter(r => !r.success);
+
+      if (successful.length > 0) {
+        toast({
+          title: "✓ Performance optimized",
+          description: successful.map(r => r.message).join(', '),
+        });
+      }
+
+      if (failed.length > 0) {
+        toast({
+          title: "Some fixes failed",
+          description: failed.map(r => r.message).join(', '),
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Fix failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  const hasIssues = fps < 40 || memoryUsage > 60 || diagnosticsStore.getAll().length > 100;
 
   // Don't render anything if user is not an admin
   if (!isAdmin) {
@@ -197,16 +240,28 @@ export const HealthOverlay = () => {
           </ScrollArea>
         </div>
 
-        {/* Export Button */}
-        <Button
-          onClick={handleExport}
-          variant="outline"
-          size="sm"
-          className="w-full"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export Diagnostics
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button
+            onClick={handleQuickFix}
+            variant={hasIssues ? "default" : "outline"}
+            size="sm"
+            disabled={isFixing || !hasIssues}
+            className="flex-1"
+          >
+            <Wrench className="w-4 h-4 mr-2" />
+            {isFixing ? "Fixing..." : "Quick Fix"}
+          </Button>
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </div>
       </div>
     </div>
   );

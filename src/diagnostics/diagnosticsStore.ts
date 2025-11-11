@@ -73,6 +73,20 @@ class DiagnosticsStore {
       2
     );
   }
+
+  clearOld(keepCount: number) {
+    if (this.events.length > keepCount) {
+      this.events = this.events.slice(-keepCount);
+    }
+  }
+
+  getIssueSummary() {
+    const errors = this.events.filter(e => e.type === 'error').length;
+    const longTasks = this.events.filter(e => e.type === 'longtask').length;
+    const lagEvents = this.events.filter(e => e.type === 'lag').length;
+    const networkErrors = this.events.filter(e => e.type === 'network' && !e.ok).length;
+    return { errors, longTasks, lagEvents, networkErrors, total: this.events.length };
+  }
 }
 
 export const diagnosticsStore = new DiagnosticsStore();

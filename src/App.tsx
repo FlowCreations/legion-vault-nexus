@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { initMetaPixel } from "@/lib/metaPixel";
+import { setQueryClient } from "@/diagnostics/performanceFixes";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import { FloatingChatbot } from "./components/FloatingChatbot";
@@ -56,6 +57,9 @@ import Step11MerchUpsell from "./pages/funnel/Step11MerchUpsell";
 import Step12RewardsLoop from "./pages/funnel/Step12RewardsLoop";
 
 const queryClient = new QueryClient();
+
+// Initialize performance fixes with queryClient
+setQueryClient(queryClient);
 
 const App = () => {
   const pixelInitialized = useRef(false);
