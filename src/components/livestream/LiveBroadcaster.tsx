@@ -138,12 +138,27 @@ export function LiveBroadcaster({ eventId }: Props) {
         throw new Error('No audio track found in stream');
       }
 
-      console.log('[Broadcaster] Mic track:', track.label, track.readyState, track.enabled);
+      console.log('[Broadcaster] 🎙️ Mic track status:', {
+        label: track.label,
+        readyState: track.readyState,
+        enabled: track.enabled,
+        muted: track.muted
+      });
 
       // Validate track is active
-      if (track.readyState === 'ended' || !track.enabled) {
-        throw new Error('Microphone stream inactive');
+      if (track.readyState === 'ended') {
+        throw new Error('Microphone stream ended');
       }
+      
+      if (!track.enabled) {
+        console.warn('[Broadcaster] ⚠️ Mic track disabled, enabling now');
+        track.enabled = true;
+      }
+
+      // Listen for track state changes
+      track.onmute = () => console.warn('[Broadcaster] ⚠️ Mic muted by system');
+      track.onended = () => console.warn('[Broadcaster] ⚠️ Mic ended');
+      track.onunmute = () => console.log('[Broadcaster] ✅ Mic unmuted');
 
       // Validate stream has audio tracks
       if (rawStream.getAudioTracks().length === 0) {
@@ -356,11 +371,38 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       // Create audio track manually from the processed stream
       const processedAudioTrack = processedAudioStreamRef.current.getAudioTracks()[0];
+      
+      if (!processedAudioTrack) {
+        throw new Error('No audio track in processed stream');
+      }
+      
+      console.log('[Broadcaster] 🔊 Processed audio track status:', {
+        id: processedAudioTrack.id,
+        label: processedAudioTrack.label,
+        enabled: processedAudioTrack.enabled,
+        readyState: processedAudioTrack.readyState,
+        muted: processedAudioTrack.muted
+      });
+      
+      // Ensure audio track is enabled and live
+      if (!processedAudioTrack.enabled) {
+        console.warn('[Broadcaster] ⚠️ Processed audio disabled, enabling now');
+        processedAudioTrack.enabled = true;
+      }
+      
+      if (processedAudioTrack.readyState !== 'live') {
+        throw new Error(`Processed audio track not live: ${processedAudioTrack.readyState}`);
+      }
+      
       const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
       
       const tracks = [...videoTracks, livekitAudioTrack];
 
-      console.log('[Broadcaster] Created LiveKit tracks:', tracks.length);
+      console.log('[Broadcaster] Created LiveKit tracks:', {
+        total: tracks.length,
+        video: tracks.filter(t => t.kind === Track.Kind.Video).length,
+        audio: tracks.filter(t => t.kind === Track.Kind.Audio).length
+      });
 
       const videoTrack = tracks.find(t => t.kind === Track.Kind.Video);
       const audioTrack = tracks.find(t => t.kind === Track.Kind.Audio);
@@ -706,14 +748,34 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       if (videoTrackRef.current) {
         await room.localParticipant.publishTrack(videoTrackRef.current);
-        console.log('[Broadcaster] Video track published successfully');
-      }
-      if (audioTrackRef.current) {
-        await room.localParticipant.publishTrack(audioTrackRef.current);
-        console.log('[Broadcaster] Audio track published successfully', {
-          sid: audioTrackRef.current.sid,
-          kind: audioTrackRef.current.kind
+        console.log('[Broadcaster] ✅ Video track published:', {
+          sid: videoTrackRef.current.sid,
+          enabled: videoTrackRef.current.mediaStreamTrack?.enabled
         });
+      }
+      
+      if (audioTrackRef.current) {
+        const audioMSTrack = audioTrackRef.current.mediaStreamTrack;
+        console.log('[Broadcaster] 🎙️ Publishing audio track with status:', {
+          enabled: audioMSTrack?.enabled,
+          readyState: audioMSTrack?.readyState,
+          muted: audioMSTrack?.muted
+        });
+        
+        // Ensure audio is enabled before publishing
+        if (audioMSTrack && !audioMSTrack.enabled) {
+          console.warn('[Broadcaster] ⚠️ Enabling audio before publish');
+          audioMSTrack.enabled = true;
+        }
+        
+        await room.localParticipant.publishTrack(audioTrackRef.current);
+        console.log('[Broadcaster] ✅ Audio track published:', {
+          sid: audioTrackRef.current.sid,
+          kind: audioTrackRef.current.kind,
+          enabled: audioMSTrack?.enabled
+        });
+      } else {
+        console.error('[Broadcaster] ❌ No audio track to publish!');
       }
 
       console.log('[Broadcaster] Broadcasting!');

@@ -103,9 +103,53 @@ export const LiveViewer = ({ eventId, streamUrl, streamStartTime }: LiveViewerPr
       // Create peer connection
       const pc = createPeerConnection({
         onTrack: (ev) => {
-          console.log('Received remote stream');
+          console.log('Received remote stream with tracks:', ev.streams[0].getTracks().map(t => ({
+            kind: t.kind,
+            id: t.id,
+            enabled: t.enabled,
+            readyState: t.readyState,
+            muted: t.muted
+          })));
+          
+          const remoteStream = ev.streams[0];
+          const audioTracks = remoteStream.getAudioTracks();
+          console.log('Audio tracks received:', audioTracks.length);
+          
+          if (audioTracks.length === 0) {
+            console.error('❌ No audio track in remote stream!');
+          } else {
+            console.log('✅ Audio track received:', {
+              label: audioTracks[0].label,
+              enabled: audioTracks[0].enabled,
+              readyState: audioTracks[0].readyState,
+              muted: audioTracks[0].muted
+            });
+            
+            // Force audio playback through Web Audio API for reliability
+            try {
+              const audioContext = new AudioContext();
+              const source = audioContext.createMediaStreamSource(remoteStream);
+              const gain = audioContext.createGain();
+              gain.gain.value = 1.0;
+              source.connect(gain).connect(audioContext.destination);
+              console.log('✅ Audio routed through Web Audio API');
+              
+              // Resume audio context if suspended
+              if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                  console.log('✅ AudioContext resumed');
+                });
+              }
+            } catch (audioError) {
+              console.error('Audio routing failed:', audioError);
+            }
+          }
+          
           if (videoRef.current) {
             videoRef.current.srcObject = ev.streams[0];
+            // Ensure video element is unmuted
+            videoRef.current.muted = false;
+            videoRef.current.volume = 1.0;
           }
         }
       });
@@ -212,7 +256,7 @@ export const LiveViewer = ({ eventId, streamUrl, streamStartTime }: LiveViewerPr
 
   return (
     <Card className="overflow-hidden">
-      <div className="relative">
+      <div className="relative min-h-screen overflow-y-auto">
         <div className="aspect-video bg-black">
           {isLive ? (
             <video
