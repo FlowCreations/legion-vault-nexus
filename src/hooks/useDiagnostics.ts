@@ -8,11 +8,10 @@ import { startRouteChangeObserver } from '@/diagnostics/routeChangeObserver';
 
 export const useDiagnostics = () => {
   useEffect(() => {
-    // Only enable in development or when explicitly enabled
-    const isDev = process.env.NODE_ENV === 'development';
+    // Only enable when explicitly enabled via debug flag (disabled by default for performance)
     const isEnabled = localStorage.getItem('debug:enable') === '1';
     
-    if (!isDev && !isEnabled) return;
+    if (!isEnabled) return;
 
     console.log('[Diagnostics] Initializing stability monitoring...');
     

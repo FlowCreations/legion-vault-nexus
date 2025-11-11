@@ -81,13 +81,13 @@ const Merchant = memo(() => {
   const [activeTab, setActiveTab] = useState("analytics");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  // Performance tracking
-  usePerformanceTracking('Merchant', {
-    trackRender: true,
-    trackAPI: true,
-    trackMemory: true,
-    memoryInterval: 15000,
-  });
+  // Performance tracking - disabled for production performance
+  // usePerformanceTracking('Merchant', {
+  //   trackRender: true,
+  //   trackAPI: true,
+  //   trackMemory: true,
+  //   memoryInterval: 15000,
+  // });
 
   useEffect(() => {
     // Check for navigation state only once on mount
