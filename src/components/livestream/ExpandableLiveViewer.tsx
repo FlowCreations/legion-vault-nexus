@@ -18,7 +18,7 @@ type Props = {
 };
 
 export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare, showExternalControls = false }: Props) {
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'ended' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
@@ -110,20 +110,30 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
 
       room.on(RoomEvent.Disconnected, () => {
         console.log('[Viewer] Disconnected from room');
-        setStatus('idle');
+        setStatus('ended');
+        setHasVideoTrack(false);
+        setHasAudioTrack(false);
       });
 
-      room.on(RoomEvent.ParticipantConnected, () => {
-        console.log('[Viewer] Participant joined');
+      room.on(RoomEvent.ParticipantConnected, (participant) => {
+        console.log('[Viewer] Participant joined:', participant.identity);
         if (roomRef.current) {
           setViewerCount(roomRef.current.numParticipants);
         }
       });
 
-      room.on(RoomEvent.ParticipantDisconnected, () => {
-        console.log('[Viewer] Participant left');
+      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        console.log('[Viewer] Participant left:', participant.identity);
         if (roomRef.current) {
           setViewerCount(roomRef.current.numParticipants);
+        }
+        
+        // If broadcaster disconnected, end the stream
+        if (participant.identity.includes('Broadcaster')) {
+          console.log('[Viewer] Broadcaster left - ending stream');
+          setStatus('ended');
+          setHasVideoTrack(false);
+          setHasAudioTrack(false);
         }
       });
 
@@ -315,6 +325,17 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
             className="w-full rounded-2xl border bg-black aspect-video shadow-xl" 
           />
           
+          {/* Stream ended message */}
+          {status === 'ended' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+              <div className="text-center px-6">
+                <div className="text-4xl mb-4">📺</div>
+                <h3 className="text-white text-2xl font-bold mb-2">Broadcast Has Ended</h3>
+                <p className="text-white/80 text-lg">Thank you for joining us!</p>
+              </div>
+            </div>
+          )}
+          
           {/* Waiting for stream message */}
           {status === 'connected' && !hasVideoTrack && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60">
@@ -327,18 +348,22 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
 
           {/* Status Indicator */}
           <div className="absolute top-4 left-4 flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-              <span className={`inline-block h-2 w-2 rounded-full ${
-                status === 'connected' ? 'bg-green-500' : 
-                status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-                'bg-red-500'
-              }`} />
-              <span className="text-white text-xs font-medium uppercase">{status}</span>
-            </div>
-            {status === 'connected' && viewerCount > 0 && (
-              <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                <span className="text-white text-xs font-medium">{viewerCount} watching</span>
-              </div>
+            {status !== 'ended' && (
+              <>
+                <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                  <span className={`inline-block h-2 w-2 rounded-full ${
+                    status === 'connected' ? 'bg-green-500' : 
+                    status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+                    'bg-red-500'
+                  }`} />
+                  <span className="text-white text-xs font-medium uppercase">{status}</span>
+                </div>
+                {status === 'connected' && viewerCount > 0 && (
+                  <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                    <span className="text-white text-xs font-medium">{viewerCount} watching</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -357,7 +382,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
           )}
 
           {/* Live Reactions Overlay */}
-          {status === 'connected' && (
+          {status === 'connected' && !status.includes('ended') && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
               <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
             </div>
@@ -408,19 +433,28 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
               controls
               className="w-full h-auto max-h-full object-contain" 
             />
-            
-            {/* Expanded Status & Viewer Count */}
-            <div className="absolute top-4 left-4 flex items-center gap-3 z-10">
-              <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-white text-sm font-medium">LIVE</span>
+              
+              {/* Expanded Status & Viewer Count */}
+              <div className="absolute top-4 left-4 flex items-center gap-3 z-10">
+                {status === 'ended' ? (
+                  <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                    <span className="inline-block h-2 w-2 rounded-full bg-gray-500" />
+                    <span className="text-white text-sm font-medium">ENDED</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                      <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-white text-sm font-medium">LIVE</span>
+                    </div>
+                    {viewerCount > 0 && (
+                      <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                        <span className="text-white text-sm font-medium">{viewerCount} watching</span>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              {viewerCount > 0 && (
-                <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                  <span className="text-white text-sm font-medium">{viewerCount} watching</span>
-                </div>
-              )}
-            </div>
             
             {/* Share button in top right */}
             <div className="absolute top-4 right-4 z-10">
@@ -434,26 +468,37 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
               </Button>
             </div>
 
-            {/* Unmute Audio Button - Expanded View */}
-            {hasAudioTrack && audioMuted && status === 'connected' && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-                <Button
-                  onClick={handleUnmute}
-                  size="lg"
-                  className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg"
-                >
-                  <Volume2 className="w-5 h-5 mr-2" />
-                  Unmute Audio
-                </Button>
-              </div>
-            )}
+              {/* Unmute Audio Button - Expanded View */}
+              {hasAudioTrack && audioMuted && status === 'connected' && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+                  <Button
+                    onClick={handleUnmute}
+                    size="lg"
+                    className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg"
+                  >
+                    <Volume2 className="w-5 h-5 mr-2" />
+                    Unmute Audio
+                  </Button>
+                </div>
+              )}
+              
+              {/* Stream ended message - Expanded View */}
+              {status === 'ended' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+                  <div className="text-center px-6">
+                    <div className="text-6xl mb-6">📺</div>
+                    <h3 className="text-white text-4xl font-bold mb-3">Broadcast Has Ended</h3>
+                    <p className="text-white/80 text-xl">Thank you for joining us!</p>
+                  </div>
+                </div>
+              )}
 
-            {/* Live Reactions Overlay - Expanded View */}
-            {status === 'connected' && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-                <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
-              </div>
-            )}
+              {/* Live Reactions Overlay - Expanded View */}
+              {status === 'connected' && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                  <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                </div>
+              )}
           </div>
           
           {/* Live Chat Sidebar */}
