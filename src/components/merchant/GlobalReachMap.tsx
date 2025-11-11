@@ -62,10 +62,12 @@ export default function GlobalReachMap({
 }: Props) {
   const [token, setToken] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [isRotating, setIsRotating] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const initializedRef = useRef(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const rotatingRef = useRef(true);
   const [members, setMembers] = useState<Member[]>(membersProp);
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -209,14 +211,15 @@ export default function GlobalReachMap({
         map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
         // Auto-rotation setup
-        let userInteracting = false;
-        const secondsPerRevolution = 120; // 2 minutes per full rotation
+        const secondsPerRevolution = 120;
         const maxSpinZoom = 5;
         const slowSpinZoom = 3;
 
         function spinGlobe() {
+          if (!rotatingRef.current) return;
+          
           const zoom = map.getZoom();
-          if (!userInteracting && zoom < maxSpinZoom) {
+          if (zoom < maxSpinZoom) {
             let distancePerSecond = 360 / secondsPerRevolution;
             if (zoom > slowSpinZoom) {
               const zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
@@ -229,12 +232,35 @@ export default function GlobalReachMap({
         }
 
         // Pause rotation on user interaction
-        map.on('mousedown', () => { userInteracting = true; });
-        map.on('dragstart', () => { userInteracting = true; });
-        map.on('mouseup', () => { userInteracting = false; spinGlobe(); });
-        map.on('dragend', () => { userInteracting = false; spinGlobe(); });
-        map.on('touchend', () => { userInteracting = false; spinGlobe(); });
-        map.on('moveend', () => { spinGlobe(); });
+        let userInteracting = false;
+        map.on('mousedown', () => { userInteracting = true; rotatingRef.current = false; });
+        map.on('dragstart', () => { userInteracting = true; rotatingRef.current = false; });
+        map.on('mouseup', () => { 
+          userInteracting = false; 
+          if (isRotating) {
+            rotatingRef.current = true;
+            spinGlobe();
+          }
+        });
+        map.on('dragend', () => { 
+          userInteracting = false;
+          if (isRotating) {
+            rotatingRef.current = true;
+            spinGlobe();
+          }
+        });
+        map.on('touchend', () => { 
+          userInteracting = false;
+          if (isRotating) {
+            rotatingRef.current = true;
+            spinGlobe();
+          }
+        });
+        map.on('moveend', () => { 
+          if (!userInteracting && rotatingRef.current) {
+            spinGlobe();
+          }
+        });
 
         map.on("load", () => {
           console.log('✅ Mapbox loaded successfully');
@@ -412,6 +438,30 @@ export default function GlobalReachMap({
     window.location.reload();
   };
 
+  const toggleRotation = () => {
+    setIsRotating(prev => !prev);
+    rotatingRef.current = !rotatingRef.current;
+    if (rotatingRef.current && mapRef.current) {
+      // Resume rotation
+      const map = mapRef.current;
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      const maxSpinZoom = 5;
+      const slowSpinZoom = 3;
+      const secondsPerRevolution = 120;
+      
+      if (zoom < maxSpinZoom) {
+        let distancePerSecond = 360 / secondsPerRevolution;
+        if (zoom > slowSpinZoom) {
+          const zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+          distancePerSecond *= zoomDif;
+        }
+        center.lng -= distancePerSecond;
+        map.easeTo({ center, duration: 1000, easing: (n) => n });
+      }
+    }
+  };
+
   if (error) {
     return (
       <div className={`w-full ${className}`}>
@@ -451,6 +501,14 @@ export default function GlobalReachMap({
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
         <div ref={containerRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
         
+        {/* Pause/Play rotation control */}
+        <button
+          onClick={toggleRotation}
+          className="absolute top-4 right-4 z-10 px-4 py-2 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm hover:bg-black/90 transition-colors"
+        >
+          {isRotating ? "⏸ Pause" : "▶ Play"}
+        </button>
+        
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E]/90 backdrop-blur-sm z-20">
             <div className="text-center">
@@ -479,7 +537,7 @@ export default function GlobalReachMap({
 
         {!loading && (
           <div className="absolute bottom-4 left-4 z-10 px-4 py-2.5 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm">
-            <span className="font-semibold">{members.length}</span> members
+            <span className="font-semibold">{members.length}</span> members worldwide
           </div>
         )}
       </div>
