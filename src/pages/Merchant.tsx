@@ -272,15 +272,8 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* COMMUNITY GLOBE - Second position */}
+                  {/* GLOBE - Second position */}
                   <ProgressiveLoader priority="low" delay={1000}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <CommunityGlobe />
-                    </Suspense>
-                  </ProgressiveLoader>
-                  
-                  {/* GEOGRAPHY - Third position */}
-                  <ProgressiveLoader priority="low" delay={1200}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Geography />
                     </Suspense>
@@ -426,6 +419,10 @@ const Merchant = memo(() => {
               <div className="space-y-6">
                 <Suspense fallback={<LoadingSpinner />}>
                   <HeartbeatToggle />
+                </Suspense>
+                
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CommunityGlobe />
                 </Suspense>
                 
                 <Tabs defaultValue="members" className="space-y-6">

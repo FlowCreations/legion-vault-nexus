@@ -67,9 +67,19 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
   // Update markers when geojson changes
   useEffect(() => {
+    console.log('🌍 GlobeRealtime: geojson changed', {
+      hasGeojson: !!geojson,
+      hasMap: !!map.current,
+      isStyleLoaded: map.current?.isStyleLoaded(),
+      featuresCount: geojson?.features?.length || 0
+    });
+    
     if (!map.current || !geojson || !map.current.isStyleLoaded()) return;
 
-    console.log('Updating markers with', geojson.features.length, 'members');
+    console.log('✅ Updating markers with', geojson.features.length, 'members');
+    if (geojson.features.length > 0) {
+      console.log('📍 First feature:', geojson.features[0]);
+    }
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());

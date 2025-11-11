@@ -34,15 +34,23 @@ export const useMembersGeojson = () => {
 
   const fetchGeojson = async () => {
     try {
+      console.log('🔍 useMembersGeojson: Fetching GeoJSON...');
       setLoading(true);
       const { data, error } = await supabase.functions.invoke('members-geojson');
       
+      console.log('📦 useMembersGeojson response:', { data, error });
+      
       if (error) throw error;
+      
+      console.log('✅ useMembersGeojson: Got', data?.features?.length || 0, 'features');
+      if (data?.features?.length > 0) {
+        console.log('📍 First feature:', data.features[0]);
+      }
       
       setGeojson(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching members GeoJSON:', err);
+      console.error('❌ Error fetching members GeoJSON:', err);
       setError(err instanceof Error ? err.message : 'Failed to load member locations');
     } finally {
       setLoading(false);

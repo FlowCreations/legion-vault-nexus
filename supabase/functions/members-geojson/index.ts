@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,70 +8,78 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
     )
 
-    // Fetch all public user profiles with coordinates
+    console.log('🔍 Fetching user profiles with coordinates...')
+
+    // Fetch all user profiles that have valid coordinates
     const { data: profiles, error } = await supabaseClient
       .from('user_profiles')
-      .select('user_id, display_name, avatar_url, location, latitude, longitude, era_current, era_label, ptp_current, ptp_status, tier, created_at, is_public')
-      .eq('is_public', true)
+      .select('user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at, era, ptp, ptp_status, era_label')
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Database error:', error)
+      throw error
+    }
 
-    // Convert to GeoJSON FeatureCollection
-    const features = profiles.map(profile => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [parseFloat(profile.longitude), parseFloat(profile.latitude)]
-      },
-      properties: {
-        user_id: profile.user_id,
-        name: profile.display_name,
-        avatar_url: profile.avatar_url,
-        location: profile.location,
-        era: profile.era_current,
-        era_label: profile.era_label,
-        ptp: profile.ptp_current,
-        ptp_status: profile.ptp_status,
-        tier: profile.tier,
-        joined_at: profile.created_at,
-        profile_url: `/community?member=${profile.user_id}`
-      }
-    }))
+    console.log(`✅ Found ${profiles?.length || 0} profiles with coordinates`)
 
+    // Convert to GeoJSON format
     const geojson = {
       type: 'FeatureCollection',
-      features
+      features: (profiles || []).map((profile) => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [Number(profile.longitude), Number(profile.latitude)]
+        },
+        properties: {
+          user_id: profile.user_id,
+          name: profile.display_name || 'Community Member',
+          avatar_url: profile.avatar_url || '',
+          location: profile.location || '',
+          era: profile.era || 0,
+          era_label: profile.era_label || '',
+          ptp: profile.ptp || 0,
+          ptp_status: profile.ptp_status || '',
+          tier: profile.tier || 'free',
+          joined_at: profile.created_at,
+          profile_url: `/community/${profile.user_id}`,
+        }
+      }))
     }
+
+    console.log(`🌍 Returning GeoJSON with ${geojson.features.length} features`)
 
     return new Response(
       JSON.stringify(geojson),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
-        } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       },
     )
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error generating GeoJSON:', error);
+  } catch (error) {
+    console.error('❌ Error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       },
     )
   }
