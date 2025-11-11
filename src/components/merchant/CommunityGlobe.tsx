@@ -47,13 +47,22 @@ export default function CommunityGlobe() {
 
   useEffect(() => {
     fetchCommunityMembers().then((rows) => {
+      console.log("✅ fetchCommunityMembers returned:", rows.length, "rows");
+      console.log("📍 First raw row:", rows[0]);
+      
       const normalized = rows.map((m) => ({
         ...m,
         regionGroup: groupByRegion(m)
       }));
+      
+      console.log("✅ Normalized:", normalized.length, "members");
+      console.log("🌎 Region breakdown:", {
+        america: normalized.filter(m => m.regionGroup === "america").length,
+        world: normalized.filter(m => m.regionGroup === "world").length
+      });
+      console.log("📍 First normalized member:", normalized[0]);
+      
       setMembers(normalized);
-      console.log(`✅ Loaded ${normalized.length} members with valid coordinates`);
-      console.log('Sample member:', normalized[0]);
     });
   }, []);
 
@@ -244,10 +253,22 @@ export default function CommunityGlobe() {
   }
 
   function updatePoints() {
-    if (!mapRef.current || !mapRef.current.getSource("community")) return;
+    console.log("🟣 updatePoints() called");
+    console.log("🟣 members.length:", members.length);
+    console.log("🟣 activeTab:", activeTab);
+    console.log("🟣 mapLoadedRef.current:", mapLoadedRef.current);
+    
+    if (!mapRef.current || !mapRef.current.getSource("community")) {
+      console.log("❌ updatePoints() aborted: map not ready");
+      return;
+    }
 
     const filtered = members.filter((m) => m.regionGroup === activeTab);
-    console.log(`🗺️ Updating map with ${filtered.length} members for ${activeTab}`);
+    console.log(`🟢 Filtered for "${activeTab}":`, filtered.length, "members");
+    
+    if (filtered.length > 0) {
+      console.log("📍 First filtered member:", filtered[0]);
+    }
 
     // Calculate engagement score for each member
     const geojson: GeoJSON.FeatureCollection = {
@@ -272,12 +293,13 @@ export default function CommunityGlobe() {
       })
     };
 
-    console.log('📍 GeoJSON features:', geojson.features.length);
+    console.log("🌍 GeoJSON features:", geojson.features.length);
     if (geojson.features.length > 0) {
-      console.log('Sample feature:', geojson.features[0]);
+      console.log("📍 First GeoJSON feature:", JSON.stringify(geojson.features[0], null, 2));
     }
 
     (mapRef.current.getSource("community") as mapboxgl.GeoJSONSource).setData(geojson);
+    console.log("✅ GeoJSON data set on source");
   }
 
   // Update layer visibility when heatmap toggle changes
