@@ -421,12 +421,6 @@ const Merchant = memo(() => {
                   <HeartbeatToggle />
                 </Suspense>
                 
-                <Suspense fallback={<LoadingSpinner />}>
-                  <div className="h-[600px] rounded-lg overflow-hidden border">
-                    <GlobeRealtime />
-                  </div>
-                </Suspense>
-                
                 <Tabs defaultValue="members" className="space-y-6">
                   <TabsList>
                     <TabsTrigger value="members">Community Members</TabsTrigger>
