@@ -21,7 +21,7 @@ type Props = {
   membersEndpoint?: string;
   autoFit?: boolean;
   padding?: number;
-  initialCenter?: [number, number]; // [lng, lat]
+  initialCenter?: [number, number];
   initialZoom?: number;
   className?: string;
   title?: string;
@@ -29,10 +29,6 @@ type Props = {
 
 type FC = GeoJSON.FeatureCollection<GeoJSON.Point, Member>;
 
-/**
- * Convert members array to GeoJSON FeatureCollection
- * Filters out invalid coordinates to prevent map errors
- */
 function toFeatureCollection(members: Member[]): FC {
   return {
     type: "FeatureCollection",
@@ -46,9 +42,6 @@ function toFeatureCollection(members: Member[]): FC {
   };
 }
 
-/**
- * Calculate bounds from member locations for auto-fit
- */
 function boundsFromMembers(members: Member[]) {
   const valid = members.filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lng));
   if (!valid.length) return null;
@@ -63,7 +56,7 @@ export default function GlobalReachMap({
   autoFit = true,
   padding = 60,
   initialCenter = [0, 20],
-  initialZoom = 1.5,
+  initialZoom = 1.2,
   className = "",
   title = "Global Reach",
 }: Props) {
@@ -77,7 +70,7 @@ export default function GlobalReachMap({
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Mapbox token from edge function on mount
+  // Fetch Mapbox token
   useEffect(() => {
     async function fetchToken() {
       try {
@@ -85,12 +78,9 @@ export default function GlobalReachMap({
         if (error) throw error;
         if (data?.token) {
           console.log('✅ Mapbox token received:', data.token.substring(0, 10) + '...');
-          
-          // Validate token format
           if (!data.token.startsWith('pk.')) {
-            throw new Error('Invalid Mapbox token format. Token should start with "pk."');
+            throw new Error('Invalid Mapbox token format');
           }
-          
           setToken(data.token);
           setError(null);
         } else {
@@ -106,7 +96,7 @@ export default function GlobalReachMap({
     fetchToken();
   }, []);
 
-  // Merge incoming prop members whenever they change
+  // Merge incoming members
   useEffect(() => {
     if (!membersProp.length) return;
     setMembers((prev) => {
@@ -116,38 +106,27 @@ export default function GlobalReachMap({
     });
   }, [membersProp]);
 
-  // Poll endpoint for members every 30s using Supabase client
+  // Poll members endpoint
   useEffect(() => {
     if (!membersEndpoint) return;
     let stopped = false;
     
     async function load() {
       try {
-        console.log('🔄 Fetching members from edge function:', membersEndpoint);
-        
-        // Use Supabase client to invoke edge function
-        const { data, error } = await supabase.functions.invoke(membersEndpoint, {
-          method: 'GET'
-        });
-        
-        if (error) {
-          console.error('❌ Error fetching members:', error);
-          throw error;
-        }
+        console.log('🔄 Fetching members from:', membersEndpoint);
+        const { data, error } = await supabase.functions.invoke(membersEndpoint, { method: 'GET' });
+        if (error) throw error;
         
         console.log('✅ Received data:', data);
         
-        // Handle both direct Member[] array and GeoJSON FeatureCollection
         let membersData: Member[];
-        
         if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
-          // Convert GeoJSON to Member array
           membersData = data.features.map((f: any) => ({
             id: f.properties.user_id || f.properties.id,
             name: f.properties.name || f.properties.display_name || 'Member',
             lat: f.geometry.coordinates[1],
             lng: f.geometry.coordinates[0],
-            city: f.properties.city || extractCity(f.properties.location),
+            city: f.properties.city || (f.properties.location?.split(',')[0]?.trim()) || '',
             country: f.properties.country || '',
             avatarUrl: f.properties.avatar_url || f.properties.avatarUrl,
           }));
@@ -170,232 +149,199 @@ export default function GlobalReachMap({
       }
     }
     
-    load(); // Initial load
-    const id = setInterval(load, 30_000); // Poll every 30s
-    
+    load();
+    const id = setInterval(load, 30_000);
     return () => {
       stopped = true;
       clearInterval(id);
     };
   }, [membersEndpoint]);
 
-  // Helper to extract city from location string "City, Country" format
-  function extractCity(location?: string): string {
-    if (!location) return '';
-    return location.split(',')[0]?.trim() || '';
-  }
-
   const featureCollection: FC = useMemo(() => toFeatureCollection(members), [members]);
 
-  // Initialize map once (never recreate on render)
+  // Initialize map with requestAnimationFrame
   useEffect(() => {
     if (initializedRef.current) return;
     if (!containerRef.current) return;
     if (!token) return;
 
-    console.log('🗺️ Initializing Mapbox with token...');
-    
-    try {
-      mapboxgl.accessToken = token;
-      const map = new mapboxgl.Map({
-        container: containerRef.current,
-        style: "mapbox://styles/mapbox/dark-v11",
-        projection: { name: 'globe' },
-        center: initialCenter,
-        zoom: initialZoom,
-        attributionControl: false,
-        cooperativeGestures: false,
-      });
+    const container = containerRef.current;
 
-      mapRef.current = map;
-      initializedRef.current = true;
-
-      // Add error event listeners
-      map.on('error', (e) => {
-        console.error('❌ Mapbox error event:', e);
-        setError(`Map error: ${e.error?.message || 'Unknown error'}`);
-        setLoading(false);
-      });
-
-      // Set timeout to catch loading failures
-      loadingTimeoutRef.current = setTimeout(() => {
-        if (loading) {
-          console.error('⏱️ Map loading timeout - taking too long');
-          setError('Map is taking too long to load. Please check your connection and try again.');
-          setLoading(false);
-        }
-      }, 15000); // 15 second timeout
-
-    // Add navigation controls
-    map.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
-
-    map.on("load", () => {
-      console.log('✅ Map loaded successfully, adding source and layers');
-      
-      // Clear timeout since map loaded successfully
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      
-      setLoading(false);
-      setError(null);
-      
-      // Setup fog/atmosphere
-      map.setFog({
-        color: 'rgb(18, 18, 18)',
-        'high-color': 'rgb(124, 189, 255)',
-        'horizon-blend': 0.2,
-        'space-color': 'rgb(11, 11, 11)',
-        'star-intensity': 0.8,
-      });
-
-      // Source with clustering enabled - this is where the magic happens
-      map.addSource("members", {
-        type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
-        cluster: true,
-        clusterRadius: 60,
-        clusterMaxZoom: 14,
-      });
-
-      // Layer 1: Cluster circles - step-based sizing by member count
-      map.addLayer({
-        id: "clusters",
-        type: "circle",
-        source: "members",
-        filter: ["has", "point_count"],
-        paint: {
-          "circle-color": [
-            "step",
-            ["get", "point_count"],
-            "rgba(124, 189, 255, 0.6)", // <10 members
-            10,
-            "rgba(124, 189, 255, 0.7)", // 10-50 members
-            50,
-            "rgba(124, 189, 255, 0.8)", // 50-100 members
-            100,
-            "rgba(124, 189, 255, 0.9)", // 100+ members
-          ],
-          "circle-radius": [
-            "step",
-            ["get", "point_count"],
-            12,  // <10 members
-            10,
-            16,  // 10-50 members
-            50,
-            24,  // 50-100 members
-            100,
-            32,  // 100+ members
-          ],
-          "circle-stroke-color": "rgba(255, 255, 255, 0.8)",
-          "circle-stroke-width": 2,
-        },
-      });
-
-      // Layer 2: Cluster count labels
-      map.addLayer({
-        id: "cluster-count",
-        type: "symbol",
-        source: "members",
-        filter: ["has", "point_count"],
-        layout: {
-          "text-field": ["get", "point_count_abbreviated"],
-          "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
-          "text-size": 12,
-        },
-        paint: {
-          "text-color": "#ffffff",
-        },
-      });
-
-      // Layer 3: Unclustered points (individual members)
-      map.addLayer({
-        id: "unclustered-point",
-        type: "circle",
-        source: "members",
-        filter: ["!", ["has", "point_count"]],
-        paint: {
-          "circle-color": "rgba(124, 189, 255, 0.8)",
-          "circle-radius": 8,
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#fff",
-        },
-      });
-
-      // Click cluster -> zoom into it using getClusterExpansionZoom
-      map.on("click", "clusters", (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-        const clusterId = features[0].properties?.cluster_id;
-        const source = map.getSource("members") as mapboxgl.GeoJSONSource & {
-          getClusterExpansionZoom?: (id: number, cb: (err: any, zoom: number) => void) => void;
-        };
-        
-        source?.getClusterExpansionZoom?.(clusterId, (err, zoom) => {
-          if (err) return;
-          const [lng, lat] = (features[0].geometry as any).coordinates;
-          map.easeTo({ center: [lng, lat], zoom });
-        });
-      });
-
-      // Click unclustered -> show popup with member info
-      map.on("click", "unclustered-point", (e) => {
-        const feature = e.features?.[0] as unknown as GeoJSON.Feature<GeoJSON.Point, Member> | undefined;
-        if (!feature) return;
-        const { properties, geometry } = feature;
-        const [lng, lat] = geometry.coordinates;
-
-        const html = `
-          <div style="display:flex;align-items:center;gap:12px;padding:4px;">
-            ${properties?.avatarUrl ? `<img src="${properties.avatarUrl}" alt="" style="width:40px;height:40px;border-radius:9999px;object-fit:cover;border:2px solid rgba(124,189,255,0.5)" />` : ""}
-            <div style="line-height:1.4">
-              <div style="font-weight:600;font-size:14px;color:#fff;">${properties?.name ?? "Member"}</div>
-              <div style="opacity:0.8;font-size:12px;color:#ccc;">${[properties?.city, properties?.country].filter(Boolean).join(", ") || "Location unknown"}</div>
-            </div>
-          </div>
-        `;
-
-        new mapboxgl.Popup({ 
-          closeOnClick: true,
-          className: 'member-popup',
-        })
-          .setLngLat([lng, lat])
-          .setHTML(html)
-          .addTo(map);
-      });
-
-      // Cursor changes for better UX
-      map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-      map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
-
-      // Ensure correct sizing after load
-      setTimeout(() => map.resize(), 50);
-    });
-
-      // Cleanup on unmount - critical for preventing memory leaks
-      return () => {
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-        }
-        map.remove();
-        mapRef.current = null;
-      };
-    } catch (err) {
-      console.error('❌ Failed to initialize Mapbox:', err);
-      setError(err instanceof Error ? err.message : 'Failed to initialize map');
-      setLoading(false);
-      initializedRef.current = false; // Allow retry
+    // 🔧 Ensure container has height before Mapbox loads
+    const style = getComputedStyle(container);
+    if (parseInt(style.height) < 200) {
+      container.style.height = "600px";
+      console.log('🔧 Set explicit container height');
     }
+
+    // 🔧 Wait for React paint before Mapbox init
+    requestAnimationFrame(() => {
+      try {
+        console.log('🗺️ Initializing Mapbox...');
+        
+        mapboxgl.accessToken = token;
+        
+        const map = new mapboxgl.Map({
+          container,
+          style: "mapbox://styles/mapbox/dark-v11",
+          projection: "globe",
+          center: initialCenter,
+          zoom: initialZoom,
+          attributionControl: false,
+          cooperativeGestures: false,
+        });
+
+        mapRef.current = map;
+        initializedRef.current = true;
+
+        map.on('error', (e) => {
+          console.error('❌ Mapbox error:', e.error);
+          setError(`Map error: ${e.error?.message || 'Unknown error'}`);
+          setLoading(false);
+        });
+
+        loadingTimeoutRef.current = setTimeout(() => {
+          console.error('⏱️ Map loading timeout');
+          setError('Map loading timeout');
+          setLoading(false);
+        }, 15000);
+
+        map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+        map.on("load", () => {
+          console.log('✅ Mapbox loaded successfully');
+          
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+            loadingTimeoutRef.current = null;
+          }
+          
+          map.resize(); // Force resize
+          setLoading(false);
+          setError(null);
+          
+          map.setFog({
+            color: 'rgb(18, 18, 18)',
+            'high-color': 'rgb(124, 189, 255)',
+            'horizon-blend': 0.2,
+            'space-color': 'rgb(11, 11, 11)',
+            'star-intensity': 0.8,
+          });
+
+          map.addSource("members", {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: [] },
+            cluster: true,
+            clusterRadius: 60,
+            clusterMaxZoom: 14,
+          });
+
+          map.addLayer({
+            id: "clusters",
+            type: "circle",
+            source: "members",
+            filter: ["has", "point_count"],
+            paint: {
+              "circle-color": [
+                "step", ["get", "point_count"],
+                "rgba(124, 189, 255, 0.6)", 10,
+                "rgba(124, 189, 255, 0.7)", 50,
+                "rgba(124, 189, 255, 0.8)", 100,
+                "rgba(124, 189, 255, 0.9)"
+              ],
+              "circle-radius": [
+                "step", ["get", "point_count"],
+                12, 10, 16, 50, 24, 100, 32
+              ],
+              "circle-stroke-color": "rgba(255, 255, 255, 0.8)",
+              "circle-stroke-width": 2,
+            },
+          });
+
+          map.addLayer({
+            id: "cluster-count",
+            type: "symbol",
+            source: "members",
+            filter: ["has", "point_count"],
+            layout: {
+              "text-field": ["get", "point_count_abbreviated"],
+              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+              "text-size": 12,
+            },
+            paint: { "text-color": "#ffffff" },
+          });
+
+          map.addLayer({
+            id: "unclustered-point",
+            type: "circle",
+            source: "members",
+            filter: ["!", ["has", "point_count"]],
+            paint: {
+              "circle-color": "rgba(124, 189, 255, 0.8)",
+              "circle-radius": 8,
+              "circle-stroke-width": 2,
+              "circle-stroke-color": "#fff",
+            },
+          });
+
+          map.on("click", "clusters", (e) => {
+            const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+            const clusterId = features[0].properties?.cluster_id;
+            const source = map.getSource("members") as any;
+            source?.getClusterExpansionZoom?.(clusterId, (err: any, zoom: number) => {
+              if (err) return;
+              const [lng, lat] = (features[0].geometry as any).coordinates;
+              map.easeTo({ center: [lng, lat], zoom });
+            });
+          });
+
+          map.on("click", "unclustered-point", (e) => {
+            const feature = e.features?.[0] as any;
+            if (!feature) return;
+            const { properties, geometry } = feature;
+            const [lng, lat] = geometry.coordinates;
+
+            const html = `
+              <div style="display:flex;align-items:center;gap:12px;padding:4px;">
+                ${properties?.avatarUrl ? `<img src="${properties.avatarUrl}" alt="" style="width:40px;height:40px;border-radius:9999px;object-fit:cover;border:2px solid rgba(124,189,255,0.5)" />` : ""}
+                <div style="line-height:1.4">
+                  <div style="font-weight:600;font-size:14px;color:#fff;">${properties?.name ?? "Member"}</div>
+                  <div style="opacity:0.8;font-size:12px;color:#ccc;">${[properties?.city, properties?.country].filter(Boolean).join(", ") || "Location unknown"}</div>
+                </div>
+              </div>
+            `;
+
+            new mapboxgl.Popup({ closeOnClick: true, className: 'member-popup' })
+              .setLngLat([lng, lat])
+              .setHTML(html)
+              .addTo(map);
+          });
+
+          map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
+          map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
+          map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
+          map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
+        });
+
+        const handleResize = () => map.resize();
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+          window.removeEventListener("resize", handleResize);
+          map.remove();
+          mapRef.current = null;
+        };
+      } catch (err) {
+        console.error('❌ Failed to initialize Mapbox:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize map');
+        setLoading(false);
+        initializedRef.current = false;
+      }
+    });
   }, [token, initialCenter, initialZoom]);
 
-  // Push data into the source whenever members change (live updates via setData)
+  // Update map data
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -404,7 +350,7 @@ export default function GlobalReachMap({
       const onLoad = () => {
         const src = map.getSource("members") as mapboxgl.GeoJSONSource;
         if (src) {
-          console.log('📍 Updating members data:', featureCollection.features.length);
+          console.log('📍 Updating members:', featureCollection.features.length);
           src.setData(featureCollection);
         }
       };
@@ -414,15 +360,14 @@ export default function GlobalReachMap({
     
     const src = map.getSource("members") as mapboxgl.GeoJSONSource;
     if (src) {
-      console.log('📍 Updating members data:', featureCollection.features.length);
+      console.log('📍 Updating members:', featureCollection.features.length);
       src.setData(featureCollection);
     }
 
-    // Auto-fit bounds on first non-empty dataset
     if (autoFit && !hasFitOnce && members.length) {
       const b = boundsFromMembers(members);
       if (b) {
-        console.log('🎯 Fitting bounds to', members.length, 'members');
+        console.log('🎯 Fitting bounds:', members.length, 'members');
         map.fitBounds(b, { padding, maxZoom: 6, duration: 700 });
         setHasFitOnce(true);
       }
@@ -436,17 +381,16 @@ export default function GlobalReachMap({
     window.location.reload();
   };
 
-  // Error state
   if (error) {
     return (
       <div className={`w-full ${className}`}>
         {title && <div className="mb-4 text-2xl font-semibold">{title}</div>}
-        <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-destructive/30 bg-destructive/5 flex flex-col items-center justify-center gap-4 p-8">
+        <div className="relative w-full h-[600px] rounded-lg border border-destructive/30 bg-destructive/5 flex flex-col items-center justify-center gap-4 p-8">
           <p className="text-destructive font-semibold text-lg">⚠️ Map Error</p>
           <p className="text-muted-foreground text-center max-w-md">{error}</p>
           <button 
             onClick={handleRetry}
-            className="px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+            className="px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             Retry
           </button>
@@ -455,15 +399,14 @@ export default function GlobalReachMap({
     );
   }
 
-  // Loading token state
   if (!token) {
     return (
       <div className={`w-full ${className}`}>
         {title && <div className="mb-4 text-2xl font-semibold">{title}</div>}
-        <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
+        <div className="relative w-full h-[600px] rounded-lg border border-border bg-muted flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-            <p className="text-muted-foreground">Loading Mapbox configuration...</p>
+            <p className="text-muted-foreground">Loading Mapbox...</p>
           </div>
         </div>
       </div>
@@ -482,12 +425,11 @@ export default function GlobalReachMap({
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading global map...</p>
-              <p className="text-xs text-muted-foreground/60 mt-2">This may take a few seconds...</p>
+              <p className="text-xs text-muted-foreground/60 mt-2">Please wait...</p>
             </div>
           </div>
         )}
         
-        {/* Hide Mapbox branding */}
         <style>{`
           .mapboxgl-ctrl-logo,
           .mapboxgl-ctrl-attrib {
@@ -504,7 +446,6 @@ export default function GlobalReachMap({
           }
         `}</style>
 
-        {/* Member count badge */}
         {!loading && (
           <div className="absolute bottom-4 left-4 z-10 px-4 py-2.5 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm">
             <span className="font-semibold">{members.length}</span> members
