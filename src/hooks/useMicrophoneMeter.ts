@@ -31,16 +31,27 @@ export function useMicrophoneMeter({
           audio: { deviceId: selectedMicId ? { exact: selectedMicId } : undefined },
           video: false,
         };
+
+        console.log("🎙️ Requesting mic with constraints:", constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         const [track] = stream.getAudioTracks();
 
-        console.log("🎙️ Track:", track?.label, "State:", track?.readyState, "Enabled:", track?.enabled);
-
-        if (!track || track.readyState === "ended" || !track.enabled) {
-          throw new Error("Microphone stream inactive or muted");
+        if (!track) throw new Error("No audio track returned.");
+        
+        if (track.readyState !== "live") {
+          console.warn("Track not live yet, waiting for activation...");
+          await new Promise<void>(res => {
+            track.onunmute = () => res();
+          });
         }
 
-        // Validate stream has audio
+        console.log("🎙️ Mic track:", {
+          label: track.label,
+          enabled: track.enabled,
+          readyState: track.readyState,
+          settings: track.getSettings(),
+        });
+
         if (stream.getAudioTracks().length === 0) {
           throw new Error("No valid microphone input found");
         }
