@@ -131,3 +131,12 @@ verify_jwt = false
 
 [functions.verify-email-token]
 verify_jwt = false
+
+[functions.members-geojson]
+verify_jwt = false
+
+[functions.seed-member-coordinates]
+verify_jwt = true
+
+[functions.check-cart-recovery-status]
+verify_jwt = false

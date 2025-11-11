@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 export type Member = {
   id: string;
@@ -83,18 +85,26 @@ export default function GlobalReachMap({
     });
   }, [membersProp]);
 
-  // Poll endpoint for members every 30s (live updates)
+  // Poll endpoint for members every 30s using Supabase client
   useEffect(() => {
     if (!membersEndpoint) return;
     let stopped = false;
     
     async function load() {
       try {
-        console.log('🔄 Polling members endpoint:', membersEndpoint);
-        const res = await fetch(membersEndpoint, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        console.log('🔄 Fetching members from edge function:', membersEndpoint);
         
-        const data = await res.json();
+        // Use Supabase client to invoke edge function
+        const { data, error } = await supabase.functions.invoke(membersEndpoint, {
+          method: 'GET'
+        });
+        
+        if (error) {
+          console.error('❌ Error fetching members:', error);
+          throw error;
+        }
+        
+        console.log('✅ Received data:', data);
         
         // Handle both direct Member[] array and GeoJSON FeatureCollection
         let membersData: Member[];

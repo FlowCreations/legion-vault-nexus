@@ -48,7 +48,7 @@ export const Geography = () => {
       </div>
       <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>
         <GlobalReachMap 
-          membersEndpoint={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/members-geojson`}
+          membersEndpoint="members-geojson"
           autoFit={true}
           padding={60}
           title=""
