@@ -27,7 +27,7 @@ serve(async (req) => {
     // Fetch all user profiles that have valid coordinates
     const { data: profiles, error } = await supabaseClient
       .from('user_profiles')
-      .select('user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at, era, ptp, ptp_status, era_label')
+      .select('user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at')
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
 
@@ -52,10 +52,6 @@ serve(async (req) => {
           name: profile.display_name || 'Community Member',
           avatar_url: profile.avatar_url || '',
           location: profile.location || '',
-          era: profile.era || 0,
-          era_label: profile.era_label || '',
-          ptp: profile.ptp || 0,
-          ptp_status: profile.ptp_status || '',
           tier: profile.tier || 'free',
           joined_at: profile.created_at,
           profile_url: `/community/${profile.user_id}`,
