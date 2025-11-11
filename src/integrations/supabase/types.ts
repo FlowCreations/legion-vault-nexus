@@ -137,6 +137,56 @@ export type Database = {
           },
         ]
       }
+      abandoned_carts: {
+        Row: {
+          cart_items: Json
+          cart_value: number | null
+          created_at: string | null
+          discount_code: string | null
+          discount_percentage: number | null
+          email_sent_at: string | null
+          expires_at: string | null
+          id: string
+          recovered_at: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cart_items: Json
+          cart_value?: number | null
+          created_at?: string | null
+          discount_code?: string | null
+          discount_percentage?: number | null
+          email_sent_at?: string | null
+          expires_at?: string | null
+          id?: string
+          recovered_at?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cart_items?: Json
+          cart_value?: number | null
+          created_at?: string | null
+          discount_code?: string | null
+          discount_percentage?: number | null
+          email_sent_at?: string | null
+          expires_at?: string | null
+          id?: string
+          recovered_at?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandoned_carts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       affiliate_content: {
         Row: {
           affiliate_id: string | null
@@ -986,6 +1036,44 @@ export type Database = {
           {
             foreignKeyName: "cameos_recipient_user_id_fkey"
             columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      cart_sessions: {
+        Row: {
+          cart_items: Json
+          cart_value: number | null
+          created_at: string | null
+          id: string
+          last_updated: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cart_items: Json
+          cart_value?: number | null
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cart_items?: Json
+          cart_value?: number | null
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_sessions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["user_id"]
@@ -3420,6 +3508,50 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      shopify_discount_codes: {
+        Row: {
+          abandoned_cart_id: string | null
+          code: string
+          created_at: string | null
+          discount_percentage: number
+          id: string
+          shopify_discount_id: string | null
+          shopify_price_rule_id: string | null
+          used_at: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          abandoned_cart_id?: string | null
+          code: string
+          created_at?: string | null
+          discount_percentage: number
+          id?: string
+          shopify_discount_id?: string | null
+          shopify_price_rule_id?: string | null
+          used_at?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          abandoned_cart_id?: string | null
+          code?: string
+          created_at?: string | null
+          discount_percentage?: number
+          id?: string
+          shopify_discount_id?: string | null
+          shopify_price_rule_id?: string | null
+          used_at?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_discount_codes_abandoned_cart_id_fkey"
+            columns: ["abandoned_cart_id"]
+            isOneToOne: false
+            referencedRelation: "abandoned_carts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_credentials: {
         Row: {

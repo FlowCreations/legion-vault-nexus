@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { AbandonedCartPopup } from "@/components/AbandonedCartPopup";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -155,6 +156,7 @@ const App = () => {
         <Footer />
         <FloatingChatbot />
         <GlobalMusicPlayer />
+        <AbandonedCartPopup />
         <HealthOverlay />
       </BrowserRouter>
     </TooltipProvider>
