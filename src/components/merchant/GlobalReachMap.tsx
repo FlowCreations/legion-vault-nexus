@@ -82,10 +82,11 @@ export default function GlobalReachMap({
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         if (error) throw error;
         if (data?.token) {
+          console.log('✅ Mapbox token received');
           setToken(data.token);
         }
       } catch (err) {
-        console.error('Failed to fetch Mapbox token:', err);
+        console.error('❌ Failed to fetch Mapbox token:', err);
       }
     }
     fetchToken();
@@ -149,11 +150,9 @@ export default function GlobalReachMap({
             for (const m of membersData) byId.set(m.id, m);
             return Array.from(byId.values());
           });
-          setLoading(false);
         }
       } catch (err) {
         console.error('❌ Error polling members:', err);
-        setLoading(false);
       }
     }
     
@@ -204,6 +203,7 @@ export default function GlobalReachMap({
 
     map.on("load", () => {
       console.log('🗺️ Map loaded, adding source and layers');
+      setLoading(false); // Hide loading overlay once map is ready
       
       // Setup fog/atmosphere
       map.setFog({
