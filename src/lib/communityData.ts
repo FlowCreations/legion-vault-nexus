@@ -41,9 +41,10 @@ export async function fetchCommunityMembers(): Promise<CommunityMemberPoint[]> {
   try {
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('user_id, display_name, location, latitude, longitude')
+      .select('user_id, display_name, location, latitude, longitude, heartbeat_member_id')
       .not('latitude', 'is', null)
-      .not('longitude', 'is', null);
+      .not('longitude', 'is', null)
+      .limit(560);
 
     if (error) {
       console.error('Error fetching community members:', error);
@@ -53,12 +54,12 @@ export async function fetchCommunityMembers(): Promise<CommunityMemberPoint[]> {
     if (!data) return [];
 
     // Normalize the data into our expected format
-    return data.map((member) => {
+    return data.map((member, index) => {
       // Parse location string if available (e.g., "Nashville, TN, USA")
       const locationParts = member.location?.split(',').map((s) => s.trim()) || [];
       
       return {
-        id: member.user_id,
+        id: member.user_id || member.heartbeat_member_id || `member-${index}`,
         displayName: member.display_name || 'Community Member',
         city: locationParts[0] || null,
         region: locationParts[1] || null,
