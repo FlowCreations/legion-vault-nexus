@@ -112,6 +112,24 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const setupAudioProcessing = async (rawStream: MediaStream) => {
     try {
+      // Ensure audio track is enabled
+      const audioTrack = rawStream.getAudioTracks()[0];
+      if (!audioTrack) {
+        throw new Error('No audio track found in stream');
+      }
+      
+      if (!audioTrack.enabled) {
+        console.log('[Broadcaster] Enabling audio track...');
+        audioTrack.enabled = true;
+      }
+      
+      console.log('[Broadcaster] Audio track status:', {
+        label: audioTrack.label,
+        enabled: audioTrack.enabled,
+        readyState: audioTrack.readyState,
+        muted: audioTrack.muted
+      });
+      
       // Create AudioContext with proper initialization
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioContextClass({ sampleRate: 48000 });
@@ -119,7 +137,6 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] AudioContext created, initial state:', ctx.state);
       
       // CRITICAL: Resume audio context - required for browser autoplay policy
-      // This MUST be called from a user gesture (button click)
       if (ctx.state === 'suspended') {
         console.log('[Broadcaster] Resuming suspended AudioContext...');
         await ctx.resume();
@@ -131,49 +148,64 @@ export function LiveBroadcaster({ eventId }: Props) {
         throw new Error('AudioContext failed to start. Click Start Preview again.');
       }
       
+      // Build audio graph: mic → gain → analyzer
       const source = ctx.createMediaStreamSource(rawStream);
-
-      // Create analyzer for continuous monitoring
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 1.0;
+      
       const rawAnalyser = ctx.createAnalyser();
-      rawAnalyser.fftSize = 256;
-      rawAnalyser.smoothingTimeConstant = 0.3;
+      rawAnalyser.fftSize = 512;
+      rawAnalyser.smoothingTimeConstant = 0.8;
       rawAnalyser.minDecibels = -90;
       rawAnalyser.maxDecibels = -10;
+      
+      // Connect: source → gain → analyzer
+      source.connect(gainNode);
+      gainNode.connect(rawAnalyser);
+      
       rawAudioAnalyserRef.current = rawAnalyser;
       
-      // Connect source to analyser
-      source.connect(rawAnalyser);
-      
-      // Test audio signal detection with better detection
-      console.log('[Broadcaster] Testing audio signal...');
+      // Test audio signal detection using FREQUENCY data (not time-domain)
+      console.log('[Broadcaster] Testing audio signal with frequency analysis...');
       let audioDetected = false;
       const maxWaitTime = 3000;
       const startTime = Date.now();
       const bufferLength = rawAnalyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
+      let maxDbLevel = -Infinity;
       
       while (!audioDetected && Date.now() - startTime < maxWaitTime) {
         await new Promise(resolve => setTimeout(resolve, 100));
         
+        // Use FREQUENCY data for accurate amplitude measurement
         rawAnalyser.getByteFrequencyData(dataArray);
         
-        // Calculate average frequency magnitude
+        // Calculate average amplitude
         const sum = dataArray.reduce((a, b) => a + b, 0);
         const avg = sum / bufferLength;
         
-        console.log('[Broadcaster] Audio level:', avg.toFixed(2), '/255');
+        // Convert to dB
+        const db = avg > 0 ? 20 * Math.log10(avg / 255) : -Infinity;
+        maxDbLevel = Math.max(maxDbLevel, db);
         
-        // Detect any signal above noise floor (> 5 is reasonable)
-        if (avg > 5) {
+        console.log('[Broadcaster] Mic level:', avg.toFixed(1), '/255', '|', db.toFixed(1), 'dB', '| Track:', audioTrack.readyState, audioTrack.muted ? 'MUTED' : 'ACTIVE');
+        
+        // Detect signal above -50 dB (reasonable threshold for voice)
+        if (db > -50) {
           audioDetected = true;
-          console.log('[Broadcaster] ✅ Audio signal DETECTED! Level:', avg);
+          console.log('[Broadcaster] ✅ Audio signal DETECTED! Level:', db.toFixed(1), 'dB');
         }
       }
       
+      console.log('[Broadcaster] Audio detection complete:', {
+        detected: audioDetected,
+        maxLevel: maxDbLevel.toFixed(1) + ' dB',
+        trackActive: audioTrack.readyState === 'live'
+      });
+      
+      // Don't fail if silent - user might start speaking later
       if (!audioDetected) {
-        console.warn('[Broadcaster] ⚠️ No audio detected after', maxWaitTime, 'ms');
-        // Don't throw error, just warn - user might be silent
-        console.log('[Broadcaster] Proceeding anyway - user might start speaking later');
+        console.log('[Broadcaster] ⚠️ No audio detected yet (max level:', maxDbLevel.toFixed(1), 'dB). Proceeding - user may speak later.');
       }
 
       setAudioReady(true);
@@ -183,7 +215,8 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Audio processing setup complete:', {
         contextState: ctx.state,
         sampleRate: ctx.sampleRate,
-        audioDetected
+        audioDetected,
+        analyzerConnected: true
       });
       
     } catch (err) {
