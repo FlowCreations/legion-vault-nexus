@@ -112,121 +112,92 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const setupAudioProcessing = async (rawStream: MediaStream) => {
     try {
-      // Ensure audio track is enabled and active
-      const audioTracks = rawStream.getAudioTracks();
-      if (audioTracks.length === 0) {
+      const [track] = rawStream.getAudioTracks();
+      
+      if (!track) {
         throw new Error('No audio track found in stream');
       }
-      
-      const audioTrack = audioTracks[0];
-      console.log('[Broadcaster] Mic track status:', {
-        label: audioTrack.label,
-        readyState: audioTrack.readyState,
-        enabled: audioTrack.enabled,
-        muted: audioTrack.muted
-      });
-      
-      // Validate track is live
-      if (audioTrack.readyState === 'ended') {
-        throw new Error('Microphone stream inactive - track ended');
+
+      console.log('[Broadcaster] Mic track:', track.label, track.readyState, track.enabled);
+
+      // Validate track is active
+      if (track.readyState === 'ended' || !track.enabled) {
+        throw new Error('Microphone stream inactive');
       }
-      
-      if (!audioTrack.enabled) {
-        console.log('[Broadcaster] Enabling audio track...');
-        audioTrack.enabled = true;
-      }
-      
-      // Create AudioContext with proper initialization
+
+      // Create AudioContext
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioContextClass({ sampleRate: 48000 });
       
-      console.log('[Broadcaster] AudioContext created, state:', ctx.state);
+      console.log('[Broadcaster] AudioContext state:', ctx.state);
       
-      // CRITICAL: Resume audio context - required for browser autoplay policy
+      // Resume if suspended (required for Safari/Chrome autoplay policy)
       if (ctx.state === 'suspended') {
-        console.log('[Broadcaster] Resuming suspended AudioContext...');
+        console.log('[Broadcaster] Resuming AudioContext...');
         await ctx.resume();
-        console.log('[Broadcaster] AudioContext resumed, state:', ctx.state);
+        console.log('[Broadcaster] AudioContext resumed:', ctx.state);
       }
-      
-      if (ctx.state !== 'running') {
-        throw new Error('AudioContext failed to start. Click Start Preview again.');
-      }
-      
-      // Build audio graph: mic → gain → analyzer (NO destination!)
-      const micSource = ctx.createMediaStreamSource(rawStream);
-      const gainNode = ctx.createGain();
-      gainNode.gain.value = 1.0;
-      
+
+      // Build audio graph: source → gain → analyser
+      const source = ctx.createMediaStreamSource(rawStream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       analyser.smoothingTimeConstant = 0.8;
       analyser.minDecibels = -90;
       analyser.maxDecibels = -10;
       
-      // Connect ONLY: mic → gain → analyzer
-      // DO NOT connect to destination (that's for speakers)
-      micSource.connect(gainNode);
-      gainNode.connect(analyser);
-      
+      const gain = ctx.createGain();
+      gain.gain.value = 1.0; // CRITICAL: Must be 1.0 for signal to pass through
+
+      // Connect: source → gain → analyser (NO destination!)
+      source.connect(gain);
+      gain.connect(analyser);
+
       rawAudioAnalyserRef.current = analyser;
+
+      console.log('[Broadcaster] Analyser connected:', analyser, 'Gain:', gain.gain.value);
+
+      // Start monitoring loop to verify signal
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      let monitorCount = 0;
+      const maxMonitorChecks = 30; // 3 seconds of checks
+      let signalDetected = false;
       
-      console.log('[Broadcaster] Audio graph connected: mic → gain → analyzer');
-      
-      // Verify analyzer receives input
-      const verifyData = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(verifyData);
-      const initialAvg = verifyData.reduce((a, b) => a + b, 0) / verifyData.length;
-      console.log('[Broadcaster] Initial analyzer input level:', initialAvg.toFixed(2));
-      
-      // Test audio signal detection using FREQUENCY data
-      console.log('[Broadcaster] Testing audio signal (speak into mic)...');
-      let audioDetected = false;
-      const maxWaitTime = 3000;
-      const startTime = Date.now();
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      let maxAvg = 0;
-      
-      while (!audioDetected && Date.now() - startTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      const checkSignal = () => {
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        const db = avg > 0 ? 20 * Math.log10(avg / 255) : -Infinity;
         
-        // Use FREQUENCY data for accurate amplitude measurement
-        analyser.getByteFrequencyData(dataArray);
-        
-        // Calculate average amplitude
-        const sum = dataArray.reduce((a, b) => a + b, 0);
-        const avg = sum / bufferLength;
-        maxAvg = Math.max(maxAvg, avg);
-        
-        console.log('[Broadcaster] Mic avg level:', avg.toFixed(2), '| Track:', audioTrack.readyState, audioTrack.muted ? 'MUTED' : 'LIVE');
-        
-        // Detect signal when average > 2 (indicates real audio data)
-        if (avg > 2) {
-          audioDetected = true;
-          console.log('[Broadcaster] ✅ Audio signal DETECTED! Avg level:', avg.toFixed(2));
+        if (monitorCount < maxMonitorChecks) {
+          console.log('[Broadcaster] Monitor #' + monitorCount + ' - Avg:', avg.toFixed(2), 'dB:', db.toFixed(1), 'Track:', track.readyState);
+          monitorCount++;
+          
+          if (avg > 2) {
+            signalDetected = true;
+            console.log('[Broadcaster] ✅ SIGNAL DETECTED! Avg:', avg.toFixed(2));
+          }
         }
+      };
+
+      // Run initial checks
+      for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        checkSignal();
+        if (signalDetected) break;
       }
-      
-      console.log('[Broadcaster] Audio detection complete:', {
-        detected: audioDetected,
-        maxAvg: maxAvg.toFixed(2),
-        trackState: audioTrack.readyState
-      });
-      
-      // Don't fail if silent - user might start speaking later
-      if (!audioDetected) {
-        console.log('[Broadcaster] ⚠️ No audio detected yet (max avg:', maxAvg.toFixed(2), '). Proceeding - user may speak later.');
+
+      if (!signalDetected) {
+        console.warn('[Broadcaster] ⚠️ No signal detected during initial test. User may need to speak or check mic permissions.');
       }
 
       setAudioReady(true);
       setAudioContext(ctx);
-      setSourceNode(micSource);
+      setSourceNode(source);
 
-      console.log('[Broadcaster] ✅ Audio processing setup complete');
+      console.log('[Broadcaster] ✅ Audio processing complete. Graph: source → gain(1.0) → analyser');
       
     } catch (err) {
-      console.error('[Broadcaster] Audio processing setup failed:', err);
+      console.error('[Broadcaster] Audio init failed:', err);
       throw err;
     }
   };
