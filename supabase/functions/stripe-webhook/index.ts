@@ -168,6 +168,77 @@ serve(async (req) => {
       });
     }
 
+    // Handle customer.subscription.updated event (plan changes)
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const previousAttributes = event.data.previous_attributes as any;
+      
+      // Check if the plan actually changed (not just other subscription updates)
+      if (previousAttributes?.items) {
+        console.log("Processing subscription plan change:", subscription.id);
+
+        // Initialize Supabase client
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Initialize Stripe to get customer details
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+        if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+        const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+        // Get customer details
+        const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
+        const customerEmail = customer.email;
+        const customerName = customer.name || customer.email?.split('@')[0] || "Member";
+        
+        if (!customerEmail) {
+          console.error("No customer email found for subscription update");
+          return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
+        }
+
+        // Get old and new plan details
+        const oldPlanName = previousAttributes.items.data[0].price.nickname || "Previous Plan";
+        const newPlanName = subscription.items.data[0].price.nickname || "New Plan";
+        const newAmount = subscription.items.data[0].price.unit_amount || 0;
+        const currency = subscription.currency || "usd";
+        const billingInterval = subscription.items.data[0].price.recurring?.interval || "month";
+        const effectiveDate = new Date(subscription.current_period_start * 1000).toISOString();
+        const nextBillingDate = new Date(subscription.current_period_end * 1000).toISOString();
+
+        // Determine if it's an upgrade or downgrade based on price
+        const oldAmount = previousAttributes.items.data[0].price.unit_amount || 0;
+        const changeType = newAmount > oldAmount ? "upgrade" : "downgrade";
+
+        // Send plan change confirmation email
+        const { error: emailError } = await supabase.functions.invoke("send-plan-change-confirmation", {
+          body: {
+            email: customerEmail,
+            customerName: customerName,
+            oldPlanName: oldPlanName,
+            newPlanName: newPlanName,
+            changeType: changeType,
+            newAmount: newAmount,
+            currency: currency,
+            billingInterval: billingInterval,
+            effectiveDate: effectiveDate,
+            nextBillingDate: nextBillingDate,
+          },
+        });
+
+        if (emailError) {
+          console.error("Error sending plan change confirmation email:", emailError);
+        } else {
+          console.log("Plan change confirmation email triggered for:", customerEmail);
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
+
     // Handle customer.subscription.deleted event (cancellation)
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;

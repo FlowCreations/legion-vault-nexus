@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.send-cancellation-confirmation]
 verify_jwt = false
 
+[functions.send-plan-change-confirmation]
+verify_jwt = false
+
 [functions.verify-checkout-session]
 verify_jwt = false
 
