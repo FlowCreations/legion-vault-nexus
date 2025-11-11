@@ -25,7 +25,10 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
     if (!mapContainer.current || map.current) return;
 
     try {
-      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+      // Mapbox public token (safe to expose in client-side code)
+      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1Ijoic29va3oiLCJhIjoiY200MWU0bHIzMDA3YzJrcHl6Mm5kOWE1MSJ9.aKPVN1SrGiNFWPVe4q9-Nw';
+      
+      console.log('🗺️ Initializing Mapbox with token:', mapboxgl.accessToken ? 'Token present' : 'No token');
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
