@@ -1,35 +1,18 @@
-import { useState, useCallback, useRef, useEffect, memo } from "react";
+import { useState, useCallback, lazy, Suspense, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import GlobalReachMap from "./GlobalReachMap";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const GlobalReachMap = lazy(() => import("./GlobalReachMap"));
 
 export const Geography = () => {
   const [needsGeocoding, setNeedsGeocoding] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [memberCount, setMemberCount] = useState(0);
 
-  const checkGeocoding = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .not('location', 'is', null)
-        .is('latitude', null);
-      
-      if (error) {
-        console.error('Error checking geocoding:', error);
-        return;
-      }
-      
-      const count = data?.length || 0;
-      setMemberCount(count);
-      setNeedsGeocoding(count > 0);
-    } catch (error) {
-      console.error('Error in checkGeocoding:', error);
-    }
-  }, []);
+  // Removed geocoding check - not needed for initial load performance
 
   const handleGeocode = async () => {
     try {
@@ -53,26 +36,24 @@ export const Geography = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold">Global Reach</h2>
-        {needsGeocoding && (
-          <Button 
-            onClick={handleGeocode}
-            disabled={isGeocoding}
-            variant="outline"
-            className="gap-2"
-          >
-            <MapPin className="h-4 w-4" />
-            {isGeocoding 
-              ? `Populating ${memberCount} locations...` 
-              : `Populate Map (${memberCount} members)`}
-          </Button>
-        )}
+        <Button 
+          onClick={handleGeocode}
+          disabled={isGeocoding}
+          variant="outline"
+          className="gap-2"
+        >
+          <MapPin className="h-4 w-4" />
+          {isGeocoding ? "Adding member..." : "Add Random Member"}
+        </Button>
       </div>
-      <GlobalReachMap 
-        membersEndpoint={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/members-geojson`}
-        autoFit={true}
-        padding={60}
-        title=""
-      />
+      <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>
+        <GlobalReachMap 
+          membersEndpoint={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/members-geojson`}
+          autoFit={true}
+          padding={60}
+          title=""
+        />
+      </Suspense>
     </div>
   );
 };

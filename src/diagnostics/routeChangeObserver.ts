@@ -1,7 +1,7 @@
 import { diagnosticsStore } from './diagnosticsStore';
 
 let lastRoute = window.location.pathname;
-let routeChangeStart = performance.now();
+let routeChangeStart: number | null = null;
 
 export function startRouteChangeObserver() {
   if (typeof window === 'undefined') {
@@ -12,7 +12,8 @@ export function startRouteChangeObserver() {
     const currentRoute = window.location.pathname;
     
     if (currentRoute !== lastRoute) {
-      const duration = performance.now() - routeChangeStart;
+      // Only measure duration if we have a valid start time
+      const duration = routeChangeStart !== null ? performance.now() - routeChangeStart : 0;
       const wasBlocking = duration > 500;
 
       diagnosticsStore.add({
@@ -24,17 +25,20 @@ export function startRouteChangeObserver() {
         wasBlocking,
       });
 
-      if (wasBlocking) {
-        console.warn(`[Performance] Slow route transition: ${lastRoute} → ${currentRoute} took ${duration.toFixed(0)}ms`);
-        diagnosticsStore.add({
-          type: 'log',
-          ts: performance.now(),
-          level: 'warn',
-          message: `Slow route change: ${lastRoute} → ${currentRoute}`,
-          data: { duration: duration.toFixed(0) }
-        });
-      } else {
-        console.log(`[Performance] Route change: ${lastRoute} → ${currentRoute} (${duration.toFixed(0)}ms)`);
+      // Only log if we had a valid measurement
+      if (routeChangeStart !== null) {
+        if (wasBlocking) {
+          console.warn(`[Performance] Slow route transition: ${lastRoute} → ${currentRoute} took ${duration.toFixed(0)}ms`);
+          diagnosticsStore.add({
+            type: 'log',
+            ts: performance.now(),
+            level: 'warn',
+            message: `Slow route change: ${lastRoute} → ${currentRoute}`,
+            data: { duration: duration.toFixed(0) }
+          });
+        } else {
+          console.log(`[Performance] Route change: ${lastRoute} → ${currentRoute} (${duration.toFixed(0)}ms)`);
+        }
       }
 
       lastRoute = currentRoute;
