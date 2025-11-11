@@ -151,8 +151,9 @@ export default function CommunityGlobe() {
           "interpolate",
           ["linear"],
           ["zoom"],
-          7, 1,
-          9, 0
+          0, 1,
+          3, 0.5,
+          5, 0
         ]
       }
     });
@@ -162,19 +163,19 @@ export default function CommunityGlobe() {
       id: "community-points",
       type: "circle",
       source: "community",
-      minzoom: 7,
+      minzoom: 0,
       layout: {
         visibility: showHeatmap ? "none" : "visible"
       },
       paint: {
-        // Size circle based on engagement
+        // Size circle based on zoom and engagement
         "circle-radius": [
           "interpolate",
           ["linear"],
-          ["get", "engagement"],
-          0, 6,
-          100, 8,
-          500, 12
+          ["zoom"],
+          0, ["interpolate", ["linear"], ["get", "engagement"], 0, 3, 100, 4, 500, 6],
+          5, ["interpolate", ["linear"], ["get", "engagement"], 0, 6, 100, 8, 500, 12],
+          10, ["interpolate", ["linear"], ["get", "engagement"], 0, 8, 100, 12, 500, 16]
         ],
         // Color based on engagement
         "circle-color": [
@@ -187,13 +188,13 @@ export default function CommunityGlobe() {
         ],
         "circle-stroke-color": "white",
         "circle-stroke-width": 1.5,
-        // Add opacity for overlapping points
+        // Visible at all zoom levels
         "circle-opacity": [
           "interpolate",
           ["linear"],
           ["zoom"],
-          7, 0,
-          8, 1
+          0, 0.8,
+          3, 1
         ]
       }
     });
