@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { GlobeRealtime } from "./GlobeRealtime";
+import GlobalReachMap from "./GlobalReachMap";
 
 export const Geography = () => {
   const [needsGeocoding, setNeedsGeocoding] = useState(false);
@@ -67,7 +67,12 @@ export const Geography = () => {
           </Button>
         )}
       </div>
-      <GlobeRealtime />
+      <GlobalReachMap 
+        membersEndpoint={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/members-geojson`}
+        autoFit={true}
+        padding={60}
+        title=""
+      />
     </div>
   );
 };
