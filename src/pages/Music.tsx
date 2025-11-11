@@ -11,6 +11,8 @@ import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
+import { useMusicTracks } from "@/hooks/useMusicTracks";
+import { usePagePerformance } from "@/hooks/usePagePerformance";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";
@@ -38,6 +40,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 export default function Music() {
+  usePagePerformance('Music');
   const { trackEvent } = useEventTracking();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -46,30 +49,19 @@ export default function Music() {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const { toast } = useToast();
-  const [uploadedTracks, setUploadedTracks] = useState<any[]>([]);
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Use React Query for data fetching with caching
+  const { data: uploadedTracks = [], isLoading } = useMusicTracks();
+
   useEffect(() => {
     checkAuth();
-    fetchUploadedTracks();
   }, []);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setIsAuthenticated(!!session);
-  };
-
-  const fetchUploadedTracks = async () => {
-    const { data, error } = await supabase
-      .from('music_tracks')
-      .select('*')
-      .order('display_order', { ascending: true, nullsFirst: false })
-      .order('created_at', { ascending: true });
-
-    if (data && !error) {
-      setUploadedTracks(data);
-    }
   };
 
   // Helper function to get album ID from album name

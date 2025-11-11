@@ -22,6 +22,8 @@ import { useNavigate } from "react-router-dom";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useTranslation } from "react-i18next";
+import { useVideos, useHeroVideo, useFavoriteVideos } from "@/hooks/useVideos";
+import { usePagePerformance } from "@/hooks/usePagePerformance";
 
 interface VideoItem {
   id: string;
@@ -34,198 +36,70 @@ interface VideoItem {
 }
 
 export default function Videos() {
+  usePagePerformance('Videos');
   const { trackEvent } = useEventTracking();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [heroVideoUrl, setHeroVideoUrl] = useState<string>("");
-  const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
-  const [behindTheScenes, setBehindTheScenes] = useState<VideoItem[]>([]);
-  const [performances, setPerformances] = useState<VideoItem[]>([]);
-  const [documentary, setDocumentary] = useState<VideoItem[]>([]);
-  const [favorites, setFavorites] = useState<VideoItem[]>([]);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const [isShuffled, setIsShuffled] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
-  const navigate = useNavigate();
+
+  // Use React Query hooks for data fetching with caching
+  const { data: heroVideoUrl = '', isLoading: heroLoading } = useHeroVideo();
+  const { data: videoCategories, isLoading: videosLoading, refetch: refetchVideos } = useVideos();
+  const { data: favoriteVideos = [], refetch: refetchFavorites } = useFavoriteVideos(userId);
+
+  const [musicVideos, setMusicVideos] = useState<VideoItem[]>([]);
+  const [behindTheScenes, setBehindTheScenes] = useState<VideoItem[]>([]);
+  const [performances, setPerformances] = useState<VideoItem[]>([]);
+  const [documentary, setDocumentary] = useState<VideoItem[]>([]);
+
+  // Update local state when React Query data changes
+  useEffect(() => {
+    if (videoCategories) {
+      setMusicVideos(videoCategories.musicVideos as VideoItem[]);
+      setBehindTheScenes(videoCategories.behindTheScenes as VideoItem[]);
+      setPerformances(videoCategories.performances as VideoItem[]);
+      setDocumentary(videoCategories.documentary as VideoItem[]);
+    }
+  }, [videoCategories]);
 
   useEffect(() => {
     checkAuth();
-    loadVideos();
-    loadFavorites();
 
-    // Set up realtime subscription to reload videos when they're updated
+    // Set up realtime subscription to invalidate cache when videos update
     const videosChannel = supabase
       .channel('videos-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'videos'
-        },
-        (payload) => {
-          console.log('Video change detected:', payload);
-          // Reload videos whenever any change happens
-          loadVideos();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'videos' }, () => {
+        refetchVideos();
+      })
       .subscribe();
 
     const favoritesChannel = supabase
       .channel('favorites-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'video_favorites'
-        },
-        () => {
-          loadFavorites();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'video_favorites' }, () => {
+        refetchFavorites();
+      })
       .subscribe();
 
     return () => {
       supabase.removeChannel(videosChannel);
       supabase.removeChannel(favoritesChannel);
     };
-  }, []);
+  }, [refetchVideos, refetchFavorites]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setIsAuthenticated(!!session);
+    setUserId(session?.user?.id);
   };
 
-  const loadVideos = async () => {
-    console.log('Loading videos...');
-    
-    // Load hero video
-    const { data: heroData, error: heroError } = await supabase
-      .from('videos')
-      .select('storage_path')
-      .eq('category', 'hero')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (heroError) {
-      console.error('Error loading hero video:', heroError);
-    } else if (heroData) {
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(heroData.storage_path);
-      setHeroVideoUrl(publicUrl);
-    }
-
-    // Load all other videos (excluding hero)
-    const { data, error } = await supabase
-      .from('videos')
-      .select('id, title, description, category, thumbnail_url, is_premium, storage_path')
-      .neq('category', 'hero')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading videos:', error);
-      return;
-    }
-
-    if (data) {
-      console.log('Loaded videos:', data);
-      
-      setMusicVideos(data.filter(v => v.category === 'music_videos').map(v => ({
-        id: v.id,
-        title: v.title,
-        description: v.description || '',
-        thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false,
-        storage_path: v.storage_path,
-        category: v.category
-      })));
-      
-      setBehindTheScenes(data.filter(v => v.category === 'behind_the_scenes').map(v => ({
-        id: v.id,
-        title: v.title,
-        description: v.description || '',
-        thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false,
-        storage_path: v.storage_path,
-        category: v.category
-      })));
-      
-      setPerformances(data.filter(v => v.category === 'performances').map(v => ({
-        id: v.id,
-        title: v.title,
-        description: v.description || '',
-        thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false,
-        storage_path: v.storage_path,
-        category: v.category
-      })));
-      
-      setDocumentary(data.filter(v => v.category === 'documentary').map(v => ({
-        id: v.id,
-        title: v.title,
-        description: v.description || '',
-        thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false,
-        storage_path: v.storage_path,
-        category: v.category
-      })));
-    }
-  };
-
-  const loadFavorites = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setFavorites([]);
-      return;
-    }
-
-    // First get the favorite video IDs
-    const { data: favData, error: favError } = await supabase
-      .from('video_favorites')
-      .select('video_id')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (favError) {
-      console.error('Error loading favorites:', favError);
-      return;
-    }
-
-    if (!favData || favData.length === 0) {
-      setFavorites([]);
-      return;
-    }
-
-    // Then fetch the actual video data
-    const videoIds = favData.map(fav => fav.video_id);
-    const { data: videosData, error: videosError } = await supabase
-      .from('videos')
-      .select('id, title, description, category, thumbnail_url, is_premium, storage_path')
-      .in('id', videoIds);
-
-    if (videosError) {
-      console.error('Error loading favorite videos:', videosError);
-      return;
-    }
-
-    if (videosData) {
-      setFavorites(videosData.map(v => ({
-        id: v.id,
-        title: v.title,
-        description: v.description || '',
-        thumbnail_url: v.thumbnail_url || '',
-        is_premium: v.is_premium || false,
-        storage_path: v.storage_path,
-        category: v.category,
-      })));
-    }
-  };
 
   const handleVideoClick = async (video: VideoItem) => {
     console.log('Video clicked, authenticated:', isAuthenticated);
@@ -276,15 +150,16 @@ export default function Videos() {
     setIsShuffling(true);
     
     setTimeout(() => {
-      if (!isShuffled) {
-        setMusicVideos(prev => shuffleArray(prev));
-        setBehindTheScenes(prev => shuffleArray(prev));
-        setPerformances(prev => shuffleArray(prev));
-        setDocumentary(prev => shuffleArray(prev));
-        setFavorites(prev => shuffleArray(prev));
-      } else {
-        loadVideos();
-        loadFavorites();
+      if (!isShuffled && videoCategories) {
+        setMusicVideos(shuffleArray(videoCategories.musicVideos as VideoItem[]));
+        setBehindTheScenes(shuffleArray(videoCategories.behindTheScenes as VideoItem[]));
+        setPerformances(shuffleArray(videoCategories.performances as VideoItem[]));
+        setDocumentary(shuffleArray(videoCategories.documentary as VideoItem[]));
+      } else if (videoCategories) {
+        setMusicVideos(videoCategories.musicVideos as VideoItem[]);
+        setBehindTheScenes(videoCategories.behindTheScenes as VideoItem[]);
+        setPerformances(videoCategories.performances as VideoItem[]);
+        setDocumentary(videoCategories.documentary as VideoItem[]);
       }
       setIsShuffled(!isShuffled);
       
@@ -423,10 +298,10 @@ export default function Videos() {
         />
 
         {/* Favorites - Only show if user has favorites */}
-        {favorites.length > 0 && (
+        {favoriteVideos.length > 0 && (
           <ContentRow
             title={t('videos.rows.favorites')}
-            items={favorites}
+            items={favoriteVideos as VideoItem[]}
             aspectRatio="landscape"
             hoveredId={hoveredId}
             setHoveredId={setHoveredId}
