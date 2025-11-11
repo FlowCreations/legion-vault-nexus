@@ -12,10 +12,6 @@ export interface MemberFeature {
     name: string;
     avatar_url: string;
     location: string;
-    era: number;
-    era_label: string;
-    ptp: number;
-    ptp_status: string;
     tier: string;
     joined_at: string;
     profile_url: string;
@@ -86,10 +82,6 @@ export const useMembersGeojson = () => {
             name: newRecord.display_name || 'Community Member',
             avatar_url: newRecord.avatar_url || '',
             location: newRecord.location || '',
-            era: newRecord.era || 0,
-            era_label: newRecord.era_label || '',
-            ptp: newRecord.ptp || 0,
-            ptp_status: newRecord.ptp_status || '',
             tier: newRecord.tier || 'free',
             joined_at: newRecord.created_at,
             profile_url: `/community/${newRecord.user_id}`,
@@ -114,8 +106,6 @@ export const useMembersGeojson = () => {
               name: newRecord.display_name || updatedFeatures[index].properties.name,
               avatar_url: newRecord.avatar_url || updatedFeatures[index].properties.avatar_url,
               location: newRecord.location || updatedFeatures[index].properties.location,
-              era: newRecord.era || updatedFeatures[index].properties.era,
-              ptp: newRecord.ptp || updatedFeatures[index].properties.ptp,
               tier: newRecord.tier || updatedFeatures[index].properties.tier,
             },
           };

@@ -25,7 +25,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
     if (!mapContainer.current || map.current) return;
 
     try {
-      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
+      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
