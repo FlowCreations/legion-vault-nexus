@@ -15,9 +15,10 @@ interface AudioMixerProps {
   onAudioLevel?: (left: number, right: number) => void;
   onReady?: () => void;
   onProcessedAnalyser?: (analyser: AnalyserNode) => void;
+  onRawInputAnalyser?: (analyser: AnalyserNode) => void;
 }
 
-export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser }: AudioMixerProps) => {
+export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser }: AudioMixerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
@@ -223,20 +224,61 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         master = audioContext.createGain();
         master.gain.value = masterGain;
 
-        // Create raw input analyser (pre-processing) for live metering
-        const rawInputAnalyser = audioContext.createAnalyser();
-        rawInputAnalyser.fftSize = 2048;
-        rawInputAnalyser.smoothingTimeConstant = 0;
-        rawInputAnalyser.minDecibels = -90;
-        rawInputAnalyser.maxDecibels = 0;
-        
-        // Connect raw source to input analyser (parallel path, doesn't affect processing)
-        sourceNode.connect(rawInputAnalyser);
-        
-        // For stereo metering, we'll use the same analyser for both L/R
-        // (most mics are mono anyway, but this ensures compatibility)
-        leftAnalyser = rawInputAnalyser;
-        rightAnalyser = rawInputAnalyser;
+        // Detect mono vs stereo input
+        const channelCount = sourceNode.channelCount;
+        const isMono = channelCount === 1;
+        console.log('[AudioMixer] Input channel config:', { channelCount, isMono });
+
+        if (isMono) {
+          // Mono input: create single analyser with gain boost for better metering
+          const rawInputAnalyser = audioContext.createAnalyser();
+          rawInputAnalyser.fftSize = 2048;
+          rawInputAnalyser.smoothingTimeConstant = 0;
+          rawInputAnalyser.minDecibels = -90;
+          rawInputAnalyser.maxDecibels = 0;
+          
+          // Apply gain boost for metering only
+          const meteringGain = audioContext.createGain();
+          meteringGain.gain.value = 1.8; // Boost signal for better visual response
+          
+          // Connect: source → metering gain → analyser (parallel path)
+          sourceNode.connect(meteringGain);
+          meteringGain.connect(rawInputAnalyser);
+          
+          // Both L/R use same analyser for mono
+          leftAnalyser = rawInputAnalyser;
+          rightAnalyser = rawInputAnalyser;
+          
+          // Expose to diagnostics
+          if (onRawInputAnalyser) {
+            onRawInputAnalyser(rawInputAnalyser);
+          }
+        } else {
+          // Stereo input: split channels for true L/R metering
+          const splitter = audioContext.createChannelSplitter(2);
+          
+          leftAnalyser = audioContext.createAnalyser();
+          leftAnalyser.fftSize = 2048;
+          leftAnalyser.smoothingTimeConstant = 0;
+          leftAnalyser.minDecibels = -90;
+          leftAnalyser.maxDecibels = 0;
+          
+          rightAnalyser = audioContext.createAnalyser();
+          rightAnalyser.fftSize = 2048;
+          rightAnalyser.smoothingTimeConstant = 0;
+          rightAnalyser.minDecibels = -90;
+          rightAnalyser.maxDecibels = 0;
+          
+          // Connect: source → splitter → [L/R analysers] (parallel path)
+          sourceNode.connect(splitter);
+          splitter.connect(leftAnalyser, 0);
+          splitter.connect(rightAnalyser, 1);
+          
+          // Expose left analyser to diagnostics
+          if (onRawInputAnalyser) {
+            onRawInputAnalyser(leftAnalyser);
+          }
+        }
 
         // Analyzer for processed signal (diagnostics only)
         analyser = audioContext.createAnalyser();
@@ -313,13 +355,13 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           });
         }, 500);
 
-        // Audio level monitoring with true stereo channel separation
+        // Audio level monitoring with improved scaling and smoothing
         const dataArrayLeft = new Float32Array(leftAnalyser.fftSize);
         const dataArrayRight = new Float32Array(rightAnalyser.fftSize);
         let smoothedLeft = 0;
         let smoothedRight = 0;
-        const smoothingFactor = 0.2;
-        const noiseFloor = 1; // 1% minimum to prevent noise oscillation
+        const smoothingFactor = 0.3; // Smoother visual motion
+        const noiseFloor = 2; // 2% minimum to prevent noise oscillation
         
         const updateLevels = () => {
           // Get time-domain data for RMS calculation
@@ -338,11 +380,11 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           const dbLeft = 20 * Math.log10(rmsLeft || 0.0001);
           const dbRight = 20 * Math.log10(rmsRight || 0.0001);
           
-          // Convert dB to percentage (assuming -60 dB = 0%, 0 dB = 100%)
-          const percentLeft = Math.max(0, Math.min(100, ((dbLeft + 60) / 60) * 100));
-          const percentRight = Math.max(0, Math.min(100, ((dbRight + 60) / 60) * 100));
+          // Better scaling for speaking range: -50 dB = 0%, -6 dB = 100%
+          const percentLeft = Math.max(0, Math.min(100, ((dbLeft + 50) / 44) * 100));
+          const percentRight = Math.max(0, Math.min(100, ((dbRight + 50) / 44) * 100));
           
-          // Apply light smoothing
+          // Apply smoothing for stable visuals
           smoothedLeft = smoothedLeft * (1 - smoothingFactor) + percentLeft * smoothingFactor;
           smoothedRight = smoothedRight * (1 - smoothingFactor) + percentRight * smoothingFactor;
           
@@ -392,7 +434,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         console.error('[AudioMixer] Cleanup error:', e);
       }
     };
-  }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser]);
+  }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser]);
 
   // Effect 2: Update node parameters (runs when controls change)
   useEffect(() => {
@@ -410,15 +452,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
   return (
     <Card className="p-4">
-      <div className="flex gap-4 items-start">
-        {/* Compact Level Meters */}
-        <div className="flex gap-2">
-          <CompactLevelMeter level={leftLevel} label="L" />
-          <CompactLevelMeter level={rightLevel} label="R" />
-        </div>
-
-        {/* Mixer Controls */}
-        <div className="flex-1">
+      <div className="flex-1">
           <Tabs defaultValue="mixing" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="mixing" className="gap-1">
@@ -703,7 +737,6 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
             </TabsContent>
           </Tabs>
         </div>
-      </div>
     </Card>
   );
 };

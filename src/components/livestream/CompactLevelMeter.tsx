@@ -34,13 +34,23 @@ export const CompactLevelMeter = ({ level, label }: CompactLevelMeterProps) => {
           <span>-50</span>
         </div>
         
-        {/* Level bars - dual channel style */}
-        <div className="absolute bottom-0 left-1 w-4 transition-all duration-75" 
-             style={{ height: `${barHeight}%` }}>
+        {/* Level bars - dual channel style with GPU acceleration */}
+        <div 
+          className="absolute bottom-0 left-1 w-4 transition-all duration-50" 
+          style={{ 
+            height: `${barHeight}%`,
+            willChange: 'height',
+          }}
+        >
           <div className={`w-full h-full ${getColor()} rounded-sm`} />
         </div>
-        <div className="absolute bottom-0 right-1 w-4 transition-all duration-75" 
-             style={{ height: `${barHeight}%` }}>
+        <div 
+          className="absolute bottom-0 right-1 w-4 transition-all duration-50" 
+          style={{ 
+            height: `${barHeight}%`,
+            willChange: 'height',
+          }}
+        >
           <div className={`w-full h-full ${getColor()} rounded-sm`} />
         </div>
       </div>

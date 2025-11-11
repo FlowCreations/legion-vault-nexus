@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Video, VideoOff, Mic, MicOff, Play, Volume2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { AudioMixer } from './AudioMixer';
+import { AudioLevelMeters } from './AudioLevelMeters';
 import { MicrophoneMeter } from './MicrophoneMeter';
 import { AudioDiagnostics } from './AudioDiagnostics';
 import { useMicrophoneMeter } from '@/hooks/useMicrophoneMeter';
@@ -211,6 +212,11 @@ export function LiveBroadcaster({ eventId }: Props) {
   const handleProcessedAnalyser = (analyser: AnalyserNode) => {
     console.log('[Broadcaster] Received processed analyser for diagnostics');
     processedAudioAnalyserRef.current = analyser;
+  };
+
+  const handleRawInputAnalyser = (analyser: AnalyserNode) => {
+    console.log('[Broadcaster] Received raw input analyser from mixer');
+    rawAudioAnalyserRef.current = analyser;
   };
 
   const handleAudioLevel = (left: number, right: number) => {
@@ -915,6 +921,15 @@ export function LiveBroadcaster({ eventId }: Props) {
             </div>
           </div>
 
+          {/* Separate Audio Level Meters */}
+          {audioReady && (
+            <AudioLevelMeters 
+              leftLevel={audioLevel}
+              rightLevel={audioLevel}
+              label="Input Levels"
+            />
+          )}
+
           {/* Professional Audio Mixer - only show when audio is ready */}
           {audioReady && audioContext && sourceNode && (
             <AudioMixer 
@@ -924,6 +939,7 @@ export function LiveBroadcaster({ eventId }: Props) {
               onAudioLevel={handleAudioLevel}
               onReady={handleMixerReady}
               onProcessedAnalyser={handleProcessedAnalyser}
+              onRawInputAnalyser={handleRawInputAnalyser}
             />
           )}
 
