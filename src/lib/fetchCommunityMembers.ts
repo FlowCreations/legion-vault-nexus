@@ -8,30 +8,23 @@ const supabase = createClient(
 export async function fetchCommunityMembers() {
   const { data, error } = await supabase
     .from("user_profiles")
-    .select(`
-      id, 
-      display_name, 
-      location, 
-      latitude, 
-      longitude,
-      watch_time,
-      listen_time,
-      livestream_engagement_score,
-      tier
-    `);
+    .select("id, display_name, location, latitude, longitude, watch_time, listen_time, livestream_engagement_score, tier");
 
   if (error) {
     console.error("Error loading user directory:", error);
     return [];
   }
 
-  // Only return members with valid coordinates
-  // This prevents the "Gulf of Mexico" bug (null island at 0,0)
-  return (data ?? []).filter(
+  console.log("Raw directory rows:", data);
+
+  const valid = (data ?? []).filter(
     (m) =>
       m.latitude !== null &&
       m.longitude !== null &&
       !isNaN(m.latitude) &&
       !isNaN(m.longitude)
   );
+
+  console.log("Members with usable map coordinates:", valid.length, valid);
+  return valid;
 }
