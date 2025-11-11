@@ -474,8 +474,8 @@ export default function GlobalReachMap({
     <div className={`w-full ${className}`}>
       {title && <div className="mb-4 text-2xl font-semibold">{title}</div>}
       
-      <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
-        <div ref={containerRef} className="absolute inset-0 z-0" />
+      <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
+        <div ref={containerRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
         
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E]/90 backdrop-blur-sm z-20">
