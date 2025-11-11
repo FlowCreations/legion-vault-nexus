@@ -5,6 +5,7 @@ import { fetchCommunityMembers } from "@/lib/fetchCommunityMembers";
 import MemberProfileDrawer from "@/components/MemberProfileDrawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Layers, MapPin } from "lucide-react";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -14,6 +15,10 @@ interface Member {
   location: string | null;
   latitude: number;
   longitude: number;
+  watch_time: number | null;
+  listen_time: number | null;
+  livestream_engagement_score: number | null;
+  tier: string | null;
   regionGroup?: string;
 }
 
@@ -32,6 +37,7 @@ export default function CommunityGlobe() {
   const [activeTab, setActiveTab] = useState<"america" | "world">("america");
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<SelectedMember | null>(null);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   // rotation/interaction state
   const isInteractingRef = useRef(false);
@@ -80,17 +86,27 @@ export default function CommunityGlobe() {
 
     const filtered = members.filter((m) => m.regionGroup === activeTab);
 
+    // Calculate engagement score for each member
     const geojson: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
-      features: filtered.map((m) => ({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [m.longitude, m.latitude] },
-        properties: {
-          id: m.id,
-          name: m.display_name ?? "Unknown",
-          location: m.location ?? ""
-        }
-      }))
+      features: filtered.map((m) => {
+        const engagement = 
+          (m.watch_time || 0) + 
+          (m.listen_time || 0) + 
+          ((m.livestream_engagement_score || 0) * 10);
+        
+        return {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [m.longitude, m.latitude] },
+          properties: {
+            id: m.id,
+            name: m.display_name ?? "Unknown",
+            location: m.location ?? "",
+            engagement: engagement,
+            tier: m.tier || "free"
+          }
+        };
+      })
     };
 
     if (mapRef.current.getSource("community")) {
@@ -98,15 +114,101 @@ export default function CommunityGlobe() {
     } else {
       mapRef.current.addSource("community", { type: "geojson", data: geojson });
 
+      // Add heatmap layer
+      mapRef.current.addLayer({
+        id: "community-heatmap",
+        type: "heatmap",
+        source: "community",
+        layout: {
+          visibility: showHeatmap ? "visible" : "none"
+        },
+        paint: {
+          // Increase weight based on engagement
+          "heatmap-weight": [
+            "interpolate",
+            ["linear"],
+            ["get", "engagement"],
+            0, 0,
+            100, 0.5,
+            500, 1
+          ],
+          // Increase intensity as zoom level increases
+          "heatmap-intensity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0, 1,
+            9, 3
+          ],
+          // Color ramp: blue -> cyan -> lime -> yellow -> red
+          "heatmap-color": [
+            "interpolate",
+            ["linear"],
+            ["heatmap-density"],
+            0, "rgba(33,102,172,0)",
+            0.2, "rgb(103,169,207)",
+            0.4, "rgb(209,229,240)",
+            0.6, "rgb(253,219,199)",
+            0.8, "rgb(239,138,98)",
+            1, "rgb(178,24,43)"
+          ],
+          // Adjust radius by zoom level
+          "heatmap-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0, 2,
+            9, 20
+          ],
+          // Transition from heatmap to circle layer by zoom level
+          "heatmap-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            7, 1,
+            9, 0
+          ]
+        }
+      });
+
+      // Add circle layer on top
       mapRef.current.addLayer({
         id: "community-points",
         type: "circle",
         source: "community",
+        minzoom: 7,
+        layout: {
+          visibility: showHeatmap ? "none" : "visible"
+        },
         paint: {
-          "circle-radius": 8,
-          "circle-color": "rgba(124,189,255,0.85)",
+          // Size circle based on engagement
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["get", "engagement"],
+            0, 6,
+            100, 8,
+            500, 12
+          ],
+          // Color based on engagement
+          "circle-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "engagement"],
+            0, "rgba(124,189,255,0.7)",
+            100, "rgba(255,205,29,0.85)",
+            500, "rgba(239,138,98,0.95)"
+          ],
           "circle-stroke-color": "white",
-          "circle-stroke-width": 1.5
+          "circle-stroke-width": 1.5,
+          // Add opacity for overlapping points
+          "circle-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            7, 0,
+            8, 1
+          ]
         }
       });
 
@@ -140,6 +242,23 @@ export default function CommunityGlobe() {
       });
     }
   }
+
+  // Update layer visibility when heatmap toggle changes
+  useEffect(() => {
+    if (!mapRef.current || !mapRef.current.getLayer("community-heatmap")) return;
+
+    mapRef.current.setLayoutProperty(
+      "community-heatmap",
+      "visibility",
+      showHeatmap ? "visible" : "none"
+    );
+
+    mapRef.current.setLayoutProperty(
+      "community-points",
+      "visibility",
+      showHeatmap ? "none" : "visible"
+    );
+  }, [showHeatmap]);
 
   function setupInteractionLogic() {
     const map = mapRef.current;
@@ -202,12 +321,47 @@ export default function CommunityGlobe() {
             AROUND THE WORLD
           </Button>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {filteredCount} {filteredCount === 1 ? "Member" : "Members"}
-        </Badge>
+        
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            variant={showHeatmap ? "default" : "outline"}
+            size="sm"
+            className="gap-2"
+          >
+            {showHeatmap ? <Layers className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
+            {showHeatmap ? "Heatmap" : "Points"}
+          </Button>
+          <Badge variant="secondary" className="text-sm">
+            {filteredCount} {filteredCount === 1 ? "Member" : "Members"}
+          </Badge>
+        </div>
       </div>
 
       <div ref={containerRef} className="h-[600px] w-full rounded-xl overflow-hidden border border-border" />
+
+      {showHeatmap && (
+        <div className="absolute bottom-6 left-6 bg-background/90 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
+          <h4 className="text-sm font-semibold mb-2">Engagement Heatmap</h4>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-[rgb(103,169,207)]" />
+              <span>Low</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-[rgb(253,219,199)]" />
+              <span>Medium</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-[rgb(178,24,43)]" />
+              <span>High</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Based on watch time, listen time, and livestream engagement
+          </p>
+        </div>
+      )}
 
       <MemberProfileDrawer
         member={selectedMember}

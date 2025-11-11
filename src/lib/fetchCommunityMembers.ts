@@ -8,7 +8,17 @@ const supabase = createClient(
 export async function fetchCommunityMembers() {
   const { data, error } = await supabase
     .from("user_profiles")
-    .select("id, display_name, location, latitude, longitude");
+    .select(`
+      id, 
+      display_name, 
+      location, 
+      latitude, 
+      longitude,
+      watch_time,
+      listen_time,
+      livestream_engagement_score,
+      tier
+    `);
 
   if (error) {
     console.error("Error loading user directory:", error);
