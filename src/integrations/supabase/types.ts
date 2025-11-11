@@ -137,6 +137,36 @@ export type Database = {
           },
         ]
       }
+      abandoned_cart_settings: {
+        Row: {
+          code_validity_days: number
+          created_at: string | null
+          delay_days: number
+          discount_percentage: number
+          id: string
+          min_cart_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          code_validity_days?: number
+          created_at?: string | null
+          delay_days?: number
+          discount_percentage?: number
+          id?: string
+          min_cart_value?: number
+          updated_at?: string | null
+        }
+        Update: {
+          code_validity_days?: number
+          created_at?: string | null
+          delay_days?: number
+          discount_percentage?: number
+          id?: string
+          min_cart_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       abandoned_carts: {
         Row: {
           cart_items: Json

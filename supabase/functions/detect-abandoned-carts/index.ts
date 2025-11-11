@@ -17,6 +17,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Get settings
+    const { data: settings } = await supabaseClient
+      .from('abandoned_cart_settings')
+      .select('*')
+      .single()
+
+    const delayDays = settings?.delay_days || 3
+    const minCartValue = settings?.min_cart_value || 20
+    const discountPercentage = settings?.discount_percentage || 25
+
     // Check if feature is enabled
     const { data: featureFlag } = await supabaseClient
       .from('feature_flags')
@@ -31,14 +41,14 @@ serve(async (req) => {
       )
     }
 
-    // Find carts abandoned for 3+ days with no purchase
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+    // Find carts abandoned based on settings
+    const cutoffDate = new Date(Date.now() - delayDays * 24 * 60 * 60 * 1000)
     
     const { data: abandonedSessions } = await supabaseClient
       .from('cart_sessions')
       .select('*')
-      .lt('last_updated', threeDaysAgo.toISOString())
-      .gte('cart_value', 20) // Minimum $20 cart value
+      .lt('last_updated', cutoffDate.toISOString())
+      .gte('cart_value', minCartValue)
 
     if (!abandonedSessions || abandonedSessions.length === 0) {
       return new Response(
@@ -70,7 +80,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
           },
           body: JSON.stringify({
-            percentage: 25,
+            discount_percentage: discountPercentage,
             userId: session.user_id,
           }),
         }
@@ -91,26 +101,14 @@ serve(async (req) => {
           cart_items: session.cart_items,
           cart_value: session.cart_value,
           discount_code: discountData.code,
-          discount_percentage: 25,
+          discount_percentage: discountPercentage,
           expires_at: discountData.expiresAt,
         })
         .select()
         .single()
 
       if (abandonedCart) {
-        // Save discount code details
-        await supabaseClient
-          .from('shopify_discount_codes')
-          .insert({
-            code: discountData.code,
-            discount_percentage: 25,
-            abandoned_cart_id: abandonedCart.id,
-            shopify_price_rule_id: discountData.priceRuleId,
-            shopify_discount_id: discountData.discountId,
-            valid_until: discountData.expiresAt,
-          })
-
-        // Trigger email send
+        // Send recovery email
         const emailResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-cart-recovery-email`,
           {
@@ -125,18 +123,28 @@ serve(async (req) => {
           }
         )
 
-        results.push({
-          userId: session.user_id,
-          cartValue: session.cart_value,
-          discountCode: discountData.code,
-          emailSent: emailResponse.ok,
-        })
+        if (emailResponse.ok) {
+          results.push({
+            userId: session.user_id,
+            cartValue: session.cart_value,
+            discountCode: discountData.code,
+            emailSent: true,
+          })
+        } else {
+          results.push({
+            userId: session.user_id,
+            cartValue: session.cart_value,
+            discountCode: discountData.code,
+            emailSent: false,
+            error: 'Failed to send email',
+          })
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Abandoned carts processed', 
+      JSON.stringify({
+        message: 'Abandoned cart detection complete',
         count: results.length,
         results 
       }),

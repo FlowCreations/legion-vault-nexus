@@ -39,6 +39,7 @@ const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m 
 const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
 const AbandonedCartToggle = lazy(() => import("@/components/merchant/AbandonedCartToggle").then(m => ({ default: m.AbandonedCartToggle })));
+const AbandonedCartSettings = lazy(() => import("@/components/merchant/AbandonedCartSettings").then(m => ({ default: m.AbandonedCartSettings })));
 const AbandonedCartAnalytics = lazy(() => import("@/components/merchant/analytics/AbandonedCartAnalytics").then(m => ({ default: m.AbandonedCartAnalytics })));
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const VideoManager = lazy(() => import("./VideoManager"));
@@ -406,6 +407,9 @@ const Merchant = memo(() => {
                     </Suspense>
                     <Suspense fallback={<LoadingSpinner />}>
                       <AbandonedCartToggle />
+                    </Suspense>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AbandonedCartSettings />
                     </Suspense>
                   </div>
                 </TabsContent>

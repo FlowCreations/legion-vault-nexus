@@ -100,12 +100,13 @@ export const AbandonedCartToggle = () => {
                     <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
-                    <p>When enabled, the system detects carts abandoned for 3+ days and automatically:</p>
+                    <p>When enabled, the system detects abandoned carts and automatically:</p>
                     <ul className="list-disc ml-4 mt-2 space-y-1">
-                      <li>Generates unique 25% discount codes via Shopify</li>
+                      <li>Generates unique discount codes via Shopify</li>
                       <li>Sends recovery emails with discount details</li>
                       <li>Shows popup offers when users return to portal</li>
                       <li>Tracks recovery performance and revenue</li>
+                      <li>Settings customizable below</li>
                     </ul>
                   </TooltipContent>
                 </Tooltip>

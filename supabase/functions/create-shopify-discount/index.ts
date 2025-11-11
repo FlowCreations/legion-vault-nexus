@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,20 @@ serve(async (req) => {
   }
 
   try {
-    const { percentage, userId } = await req.json()
+    const { discount_percentage, userId } = await req.json()
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Get settings for code validity
+    const { data: settings } = await supabaseClient
+      .from('abandoned_cart_settings')
+      .select('code_validity_days')
+      .single()
+
+    const codeValidityDays = settings?.code_validity_days || 7
     
     const SHOPIFY_DOMAIN = Deno.env.get('SHOPIFY_STORE_PERMANENT_DOMAIN')
     const SHOPIFY_ACCESS_TOKEN = Deno.env.get('SHOPIFY_ACCESS_TOKEN')
@@ -22,7 +36,11 @@ serve(async (req) => {
 
     // Generate unique code
     const randomString = Math.random().toString(36).substring(2, 8).toUpperCase()
-    const discountCode = `COMEBACK${percentage}-${randomString}`
+    const discountCode = `COMEBACK${discount_percentage}-${randomString}`
+
+    // Calculate expiration date based on settings
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + codeValidityDays)
     
     // Create Price Rule
     const priceRuleResponse = await fetch(
@@ -40,10 +58,10 @@ serve(async (req) => {
             target_selection: 'all',
             allocation_method: 'across',
             value_type: 'percentage',
-            value: `-${percentage}.0`,
+            value: `-${discount_percentage}.0`,
             customer_selection: 'all',
             starts_at: new Date().toISOString(),
-            ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            ends_at: expiresAt.toISOString(),
             usage_limit: 1,
           },
         }),
