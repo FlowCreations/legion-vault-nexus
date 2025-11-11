@@ -758,7 +758,9 @@ export function LiveBroadcaster({ eventId }: Props) {
         console.log('[Broadcaster] 🎙️ Publishing audio track with status:', {
           enabled: audioMSTrack?.enabled,
           readyState: audioMSTrack?.readyState,
-          muted: audioMSTrack?.muted
+          muted: audioMSTrack?.muted,
+          id: audioMSTrack?.id,
+          label: audioMSTrack?.label
         });
         
         // Ensure audio is enabled before publishing
@@ -771,7 +773,26 @@ export function LiveBroadcaster({ eventId }: Props) {
         console.log('[Broadcaster] ✅ Audio track published:', {
           sid: audioTrackRef.current.sid,
           kind: audioTrackRef.current.kind,
-          enabled: audioMSTrack?.enabled
+          enabled: audioMSTrack?.enabled,
+          source: audioTrackRef.current.source
+        });
+        
+        // Verify the publication was successful
+        const audioPublications = Array.from(room.localParticipant.audioTrackPublications.values());
+        console.log('[Broadcaster] 📡 Current audio publications:', {
+          count: audioPublications.length,
+          publications: audioPublications.map(pub => ({
+            trackSid: pub.trackSid,
+            trackName: pub.trackName,
+            source: pub.source,
+            isMuted: pub.isMuted,
+            isEnabled: pub.isEnabled,
+            track: pub.track ? {
+              sid: pub.track.sid,
+              enabled: pub.track.mediaStreamTrack?.enabled,
+              readyState: pub.track.mediaStreamTrack?.readyState
+            } : null
+          }))
         });
       } else {
         console.error('[Broadcaster] ❌ No audio track to publish!');

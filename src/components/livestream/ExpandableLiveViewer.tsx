@@ -128,21 +128,37 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
       });
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-        console.log('[Viewer] Track subscribed:', {
+        console.log('[Viewer] 🎯 Track subscribed:', {
           kind: track.kind,
           participant: participant.identity,
-          sid: track.sid
+          sid: track.sid,
+          publication: {
+            trackSid: publication.trackSid,
+            trackName: publication.trackName,
+            source: publication.source,
+            isMuted: publication.isMuted,
+            isEnabled: publication.isEnabled
+          }
         });
         
         if (track.kind === Track.Kind.Video && track instanceof RemoteVideoTrack) {
-          console.log('[Viewer] Storing video track');
+          console.log('[Viewer] 📹 Storing video track');
           videoTrackRef.current = track;
           setHasVideoTrack(true);
           
           // Attach immediately to current view
           setTimeout(() => attachTracks(), 100);
         } else if (track.kind === Track.Kind.Audio && track instanceof RemoteAudioTrack) {
-          console.log('[Viewer] Storing audio track');
+          console.log('[Viewer] 🔊 Storing audio track:', {
+            sid: track.sid,
+            mediaStreamTrack: track.mediaStreamTrack ? {
+              id: track.mediaStreamTrack.id,
+              label: track.mediaStreamTrack.label,
+              enabled: track.mediaStreamTrack.enabled,
+              muted: track.mediaStreamTrack.muted,
+              readyState: track.mediaStreamTrack.readyState
+            } : null
+          });
           audioTrackRef.current = track;
           setHasAudioTrack(true);
           

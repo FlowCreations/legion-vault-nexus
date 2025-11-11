@@ -143,19 +143,25 @@ export const LiveChat = ({ eventId, isModerator = false, onTipRequest }: LiveCha
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log('[LiveChat] Sending message:', { eventId, message: newMessage.trim() });
 
-    const { error } = await supabase.from('livestream_chat').insert({
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    console.log('[LiveChat] User:', { userId: user?.id, username });
+
+    const { data, error } = await supabase.from('livestream_chat').insert({
       event_id: eventId,
       user_id: user?.id,
       username,
       message: newMessage.trim(),
       is_bot: false,
-    });
+    }).select();
 
     if (error) {
-      toast.error('Failed to send message');
+      console.error('[LiveChat] Failed to send message:', error);
+      toast.error('Failed to send message: ' + error.message);
     } else {
+      console.log('[LiveChat] Message sent successfully:', data);
       setNewMessage("");
     }
   };
