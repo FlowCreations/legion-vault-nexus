@@ -68,26 +68,25 @@ export function useMicrophoneMeter({
           await ctx.resume();
         }
 
+        // Build direct signal graph: mic → analyser (no intermediate nodes for meter)
         const source = ctx.createMediaStreamSource(stream);
-        const gain = ctx.createGain();
-        gain.gain.value = 1.0;
         const analyser = ctx.createAnalyser();
-        analyser.fftSize = 512;
-        analyser.smoothingTimeConstant = 0.0; // No smoothing to prevent signal flattening
+        analyser.fftSize = 1024;
+        analyser.smoothingTimeConstant = 0.1;
         analyser.minDecibels = -90;
         analyser.maxDecibels = -10;
 
-        source.connect(gain);
-        gain.connect(analyser);
+        source.connect(analyser);
 
         const data = new Float32Array(analyser.fftSize);
 
         ctxRef.current = ctx;
         analyserRef.current = analyser;
-        gainRef.current = gain;
         streamRef.current = stream;
 
-        console.log("✅ Analyzer connected. Gain:", gain.gain.value, "Context state:", ctx.state);
+        console.log("✅ Analyzer connected. Context state:", ctx.state, "Sample rate:", ctx.sampleRate);
+
+        let liveDetected = false;
 
         const animate = () => {
           if (!active) return;
@@ -100,14 +99,17 @@ export function useMicrophoneMeter({
           for (let i = 0; i < data.length; i++) {
             sumSquares += data[i] * data[i];
           }
-          const rms = Math.sqrt(sumSquares / data.length);
-          const db = 20 * Math.log10(rms || 0.0001);
+          const rms = Math.sqrt(sumSquares / data.length) || 0.0001;
+          const db = 20 * Math.log10(rms);
+          
+          // Detect live signal
+          if (db > -55) liveDetected = true;
           
           // Apply smoothing for UI (not analyzer)
           const smoothed = micLevel * (1 - smoothing) + db * smoothing;
 
           setMicLevel(smoothed);
-          setHasSignal(db > -55);
+          setHasSignal(liveDetected && db > threshold);
           rafRef.current = requestAnimationFrame(animate);
         };
         animate();
