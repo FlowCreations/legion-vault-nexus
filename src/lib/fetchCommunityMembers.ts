@@ -1,21 +1,18 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY!
-);
+import { supabase } from "@/integrations/supabase/client";
 
 export async function fetchCommunityMembers() {
+  console.log("🔍 Fetching community members...");
+  
   const { data, error } = await supabase
     .from("user_profiles")
     .select("id, display_name, location, latitude, longitude, watch_time, listen_time, livestream_engagement_score, tier");
 
   if (error) {
-    console.error("Error loading user directory:", error);
+    console.error("❌ Error loading user directory:", error);
     return [];
   }
 
-  console.log("Raw directory rows:", data);
+  console.log("📦 Raw directory rows:", data?.length, data);
 
   const valid = (data ?? []).filter(
     (m) =>
@@ -25,6 +22,10 @@ export async function fetchCommunityMembers() {
       !isNaN(m.longitude)
   );
 
-  console.log("Members with usable map coordinates:", valid.length, valid);
+  console.log("✅ Members with usable map coordinates:", valid.length);
+  if (valid.length > 0) {
+    console.log("Sample member:", valid[0]);
+  }
+  
   return valid;
 }
