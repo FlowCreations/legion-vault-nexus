@@ -3,7 +3,7 @@ import { Room, RoomEvent, Track, RemoteTrack, RemoteVideoTrack, RemoteAudioTrack
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Maximize2, DollarSign, Share2 } from 'lucide-react';
+import { Maximize2, DollarSign, Share2, Volume2 } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
@@ -25,6 +25,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
   const [hasAudioTrack, setHasAudioTrack] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
+  const [audioMuted, setAudioMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
@@ -62,6 +63,17 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
     if (audioTrackRef.current) {
       console.log('[Viewer] Attaching audio track');
       audioTrackRef.current.attach(activeVideoEl);
+      
+      // Force audio playback with explicit volume control
+      activeVideoEl.muted = false;
+      activeVideoEl.volume = 1.0;
+      
+      // Trigger play to ensure audio context starts
+      activeVideoEl.play().catch(err => {
+        console.warn('[Viewer] Audio autoplay prevented:', err.message);
+        // Show unmute button to user
+        setAudioMuted(true);
+      });
     }
   }, [isExpanded]);
 
@@ -216,6 +228,34 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
     }
   }, [eventId]);
 
+  // Force volume to 1.0 when audio track is available
+  useEffect(() => {
+    if (hasAudioTrack) {
+      if (videoRef.current) videoRef.current.volume = 1.0;
+      if (expandedVideoRef.current) expandedVideoRef.current.volume = 1.0;
+    }
+  }, [hasAudioTrack]);
+
+  // Audio diagnostic logging - runs every 2 seconds when connected
+  useEffect(() => {
+    if (status !== 'connected' || !hasAudioTrack) return;
+    
+    const interval = setInterval(() => {
+      const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+      if (activeVideoEl) {
+        console.log('[Audio Debug]', {
+          volume: activeVideoEl.volume,
+          muted: activeVideoEl.muted,
+          paused: activeVideoEl.paused,
+          hasAudioTrack: !!audioTrackRef.current,
+          audioTrackEnabled: audioTrackRef.current?.mediaStreamTrack?.enabled
+        });
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [status, hasAudioTrack, isExpanded]);
+
   const handleTip = () => {
     if (onTip) {
       onTip();
@@ -231,6 +271,18 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
       navigator.clipboard.writeText(window.location.href);
       toast.success('Link copied to clipboard!');
     }
+  };
+
+  const handleUnmute = () => {
+    const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+    if (activeVideoEl) {
+      activeVideoEl.muted = false;
+      activeVideoEl.volume = 1.0;
+      activeVideoEl.play().catch(err => 
+        console.error('[Viewer] Error unmuting audio:', err)
+      );
+    }
+    setAudioMuted(false);
   };
 
   return (
@@ -273,6 +325,20 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
               </div>
             )}
           </div>
+
+          {/* Unmute Audio Button - Show if browser blocks autoplay */}
+          {hasAudioTrack && audioMuted && status === 'connected' && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+              <Button
+                onClick={handleUnmute}
+                size="lg"
+                className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg"
+              >
+                <Volume2 className="w-5 h-5 mr-2" />
+                Unmute Audio
+              </Button>
+            </div>
+          )}
 
           {/* Live Reactions Overlay */}
           {status === 'connected' && (
@@ -353,6 +419,20 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
                   Share
                 </Button>
               </div>
+
+              {/* Unmute Audio Button - Expanded View */}
+              {hasAudioTrack && audioMuted && status === 'connected' && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+                  <Button
+                    onClick={handleUnmute}
+                    size="lg"
+                    className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg"
+                  >
+                    <Volume2 className="w-5 h-5 mr-2" />
+                    Unmute Audio
+                  </Button>
+                </div>
+              )}
 
               {/* Live Reactions Overlay - Expanded View */}
               {status === 'connected' && (
