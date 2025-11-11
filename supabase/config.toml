@@ -132,6 +132,9 @@ verify_jwt = false
 [functions.verify-email-token]
 verify_jwt = false
 
+[functions.get-mapbox-token]
+verify_jwt = false
+
 [functions.members-geojson]
 verify_jwt = false
 

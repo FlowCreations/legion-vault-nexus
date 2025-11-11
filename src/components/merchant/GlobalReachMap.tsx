@@ -67,13 +67,29 @@ export default function GlobalReachMap({
   className = "",
   title = "Global Reach",
 }: Props) {
-  const token = import.meta.env.VITE_MAPBOX_TOKEN;
+  const [token, setToken] = useState<string>("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const initializedRef = useRef(false); // Prevents re-initialization on render
   const [members, setMembers] = useState<Member[]>(membersProp);
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Fetch Mapbox token from edge function on mount
+  useEffect(() => {
+    async function fetchToken() {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) throw error;
+        if (data?.token) {
+          setToken(data.token);
+        }
+      } catch (err) {
+        console.error('Failed to fetch Mapbox token:', err);
+      }
+    }
+    fetchToken();
+  }, []);
 
   // Merge incoming prop members whenever they change
   useEffect(() => {
