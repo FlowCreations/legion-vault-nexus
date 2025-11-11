@@ -40,8 +40,19 @@ export function LiveBroadcaster({ eventId }: Props) {
   const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
 
   useEffect(() => {
-    requestPermissionsAndLoadDevices();
+    requestPermissionsAndLoadDevices(false);
   }, []);
+
+  // Helper functions to get fresh device lists
+  const getCameras = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter(d => d.kind === 'videoinput');
+  };
+
+  const getMicrophones = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter(d => d.kind === 'audioinput');
+  };
 
   const requestPermissionsAndLoadDevices = async (requestPermission = false) => {
     try {
@@ -61,27 +72,27 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       const devices = await navigator.mediaDevices.enumerateDevices();
       
-      // Only use real devices with proper labels (indicates permission granted)
+      // Include all devices, with or without labels
       const videoDevices = devices
-        .filter(d => d.kind === 'videoinput' && d.label)
-        .map(d => ({
+        .filter(d => d.kind === 'videoinput')
+        .map((d, idx) => ({
           ...d,
-          deviceId: d.deviceId,
-          label: d.label
+          deviceId: d.deviceId || `video-${idx}`,
+          label: d.label || `Camera ${idx + 1}`
         }));
       
       const audioDevices = devices
-        .filter(d => d.kind === 'audioinput' && d.label)
-        .map(d => ({
+        .filter(d => d.kind === 'audioinput')
+        .map((d, idx) => ({
           ...d,
-          deviceId: d.deviceId,
-          label: d.label
+          deviceId: d.deviceId || `audio-${idx}`,
+          label: d.label || `Microphone ${idx + 1}`
         }));
       
       console.log('[Broadcaster] Found devices:', {
         cameras: videoDevices.length,
         microphones: audioDevices.length,
-        devices: audioDevices.map(d => ({ id: d.deviceId, label: d.label }))
+        hasLabels: audioDevices[0]?.label && !audioDevices[0].label.startsWith('Microphone')
       });
       
       setCameras(videoDevices);
@@ -220,28 +231,26 @@ export function LiveBroadcaster({ eventId }: Props) {
       setStatus('requesting-permission');
       console.log('[Broadcaster] Requesting camera and microphone access...');
 
-      // STEP 1: Request permission and load devices with proper labels
+      // STEP 1: Request permission and reload devices with proper labels
       await requestPermissionsAndLoadDevices(true);
       
-      // Wait a bit for state to update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for state to update with new device list
+      await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Check if we have valid devices now
-      if (cameras.length === 0 || microphones.length === 0) {
-        throw new Error('No camera or microphone found. Please connect devices and try again.');
-      }
+      // Use the selected devices (they should now have real IDs after permission)
+      const currentCameras = cameras.length > 0 ? cameras : await getCameras();
+      const currentMics = microphones.length > 0 ? microphones : await getMicrophones();
       
-      // Use the selected devices or fall back to first available
-      const cameraId = selectedCamera || cameras[0]?.deviceId;
-      const micId = selectedMicrophone || microphones[0]?.deviceId;
+      const cameraId = selectedCamera || currentCameras[0]?.deviceId;
+      const micId = selectedMicrophone || currentMics[0]?.deviceId;
       
       if (!cameraId || !micId) {
-        throw new Error('Please select both camera and microphone');
+        throw new Error('No camera or microphone found. Please connect devices and try again.');
       }
 
       console.log('[Broadcaster] Using devices:', {
-        camera: cameras.find(c => c.deviceId === cameraId)?.label,
-        microphone: microphones.find(m => m.deviceId === micId)?.label
+        camera: currentCameras.find(c => c.deviceId === cameraId)?.label,
+        microphone: currentMics.find(m => m.deviceId === micId)?.label
       });
       
       // STEP 2: Request raw media streams with specific device IDs
@@ -654,49 +663,37 @@ export function LiveBroadcaster({ eventId }: Props) {
       {/* Device Selection */}
       {status === 'idle' && (
         <div className="space-y-4">
-          {cameras.length === 0 && microphones.length === 0 && (
-            <Card className="p-4 bg-blue-50 border-blue-200">
-              <p className="text-sm text-blue-800">
-                Click "Start Preview" to grant camera and microphone access, then select your devices.
-              </p>
-            </Card>
-          )}
-          
-          {cameras.length > 0 && (
-            <div>
-              <Label>Camera</Label>
-              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select camera" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cameras.map(cam => (
-                    <SelectItem key={cam.deviceId} value={cam.deviceId}>
-                      {cam.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div>
+            <Label>Camera</Label>
+            <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select camera" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {cameras.map(cam => (
+                  <SelectItem key={cam.deviceId} value={cam.deviceId}>
+                    {cam.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {microphones.length > 0 && (
-            <div>
-              <Label>Microphone</Label>
-              <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select microphone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {microphones.map(mic => (
-                    <SelectItem key={mic.deviceId} value={mic.deviceId}>
-                      {mic.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div>
+            <Label>Microphone</Label>
+            <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select microphone" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {microphones.map(mic => (
+                  <SelectItem key={mic.deviceId} value={mic.deviceId}>
+                    {mic.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Real-time Microphone Test */}
           {rawMicStream && (
