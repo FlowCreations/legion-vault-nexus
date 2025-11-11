@@ -152,6 +152,9 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     let master: GainNode;
     let analyser: AnalyserNode;
     let destination: MediaStreamAudioDestinationNode;
+    let splitter: ChannelSplitterNode;
+    let leftAnalyser: AnalyserNode;
+    let rightAnalyser: AnalyserNode;
 
     (async () => {
       try {
@@ -221,7 +224,25 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         master = audioContext.createGain();
         master.gain.value = masterGain;
 
-        // Analyzer - optimized for better sensitivity
+        // Create pre-processing stereo analysers for accurate metering
+        splitter = audioContext.createChannelSplitter(2);
+        leftAnalyser = audioContext.createAnalyser();
+        rightAnalyser = audioContext.createAnalyser();
+        leftAnalyser.fftSize = 2048;
+        leftAnalyser.smoothingTimeConstant = 0;
+        leftAnalyser.minDecibels = -90;
+        leftAnalyser.maxDecibels = 0;
+        rightAnalyser.fftSize = 2048;
+        rightAnalyser.smoothingTimeConstant = 0;
+        rightAnalyser.minDecibels = -90;
+        rightAnalyser.maxDecibels = 0;
+
+        // Connect parallel metering path: source → splitter → [left/right analysers]
+        sourceNode.connect(splitter);
+        splitter.connect(leftAnalyser, 0);
+        splitter.connect(rightAnalyser, 1);
+
+        // Analyzer for processed signal (diagnostics only)
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 512;
         analyser.smoothingTimeConstant = 0.3;
@@ -296,28 +317,48 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           });
         }, 500);
 
-        // Audio level monitoring - split to left/right channels
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        // Audio level monitoring with true stereo channel separation
+        const dataArrayLeft = new Float32Array(leftAnalyser.fftSize);
+        const dataArrayRight = new Float32Array(rightAnalyser.fftSize);
         let smoothedLeft = 0;
         let smoothedRight = 0;
-        const smoothingFactor = 0.3;
+        const smoothingFactor = 0.2;
+        const noiseFloor = 1; // 1% minimum to prevent noise oscillation
         
         const updateLevels = () => {
-          analyser.getByteFrequencyData(dataArray);
+          // Get time-domain data for RMS calculation
+          leftAnalyser.getFloatTimeDomainData(dataArrayLeft);
+          rightAnalyser.getFloatTimeDomainData(dataArrayRight);
           
-          // Calculate separate left/right from frequency data
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          const rawLevel = Math.min(100, (average / 255) * 150);
+          // Calculate RMS for each channel
+          const rmsLeft = Math.sqrt(
+            dataArrayLeft.reduce((sum, val) => sum + val * val, 0) / dataArrayLeft.length
+          );
+          const rmsRight = Math.sqrt(
+            dataArrayRight.reduce((sum, val) => sum + val * val, 0) / dataArrayRight.length
+          );
           
-          // Smooth the levels
-          smoothedLeft = smoothedLeft * (1 - smoothingFactor) + rawLevel * smoothingFactor;
-          smoothedRight = smoothedRight * (1 - smoothingFactor) + rawLevel * smoothingFactor;
+          // Convert to dB
+          const dbLeft = 20 * Math.log10(rmsLeft || 0.0001);
+          const dbRight = 20 * Math.log10(rmsRight || 0.0001);
           
-          setLeftLevel(smoothedLeft);
-          setRightLevel(smoothedRight);
+          // Convert dB to percentage (assuming -60 dB = 0%, 0 dB = 100%)
+          const percentLeft = Math.max(0, Math.min(100, ((dbLeft + 60) / 60) * 100));
+          const percentRight = Math.max(0, Math.min(100, ((dbRight + 60) / 60) * 100));
+          
+          // Apply light smoothing
+          smoothedLeft = smoothedLeft * (1 - smoothingFactor) + percentLeft * smoothingFactor;
+          smoothedRight = smoothedRight * (1 - smoothingFactor) + percentRight * smoothingFactor;
+          
+          // Only update if above noise floor
+          setLeftLevel(smoothedLeft > noiseFloor ? smoothedLeft : 0);
+          setRightLevel(smoothedRight > noiseFloor ? smoothedRight : 0);
           
           if (onAudioLevel) {
-            onAudioLevel(smoothedLeft, smoothedRight);
+            onAudioLevel(
+              smoothedLeft > noiseFloor ? smoothedLeft : 0,
+              smoothedRight > noiseFloor ? smoothedRight : 0
+            );
           }
           
           animationFrameId = requestAnimationFrame(updateLevels);
@@ -341,6 +382,9 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       try {
         cancelAnimationFrame(animationFrameId);
         sourceNode.disconnect();
+        splitter?.disconnect();
+        leftAnalyser?.disconnect();
+        rightAnalyser?.disconnect();
         lowShelf?.disconnect();
         midPeak?.disconnect();
         highShelf?.disconnect();
