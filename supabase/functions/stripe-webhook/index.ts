@@ -173,8 +173,8 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       const previousAttributes = event.data.previous_attributes as any;
       
-      // Check if the plan actually changed (not just other subscription updates)
-      if (previousAttributes?.items) {
+      // Check if items changed (indicating a plan change)
+      if (previousAttributes?.items?.data && previousAttributes.items.data.length > 0) {
         console.log("Processing subscription plan change:", subscription.id);
 
         // Initialize Supabase client
@@ -197,18 +197,24 @@ serve(async (req) => {
           return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
         }
 
-        // Get old and new plan details
-        const oldPlanName = previousAttributes.items.data[0].price.nickname || "Previous Plan";
-        const newPlanName = subscription.items.data[0].price.nickname || "New Plan";
-        const newAmount = subscription.items.data[0].price.unit_amount || 0;
+        // Get current plan details
+        const currentItem = subscription.items.data[0];
+        const newPlanName = currentItem.price.nickname || "New Plan";
+        const newAmount = currentItem.price.unit_amount || 0;
         const currency = subscription.currency || "usd";
-        const billingInterval = subscription.items.data[0].price.recurring?.interval || "month";
+        const billingInterval = currentItem.price.recurring?.interval || "month";
         const effectiveDate = new Date(subscription.current_period_start * 1000).toISOString();
         const nextBillingDate = new Date(subscription.current_period_end * 1000).toISOString();
 
+        // Get old plan details from previous attributes
+        const previousItem = previousAttributes.items.data[0];
+        const oldPlanName = previousItem.price?.nickname || "Previous Plan";
+        const oldAmount = previousItem.price?.unit_amount || 0;
+
         // Determine if it's an upgrade or downgrade based on price
-        const oldAmount = previousAttributes.items.data[0].price.unit_amount || 0;
         const changeType = newAmount > oldAmount ? "upgrade" : "downgrade";
+
+        console.log("Plan change detected:", { oldPlanName, newPlanName, oldAmount, newAmount, changeType });
 
         // Send plan change confirmation email
         const { error: emailError } = await supabase.functions.invoke("send-plan-change-confirmation", {
