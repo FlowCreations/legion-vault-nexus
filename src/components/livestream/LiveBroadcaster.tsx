@@ -425,6 +425,135 @@ export function LiveBroadcaster({ eventId }: Props) {
     setStatus('idle');
   };
 
+  const switchCamera = async (newCameraId: string) => {
+    if (status !== 'preview') return;
+    
+    try {
+      console.log('[Broadcaster] Switching camera to:', newCameraId);
+      
+      // Get new video stream
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: newCameraId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+      
+      // Stop old video track
+      if (videoTrackRef.current) {
+        videoTrackRef.current.stop();
+      }
+      
+      // Create new LiveKit video track
+      const newVideoTrack = await createLocalTracks({
+        audio: false,
+        video: {
+          deviceId: { exact: newCameraId },
+          resolution: {
+            width: 1920,
+            height: 1080
+          }
+        }
+      });
+      
+      const videoTrack = newVideoTrack.find(t => t.kind === Track.Kind.Video);
+      
+      if (videoTrack && videoRef.current) {
+        videoTrack.attach(videoRef.current);
+        videoTrackRef.current = videoTrack;
+        console.log('[Broadcaster] Camera switched successfully');
+      }
+      
+      setSelectedCamera(newCameraId);
+    } catch (err) {
+      console.error('[Broadcaster] Failed to switch camera:', err);
+      setError('Failed to switch camera. Please try again.');
+    }
+  };
+
+  const switchMicrophone = async (newMicId: string) => {
+    if (status !== 'preview') return;
+    
+    try {
+      console.log('[Broadcaster] Switching microphone to:', newMicId);
+      
+      // Stop old audio processing
+      if (sourceNode) {
+        sourceNode.disconnect();
+      }
+      if (rawAudioAnalyserRef.current) {
+        rawAudioAnalyserRef.current.disconnect();
+      }
+      if (rawMicStream) {
+        rawMicStream.getTracks().forEach(track => track.stop());
+      }
+      if (audioTrackRef.current) {
+        audioTrackRef.current.stop();
+      }
+      
+      // Get new audio stream
+      const newAudioStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: { exact: newMicId },
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 2
+        }
+      });
+      
+      console.log('[Broadcaster] New microphone stream acquired');
+      
+      // Store new raw mic stream
+      setRawMicStream(newAudioStream);
+      
+      // Reinitialize audio processing with new stream
+      setStatus('initializing-audio');
+      await setupAudioProcessing(newAudioStream);
+      
+      // Wait for mixer to be ready again
+      mixerReadyRef.current = false;
+      setMixerReady(false);
+      const mixerTimeout = 5000;
+      const mixerStartTime = Date.now();
+      
+      while (!mixerReadyRef.current && Date.now() - mixerStartTime < mixerTimeout) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      if (!mixerReadyRef.current) {
+        throw new Error('Audio mixer failed to reinitialize');
+      }
+      
+      // Wait for processed stream
+      const streamTimeout = 2000;
+      const streamStartTime = Date.now();
+      
+      while (!processedAudioStreamRef.current && Date.now() - streamStartTime < streamTimeout) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      if (!processedAudioStreamRef.current) {
+        throw new Error('Processed audio stream not ready');
+      }
+      
+      // Create new audio track
+      const processedAudioTrack = processedAudioStreamRef.current.getAudioTracks()[0];
+      const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
+      audioTrackRef.current = livekitAudioTrack;
+      
+      setStatus('preview');
+      setSelectedMicrophone(newMicId);
+      console.log('[Broadcaster] Microphone switched successfully');
+    } catch (err) {
+      console.error('[Broadcaster] Failed to switch microphone:', err);
+      setError('Failed to switch microphone. Please try again.');
+      setStatus('preview');
+    }
+  };
+
   const fullCleanup = () => {
     console.log('[Broadcaster] Full cleanup - stopping all tracks and closing AudioContext');
     
@@ -783,6 +912,49 @@ export function LiveBroadcaster({ eventId }: Props) {
               room={roomRef.current}
               status={status}
             />
+          )}
+
+          {/* Device Selection During Preview */}
+          {status === 'preview' && (
+            <Card className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Device Settings</Label>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">Camera</Label>
+                  <Select value={selectedCamera} onValueChange={switchCamera}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {cameras.map(cam => (
+                        <SelectItem key={cam.deviceId} value={cam.deviceId}>
+                          {cam.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Microphone</Label>
+                  <Select value={selectedMicrophone} onValueChange={switchMicrophone}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {microphones.map(mic => (
+                        <SelectItem key={mic.deviceId} value={mic.deviceId}>
+                          {mic.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </Card>
           )}
 
           <div className="flex gap-2">
