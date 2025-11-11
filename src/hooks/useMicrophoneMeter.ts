@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from "react";
 
 interface MicMeterOptions {
   selectedMicId?: string;
-  smoothing?: number; // smoothing factor for UI meter
-  threshold?: number; // signal detection threshold
+  smoothing?: number;
+  threshold?: number;
+  sharedAudioContext?: AudioContext | null; // Accept shared context
 }
 
 export function useMicrophoneMeter({
   selectedMicId,
   smoothing = 0.3,
   threshold = -50,
+  sharedAudioContext,
 }: MicMeterOptions = {}) {
   const [micLevel, setMicLevel] = useState(-60);
   const [hasSignal, setHasSignal] = useState(false);
@@ -32,19 +34,37 @@ export function useMicrophoneMeter({
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         const [track] = stream.getAudioTracks();
 
-        console.log("🎙️ Track:", track.label, "State:", track.readyState, "Enabled:", track.enabled);
+        console.log("🎙️ Track:", track?.label, "State:", track?.readyState, "Enabled:", track?.enabled);
 
         if (!track || track.readyState === "ended" || !track.enabled) {
           throw new Error("Microphone stream inactive or muted");
         }
 
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        if (ctx.state === "suspended") await ctx.resume();
+        // Validate stream has audio
+        if (stream.getAudioTracks().length === 0) {
+          throw new Error("No valid microphone input found");
+        }
+
+        // Use shared context if provided, otherwise create new one
+        let ctx = sharedAudioContext;
+        if (!ctx || ctx.state === "closed") {
+          ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+
+        // Resume if suspended (Safari/Chrome autoplay policy)
+        if (ctx.state === "suspended") {
+          console.log("🎙️ Resuming AudioContext...");
+          await ctx.resume();
+        }
 
         const source = ctx.createMediaStreamSource(stream);
         const gain = ctx.createGain();
         gain.gain.value = 1.0;
         const analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.3;
+        analyser.minDecibels = -90;
+        analyser.maxDecibels = -10;
 
         source.connect(gain);
         gain.connect(analyser);
@@ -56,7 +76,7 @@ export function useMicrophoneMeter({
         gainRef.current = gain;
         streamRef.current = stream;
 
-        console.log("✅ Analyzer connected. Gain:", gain.gain.value);
+        console.log("✅ Analyzer connected. Gain:", gain.gain.value, "Context state:", ctx.state);
 
         const animate = () => {
           if (!active) return;
@@ -82,9 +102,12 @@ export function useMicrophoneMeter({
       active = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      ctxRef.current?.close();
+      // Only close context if we created it (not shared)
+      if (!sharedAudioContext && ctxRef.current) {
+        ctxRef.current.close();
+      }
     };
-  }, [selectedMicId, smoothing, threshold, micLevel]);
+  }, [selectedMicId, smoothing, threshold, micLevel, sharedAudioContext]);
 
-  return { micLevel, hasSignal, error, analyser: analyserRef.current, stream: streamRef.current };
+  return { micLevel, hasSignal, error, analyser: analyserRef.current, stream: streamRef.current, audioContext: ctxRef.current };
 }

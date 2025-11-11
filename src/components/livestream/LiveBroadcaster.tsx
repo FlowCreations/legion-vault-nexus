@@ -39,12 +39,23 @@ export function LiveBroadcaster({ eventId }: Props) {
   const processedAudioStreamRef = useRef<MediaStream | null>(null);
   const rawAudioAnalyserRef = useRef<AnalyserNode | null>(null);
   const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const sharedAudioContextRef = useRef<AudioContext | null>(null);
 
-  // Use the reusable mic meter hook
-  const { micLevel, hasSignal, error: micError, analyser: micAnalyser, stream: micStream } = useMicrophoneMeter({
+  // Initialize shared AudioContext once
+  useEffect(() => {
+    if (!sharedAudioContextRef.current || sharedAudioContextRef.current.state === "closed") {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      sharedAudioContextRef.current = new AudioContextClass({ sampleRate: 48000 });
+      console.log('[Broadcaster] Shared AudioContext created:', sharedAudioContextRef.current.state);
+    }
+  }, []);
+
+  // Use the reusable mic meter hook with shared context
+  const { micLevel, hasSignal, error: micError, analyser: micAnalyser, stream: micStream, audioContext: hookAudioContext } = useMicrophoneMeter({
     selectedMicId: status === 'preview' || status === 'live' ? selectedMicrophone : undefined,
     smoothing: 0.3,
     threshold: -50,
+    sharedAudioContext: sharedAudioContextRef.current,
   });
 
   useEffect(() => {
@@ -120,18 +131,62 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const setupAudioProcessing = async (rawStream: MediaStream) => {
     try {
-      // The useMicrophoneMeter hook now handles all signal detection
-      // We just need to store the raw stream for the AudioMixer
-      console.log('[Broadcaster] Audio processing delegated to useMicrophoneMeter hook');
+      const [track] = rawStream.getAudioTracks();
       
-      // Store the analyzer from the hook
-      if (micAnalyser) {
-        rawAudioAnalyserRef.current = micAnalyser;
-        console.log('[Broadcaster] ✅ Using analyser from useMicrophoneMeter hook');
+      if (!track) {
+        throw new Error('No audio track found in stream');
       }
 
+      console.log('[Broadcaster] Mic track:', track.label, track.readyState, track.enabled);
+
+      // Validate track is active
+      if (track.readyState === 'ended' || !track.enabled) {
+        throw new Error('Microphone stream inactive');
+      }
+
+      // Validate stream has audio tracks
+      if (rawStream.getAudioTracks().length === 0) {
+        throw new Error('No valid microphone input found');
+      }
+
+      // Use the shared AudioContext
+      const ctx = sharedAudioContextRef.current;
+      if (!ctx) {
+        throw new Error('Shared AudioContext not initialized');
+      }
+      
+      console.log('[Broadcaster] Using shared AudioContext, state:', ctx.state);
+      
+      // Resume if suspended (required for Safari/Chrome autoplay policy)
+      if (ctx.state === 'suspended') {
+        console.log('[Broadcaster] Resuming shared AudioContext...');
+        await ctx.resume();
+        console.log('[Broadcaster] AudioContext resumed:', ctx.state);
+      }
+
+      // Build audio graph: source → gain → analyser
+      const source = ctx.createMediaStreamSource(rawStream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
+      
+      const gain = ctx.createGain();
+      gain.gain.value = 1.0;
+
+      source.connect(gain);
+      gain.connect(analyser);
+
+      rawAudioAnalyserRef.current = analyser;
+
+      console.log('[Broadcaster] Analyser connected. Gain:', gain.gain.value, 'Context state:', ctx.state);
+
       setAudioReady(true);
-      console.log('[Broadcaster] ✅ Audio processing ready');
+      setAudioContext(ctx);
+      setSourceNode(source);
+
+      console.log('[Broadcaster] ✅ Audio processing complete using shared AudioContext');
       
     } catch (err) {
       console.error('[Broadcaster] Audio init failed:', err);

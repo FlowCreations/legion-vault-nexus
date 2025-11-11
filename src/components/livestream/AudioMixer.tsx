@@ -153,183 +153,207 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     let analyser: AnalyserNode;
     let destination: MediaStreamAudioDestinationNode;
 
-    try {
-      // Create audio processing nodes
-      lowShelf = audioContext.createBiquadFilter();
-      lowShelf.type = 'lowshelf';
-      lowShelf.frequency.value = 320;
-      lowShelf.gain.value = lowGain;
+    (async () => {
+      try {
+        console.log('[AudioMixer] Initializing with context state:', audioContext.state);
 
-      midPeak = audioContext.createBiquadFilter();
-      midPeak.type = 'peaking';
-      midPeak.frequency.value = 1000;
-      midPeak.Q.value = 1;
-      midPeak.gain.value = midGain;
-
-      highShelf = audioContext.createBiquadFilter();
-      highShelf.type = 'highshelf';
-      highShelf.frequency.value = 3200;
-      highShelf.gain.value = highGain;
-
-      // Compressor
-      compressor = audioContext.createDynamicsCompressor();
-      compressor.threshold.value = threshold;
-      compressor.ratio.value = ratio;
-      compressor.attack.value = attack;
-      compressor.release.value = release;
-      compressor.knee.value = knee;
-
-      // Limiter
-      limiter = audioContext.createDynamicsCompressor();
-      limiter.threshold.value = limiterThreshold;
-      limiter.ratio.value = 20;
-      limiter.attack.value = 0.001;
-      limiter.release.value = 0.1;
-      limiter.knee.value = 0;
-
-      // Reverb
-      const convolver = audioContext.createConvolver();
-      const reverbGain = audioContext.createGain();
-      const dryGain = audioContext.createGain();
-      reverbGain.gain.value = reverbMix / 100;
-      dryGain.gain.value = 1 - (reverbMix / 100);
-
-      const impulseLength = audioContext.sampleRate * 2;
-      const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
-      for (let channel = 0; channel < 2; channel++) {
-        const channelData = impulse.getChannelData(channel);
-        for (let i = 0; i < impulseLength; i++) {
-          channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLength, 2);
+        // Ensure AudioContext is running
+        if (audioContext.state === 'suspended') {
+          console.log('[AudioMixer] Resuming AudioContext...');
+          await audioContext.resume();
         }
-      }
-      convolver.buffer = impulse;
 
-      // Master gain
-      master = audioContext.createGain();
-      master.gain.value = masterGain;
+        if (audioContext.state === 'closed') {
+          throw new Error('AudioContext is closed. Cannot initialize mixer.');
+        }
 
-      // Analyzer - optimized for better sensitivity
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.3;
-      analyser.minDecibels = -100;
-      analyser.maxDecibels = 0;
+        // Create audio processing nodes
+        lowShelf = audioContext.createBiquadFilter();
+        lowShelf.type = 'lowshelf';
+        lowShelf.frequency.value = 320;
+        lowShelf.gain.value = lowGain;
 
-      // MediaStreamDestination
-      destination = audioContext.createMediaStreamDestination();
+        midPeak = audioContext.createBiquadFilter();
+        midPeak.type = 'peaking';
+        midPeak.frequency.value = 1000;
+        midPeak.Q.value = 1;
+        midPeak.gain.value = midGain;
 
-      // Connect the chain
-      sourceNode.connect(lowShelf);
-      lowShelf.connect(midPeak);
-      midPeak.connect(highShelf);
-      
-      if (compressorEnabled) {
-        highShelf.connect(compressor);
-        compressor.connect(dryGain);
-        compressor.connect(convolver);
-      } else {
-        highShelf.connect(dryGain);
-        highShelf.connect(convolver);
-      }
+        highShelf = audioContext.createBiquadFilter();
+        highShelf.type = 'highshelf';
+        highShelf.frequency.value = 3200;
+        highShelf.gain.value = highGain;
 
-      convolver.connect(reverbGain);
-      
-      const merger = audioContext.createChannelMerger(2);
-      dryGain.connect(merger);
-      reverbGain.connect(merger);
+        // Compressor
+        compressor = audioContext.createDynamicsCompressor();
+        compressor.threshold.value = threshold;
+        compressor.ratio.value = ratio;
+        compressor.attack.value = attack;
+        compressor.release.value = release;
+        compressor.knee.value = knee;
 
-      if (limiterEnabled) {
-        merger.connect(limiter);
-        limiter.connect(master);
-      } else {
-        merger.connect(master);
-      }
+        // Limiter
+        limiter = audioContext.createDynamicsCompressor();
+        limiter.threshold.value = limiterThreshold;
+        limiter.ratio.value = 20;
+        limiter.attack.value = 0.001;
+        limiter.release.value = 0.1;
+        limiter.knee.value = 0;
 
-      master.connect(analyser);
-      analyser.connect(destination);
-      
-      console.log('[AudioMixer] Audio chain established:', {
-        contextState: audioContext.state,
-        sampleRate: audioContext.sampleRate,
-        analyserFftSize: analyser.fftSize
-      });
-      
-      if (onProcessedStream) {
-        onProcessedStream(destination.stream);
-      }
-      
-      // Expose analyser for diagnostics
-      if (onProcessedAnalyser) {
-        onProcessedAnalyser(analyser);
-      }
-      
-      // Signal that mixer is ready
-      console.log('[AudioMixer] Audio chain fully initialized');
-      if (onReady) {
-        onReady();
-      }
-      
-      // Initial audio check
-      setTimeout(() => {
-        const testArray = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(testArray);
-        const maxValue = Math.max(...testArray);
-        console.log('[AudioMixer] Initial audio check:', {
-          hasSignal: testArray.some(v => v > 0),
-          maxValue,
-          avgValue: testArray.reduce((a, b) => a + b) / testArray.length
+        // Reverb
+        const convolver = audioContext.createConvolver();
+        const reverbGain = audioContext.createGain();
+        const dryGain = audioContext.createGain();
+        reverbGain.gain.value = reverbMix / 100;
+        dryGain.gain.value = 1 - (reverbMix / 100);
+
+        const impulseLength = audioContext.sampleRate * 2;
+        const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
+        for (let channel = 0; channel < 2; channel++) {
+          const channelData = impulse.getChannelData(channel);
+          for (let i = 0; i < impulseLength; i++) {
+            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLength, 2);
+          }
+        }
+        convolver.buffer = impulse;
+
+        // Master gain
+        master = audioContext.createGain();
+        master.gain.value = masterGain;
+
+        // Analyzer - optimized for better sensitivity
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.3;
+        analyser.minDecibels = -100;
+        analyser.maxDecibels = 0;
+
+        // MediaStreamDestination
+        console.log('[AudioMixer] Creating MediaStreamDestination...');
+        destination = audioContext.createMediaStreamDestination();
+        console.log('[AudioMixer] MediaStreamDestination created, stream:', destination.stream.id);
+
+        // Connect the chain
+        sourceNode.connect(lowShelf);
+        lowShelf.connect(midPeak);
+        midPeak.connect(highShelf);
+        
+        if (compressorEnabled) {
+          highShelf.connect(compressor);
+          compressor.connect(dryGain);
+          compressor.connect(convolver);
+        } else {
+          highShelf.connect(dryGain);
+          highShelf.connect(convolver);
+        }
+
+        convolver.connect(reverbGain);
+        
+        const merger = audioContext.createChannelMerger(2);
+        dryGain.connect(merger);
+        reverbGain.connect(merger);
+
+        if (limiterEnabled) {
+          merger.connect(limiter);
+          limiter.connect(master);
+        } else {
+          merger.connect(master);
+        }
+
+        master.connect(analyser);
+        analyser.connect(destination);
+        
+        console.log('[AudioMixer] Audio chain established:', {
+          contextState: audioContext.state,
+          sampleRate: audioContext.sampleRate,
+          analyserFftSize: analyser.fftSize
         });
-      }, 500);
-
-      // Audio level monitoring - split to left/right channels
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      let smoothedLeft = 0;
-      let smoothedRight = 0;
-      const smoothingFactor = 0.3;
-      
-      const updateLevels = () => {
-        analyser.getByteFrequencyData(dataArray);
         
-        // Calculate separate left/right from frequency data
-        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        const rawLevel = Math.min(100, (average / 255) * 150);
-        
-        // Smooth the levels
-        smoothedLeft = smoothedLeft * (1 - smoothingFactor) + rawLevel * smoothingFactor;
-        smoothedRight = smoothedRight * (1 - smoothingFactor) + rawLevel * smoothingFactor;
-        
-        setLeftLevel(smoothedLeft);
-        setRightLevel(smoothedRight);
-        
-        if (onAudioLevel) {
-          onAudioLevel(smoothedLeft, smoothedRight);
+        if (onProcessedStream) {
+          onProcessedStream(destination.stream);
         }
         
-        animationFrameId = requestAnimationFrame(updateLevels);
-      };
-      updateLevels();
-
-      // Cleanup
-      return () => {
-        try {
-          cancelAnimationFrame(animationFrameId);
-          sourceNode.disconnect();
-          lowShelf.disconnect();
-          midPeak.disconnect();
-          highShelf.disconnect();
-          compressor.disconnect();
-          limiter.disconnect();
-          master.disconnect();
-          analyser.disconnect();
-          destination.disconnect();
-          console.log('[AudioMixer] Audio chain cleaned up');
-        } catch (e) {
-          console.error('[AudioMixer] Cleanup error:', e);
+        // Expose analyser for diagnostics
+        if (onProcessedAnalyser) {
+          onProcessedAnalyser(analyser);
         }
-      };
-    } catch (error) {
-      console.error('[AudioMixer] Setup error:', error);
-    }
+        
+        // Signal that mixer is ready
+        console.log('[AudioMixer] Audio chain fully initialized');
+        if (onReady) {
+          onReady();
+        }
+        
+        // Initial audio check
+        setTimeout(() => {
+          const testArray = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteFrequencyData(testArray);
+          const maxValue = Math.max(...testArray);
+          console.log('[AudioMixer] Initial audio check:', {
+            hasSignal: testArray.some(v => v > 0),
+            maxValue,
+            avgValue: testArray.reduce((a, b) => a + b) / testArray.length
+          });
+        }, 500);
+
+        // Audio level monitoring - split to left/right channels
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        let smoothedLeft = 0;
+        let smoothedRight = 0;
+        const smoothingFactor = 0.3;
+        
+        const updateLevels = () => {
+          analyser.getByteFrequencyData(dataArray);
+          
+          // Calculate separate left/right from frequency data
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          const rawLevel = Math.min(100, (average / 255) * 150);
+          
+          // Smooth the levels
+          smoothedLeft = smoothedLeft * (1 - smoothingFactor) + rawLevel * smoothingFactor;
+          smoothedRight = smoothedRight * (1 - smoothingFactor) + rawLevel * smoothingFactor;
+          
+          setLeftLevel(smoothedLeft);
+          setRightLevel(smoothedRight);
+          
+          if (onAudioLevel) {
+            onAudioLevel(smoothedLeft, smoothedRight);
+          }
+          
+          animationFrameId = requestAnimationFrame(updateLevels);
+        };
+        updateLevels();
+
+      } catch (error: any) {
+        console.error('[AudioMixer] Setup error:', error);
+        console.error('[AudioMixer] Error details:', {
+          name: error.name,
+          message: error.message,
+          contextState: audioContext?.state,
+          stack: error.stack
+        });
+        throw new Error(`Audio mixer failed to initialize: ${error.message}`);
+      }
+    })();
+
+    // Cleanup
+    return () => {
+      try {
+        cancelAnimationFrame(animationFrameId);
+        sourceNode.disconnect();
+        lowShelf?.disconnect();
+        midPeak?.disconnect();
+        highShelf?.disconnect();
+        compressor?.disconnect();
+        limiter?.disconnect();
+        master?.disconnect();
+        analyser?.disconnect();
+        destination?.disconnect();
+        console.log('[AudioMixer] Audio chain cleaned up');
+      } catch (e) {
+        console.error('[AudioMixer] Cleanup error:', e);
+      }
+    };
   }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser]);
 
   // Effect 2: Update node parameters (runs when controls change)
