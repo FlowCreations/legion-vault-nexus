@@ -152,7 +152,6 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     let master: GainNode;
     let analyser: AnalyserNode;
     let destination: MediaStreamAudioDestinationNode;
-    let splitter: ChannelSplitterNode;
     let leftAnalyser: AnalyserNode;
     let rightAnalyser: AnalyserNode;
 
@@ -224,23 +223,20 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         master = audioContext.createGain();
         master.gain.value = masterGain;
 
-        // Create pre-processing stereo analysers for accurate metering
-        splitter = audioContext.createChannelSplitter(2);
-        leftAnalyser = audioContext.createAnalyser();
-        rightAnalyser = audioContext.createAnalyser();
-        leftAnalyser.fftSize = 2048;
-        leftAnalyser.smoothingTimeConstant = 0;
-        leftAnalyser.minDecibels = -90;
-        leftAnalyser.maxDecibels = 0;
-        rightAnalyser.fftSize = 2048;
-        rightAnalyser.smoothingTimeConstant = 0;
-        rightAnalyser.minDecibels = -90;
-        rightAnalyser.maxDecibels = 0;
-
-        // Connect parallel metering path: source → splitter → [left/right analysers]
-        sourceNode.connect(splitter);
-        splitter.connect(leftAnalyser, 0);
-        splitter.connect(rightAnalyser, 1);
+        // Create raw input analyser (pre-processing) for live metering
+        const rawInputAnalyser = audioContext.createAnalyser();
+        rawInputAnalyser.fftSize = 2048;
+        rawInputAnalyser.smoothingTimeConstant = 0;
+        rawInputAnalyser.minDecibels = -90;
+        rawInputAnalyser.maxDecibels = 0;
+        
+        // Connect raw source to input analyser (parallel path, doesn't affect processing)
+        sourceNode.connect(rawInputAnalyser);
+        
+        // For stereo metering, we'll use the same analyser for both L/R
+        // (most mics are mono anyway, but this ensures compatibility)
+        leftAnalyser = rawInputAnalyser;
+        rightAnalyser = rawInputAnalyser;
 
         // Analyzer for processed signal (diagnostics only)
         analyser = audioContext.createAnalyser();
@@ -382,9 +378,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       try {
         cancelAnimationFrame(animationFrameId);
         sourceNode.disconnect();
-        splitter?.disconnect();
         leftAnalyser?.disconnect();
-        rightAnalyser?.disconnect();
         lowShelf?.disconnect();
         midPeak?.disconnect();
         highShelf?.disconnect();
