@@ -68,9 +68,11 @@ export default function GlobalReachMap({
   title = "Global Reach",
 }: Props) {
   const [token, setToken] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const initializedRef = useRef(false); // Prevents re-initialization on render
+  const initializedRef = useRef(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [members, setMembers] = useState<Member[]>(membersProp);
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -82,11 +84,23 @@ export default function GlobalReachMap({
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         if (error) throw error;
         if (data?.token) {
-          console.log('✅ Mapbox token received');
+          console.log('✅ Mapbox token received:', data.token.substring(0, 10) + '...');
+          
+          // Validate token format
+          if (!data.token.startsWith('pk.')) {
+            throw new Error('Invalid Mapbox token format. Token should start with "pk."');
+          }
+          
           setToken(data.token);
+          setError(null);
+        } else {
+          throw new Error('No token received from server');
         }
       } catch (err) {
-        console.error('❌ Failed to fetch Mapbox token:', err);
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch Mapbox token';
+        console.error('❌ Mapbox token error:', errorMsg);
+        setError(errorMsg);
+        setLoading(false);
       }
     }
     fetchToken();
@@ -179,19 +193,38 @@ export default function GlobalReachMap({
     if (!containerRef.current) return;
     if (!token) return;
 
-    mapboxgl.accessToken = token;
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: "mapbox://styles/mapbox/dark-v11",
-      projection: { name: 'globe' },
-      center: initialCenter,
-      zoom: initialZoom,
-      attributionControl: false,
-      cooperativeGestures: false,
-    });
+    console.log('🗺️ Initializing Mapbox with token...');
+    
+    try {
+      mapboxgl.accessToken = token;
+      const map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: "mapbox://styles/mapbox/dark-v11",
+        projection: { name: 'globe' },
+        center: initialCenter,
+        zoom: initialZoom,
+        attributionControl: false,
+        cooperativeGestures: false,
+      });
 
-    mapRef.current = map;
-    initializedRef.current = true;
+      mapRef.current = map;
+      initializedRef.current = true;
+
+      // Add error event listeners
+      map.on('error', (e) => {
+        console.error('❌ Mapbox error event:', e);
+        setError(`Map error: ${e.error?.message || 'Unknown error'}`);
+        setLoading(false);
+      });
+
+      // Set timeout to catch loading failures
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (loading) {
+          console.error('⏱️ Map loading timeout - taking too long');
+          setError('Map is taking too long to load. Please check your connection and try again.');
+          setLoading(false);
+        }
+      }, 15000); // 15 second timeout
 
     // Add navigation controls
     map.addControl(
@@ -202,8 +235,16 @@ export default function GlobalReachMap({
     );
 
     map.on("load", () => {
-      console.log('🗺️ Map loaded, adding source and layers');
-      setLoading(false); // Hide loading overlay once map is ready
+      console.log('✅ Map loaded successfully, adding source and layers');
+      
+      // Clear timeout since map loaded successfully
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      
+      setLoading(false);
+      setError(null);
       
       // Setup fog/atmosphere
       map.setFog({
@@ -338,11 +379,20 @@ export default function GlobalReachMap({
       setTimeout(() => map.resize(), 50);
     });
 
-    // Cleanup on unmount - critical for preventing memory leaks
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
+      // Cleanup on unmount - critical for preventing memory leaks
+      return () => {
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+        map.remove();
+        mapRef.current = null;
+      };
+    } catch (err) {
+      console.error('❌ Failed to initialize Mapbox:', err);
+      setError(err instanceof Error ? err.message : 'Failed to initialize map');
+      setLoading(false);
+      initializedRef.current = false; // Allow retry
+    }
   }, [token, initialCenter, initialZoom]);
 
   // Push data into the source whenever members change (live updates via setData)
@@ -379,12 +429,42 @@ export default function GlobalReachMap({
     }
   }, [featureCollection, members, autoFit, padding, hasFitOnce]);
 
-  // Error state if token is missing
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    initializedRef.current = false;
+    window.location.reload();
+  };
+
+  // Error state
+  if (error) {
+    return (
+      <div className={`w-full ${className}`}>
+        {title && <div className="mb-4 text-2xl font-semibold">{title}</div>}
+        <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-destructive/30 bg-destructive/5 flex flex-col items-center justify-center gap-4 p-8">
+          <p className="text-destructive font-semibold text-lg">⚠️ Map Error</p>
+          <p className="text-muted-foreground text-center max-w-md">{error}</p>
+          <button 
+            onClick={handleRetry}
+            className="px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading token state
   if (!token) {
     return (
-      <div className={`relative w-full min-h-[420px] rounded-2xl bg-black/60 ${className}`}>
-        <div className="absolute inset-0 grid place-items-center text-sm opacity-80">
-          ⚠️ Missing VITE_MAPBOX_TOKEN
+      <div className={`w-full ${className}`}>
+        {title && <div className="mb-4 text-2xl font-semibold">{title}</div>}
+        <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+            <p className="text-muted-foreground">Loading Mapbox configuration...</p>
+          </div>
         </div>
       </div>
     );
@@ -395,16 +475,17 @@ export default function GlobalReachMap({
       {title && <div className="mb-4 text-2xl font-semibold">{title}</div>}
       
       <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
+        <div ref={containerRef} className="absolute inset-0 z-0" />
+        
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E] z-20">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E]/90 backdrop-blur-sm z-20">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading community members...</p>
+              <p className="text-muted-foreground">Loading global map...</p>
+              <p className="text-xs text-muted-foreground/60 mt-2">This may take a few seconds...</p>
             </div>
           </div>
         )}
-        
-        <div ref={containerRef} className="absolute inset-0" />
         
         {/* Hide Mapbox branding */}
         <style>{`
