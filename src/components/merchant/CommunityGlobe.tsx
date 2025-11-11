@@ -51,7 +51,8 @@ export default function CommunityGlobe() {
         regionGroup: groupByRegion(m)
       }));
       setMembers(normalized);
-      console.log(`Loaded ${normalized.length} members with valid coordinates`);
+      console.log(`✅ Loaded ${normalized.length} members with valid coordinates`);
+      console.log('Sample member:', normalized[0]);
     });
   }, []);
 
@@ -73,18 +74,165 @@ export default function CommunityGlobe() {
 
     map.on("load", () => {
       map.setFog({});
-      updatePoints();
       setupInteractionLogic();
       startRotation();
+      
+      // Add initial empty source
+      map.addSource("community", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: []
+        }
+      });
+
+      addLayers();
     });
 
     return () => map.remove();
+  }, []);
+
+  // Update data when members or activeTab changes
+  useEffect(() => {
+    updatePoints();
   }, [members, activeTab]);
 
-  function updatePoints() {
+  function addLayers() {
     if (!mapRef.current) return;
 
+    // Add heatmap layer
+    mapRef.current.addLayer({
+      id: "community-heatmap",
+      type: "heatmap",
+      source: "community",
+      layout: {
+        visibility: showHeatmap ? "visible" : "none"
+      },
+      paint: {
+        // Increase weight based on engagement
+        "heatmap-weight": [
+          "interpolate",
+          ["linear"],
+          ["get", "engagement"],
+          0, 0,
+          100, 0.5,
+          500, 1
+        ],
+        // Increase intensity as zoom level increases
+        "heatmap-intensity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          0, 1,
+          9, 3
+        ],
+        // Color ramp: blue -> cyan -> lime -> yellow -> red
+        "heatmap-color": [
+          "interpolate",
+          ["linear"],
+          ["heatmap-density"],
+          0, "rgba(33,102,172,0)",
+          0.2, "rgb(103,169,207)",
+          0.4, "rgb(209,229,240)",
+          0.6, "rgb(253,219,199)",
+          0.8, "rgb(239,138,98)",
+          1, "rgb(178,24,43)"
+        ],
+        // Adjust radius by zoom level
+        "heatmap-radius": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          0, 2,
+          9, 20
+        ],
+        // Transition from heatmap to circle layer by zoom level
+        "heatmap-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          7, 1,
+          9, 0
+        ]
+      }
+    });
+
+    // Add circle layer
+    mapRef.current.addLayer({
+      id: "community-points",
+      type: "circle",
+      source: "community",
+      minzoom: 7,
+      layout: {
+        visibility: showHeatmap ? "none" : "visible"
+      },
+      paint: {
+        // Size circle based on engagement
+        "circle-radius": [
+          "interpolate",
+          ["linear"],
+          ["get", "engagement"],
+          0, 6,
+          100, 8,
+          500, 12
+        ],
+        // Color based on engagement
+        "circle-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "engagement"],
+          0, "rgba(124,189,255,0.7)",
+          100, "rgba(255,205,29,0.85)",
+          500, "rgba(239,138,98,0.95)"
+        ],
+        "circle-stroke-color": "white",
+        "circle-stroke-width": 1.5,
+        // Add opacity for overlapping points
+        "circle-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          7, 0,
+          8, 1
+        ]
+      }
+    });
+
+    // Click handler
+    mapRef.current.on("click", "community-points", (e) => {
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+
+      const props = feature.properties;
+
+      setSelectedMember({
+        id: props?.id || "",
+        name: props?.name || "Unknown",
+        location: props?.location || "",
+        latitude: feature.geometry.coordinates[1],
+        longitude: feature.geometry.coordinates[0]
+      });
+    });
+
+    // Cursor handlers
+    mapRef.current.on("mouseenter", "community-points", () => {
+      if (mapRef.current) {
+        mapRef.current.getCanvas().style.cursor = "pointer";
+      }
+    });
+
+    mapRef.current.on("mouseleave", "community-points", () => {
+      if (mapRef.current) {
+        mapRef.current.getCanvas().style.cursor = "";
+      }
+    });
+  }
+
+  function updatePoints() {
+    if (!mapRef.current || !mapRef.current.getSource("community")) return;
+
     const filtered = members.filter((m) => m.regionGroup === activeTab);
+    console.log(`🗺️ Updating map with ${filtered.length} members for ${activeTab}`);
 
     // Calculate engagement score for each member
     const geojson: GeoJSON.FeatureCollection = {
@@ -109,138 +257,12 @@ export default function CommunityGlobe() {
       })
     };
 
-    if (mapRef.current.getSource("community")) {
-      (mapRef.current.getSource("community") as mapboxgl.GeoJSONSource).setData(geojson);
-    } else {
-      mapRef.current.addSource("community", { type: "geojson", data: geojson });
-
-      // Add heatmap layer
-      mapRef.current.addLayer({
-        id: "community-heatmap",
-        type: "heatmap",
-        source: "community",
-        layout: {
-          visibility: showHeatmap ? "visible" : "none"
-        },
-        paint: {
-          // Increase weight based on engagement
-          "heatmap-weight": [
-            "interpolate",
-            ["linear"],
-            ["get", "engagement"],
-            0, 0,
-            100, 0.5,
-            500, 1
-          ],
-          // Increase intensity as zoom level increases
-          "heatmap-intensity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            0, 1,
-            9, 3
-          ],
-          // Color ramp: blue -> cyan -> lime -> yellow -> red
-          "heatmap-color": [
-            "interpolate",
-            ["linear"],
-            ["heatmap-density"],
-            0, "rgba(33,102,172,0)",
-            0.2, "rgb(103,169,207)",
-            0.4, "rgb(209,229,240)",
-            0.6, "rgb(253,219,199)",
-            0.8, "rgb(239,138,98)",
-            1, "rgb(178,24,43)"
-          ],
-          // Adjust radius by zoom level
-          "heatmap-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            0, 2,
-            9, 20
-          ],
-          // Transition from heatmap to circle layer by zoom level
-          "heatmap-opacity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            7, 1,
-            9, 0
-          ]
-        }
-      });
-
-      // Add circle layer on top
-      mapRef.current.addLayer({
-        id: "community-points",
-        type: "circle",
-        source: "community",
-        minzoom: 7,
-        layout: {
-          visibility: showHeatmap ? "none" : "visible"
-        },
-        paint: {
-          // Size circle based on engagement
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["get", "engagement"],
-            0, 6,
-            100, 8,
-            500, 12
-          ],
-          // Color based on engagement
-          "circle-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "engagement"],
-            0, "rgba(124,189,255,0.7)",
-            100, "rgba(255,205,29,0.85)",
-            500, "rgba(239,138,98,0.95)"
-          ],
-          "circle-stroke-color": "white",
-          "circle-stroke-width": 1.5,
-          // Add opacity for overlapping points
-          "circle-opacity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            7, 0,
-            8, 1
-          ]
-        }
-      });
-
-      // Click handler
-      mapRef.current.on("click", "community-points", (e) => {
-        const feature = e.features?.[0];
-        if (!feature || feature.geometry.type !== "Point") return;
-
-        const props = feature.properties;
-
-        setSelectedMember({
-          id: props?.id || "",
-          name: props?.name || "Unknown",
-          location: props?.location || "",
-          latitude: feature.geometry.coordinates[1],
-          longitude: feature.geometry.coordinates[0]
-        });
-      });
-
-      // Cursor handlers
-      mapRef.current.on("mouseenter", "community-points", () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = "pointer";
-        }
-      });
-
-      mapRef.current.on("mouseleave", "community-points", () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = "";
-        }
-      });
+    console.log('📍 GeoJSON features:', geojson.features.length);
+    if (geojson.features.length > 0) {
+      console.log('Sample feature:', geojson.features[0]);
     }
+
+    (mapRef.current.getSource("community") as mapboxgl.GeoJSONSource).setData(geojson);
   }
 
   // Update layer visibility when heatmap toggle changes
