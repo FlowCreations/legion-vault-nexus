@@ -166,7 +166,9 @@ export default function CommunityGlobe() {
           5, 0
         ]
       }
-    });
+    }, "country-label");
+    
+    console.log("✅ Added community-heatmap layer");
 
     // Add circle layer
     mapRef.current.addLayer({
@@ -178,14 +180,14 @@ export default function CommunityGlobe() {
         visibility: showHeatmap ? "none" : "visible"
       },
       paint: {
-        // Size circle based on zoom and engagement
+        // Size circle based on zoom and engagement - increased for visibility
         "circle-radius": [
           "interpolate",
           ["linear"],
           ["zoom"],
-          0, ["interpolate", ["linear"], ["get", "engagement"], 0, 3, 100, 4, 500, 6],
-          5, ["interpolate", ["linear"], ["get", "engagement"], 0, 6, 100, 8, 500, 12],
-          10, ["interpolate", ["linear"], ["get", "engagement"], 0, 8, 100, 12, 500, 16]
+          0, ["interpolate", ["linear"], ["get", "engagement"], 0, 8, 100, 10, 500, 12],
+          5, ["interpolate", ["linear"], ["get", "engagement"], 0, 14, 100, 16, 500, 20],
+          10, ["interpolate", ["linear"], ["get", "engagement"], 0, 20, 100, 24, 500, 28]
         ],
         // Color based on engagement
         "circle-color": [
@@ -207,7 +209,9 @@ export default function CommunityGlobe() {
           3, 1
         ]
       }
-    });
+    }, "country-label");
+    
+    console.log("✅ Added community-points layer");
 
     // Click handler
     mapRef.current.on("click", "community-points", (e) => {
@@ -404,13 +408,22 @@ export default function CommunityGlobe() {
   );
 }
 
-function groupByRegion(member: { location: string | null }) {
+function groupByRegion(member: { location: string | null; longitude: number }) {
   const americas = [
     "USA", "United States", "Canada", "Mexico", "Costa Rica", "Guatemala",
     "Brazil", "Argentina", "Colombia", "Chile"
   ];
   const c = (member.location || "").toLowerCase();
-  return americas.some((x) => c.includes(x.toLowerCase()))
-    ? "america"
-    : "world";
+  
+  // Check location text first
+  if (americas.some((x) => c.includes(x.toLowerCase()))) {
+    return "america";
+  }
+  
+  // Fallback: Check coordinates (Americas: -168 to -30 longitude)
+  if (member.longitude >= -168 && member.longitude <= -30) {
+    return "america";
+  }
+  
+  return "world";
 }
