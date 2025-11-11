@@ -73,14 +73,14 @@ export function useMicrophoneMeter({
         gain.gain.value = 1.0;
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 512;
-        analyser.smoothingTimeConstant = 0.3;
+        analyser.smoothingTimeConstant = 0.0; // No smoothing to prevent signal flattening
         analyser.minDecibels = -90;
         analyser.maxDecibels = -10;
 
         source.connect(gain);
         gain.connect(analyser);
 
-        const data = new Uint8Array(analyser.frequencyBinCount);
+        const data = new Float32Array(analyser.fftSize);
 
         ctxRef.current = ctx;
         analyserRef.current = analyser;
@@ -91,13 +91,23 @@ export function useMicrophoneMeter({
 
         const animate = () => {
           if (!active) return;
-          analyser.getByteFrequencyData(data);
-          const avg = data.reduce((a, b) => a + b, 0) / data.length;
-          const db = 20 * Math.log10(avg / 255 || 0.0001);
+          
+          // Use time domain data for accurate RMS calculation
+          analyser.getFloatTimeDomainData(data);
+          
+          // Calculate RMS (root mean square) energy
+          let sumSquares = 0;
+          for (let i = 0; i < data.length; i++) {
+            sumSquares += data[i] * data[i];
+          }
+          const rms = Math.sqrt(sumSquares / data.length);
+          const db = 20 * Math.log10(rms || 0.0001);
+          
+          // Apply smoothing for UI (not analyzer)
           const smoothed = micLevel * (1 - smoothing) + db * smoothing;
 
           setMicLevel(smoothed);
-          setHasSignal(avg > 5);
+          setHasSignal(db > -55);
           rafRef.current = requestAnimationFrame(animate);
         };
         animate();
