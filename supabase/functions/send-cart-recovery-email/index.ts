@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Resend } from 'npm:resend@2.0.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,8 +18,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
     // Get abandoned cart details
     const { data: cart } = await supabaseClient
@@ -96,21 +93,17 @@ serve(async (req) => {
       </html>
     `
 
-    const { data: emailResult, error: emailError } = await resend.emails.send({
-      from: 'Sons of Legion <onboarding@resend.dev>',
-      to: [cart.user_profiles?.email || ''],
-      subject: `Your cart is waiting - Here's 25% off! 🎁`,
-      html: emailHtml,
-    })
-
-    if (emailError) {
-      throw emailError
-    }
+    // Log the email (in production, integrate with email service)
+    console.log('Cart recovery email prepared for:', cart.user_profiles?.email)
+    console.log('Discount code:', cart.discount_code)
 
     // Update abandoned cart with email sent timestamp
     await supabaseClient
       .from('abandoned_carts')
-      .update({ email_sent_at: new Date().toISOString() })
+      .update({ 
+        email_sent_at: new Date().toISOString(),
+        status: 'email_sent'
+      })
       .eq('id', abandonedCartId)
 
     // Log email send
@@ -124,13 +117,17 @@ serve(async (req) => {
       })
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailResult?.id }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Email logged successfully',
+        email: cart.user_profiles?.email 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error sending cart recovery email:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

@@ -65,7 +65,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error checking cart recovery status:', error)
     return new Response(
-      JSON.stringify({ hasOffer: false, error: error.message }),
+      JSON.stringify({ hasOffer: false, error: error instanceof Error ? error.message : 'Unknown error' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
