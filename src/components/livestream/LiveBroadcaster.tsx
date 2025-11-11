@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { AudioMixer } from './AudioMixer';
 import { MicrophoneMeter } from './MicrophoneMeter';
 import { AudioDiagnostics } from './AudioDiagnostics';
+import { useMicrophoneMeter } from '@/hooks/useMicrophoneMeter';
 
 type Props = { eventId: string };
 
@@ -38,6 +39,13 @@ export function LiveBroadcaster({ eventId }: Props) {
   const processedAudioStreamRef = useRef<MediaStream | null>(null);
   const rawAudioAnalyserRef = useRef<AnalyserNode | null>(null);
   const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
+
+  // Use the reusable mic meter hook
+  const { micLevel, hasSignal, error: micError, analyser: micAnalyser, stream: micStream } = useMicrophoneMeter({
+    selectedMicId: status === 'preview' || status === 'live' ? selectedMicrophone : undefined,
+    smoothing: 0.3,
+    threshold: -50,
+  });
 
   useEffect(() => {
     requestPermissionsAndLoadDevices(false);
@@ -112,89 +120,18 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   const setupAudioProcessing = async (rawStream: MediaStream) => {
     try {
-      const [track] = rawStream.getAudioTracks();
+      // The useMicrophoneMeter hook now handles all signal detection
+      // We just need to store the raw stream for the AudioMixer
+      console.log('[Broadcaster] Audio processing delegated to useMicrophoneMeter hook');
       
-      if (!track) {
-        throw new Error('No audio track found in stream');
-      }
-
-      console.log('[Broadcaster] Mic track:', track.label, track.readyState, track.enabled);
-
-      // Validate track is active
-      if (track.readyState === 'ended' || !track.enabled) {
-        throw new Error('Microphone stream inactive');
-      }
-
-      // Create AudioContext
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioContextClass({ sampleRate: 48000 });
-      
-      console.log('[Broadcaster] AudioContext state:', ctx.state);
-      
-      // Resume if suspended (required for Safari/Chrome autoplay policy)
-      if (ctx.state === 'suspended') {
-        console.log('[Broadcaster] Resuming AudioContext...');
-        await ctx.resume();
-        console.log('[Broadcaster] AudioContext resumed:', ctx.state);
-      }
-
-      // Build audio graph: source → gain → analyser
-      const source = ctx.createMediaStreamSource(rawStream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.8;
-      analyser.minDecibels = -90;
-      analyser.maxDecibels = -10;
-      
-      const gain = ctx.createGain();
-      gain.gain.value = 1.0; // CRITICAL: Must be 1.0 for signal to pass through
-
-      // Connect: source → gain → analyser (NO destination!)
-      source.connect(gain);
-      gain.connect(analyser);
-
-      rawAudioAnalyserRef.current = analyser;
-
-      console.log('[Broadcaster] Analyser connected:', analyser, 'Gain:', gain.gain.value);
-
-      // Start monitoring loop to verify signal
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      let monitorCount = 0;
-      const maxMonitorChecks = 30; // 3 seconds of checks
-      let signalDetected = false;
-      
-      const checkSignal = () => {
-        analyser.getByteFrequencyData(data);
-        const avg = data.reduce((a, b) => a + b, 0) / data.length;
-        const db = avg > 0 ? 20 * Math.log10(avg / 255) : -Infinity;
-        
-        if (monitorCount < maxMonitorChecks) {
-          console.log('[Broadcaster] Monitor #' + monitorCount + ' - Avg:', avg.toFixed(2), 'dB:', db.toFixed(1), 'Track:', track.readyState);
-          monitorCount++;
-          
-          if (avg > 2) {
-            signalDetected = true;
-            console.log('[Broadcaster] ✅ SIGNAL DETECTED! Avg:', avg.toFixed(2));
-          }
-        }
-      };
-
-      // Run initial checks
-      for (let i = 0; i < 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        checkSignal();
-        if (signalDetected) break;
-      }
-
-      if (!signalDetected) {
-        console.warn('[Broadcaster] ⚠️ No signal detected during initial test. User may need to speak or check mic permissions.');
+      // Store the analyzer from the hook
+      if (micAnalyser) {
+        rawAudioAnalyserRef.current = micAnalyser;
+        console.log('[Broadcaster] ✅ Using analyser from useMicrophoneMeter hook');
       }
 
       setAudioReady(true);
-      setAudioContext(ctx);
-      setSourceNode(source);
-
-      console.log('[Broadcaster] ✅ Audio processing complete. Graph: source → gain(1.0) → analyser');
+      console.log('[Broadcaster] ✅ Audio processing ready');
       
     } catch (err) {
       console.error('[Broadcaster] Audio init failed:', err);
