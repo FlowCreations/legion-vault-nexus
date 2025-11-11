@@ -275,29 +275,15 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* GLOBE - Second position */}
-                  <ProgressiveLoader priority="low" delay={1000}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <Geography />
-                    </Suspense>
-                  </ProgressiveLoader>
-                  
-                  {/* Fanbase Stats - Below Globe */}
-                  <ProgressiveLoader priority="high" delay={200}>
+                  {/* Fanbase Stats - Load quickly */}
+                  <ProgressiveLoader priority="high" delay={50}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <FanbaseStats />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Demographics - Third position */}
-                  <ProgressiveLoader priority="low" delay={1200}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <Demographics />
-                    </Suspense>
-                  </ProgressiveLoader>
-                  
-                  {/* Platform Distribution - Fourth position */}
-                  <ProgressiveLoader priority="medium" delay={300}>
+                  {/* Platform Distribution - Load quickly */}
+                  <ProgressiveLoader priority="high" delay={100}>
                     <div className="grid gap-6 md:grid-cols-2">
                       <Suspense fallback={<LoadingSpinner />}>
                         <PlatformDistribution />
@@ -308,15 +294,29 @@ const Merchant = memo(() => {
                     </div>
                   </ProgressiveLoader>
                   
-                  {/* Most Talked About - Fifth position */}
-                  <ProgressiveLoader priority="low" delay={1000}>
+                  {/* GLOBE - Load after above-fold content */}
+                  <ProgressiveLoader priority="medium" delay={150}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Geography />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* Demographics */}
+                  <ProgressiveLoader priority="medium" delay={200}>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Demographics />
+                    </Suspense>
+                  </ProgressiveLoader>
+                  
+                  {/* Most Talked About */}
+                  <ProgressiveLoader priority="medium" delay={250}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <MostTalkedAbout />
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* Top Tracks - Sixth position */}
-                  <ProgressiveLoader priority="low" delay={1000}>
+                  {/* Top Tracks - Load last */}
+                  <ProgressiveLoader priority="low" delay={300}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <TopTracks period="7days" />
                     </Suspense>

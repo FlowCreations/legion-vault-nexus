@@ -26,34 +26,30 @@ export function useProgressiveLoad({ priority, delay = 0 }: ProgressiveLoadOptio
 
     switch (priority) {
       case 'high':
-        // Load after brief delay
-        timeoutId = setTimeout(load, delay || 100);
+        // Load quickly after brief delay
+        timeoutId = setTimeout(load, delay || 50);
         break;
       
       case 'medium':
-        // Load when browser is idle
-        if ('requestIdleCallback' in window) {
-          idleCallbackId = requestIdleCallback(load, { timeout: delay || 500 });
-        } else {
-          timeoutId = setTimeout(load, delay || 300);
-        }
+        // Load with short delay
+        timeoutId = setTimeout(load, delay || 150);
         break;
       
       case 'low':
-        // Load when browser is idle with longer timeout
+        // Load when browser is idle
         if ('requestIdleCallback' in window) {
-          idleCallbackId = requestIdleCallback(load, { timeout: delay || 2000 });
+          idleCallbackId = requestIdleCallback(load, { timeout: delay || 300 });
         } else {
-          timeoutId = setTimeout(load, delay || 1000);
+          timeoutId = setTimeout(load, delay || 300);
         }
         break;
       
       case 'idle':
         // Load only when browser is truly idle
         if ('requestIdleCallback' in window) {
-          idleCallbackId = requestIdleCallback(load, { timeout: delay || 5000 });
+          idleCallbackId = requestIdleCallback(load, { timeout: delay || 1000 });
         } else {
-          timeoutId = setTimeout(load, delay || 2000);
+          timeoutId = setTimeout(load, delay || 500);
         }
         break;
     }
