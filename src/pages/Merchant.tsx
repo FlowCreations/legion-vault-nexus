@@ -272,13 +272,6 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  {/* HIGH PRIORITY - Daily Sales */}
-                  <ProgressiveLoader priority="high" delay={100}>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <PlatformOverview />
-                    </Suspense>
-                  </ProgressiveLoader>
-                  
                   {/* GLOBE - Second position */}
                   <ProgressiveLoader priority="low" delay={1000}>
                     <Suspense fallback={<LoadingSpinner />}>
