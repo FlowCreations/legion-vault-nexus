@@ -38,6 +38,7 @@ const DistributorIntegration = lazy(() => import("@/components/merchant/Distribu
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
 const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
+const AbandonedCartToggle = lazy(() => import("@/components/merchant/AbandonedCartToggle").then(m => ({ default: m.AbandonedCartToggle })));
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const VideoManager = lazy(() => import("./VideoManager"));
 const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
@@ -385,6 +386,7 @@ const Merchant = memo(() => {
               <Tabs defaultValue="campaigns" className="space-y-6">
                 <TabsList>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                  <TabsTrigger value="automations">Automations</TabsTrigger>
                   <TabsTrigger value="funnels">Funnels</TabsTrigger>
                   <TabsTrigger value="email">Email</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
@@ -395,6 +397,15 @@ const Merchant = memo(() => {
                     <CreateCampaigns />
                   </Suspense>
                 </TabsContent>
+                
+                <TabsContent value="automations">
+                  <div className="space-y-6">
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AbandonedCartToggle />
+                    </Suspense>
+                  </div>
+                </TabsContent>
+                
                 <TabsContent value="funnels">
                   <Suspense fallback={<LoadingSpinner />}>
                     <BuildFunnel />
