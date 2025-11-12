@@ -361,47 +361,15 @@ export function LiveBroadcaster({ eventId }: Props) {
       // Store raw mic stream for visualization
       setRawMicStream(audioStream);
       
-      // Setup audio processing - this will test raw audio and set audioReady
+      // Setup audio processing - AudioMixer runs for visualization/meters ONLY
+      // NOTE: AudioMixer is NOT used for LiveKit audio - we publish raw mic instead
       await setupAudioProcessing(audioStream);
-      console.log('[Broadcaster] Audio processing initialized, waiting for AudioMixer to be ready');
-
-      // STEP 4: Wait for AudioMixer to signal ready
-      console.log('[Broadcaster] ⏳ Waiting for AudioMixer initialization...');
-      mixerReadyRef.current = false;
-      setMixerReady(false);
-      const mixerTimeout = 15000; // 15 seconds for worklet to load
-      const mixerStartTime = Date.now();
-
-      while (!mixerReadyRef.current && Date.now() - mixerStartTime < mixerTimeout) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      if (!mixerReadyRef.current) {
-        console.error('[Broadcaster] ❌ Audio mixer initialization timeout!');
-        throw new Error('Audio processor failed to load within 15 seconds. Please check your connection and try again.');
-      }
-      
-      console.log('[Broadcaster] ✅ AudioMixer ready! Processing enabled.');
-
-      // STEP 5: Wait for processed stream
-      const streamTimeout = 5000; // 5 seconds for stream to be ready
-      const streamStartTime = Date.now();
-      
-      while (!processedAudioStreamRef.current && Date.now() - streamStartTime < streamTimeout) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      if (!processedAudioStreamRef.current) {
-        console.error('[Broadcaster] ❌ Processed audio stream timeout!');
-        throw new Error('Processed audio stream not available. Audio processing may have failed.');
-      }
-      
-      console.log('[Broadcaster] Processed audio stream confirmed');
+      console.log('[Broadcaster] Audio processing initialized for visualization only');
 
       // STEP 6: Create LiveKit tracks for broadcasting
       const actualVideoId = videoStream.getVideoTracks()[0]?.getSettings().deviceId;
       
-      console.log('[Broadcaster] 🎵 Using processed audio stream for LiveKit (with EQ, compression, gain)');
+      console.log('[Broadcaster] 🎙️ Using RAW microphone for LiveKit (industry standard - like Zoom)');
       
       // Create video track with LiveKit
       const videoTracks = await createLocalTracks({
@@ -420,34 +388,38 @@ export function LiveBroadcaster({ eventId }: Props) {
         },
       });
       
-      // Create audio track manually from the processed stream
-      const processedAudioTrack = processedAudioStreamRef.current.getAudioTracks()[0];
+      // CRITICAL FIX: Use RAW microphone stream (bypass AudioContext)
+      // This is the industry standard approach used by Zoom, Google Meet, Facebook Live
+      const rawAudioTrack = audioStream.getAudioTracks()[0];
       
-      if (!processedAudioTrack) {
-        throw new Error('No audio track in processed stream');
+      if (!rawAudioTrack) {
+        throw new Error('No audio track in raw microphone stream');
       }
       
-      console.log('[Broadcaster] 🔊 Processed audio track status:', {
-        id: processedAudioTrack.id,
-        label: processedAudioTrack.label,
-        enabled: processedAudioTrack.enabled,
-        readyState: processedAudioTrack.readyState,
-        muted: processedAudioTrack.muted,
-        settings: processedAudioTrack.getSettings()
+      console.log('[Broadcaster] 🔊 Raw audio track status:', {
+        id: rawAudioTrack.id,
+        label: rawAudioTrack.label,
+        enabled: rawAudioTrack.enabled,
+        readyState: rawAudioTrack.readyState,
+        muted: rawAudioTrack.muted,
+        settings: rawAudioTrack.getSettings()
       });
       
       // Ensure audio track is enabled and live
-      if (!processedAudioTrack.enabled) {
-        console.warn('[Broadcaster] ⚠️ Processed audio disabled, enabling now');
-        processedAudioTrack.enabled = true;
+      if (!rawAudioTrack.enabled) {
+        console.warn('[Broadcaster] ⚠️ Raw audio disabled, enabling now');
+        rawAudioTrack.enabled = true;
       }
       
-      if (processedAudioTrack.readyState !== 'live') {
-        throw new Error(`Processed audio track not live: ${processedAudioTrack.readyState}`);
+      if (rawAudioTrack.readyState !== 'live') {
+        throw new Error(`Raw audio track not live: ${rawAudioTrack.readyState}`);
       }
       
-      // Create LiveKit audio track - simple constructor
-      const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
+      // Set content hint for voice optimization
+      rawAudioTrack.contentHint = 'speech';
+      
+      // Create LiveKit audio track from RAW microphone
+      const livekitAudioTrack = new LocalAudioTrack(rawAudioTrack);
       
       const tracks = [...videoTracks, livekitAudioTrack];
 
