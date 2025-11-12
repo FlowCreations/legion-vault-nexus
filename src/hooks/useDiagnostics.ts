@@ -8,10 +8,13 @@ import { startRouteChangeObserver } from '@/diagnostics/routeChangeObserver';
 
 export const useDiagnostics = () => {
   useEffect(() => {
-    // Only enable when explicitly enabled via debug flag (disabled by default for performance)
+    // Diagnostics disabled by default to prevent performance issues and refresh loops
     const isEnabled = localStorage.getItem('debug:enable') === '1';
     
-    if (!isEnabled) return;
+    if (!isEnabled) {
+      console.log('[Diagnostics] Disabled (set localStorage debug:enable=1 to enable)');
+      return;
+    }
 
     console.log('[Diagnostics] Initializing stability monitoring...');
     

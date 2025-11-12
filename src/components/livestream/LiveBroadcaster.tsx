@@ -40,6 +40,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   const rawAudioAnalyserRef = useRef<AnalyserNode | null>(null);
   const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
   const sharedAudioContextRef = useRef<AudioContext | null>(null);
+  const isUnmountingRef = useRef(false); // Guard against state updates during unmount
 
   // Initialize shared AudioContext once
   useEffect(() => {
@@ -724,6 +725,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       roomRef.current = room;
 
       room.on(RoomEvent.Connected, () => {
+        if (isUnmountingRef.current) return; // Prevent state updates during unmount
         console.log('[Broadcaster] ✅ Connected to room');
         setStatus('live');
       });
@@ -742,19 +744,24 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       room.on(RoomEvent.Disconnected, (reason) => {
         console.log('[Broadcaster] ❌ Disconnected from room:', reason);
-        // Update event status back to scheduled when disconnected
-        supabase
-          .from('livestream_events')
-          .update({ status: 'scheduled' })
-          .eq('id', eventId)
-          .then(({ error }) => {
-            if (error) console.error('[Broadcaster] Error updating status on disconnect:', error);
-          });
-        setStatus('idle');
-        setError('Disconnected from broadcast. Please try reconnecting.');
+        
+        // Only update state if not unmounting
+        if (!isUnmountingRef.current) {
+          // Update event status back to scheduled when disconnected
+          supabase
+            .from('livestream_events')
+            .update({ status: 'scheduled' })
+            .eq('id', eventId)
+            .then(({ error }) => {
+              if (error) console.error('[Broadcaster] Error updating status on disconnect:', error);
+            });
+          setStatus('idle');
+          setError('Disconnected from broadcast. Please try reconnecting.');
+        }
       });
       
       room.on(RoomEvent.MediaDevicesError, (error) => {
+        if (isUnmountingRef.current) return; // Prevent state updates during unmount
         console.error('[Broadcaster] ❌ Media device error:', error);
         setError('Media device error: ' + error.message);
       });
@@ -925,49 +932,59 @@ export function LiveBroadcaster({ eventId }: Props) {
   // Effect 2: Full cleanup only on component unmount
   useEffect(() => {
     console.log('[Broadcaster] Component mounted');
+    isUnmountingRef.current = false; // Reset flag on mount
     
     return () => {
-      console.log('[Broadcaster] Component unmounting, full cleanup');
+      console.log('[Broadcaster] Component unmounting - setting guard flag');
+      isUnmountingRef.current = true; // Set flag FIRST to prevent any state updates
       
-      // Set status to prevent any ongoing operations
-      setStatus('idle');
-      
-      // Disconnect LiveKit room first
-      if (roomRef.current) {
-        console.log('[Broadcaster] ❌ Disconnected from room:', roomRef.current.state);
-        roomRef.current.disconnect();
-        roomRef.current = null;
-      }
-      
-      // Stop all tracks
-      if (videoTrackRef.current) {
-        videoTrackRef.current.stop();
-        videoTrackRef.current = null;
-      }
-      if (audioTrackRef.current) {
-        audioTrackRef.current.stop();
-        audioTrackRef.current = null;
-      }
-      
-      // Clean up streams
-      if (rawMicStream) {
-        rawMicStream.getTracks().forEach(track => track.stop());
-      }
-      if (rawAudioStream) {
-        rawAudioStream.getTracks().forEach(track => track.stop());
-      }
-      
-      // Disconnect audio nodes
-      if (rawAudioAnalyserRef.current) {
-        rawAudioAnalyserRef.current.disconnect();
-        rawAudioAnalyserRef.current = null;
-      }
-      if (sourceNode) {
-        sourceNode.disconnect();
-      }
-      if (audioContext) {
-        audioContext.close();
-      }
+      // Small delay to ensure flag is set before cleanup
+      setTimeout(() => {
+        console.log('[Broadcaster] Starting cleanup sequence');
+        
+        // Disconnect LiveKit room first
+        if (roomRef.current) {
+          console.log('[Broadcaster] ❌ Disconnecting from room');
+          try {
+            roomRef.current.disconnect();
+          } catch (err) {
+            console.error('[Broadcaster] Error disconnecting:', err);
+          }
+          roomRef.current = null;
+        }
+        
+        // Stop all tracks
+        if (videoTrackRef.current) {
+          videoTrackRef.current.stop();
+          videoTrackRef.current = null;
+        }
+        if (audioTrackRef.current) {
+          audioTrackRef.current.stop();
+          audioTrackRef.current = null;
+        }
+        
+        // Clean up streams
+        if (rawMicStream) {
+          rawMicStream.getTracks().forEach(track => track.stop());
+        }
+        if (rawAudioStream) {
+          rawAudioStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Disconnect audio nodes
+        if (rawAudioAnalyserRef.current) {
+          rawAudioAnalyserRef.current.disconnect();
+          rawAudioAnalyserRef.current = null;
+        }
+        if (sourceNode) {
+          sourceNode.disconnect();
+        }
+        if (audioContext && audioContext.state !== 'closed') {
+          audioContext.close();
+        }
+        
+        console.log('[Broadcaster] Cleanup complete');
+      }, 0);
     };
   }, []); // Empty dependencies = only runs on mount/unmount
 
