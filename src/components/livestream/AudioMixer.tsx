@@ -21,7 +21,23 @@ interface AudioMixerProps {
 export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser }: AudioMixerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isInitializedRef = useRef(false);
-  const masterWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
+  
+  // Store native Web Audio nodes for processing
+  const nodesRef = useRef<{
+    highPass: BiquadFilterNode | null;
+    lowShelf: BiquadFilterNode | null;
+    midPeak: BiquadFilterNode | null;
+    highShelf: BiquadFilterNode | null;
+    compressor: DynamicsCompressorNode | null;
+    masterGain: GainNode | null;
+  }>({
+    highPass: null,
+    lowShelf: null,
+    midPeak: null,
+    highShelf: null,
+    compressor: null,
+    masterGain: null
+  });
   
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
@@ -143,7 +159,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     
   }, [lowGain, midGain, highGain]);
 
-  // Effect 1: Initialize Master Bus AudioWorklet (Warm Analog signature)
+  // Effect 1: Initialize Native Web Audio Processing Chain (Simple & Reliable)
   useEffect(() => {
     if (!audioContext || !sourceNode) {
       console.log('[AudioMixer] ⚠️ Missing dependencies:', { 
@@ -159,290 +175,301 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       return;
     }
     
-    // Prevent re-initialization if worklet already exists
-    if (masterWorkletNodeRef.current) {
-      console.log('[AudioMixer] ⚠️ Worklet node already exists, skipping');
-      return;
-    }
-    
     let animationFrameId: number;
-    let masterWorkletNode: AudioWorkletNode | null = null;
+    let highPass: BiquadFilterNode | null = null;
+    let lowShelf: BiquadFilterNode | null = null;
+    let midPeak: BiquadFilterNode | null = null;
+    let highShelf: BiquadFilterNode | null = null;
+    let compressor: DynamicsCompressorNode | null = null;
+    let masterGain: GainNode | null = null;
     let destination: MediaStreamAudioDestinationNode | null = null;
     let analyser: AnalyserNode | null = null;
     let leftAnalyser: AnalyserNode | null = null;
     let rightAnalyser: AnalyserNode | null = null;
     let splitter: ChannelSplitterNode | null = null;
 
-    (async () => {
-      try {
-        isInitializedRef.current = true;
-        
-        console.log('[AudioMixer] 🔧 Loading Master Bus Worklet (Warm Analog)...');
-        console.log('[AudioMixer] Context state:', audioContext.state);
-        console.log('[AudioMixer] Source node channels:', sourceNode.channelCount);
+    try {
+      isInitializedRef.current = true;
+      
+      console.log('[AudioMixer] 🔧 Initializing Native Web Audio Processing Chain...');
+      console.log('[AudioMixer] Context state:', audioContext.state);
+      console.log('[AudioMixer] Source node channels:', sourceNode.channelCount);
 
-        // Ensure AudioContext is running
-        if (audioContext.state === 'suspended') {
-          console.log('[AudioMixer] Resuming AudioContext...');
-          await audioContext.resume();
-        }
-
-        if (audioContext.state === 'closed') {
-          console.error('[AudioMixer] ❌ AudioContext is closed!');
-          throw new Error('AudioContext is closed. Cannot initialize mixer.');
-        }
-
-        // Load the Master Bus AudioWorklet with comprehensive error handling
-        try {
-          console.log('[AudioMixer] Attempting to load worklet from:', '/audio/master-processor.js');
-          console.log('[AudioMixer] Base URL:', window.location.origin);
-          console.log('[AudioMixer] Full path:', new URL('/audio/master-processor.js', window.location.origin).href);
-          
-          await audioContext.audioWorklet.addModule('/audio/master-processor.js');
-          console.log('[AudioMixer] ✅ Worklet module loaded successfully');
-        } catch (moduleError: any) {
-          console.error('[AudioMixer] ❌ Failed to load worklet module');
-          console.error('[AudioMixer] Error name:', moduleError.name);
-          console.error('[AudioMixer] Error message:', moduleError.message);
-          console.error('[AudioMixer] Error stack:', moduleError.stack);
-          
-          // Try to fetch the file manually to debug
-          try {
-            const response = await fetch('/audio/master-processor.js');
-            console.log('[AudioMixer] Manual fetch status:', response.status);
-            if (response.ok) {
-              const text = await response.text();
-              console.log('[AudioMixer] File exists, length:', text.length, 'bytes');
-            }
-          } catch (fetchError) {
-            console.error('[AudioMixer] File cannot be fetched:', fetchError);
-          }
-          
-          throw new Error(`Failed to load audio processor: ${moduleError.message}`);
-        }
-
-        // Create the master worklet node
-        masterWorkletNode = new AudioWorkletNode(audioContext, 'master-processor', {
-          numberOfInputs: 1,
-          numberOfOutputs: 1,
-          outputChannelCount: [2], // Stereo output
-          processorOptions: {
-            sampleRate: audioContext.sampleRate
-          }
-        });
-        
-        // Store in ref for guard checks
-        masterWorkletNodeRef.current = masterWorkletNode;
-
-        console.log('[AudioMixer] ✅ Master worklet node created');
-
-        // Create destination for processed stream
-        destination = audioContext.createMediaStreamDestination();
-        console.log('[AudioMixer] MediaStreamDestination created:', destination.stream.id);
-
-        // Create analysers for metering (tap the output)
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
-        analyser.smoothingTimeConstant = 0.1;
-        analyser.minDecibels = -90;
-        analyser.maxDecibels = 0;
-
-        // Stereo L/R analysers for true stereo metering
-        splitter = audioContext.createChannelSplitter(2);
-        
-        leftAnalyser = audioContext.createAnalyser();
-        leftAnalyser.fftSize = 2048;
-        leftAnalyser.smoothingTimeConstant = 0;
-        leftAnalyser.minDecibels = -90;
-        leftAnalyser.maxDecibels = 0;
-        
-        rightAnalyser = audioContext.createAnalyser();
-        rightAnalyser.fftSize = 2048;
-        rightAnalyser.smoothingTimeConstant = 0;
-        rightAnalyser.minDecibels = -90;
-        rightAnalyser.maxDecibels = 0;
-
-        // Connect the signal chain:
-        // sourceNode → masterWorkletNode → [destination, analyser, splitter → L/R analysers]
-        console.log('[AudioMixer] 🔌 Connecting source to Master Bus worklet...');
-        sourceNode.connect(masterWorkletNode);
-        masterWorkletNode.connect(destination);
-        masterWorkletNode.connect(analyser);
-        masterWorkletNode.connect(splitter);
-        
-        splitter.connect(leftAnalyser, 0);
-        splitter.connect(rightAnalyser, 1);
-
-        console.log('[AudioMixer] 🎛️ Signal chain connected:', {
-          source: 'Microphone/Band',
-          processing: 'Master Worklet (Warm Analog)',
-          outputs: ['LiveKit Stream', 'Level Meters', 'Diagnostics']
-        });
-
-        // CRITICAL FIX #2: Verify processed stream has active audio tracks
-        const processedTracks = destination.stream.getAudioTracks();
-        console.log('[AudioMixer] 🔍 Processed stream has', processedTracks.length, 'audio tracks');
-        
-        if (processedTracks.length === 0) {
-          console.error('[AudioMixer] ❌ CRITICAL: Destination stream has no audio tracks!');
-          throw new Error('Audio processing failed - no output tracks');
-        }
-        
-        processedTracks.forEach((track, i) => {
-          console.log(`[AudioMixer] 🔍 Processed track ${i}:`, {
-            enabled: track.enabled,
-            readyState: track.readyState,
-            muted: track.muted,
-            label: track.label
-          });
-          
-          if (track.readyState !== 'live') {
-            console.error(`[AudioMixer] ❌ Track ${i} is not live! readyState:`, track.readyState);
-          }
-          
-          if (!track.enabled) {
-            console.warn(`[AudioMixer] ⚠️ Track ${i} is disabled, enabling it`);
-            track.enabled = true;
-          }
-        });
-        
-        // Notify parent components
-        if (onProcessedStream) {
-          onProcessedStream(destination.stream);
-          console.log('[AudioMixer] ✅ Processed stream sent to LiveKit with', processedTracks.length, 'active tracks');
-        }
-
-        if (onProcessedAnalyser) {
-          onProcessedAnalyser(analyser);
-        }
-
-        if (onRawInputAnalyser) {
-          onRawInputAnalyser(leftAnalyser);
-        }
-
-        if (onReady) {
-          onReady();
-        }
-
-        console.log('[AudioMixer] ✅ Master Bus initialized successfully');
-
-        // Start level metering animation
-        const bufferLeft = new Float32Array(leftAnalyser.fftSize);
-        const bufferRight = new Float32Array(rightAnalyser.fftSize);
-        let smoothedLeft = 0;
-        let smoothedRight = 0;
-        const smoothingFactor = 0.3;
-        const noiseFloor = 2;
-
-        const updateMeters = () => {
-          leftAnalyser.getFloatTimeDomainData(bufferLeft);
-          rightAnalyser.getFloatTimeDomainData(bufferRight);
-
-          // Calculate RMS for each channel
-          let sumL = 0, sumR = 0;
-          for (let i = 0; i < bufferLeft.length; i++) {
-            sumL += bufferLeft[i] * bufferLeft[i];
-            sumR += bufferRight[i] * bufferRight[i];
-          }
-          const rmsL = Math.sqrt(sumL / bufferLeft.length);
-          const rmsR = Math.sqrt(sumR / bufferRight.length);
-
-          const dbL = 20 * Math.log10(rmsL || 0.0001);
-          const dbR = 20 * Math.log10(rmsR || 0.0001);
-
-          const percentLeft = Math.max(0, Math.min(100, ((dbL + 50) / 44) * 100));
-          const percentRight = Math.max(0, Math.min(100, ((dbR + 50) / 44) * 100));
-
-          smoothedLeft = smoothedLeft * (1 - smoothingFactor) + percentLeft * smoothingFactor;
-          smoothedRight = smoothedRight * (1 - smoothingFactor) + percentRight * smoothingFactor;
-
-          setLeftLevel(smoothedLeft > noiseFloor ? smoothedLeft : 0);
-          setRightLevel(smoothedRight > noiseFloor ? smoothedRight : 0);
-
-          if (onAudioLevel) {
-            onAudioLevel(
-              smoothedLeft > noiseFloor ? smoothedLeft : 0,
-              smoothedRight > noiseFloor ? smoothedRight : 0
-            );
-          }
-
-          animationFrameId = requestAnimationFrame(updateMeters);
-        };
-
-        updateMeters();
-
-      } catch (error: any) {
-        console.error('[AudioMixer] ❌ Fatal setup error:', error);
-        console.error('[AudioMixer] Error details:', {
-          name: error.name,
-          message: error.message,
-          contextState: audioContext?.state,
-          stack: error.stack
-        });
-        
-        // Reset flags on error so it can be retried
-        isInitializedRef.current = false;
-        masterWorkletNodeRef.current = null;
-        
-        // DO NOT call onReady() when there's an error
-        // This will prevent the broadcast from continuing with broken audio
-        throw new Error(`Audio mixer failed to initialize: ${error.message}`);
+      // Ensure AudioContext is running
+      if (audioContext.state === 'suspended') {
+        console.log('[AudioMixer] Resuming AudioContext...');
+        audioContext.resume();
       }
-    })().catch(error => {
-      console.error('[AudioMixer] ❌ Unhandled error in audio setup:', error);
+
+      // Create high-pass filter (remove rumble below 80Hz)
+      highPass = audioContext.createBiquadFilter();
+      highPass.type = 'highpass';
+      highPass.frequency.value = 80;
+      highPass.Q.value = 0.7;
+      console.log('[AudioMixer] ✅ High-pass filter created (80Hz)');
+
+      // Create EQ - Low shelf (warmth at 200Hz)
+      lowShelf = audioContext.createBiquadFilter();
+      lowShelf.type = 'lowshelf';
+      lowShelf.frequency.value = 200;
+      lowShelf.gain.value = 0; // Controlled by UI
+      console.log('[AudioMixer] ✅ Low shelf EQ created (200Hz)');
+
+      // Create EQ - Mid peak (presence at 3kHz)
+      midPeak = audioContext.createBiquadFilter();
+      midPeak.type = 'peaking';
+      midPeak.frequency.value = 3000;
+      midPeak.Q.value = 1.0;
+      midPeak.gain.value = 0; // Controlled by UI
+      console.log('[AudioMixer] ✅ Mid peak EQ created (3kHz)');
+
+      // Create EQ - High shelf (air at 8kHz)
+      highShelf = audioContext.createBiquadFilter();
+      highShelf.type = 'highshelf';
+      highShelf.frequency.value = 8000;
+      highShelf.gain.value = 0; // Controlled by UI
+      console.log('[AudioMixer] ✅ High shelf EQ created (8kHz)');
+
+      // Create compressor (smooth out dynamics)
+      compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -24;
+      compressor.knee.value = 30;
+      compressor.ratio.value = 4;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.25;
+      console.log('[AudioMixer] ✅ Compressor created');
+
+      // Create master gain
+      masterGain = audioContext.createGain();
+      masterGain.gain.value = 1.0;
+      console.log('[AudioMixer] ✅ Master gain created');
+
+      // Store nodes in ref for UI control
+      nodesRef.current = {
+        highPass,
+        lowShelf,
+        midPeak,
+        highShelf,
+        compressor,
+        masterGain
+      };
+
+      // Create destination for processed stream
+      destination = audioContext.createMediaStreamDestination();
+      console.log('[AudioMixer] ✅ MediaStreamDestination created:', destination.stream.id);
+
+      // Create analysers for metering
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.1;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = 0;
+
+      // Stereo L/R analysers for true stereo metering
+      splitter = audioContext.createChannelSplitter(2);
+      
+      leftAnalyser = audioContext.createAnalyser();
+      leftAnalyser.fftSize = 2048;
+      leftAnalyser.smoothingTimeConstant = 0;
+      leftAnalyser.minDecibels = -90;
+      leftAnalyser.maxDecibels = 0;
+      
+      rightAnalyser = audioContext.createAnalyser();
+      rightAnalyser.fftSize = 2048;
+      rightAnalyser.smoothingTimeConstant = 0;
+      rightAnalyser.minDecibels = -90;
+      rightAnalyser.maxDecibels = 0;
+
+      // Connect the signal chain:
+      // source → highpass → lowshelf → midpeak → highshelf → compressor → gain → [destination, analysers]
+      console.log('[AudioMixer] 🔌 Connecting processing chain...');
+      sourceNode.connect(highPass);
+      highPass.connect(lowShelf);
+      lowShelf.connect(midPeak);
+      midPeak.connect(highShelf);
+      highShelf.connect(compressor);
+      compressor.connect(masterGain);
+      masterGain.connect(destination);
+      masterGain.connect(analyser);
+      masterGain.connect(splitter);
+      
+      splitter.connect(leftAnalyser, 0);
+      splitter.connect(rightAnalyser, 1);
+
+      console.log('[AudioMixer] 🎛️ Signal chain connected:', {
+        source: 'Microphone',
+        chain: 'HPF → Low EQ → Mid EQ → High EQ → Compressor → Master Gain',
+        outputs: ['LiveKit Stream', 'Level Meters']
+      });
+
+      // Verify processed stream has active audio tracks
+      const processedTracks = destination.stream.getAudioTracks();
+      console.log('[AudioMixer] 🔍 Processed stream has', processedTracks.length, 'audio tracks');
+      
+      if (processedTracks.length === 0) {
+        console.error('[AudioMixer] ❌ CRITICAL: Destination stream has no audio tracks!');
+        throw new Error('Audio processing failed - no output tracks');
+      }
+      
+      processedTracks.forEach((track, i) => {
+        console.log(`[AudioMixer] 🔍 Processed track ${i}:`, {
+          enabled: track.enabled,
+          readyState: track.readyState,
+          muted: track.muted,
+          label: track.label
+        });
+        
+        if (!track.enabled) {
+          console.warn(`[AudioMixer] ⚠️ Track ${i} is disabled, enabling it`);
+          track.enabled = true;
+        }
+      });
+      
+      // Notify parent components
+      if (onProcessedStream) {
+        onProcessedStream(destination.stream);
+        console.log('[AudioMixer] ✅ Processed stream sent to LiveKit with', processedTracks.length, 'active tracks');
+      }
+
+      if (onProcessedAnalyser) {
+        onProcessedAnalyser(analyser);
+      }
+
+      if (onRawInputAnalyser) {
+        onRawInputAnalyser(leftAnalyser);
+      }
+
+      if (onReady) {
+        onReady();
+      }
+
+      console.log('[AudioMixer] ✅ Native Web Audio processing initialized successfully');
+
+      // Start level metering animation
+      const bufferLeft = new Float32Array(leftAnalyser.fftSize);
+      const bufferRight = new Float32Array(rightAnalyser.fftSize);
+      let smoothedLeft = 0;
+      let smoothedRight = 0;
+      const smoothingFactor = 0.3;
+      const noiseFloor = 2;
+
+      const updateMeters = () => {
+        leftAnalyser.getFloatTimeDomainData(bufferLeft);
+        rightAnalyser.getFloatTimeDomainData(bufferRight);
+
+        // Calculate RMS for each channel
+        let sumL = 0, sumR = 0;
+        for (let i = 0; i < bufferLeft.length; i++) {
+          sumL += bufferLeft[i] * bufferLeft[i];
+          sumR += bufferRight[i] * bufferRight[i];
+        }
+        const rmsL = Math.sqrt(sumL / bufferLeft.length);
+        const rmsR = Math.sqrt(sumR / bufferRight.length);
+
+        const dbL = 20 * Math.log10(rmsL || 0.0001);
+        const dbR = 20 * Math.log10(rmsR || 0.0001);
+
+        const percentLeft = Math.max(0, Math.min(100, ((dbL + 50) / 44) * 100));
+        const percentRight = Math.max(0, Math.min(100, ((dbR + 50) / 44) * 100));
+
+        smoothedLeft = smoothedLeft * (1 - smoothingFactor) + percentLeft * smoothingFactor;
+        smoothedRight = smoothedRight * (1 - smoothingFactor) + percentRight * smoothingFactor;
+
+        setLeftLevel(smoothedLeft > noiseFloor ? smoothedLeft : 0);
+        setRightLevel(smoothedRight > noiseFloor ? smoothedRight : 0);
+
+        if (onAudioLevel) {
+          onAudioLevel(
+            smoothedLeft > noiseFloor ? smoothedLeft : 0,
+            smoothedRight > noiseFloor ? smoothedRight : 0
+          );
+        }
+
+        animationFrameId = requestAnimationFrame(updateMeters);
+      };
+
+      updateMeters();
+
+    } catch (error: any) {
+      console.error('[AudioMixer] ❌ Fatal setup error:', error);
+      console.error('[AudioMixer] Error details:', {
+        name: error.name,
+        message: error.message,
+        contextState: audioContext?.state,
+        stack: error.stack
+      });
+      
+      // Reset flags on error so it can be retried
       isInitializedRef.current = false;
-      masterWorkletNodeRef.current = null;
-      // The error will propagate and prevent onReady from being called
-    });
+      
+      throw new Error(`Audio mixer failed to initialize: ${error.message}`);
+    }
 
     // Cleanup
     return () => {
-      console.log('[AudioMixer] 🧹 Cleaning up Master Bus...');
+      console.log('[AudioMixer] 🧹 Cleaning up audio processing...');
       
-      // Reset initialization flags
+      // Reset initialization flag
       isInitializedRef.current = false;
-      masterWorkletNodeRef.current = null;
+      
+      // Clear nodes ref
+      nodesRef.current = {
+        highPass: null,
+        lowShelf: null,
+        midPeak: null,
+        highShelf: null,
+        compressor: null,
+        masterGain: null
+      };
       
       try {
         cancelAnimationFrame(animationFrameId);
-        if (masterWorkletNode) {
-          masterWorkletNode.disconnect();
-        }
-        if (destination) {
-          destination.disconnect();
-        }
-        if (analyser) {
-          analyser.disconnect();
-        }
-        if (leftAnalyser) {
-          leftAnalyser.disconnect();
-        }
-        if (rightAnalyser) {
-          rightAnalyser.disconnect();
-        }
-        if (splitter) {
-          splitter.disconnect();
-        }
-        console.log('[AudioMixer] Master Bus worklet cleaned up');
+        if (highPass) highPass.disconnect();
+        if (lowShelf) lowShelf.disconnect();
+        if (midPeak) midPeak.disconnect();
+        if (highShelf) highShelf.disconnect();
+        if (compressor) compressor.disconnect();
+        if (masterGain) masterGain.disconnect();
+        if (destination) destination.disconnect();
+        if (analyser) analyser.disconnect();
+        if (leftAnalyser) leftAnalyser.disconnect();
+        if (rightAnalyser) rightAnalyser.disconnect();
+        if (splitter) splitter.disconnect();
+        console.log('[AudioMixer] Audio processing cleaned up');
       } catch (e) {
         console.error('[AudioMixer] Cleanup error:', e);
       }
     };
   }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser]);
 
-  // Effect 2: Update worklet parameters in real-time (runs when controls change)
-  // Parameters are controlled directly via AudioParams - zero latency!
+  // Effect 2: Update native Web Audio node parameters when UI controls change
   useEffect(() => {
-    // Worklet parameters are handled automatically via AudioParams
-    // This effect is intentionally minimal - worklet handles all DSP updates
-    console.log('[AudioMixer] UI controls updated (worklet handles parameters automatically):', { 
+    if (nodesRef.current.lowShelf) {
+      nodesRef.current.lowShelf.gain.value = lowGain;
+    }
+    if (nodesRef.current.midPeak) {
+      nodesRef.current.midPeak.gain.value = midGain;
+    }
+    if (nodesRef.current.highShelf) {
+      nodesRef.current.highShelf.gain.value = highGain;
+    }
+    if (nodesRef.current.compressor) {
+      nodesRef.current.compressor.threshold.value = threshold;
+      nodesRef.current.compressor.ratio.value = ratio;
+      nodesRef.current.compressor.attack.value = attack;
+      nodesRef.current.compressor.release.value = release;
+      nodesRef.current.compressor.knee.value = knee;
+    }
+    if (nodesRef.current.masterGain) {
+      nodesRef.current.masterGain.gain.value = masterGain;
+    }
+    
+    console.log('[AudioMixer] Native node parameters updated:', { 
       lowGain, midGain, highGain, 
       threshold, ratio, attack, release, knee,
-      limiterThreshold, 
-      masterGain, 
-      reverbMix 
+      masterGain 
     });
-  }, [lowGain, midGain, highGain, threshold, ratio, attack, release, knee, limiterThreshold, masterGain, reverbMix]);
+  }, [lowGain, midGain, highGain, threshold, ratio, attack, release, knee, masterGain]);
 
   if (!audioContext || !sourceNode) {
     return (
