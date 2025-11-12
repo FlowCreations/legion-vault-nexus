@@ -317,120 +317,53 @@ export function LiveBroadcaster({ eventId }: Props) {
       
       // STEP 2: Request SEPARATE streams for video and audio
       // This is critical - don't reuse the same stream for both preview and audio processing
-      console.log('[Broadcaster] Requesting video stream...');
-      const videoStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          deviceId: { exact: cameraId },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      });
+      // CRITICAL FIX: Use LiveKit's native audio track creation
+      // This ensures LiveKit properly initializes the WebRTC audio pipeline
+      console.log('[Broadcaster] 🎙️ Creating LiveKit tracks (audio + video)...');
       
-      console.log('[Broadcaster] Requesting audio stream...');
-      const audioStream = await navigator.mediaDevices.getUserMedia({
+      const tracks = await createLocalTracks({
         audio: {
           deviceId: { exact: micId },
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 48000,
-          channelCount: 2
+          echoCancellation: true,  // Enable for better quality
+          noiseSuppression: true,  // Enable for better quality
+          autoGainControl: true,   // Enable for better quality
+        },
+        video: {
+          deviceId: { exact: cameraId },
+          resolution: {
+            width: 1920,
+            height: 1080
+          }
         }
       });
 
-      console.log('[Broadcaster] ✅ Streams acquired!', {
-        video: videoStream.getVideoTracks().map(t => ({
-          label: t.label,
-          enabled: t.enabled,
-          readyState: t.readyState,
-          muted: t.muted
-        })),
-        audio: audioStream.getAudioTracks().map(t => ({
-          label: t.label,
-          enabled: t.enabled,
-          readyState: t.readyState,
-          muted: t.muted,
-          settings: t.getSettings()
-        }))
-      });
-
-      // STEP 3: Initialize audio processing with SEPARATE audio stream
-      setStatus('initializing-audio');
-      console.log('[Broadcaster] Initializing audio processing with dedicated audio stream...');
-      
-      // Store raw mic stream for visualization
-      setRawMicStream(audioStream);
-      
-      // Setup audio processing - AudioMixer runs for visualization/meters ONLY
-      // NOTE: AudioMixer is NOT used for LiveKit audio - we publish raw mic instead
-      await setupAudioProcessing(audioStream);
-      console.log('[Broadcaster] Audio processing initialized for visualization only');
-
-      // STEP 6: Create LiveKit tracks for broadcasting
-      const actualVideoId = videoStream.getVideoTracks()[0]?.getSettings().deviceId;
-      
-      console.log('[Broadcaster] 🎙️ Using RAW microphone for LiveKit (industry standard - like Zoom)');
-      
-      // Create video track with LiveKit
-      const videoTracks = await createLocalTracks({
-        audio: false,
-        video: actualVideoId ? { 
-          deviceId: { exact: actualVideoId },
-          resolution: {
-            width: 1920,
-            height: 1080
-          }
-        } : {
-          resolution: {
-            width: 1920,
-            height: 1080
-          }
-        },
-      });
-      
-      // CRITICAL FIX: Use RAW microphone stream (bypass AudioContext)
-      // This is the industry standard approach used by Zoom, Google Meet, Facebook Live
-      const rawAudioTrack = audioStream.getAudioTracks()[0];
-      
-      if (!rawAudioTrack) {
-        throw new Error('No audio track in raw microphone stream');
-      }
-      
-      console.log('[Broadcaster] 🔊 Raw audio track status:', {
-        id: rawAudioTrack.id,
-        label: rawAudioTrack.label,
-        enabled: rawAudioTrack.enabled,
-        readyState: rawAudioTrack.readyState,
-        muted: rawAudioTrack.muted,
-        settings: rawAudioTrack.getSettings()
-      });
-      
-      // Ensure audio track is enabled and live
-      if (!rawAudioTrack.enabled) {
-        console.warn('[Broadcaster] ⚠️ Raw audio disabled, enabling now');
-        rawAudioTrack.enabled = true;
-      }
-      
-      if (rawAudioTrack.readyState !== 'live') {
-        throw new Error(`Raw audio track not live: ${rawAudioTrack.readyState}`);
-      }
-      
-      // Set content hint for voice optimization
-      rawAudioTrack.contentHint = 'speech';
-      
-      // Create LiveKit audio track from RAW microphone
-      const livekitAudioTrack = new LocalAudioTrack(rawAudioTrack);
-      
-      const tracks = [...videoTracks, livekitAudioTrack];
-
-      console.log('[Broadcaster] Created LiveKit tracks:', {
+      console.log('[Broadcaster] ✅ LiveKit tracks created:', {
         total: tracks.length,
         video: tracks.filter(t => t.kind === Track.Kind.Video).length,
         audio: tracks.filter(t => t.kind === Track.Kind.Audio).length
       });
 
+      // STEP 3: Setup audio visualization from LiveKit track
+      const audioTrack = tracks.find(t => t.kind === Track.Kind.Audio) as LocalAudioTrack;
+      
+      if (audioTrack?.mediaStreamTrack) {
+        setStatus('initializing-audio');
+        console.log('[Broadcaster] Initializing audio visualization...');
+        
+        // Create a MediaStream from the LiveKit track's underlying MediaStreamTrack
+        const audioStreamForVisualization = new MediaStream([audioTrack.mediaStreamTrack]);
+        setRawMicStream(audioStreamForVisualization);
+        
+        // Setup audio processing for visualization/meters ONLY
+        await setupAudioProcessing(audioStreamForVisualization);
+        console.log('[Broadcaster] Audio visualization initialized');
+      }
+
+      console.log('[Broadcaster] ✅ LiveKit tracks created successfully');
+
+      // Attach tracks to refs and UI
       const videoTrack = tracks.find(t => t.kind === Track.Kind.Video);
-      const audioTrack = tracks.find(t => t.kind === Track.Kind.Audio);
+      const livekitAudioTrack = tracks.find(t => t.kind === Track.Kind.Audio) as LocalAudioTrack;
 
       if (videoTrack && videoRef.current) {
         videoTrack.attach(videoRef.current);
@@ -438,16 +371,16 @@ export function LiveBroadcaster({ eventId }: Props) {
         console.log('[Broadcaster] Video track attached');
       }
       
-      if (audioTrack) {
-        audioTrackRef.current = audioTrack;
-        console.log('[Broadcaster] Audio track ready for broadcast', {
-          kind: audioTrack.kind,
-          source: audioTrack.source,
-          mediaStreamTrack: audioTrack.mediaStreamTrack?.id,
-          enabled: audioTrack.mediaStreamTrack?.enabled
+      if (livekitAudioTrack) {
+        audioTrackRef.current = livekitAudioTrack;
+        console.log('[Broadcaster] ✅ Audio track ready for broadcast', {
+          kind: livekitAudioTrack.kind,
+          source: livekitAudioTrack.source,
+          mediaStreamTrack: livekitAudioTrack.mediaStreamTrack?.id,
+          enabled: livekitAudioTrack.mediaStreamTrack?.enabled
         });
       } else {
-        console.error('[Broadcaster] No audio track found!');
+        console.error('[Broadcaster] ❌ No audio track found!');
         setError('Failed to create audio track');
       }
 
