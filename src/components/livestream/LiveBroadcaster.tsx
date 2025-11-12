@@ -446,16 +446,8 @@ export function LiveBroadcaster({ eventId }: Props) {
         throw new Error(`Processed audio track not live: ${processedAudioTrack.readyState}`);
       }
       
-      // Create LiveKit audio track with explicit audio constraints
-      const livekitAudioTrack = new LocalAudioTrack(
-        processedAudioTrack,
-        undefined, // no constraint overrides
-        undefined, // no audio context (we're already processing)
-        {
-          // Explicitly enable audio processing in LiveKit
-          name: 'broadcaster-audio',
-        }
-      );
+      // Create LiveKit audio track - simple constructor
+      const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
       
       const tracks = [...videoTracks, livekitAudioTrack];
 
@@ -883,8 +875,7 @@ export function LiveBroadcaster({ eventId }: Props) {
         // Publish with explicit options
         await room.localParticipant.publishTrack(audioTrackRef.current, {
           name: 'broadcaster-audio',
-          source: Track.Source.Microphone,
-          stream: processedAudioStreamRef.current
+          source: Track.Source.Microphone
         });
         console.log('[Broadcaster] ✅ Audio track published');
         
