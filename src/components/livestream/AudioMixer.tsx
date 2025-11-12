@@ -319,8 +319,22 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         destination = audioContext.createMediaStreamDestination();
         console.log('[AudioMixer] MediaStreamDestination created, stream:', destination.stream.id);
 
-        // Connect the chain
+        // Connect the chain - CRITICAL: Source must connect to first processing node
+        console.log('[AudioMixer] 🔌 Connecting source to processing chain...');
+        console.log('[AudioMixer] Source node details:', {
+          numberOfInputs: sourceNode.numberOfInputs,
+          numberOfOutputs: sourceNode.numberOfOutputs,
+          channelCount: sourceNode.channelCount,
+          mediaStream: sourceNode.mediaStream?.id,
+          audioTracks: sourceNode.mediaStream?.getAudioTracks().length,
+          firstTrack: sourceNode.mediaStream?.getAudioTracks()[0]?.label,
+          trackEnabled: sourceNode.mediaStream?.getAudioTracks()[0]?.enabled,
+          trackReadyState: sourceNode.mediaStream?.getAudioTracks()[0]?.readyState
+        });
+        
         sourceNode.connect(lowShelf);
+        console.log('[AudioMixer] ✅ Source → Low Shelf connected');
+        
         lowShelf.connect(midPeak);
         midPeak.connect(highShelf);
         
