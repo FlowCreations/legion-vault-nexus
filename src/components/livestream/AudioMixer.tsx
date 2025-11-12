@@ -161,45 +161,51 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
   // Effect 1: Initialize Native Web Audio Processing Chain (Simple & Reliable)
   useEffect(() => {
-    if (!audioContext || !sourceNode) {
-      console.log('[AudioMixer] ⚠️ Missing dependencies:', { 
-        hasContext: !!audioContext, 
-        hasSource: !!sourceNode 
-      });
-      return;
-    }
+    (async () => {
+      if (!audioContext || !sourceNode) {
+        console.log('[AudioMixer] ⚠️ Missing dependencies:', { 
+          hasContext: !!audioContext, 
+          hasSource: !!sourceNode 
+        });
+        return;
+      }
 
-    // Prevent double initialization
-    if (isInitializedRef.current) {
-      console.log('[AudioMixer] ⚠️ Already initialized, skipping duplicate init');
-      return;
-    }
+      // Prevent double initialization
+      if (isInitializedRef.current) {
+        console.log('[AudioMixer] ⚠️ Already initialized, skipping duplicate init');
+        return;
+      }
     
-    let animationFrameId: number;
-    let highPass: BiquadFilterNode | null = null;
-    let lowShelf: BiquadFilterNode | null = null;
-    let midPeak: BiquadFilterNode | null = null;
-    let highShelf: BiquadFilterNode | null = null;
-    let compressor: DynamicsCompressorNode | null = null;
-    let masterGain: GainNode | null = null;
-    let destination: MediaStreamAudioDestinationNode | null = null;
-    let analyser: AnalyserNode | null = null;
-    let leftAnalyser: AnalyserNode | null = null;
-    let rightAnalyser: AnalyserNode | null = null;
-    let splitter: ChannelSplitterNode | null = null;
+      let animationFrameId: number;
+      let highPass: BiquadFilterNode | null = null;
+      let lowShelf: BiquadFilterNode | null = null;
+      let midPeak: BiquadFilterNode | null = null;
+      let highShelf: BiquadFilterNode | null = null;
+      let compressor: DynamicsCompressorNode | null = null;
+      let masterGain: GainNode | null = null;
+      let destination: MediaStreamAudioDestinationNode | null = null;
+      let analyser: AnalyserNode | null = null;
+      let leftAnalyser: AnalyserNode | null = null;
+      let rightAnalyser: AnalyserNode | null = null;
+      let splitter: ChannelSplitterNode | null = null;
 
-    try {
-      isInitializedRef.current = true;
+      try {
+        isInitializedRef.current = true;
       
       console.log('[AudioMixer] 🔧 Initializing Native Web Audio Processing Chain...');
       console.log('[AudioMixer] Context state:', audioContext.state);
       console.log('[AudioMixer] Source node channels:', sourceNode.channelCount);
 
-      // Ensure AudioContext is running
+      // CRITICAL: Ensure AudioContext is running before creating nodes
       if (audioContext.state === 'suspended') {
-        console.log('[AudioMixer] Resuming AudioContext...');
-        audioContext.resume();
+        console.log('[AudioMixer] Resuming suspended AudioContext...');
+        await audioContext.resume();
+      } else if (audioContext.state === 'closed') {
+        console.error('[AudioMixer] ❌ AudioContext is closed! Cannot process audio.');
+        throw new Error('AudioContext is closed - cannot initialize audio processing');
       }
+      
+      console.log('[AudioMixer] Context state after resume:', audioContext.state);
 
       // Create high-pass filter (remove rumble below 80Hz)
       highPass = audioContext.createBiquadFilter();
@@ -388,22 +394,23 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         animationFrameId = requestAnimationFrame(updateMeters);
       };
 
-      updateMeters();
+        updateMeters();
 
-    } catch (error: any) {
-      console.error('[AudioMixer] ❌ Fatal setup error:', error);
-      console.error('[AudioMixer] Error details:', {
-        name: error.name,
-        message: error.message,
-        contextState: audioContext?.state,
-        stack: error.stack
-      });
-      
-      // Reset flags on error so it can be retried
-      isInitializedRef.current = false;
-      
-      throw new Error(`Audio mixer failed to initialize: ${error.message}`);
-    }
+      } catch (error: any) {
+        console.error('[AudioMixer] ❌ Fatal setup error:', error);
+        console.error('[AudioMixer] Error details:', {
+          name: error.name,
+          message: error.message,
+          contextState: audioContext?.state,
+          stack: error.stack
+        });
+        
+        // Reset flags on error so it can be retried
+        isInitializedRef.current = false;
+        
+        throw new Error(`Audio mixer failed to initialize: ${error.message}`);
+      }
+    })();
 
     // Cleanup
     return () => {
@@ -421,24 +428,6 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         compressor: null,
         masterGain: null
       };
-      
-      try {
-        cancelAnimationFrame(animationFrameId);
-        if (highPass) highPass.disconnect();
-        if (lowShelf) lowShelf.disconnect();
-        if (midPeak) midPeak.disconnect();
-        if (highShelf) highShelf.disconnect();
-        if (compressor) compressor.disconnect();
-        if (masterGain) masterGain.disconnect();
-        if (destination) destination.disconnect();
-        if (analyser) analyser.disconnect();
-        if (leftAnalyser) leftAnalyser.disconnect();
-        if (rightAnalyser) rightAnalyser.disconnect();
-        if (splitter) splitter.disconnect();
-        console.log('[AudioMixer] Audio processing cleaned up');
-      } catch (e) {
-        console.error('[AudioMixer] Cleanup error:', e);
-      }
     };
   }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser]);
 
