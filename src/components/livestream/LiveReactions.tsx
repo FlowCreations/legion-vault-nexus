@@ -15,6 +15,8 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
   const [sessionId] = useState(() => crypto.randomUUID());
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
   const floatingEmojisRef = useRef<HTMLDivElement>(null);
+  const [recentReactions, setRecentReactions] = useState<Array<{ type: string; timestamp: number }>>([]);
+  const recentReactionsTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     return () => {
@@ -31,26 +33,63 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
     return Math.floor(diff / 1000); // Convert to seconds
   };
 
-  const createFloatingEmoji = (emoji: string) => {
+  const createFloatingEmoji = (emoji: string, isBurst = false) => {
     if (!floatingEmojisRef.current) return;
 
-    const emojiEl = document.createElement('div');
-    emojiEl.className = 'floating-emoji';
-    emojiEl.textContent = emoji;
-    emojiEl.style.left = `${Math.random() * 80 + 10}%`;
-    emojiEl.style.animationDuration = `${Math.random() * 1 + 2}s`;
+    const count = isBurst ? Math.floor(Math.random() * 5) + 8 : 1; // 8-12 emojis for burst, 1 for normal
     
-    floatingEmojisRef.current.appendChild(emojiEl);
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const emojiEl = document.createElement('div');
+        emojiEl.className = isBurst ? 'floating-emoji burst-emoji' : 'floating-emoji';
+        emojiEl.textContent = emoji;
+        emojiEl.style.left = `${Math.random() * 80 + 10}%`;
+        emojiEl.style.animationDuration = `${Math.random() * 1 + 2}s`;
+        
+        if (isBurst) {
+          // Add slight horizontal offset for burst effect
+          emojiEl.style.setProperty('--burst-x', `${(Math.random() - 0.5) * 100}px`);
+        }
+        
+        floatingEmojisRef.current?.appendChild(emojiEl);
 
-    setTimeout(() => {
-      emojiEl.remove();
-    }, 3000);
+        setTimeout(() => {
+          emojiEl.remove();
+        }, 3000);
+      }, isBurst ? i * 50 : 0); // Stagger burst animations
+    }
+  };
+
+  const checkForBurst = (type: 'heart' | 'clap') => {
+    const now = Date.now();
+    const recentOfType = recentReactions.filter(
+      r => r.type === type && now - r.timestamp < 2000 // Within last 2 seconds
+    );
+    
+    // If 3+ reactions of same type in 2 seconds, trigger burst
+    return recentOfType.length >= 2;
   };
 
   const handleReaction = async (type: 'heart' | 'clap') => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const timestamp = getTimestamp();
+
+      // Track recent reactions for burst detection
+      const now = Date.now();
+      const newReaction = { type, timestamp: now };
+      setRecentReactions(prev => [...prev, newReaction]);
+      
+      // Clear old reactions from tracking after 2 seconds
+      if (recentReactionsTimeoutRef.current) {
+        clearTimeout(recentReactionsTimeoutRef.current);
+      }
+      recentReactionsTimeoutRef.current = setTimeout(() => {
+        setRecentReactions(prev => prev.filter(r => now - r.timestamp < 2000));
+      }, 2000);
+
+      // Check if this should trigger a burst
+      const isBurst = checkForBurst(type);
 
       // Insert reaction to database
       const { error } = await supabase.from('livestream_reactions').insert({
@@ -63,9 +102,9 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
 
       if (error) throw error;
 
-      // Trigger visual feedback
+      // Trigger visual feedback with burst if applicable
       setReactionAnimation(type);
-      createFloatingEmoji(type === 'heart' ? '❤️' : '👏');
+      createFloatingEmoji(type === 'heart' ? '❤️' : '👏', isBurst);
 
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
@@ -131,12 +170,28 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
           }
         }
 
+        @keyframes burst-float {
+          0% {
+            transform: translateY(0) translateX(0) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-180px) translateX(var(--burst-x, 0px)) scale(1.8) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
         .floating-emoji {
           position: absolute;
           bottom: 0;
           font-size: 2rem;
           animation: float-up ease-out forwards;
           pointer-events: none;
+        }
+
+        .burst-emoji {
+          animation: burst-float cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          font-size: 2.5rem;
         }
       `}</style>
     </>

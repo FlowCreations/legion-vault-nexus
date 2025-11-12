@@ -921,14 +921,16 @@ export function LiveBroadcaster({ eventId }: Props) {
   const stopBroadcast = async () => {
     console.log('[Broadcaster] Stopping broadcast');
     
-    // Update event status back to scheduled
+    // Update event status to ended so LiveStudio turns off
     const { error: updateError } = await supabase
       .from('livestream_events')
-      .update({ status: 'scheduled' })
+      .update({ status: 'ended' })
       .eq('id', eventId);
 
     if (updateError) {
       console.error('[Broadcaster] Error updating event status:', updateError);
+    } else {
+      console.log('[Broadcaster] ✅ Event status updated to "ended"');
     }
     
     if (roomRef.current) {

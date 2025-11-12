@@ -36,6 +36,7 @@ export const LiveReactionAnalytics = ({ eventId }: ReactionAnalyticsProps) => {
   const [totalClaps, setTotalClaps] = useState(0);
   const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
   const [topMoments, setTopMoments] = useState<TopMoment[]>([]);
+  const [newReactionPulse, setNewReactionPulse] = useState(false);
 
   useEffect(() => {
     fetchReactions();
@@ -49,6 +50,9 @@ export const LiveReactionAnalytics = ({ eventId }: ReactionAnalyticsProps) => {
         table: 'livestream_reactions',
         filter: `event_id=eq.${eventId}`
       }, () => {
+        // Trigger pulse animation
+        setNewReactionPulse(true);
+        setTimeout(() => setNewReactionPulse(false), 1000);
         fetchReactions();
       })
       .subscribe();
@@ -140,33 +144,33 @@ export const LiveReactionAnalytics = ({ eventId }: ReactionAnalyticsProps) => {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6">
+        <Card className={`p-6 transition-all duration-300 ${newReactionPulse ? 'ring-2 ring-red-500 scale-105' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Hearts</p>
               <p className="text-3xl font-bold text-red-500">{totalHearts}</p>
             </div>
-            <Heart className="w-10 h-10 text-red-500" />
+            <Heart className={`w-10 h-10 text-red-500 ${newReactionPulse ? 'animate-pulse' : ''}`} />
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className={`p-6 transition-all duration-300 ${newReactionPulse ? 'ring-2 ring-primary scale-105' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Applause</p>
               <p className="text-3xl font-bold text-primary">{totalClaps}</p>
             </div>
-            <Sparkles className="w-10 h-10 text-primary" />
+            <Sparkles className={`w-10 h-10 text-primary ${newReactionPulse ? 'animate-pulse' : ''}`} />
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className={`p-6 transition-all duration-300 ${newReactionPulse ? 'ring-2 ring-primary scale-105' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Reactions</p>
               <p className="text-3xl font-bold">{totalHearts + totalClaps}</p>
             </div>
-            <TrendingUp className="w-10 h-10 text-primary" />
+            <TrendingUp className={`w-10 h-10 text-primary ${newReactionPulse ? 'animate-pulse' : ''}`} />
           </div>
         </Card>
       </div>
