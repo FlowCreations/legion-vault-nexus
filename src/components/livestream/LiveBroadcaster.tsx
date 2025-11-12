@@ -551,7 +551,7 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const switchCamera = async (newCameraId: string) => {
-    if (status !== 'preview') return;
+    if (status !== 'preview' && status !== 'live') return;
     
     try {
       console.log('[Broadcaster] Switching camera to:', newCameraId);
@@ -564,6 +564,12 @@ export function LiveBroadcaster({ eventId }: Props) {
           height: { ideal: 1080 }
         }
       });
+      
+      // If live, unpublish old track first
+      if (status === 'live' && roomRef.current && videoTrackRef.current) {
+        console.log('[Broadcaster] Unpublishing old video track...');
+        await roomRef.current.localParticipant.unpublishTrack(videoTrackRef.current);
+      }
       
       // Stop old video track
       if (videoTrackRef.current) {
@@ -587,6 +593,13 @@ export function LiveBroadcaster({ eventId }: Props) {
       if (videoTrack && videoRef.current) {
         videoTrack.attach(videoRef.current);
         videoTrackRef.current = videoTrack;
+        
+        // If live, publish new track
+        if (status === 'live' && roomRef.current) {
+          console.log('[Broadcaster] Publishing new video track...');
+          await roomRef.current.localParticipant.publishTrack(videoTrack);
+        }
+        
         console.log('[Broadcaster] Camera switched successfully');
       }
       
@@ -598,10 +611,16 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const switchMicrophone = async (newMicId: string) => {
-    if (status !== 'preview') return;
+    if (status !== 'preview' && status !== 'live') return;
     
     try {
       console.log('[Broadcaster] Switching microphone to:', newMicId);
+      
+      // If live, unpublish old audio track first
+      if (status === 'live' && roomRef.current && audioTrackRef.current) {
+        console.log('[Broadcaster] Unpublishing old audio track...');
+        await roomRef.current.localParticipant.unpublishTrack(audioTrackRef.current);
+      }
       
       // Stop old audio processing
       if (sourceNode) {
@@ -635,7 +654,6 @@ export function LiveBroadcaster({ eventId }: Props) {
       setRawMicStream(newAudioStream);
       
       // Reinitialize audio processing with new stream
-      setStatus('initializing-audio');
       await setupAudioProcessing(newAudioStream);
       
       // Wait for mixer to be ready again
@@ -669,13 +687,21 @@ export function LiveBroadcaster({ eventId }: Props) {
       const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
       audioTrackRef.current = livekitAudioTrack;
       
-      setStatus('preview');
+      // If live, publish new track
+      if (status === 'live' && roomRef.current) {
+        console.log('[Broadcaster] Publishing new audio track...');
+        livekitAudioTrack.unmute();
+        await roomRef.current.localParticipant.publishTrack(livekitAudioTrack, {
+          name: 'broadcaster-audio',
+          source: Track.Source.Microphone
+        });
+      }
+      
       setSelectedMicrophone(newMicId);
       console.log('[Broadcaster] Microphone switched successfully');
     } catch (err) {
       console.error('[Broadcaster] Failed to switch microphone:', err);
       setError('Failed to switch microphone. Please try again.');
-      setStatus('preview');
     }
   };
 
