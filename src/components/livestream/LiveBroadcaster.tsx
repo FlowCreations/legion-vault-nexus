@@ -324,9 +324,11 @@ export function LiveBroadcaster({ eventId }: Props) {
       const tracks = await createLocalTracks({
         audio: {
           deviceId: { exact: micId },
-          echoCancellation: true,  // Enable for better quality
-          noiseSuppression: true,  // Enable for better quality
-          autoGainControl: true,   // Enable for better quality
+          echoCancellation: false,  // Get RAW signal for broadcasting
+          noiseSuppression: false,  // Get RAW signal for broadcasting
+          autoGainControl: false,   // Get RAW signal for broadcasting
+          sampleRate: 48000,        // Broadcast quality
+          channelCount: 1,          // Mono for voice (saves bandwidth)
         },
         video: {
           deviceId: { exact: cameraId },
@@ -343,21 +345,23 @@ export function LiveBroadcaster({ eventId }: Props) {
         audio: tracks.filter(t => t.kind === Track.Kind.Audio).length
       });
 
-      // STEP 3: Setup audio visualization from LiveKit track
-      const audioTrack = tracks.find(t => t.kind === Track.Kind.Audio) as LocalAudioTrack;
-      
-      if (audioTrack?.mediaStreamTrack) {
-        setStatus('initializing-audio');
-        console.log('[Broadcaster] Initializing audio visualization...');
-        
-        // Create a MediaStream from the LiveKit track's underlying MediaStreamTrack
-        const audioStreamForVisualization = new MediaStream([audioTrack.mediaStreamTrack]);
-        setRawMicStream(audioStreamForVisualization);
-        
-        // Setup audio processing for visualization/meters ONLY
-        await setupAudioProcessing(audioStreamForVisualization);
-        console.log('[Broadcaster] Audio visualization initialized');
-      }
+      // STEP 3a: Get RAW mic stream for monitoring (bypass LiveKit)
+      const rawMicForMonitoring = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: { exact: micId },
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        }
+      });
+
+      setRawMicStream(rawMicForMonitoring);
+      console.log('[Broadcaster] Raw mic stream for monitoring:', rawMicForMonitoring.id);
+
+      // STEP 3b: Setup audio visualization from RAW stream
+      setStatus('initializing-audio');
+      await setupAudioProcessing(rawMicForMonitoring);
+      console.log('[Broadcaster] Audio visualization initialized from raw stream');
 
       console.log('[Broadcaster] ✅ LiveKit tracks created successfully');
 
@@ -1158,6 +1162,7 @@ export function LiveBroadcaster({ eventId }: Props) {
           {/* Professional Audio Mixer - only show when audio is ready */}
           {audioReady && audioContext && sourceNode && (
           <AudioMixer
+            key="audio-mixer-singleton"
             audioContext={audioContextRef.current || audioContext}
             sourceNode={sourceNodeRef.current || sourceNode}
               onProcessedStream={handleProcessedStream}
