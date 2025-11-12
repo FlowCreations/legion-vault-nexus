@@ -172,12 +172,18 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         }
 
         if (audioContext.state === 'closed') {
+          console.error('[AudioMixer] ❌ AudioContext is closed!');
           throw new Error('AudioContext is closed. Cannot initialize mixer.');
         }
 
-        // Load the Master Bus AudioWorklet
-        await audioContext.audioWorklet.addModule('/audio/master-processor.js');
-        console.log('[AudioMixer] ✅ Worklet module loaded');
+        // Load the Master Bus AudioWorklet with error handling
+        try {
+          await audioContext.audioWorklet.addModule('/audio/master-processor.js');
+          console.log('[AudioMixer] ✅ Worklet module loaded');
+        } catch (moduleError) {
+          console.error('[AudioMixer] ❌ Failed to load worklet module:', moduleError);
+          throw new Error('Failed to load audio processor. Please refresh and try again.');
+        }
 
         // Create the master worklet node
         masterWorkletNode = new AudioWorkletNode(audioContext, 'master-processor', {
@@ -300,16 +306,21 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         updateMeters();
 
       } catch (error: any) {
-        console.error('[AudioMixer] Setup error:', error);
+        console.error('[AudioMixer] ❌ Fatal setup error:', error);
         console.error('[AudioMixer] Error details:', {
           name: error.name,
           message: error.message,
           contextState: audioContext?.state,
           stack: error.stack
         });
+        // DO NOT call onReady() when there's an error
+        // This will prevent the broadcast from continuing with broken audio
         throw new Error(`Audio mixer failed to initialize: ${error.message}`);
       }
-    })();
+    })().catch(error => {
+      console.error('[AudioMixer] ❌ Unhandled error in audio setup:', error);
+      // The error will propagate and prevent onReady from being called
+    });
 
     // Cleanup
     return () => {

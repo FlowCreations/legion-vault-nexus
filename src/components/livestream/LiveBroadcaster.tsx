@@ -356,7 +356,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] ⏳ Waiting for AudioMixer initialization...');
       mixerReadyRef.current = false;
       setMixerReady(false);
-      const mixerTimeout = 5000;
+      const mixerTimeout = 10000; // 10 seconds for worklet to load
       const mixerStartTime = Date.now();
 
       while (!mixerReadyRef.current && Date.now() - mixerStartTime < mixerTimeout) {
@@ -364,13 +364,14 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
 
       if (!mixerReadyRef.current) {
-        throw new Error('Audio mixer failed to initialize. Please try again.');
+        console.error('[Broadcaster] ❌ Audio mixer initialization timeout!');
+        throw new Error('Audio processor failed to load within 10 seconds. Please check your connection and try again.');
       }
       
       console.log('[Broadcaster] ✅ AudioMixer ready! Processing enabled.');
 
       // STEP 5: Wait for processed stream
-      const streamTimeout = 2000;
+      const streamTimeout = 5000; // 5 seconds for stream to be ready
       const streamStartTime = Date.now();
       
       while (!processedAudioStreamRef.current && Date.now() - streamStartTime < streamTimeout) {
@@ -378,7 +379,8 @@ export function LiveBroadcaster({ eventId }: Props) {
       }
       
       if (!processedAudioStreamRef.current) {
-        throw new Error('Processed audio stream not ready');
+        console.error('[Broadcaster] ❌ Processed audio stream timeout!');
+        throw new Error('Processed audio stream not available. Audio processing may have failed.');
       }
       
       console.log('[Broadcaster] Processed audio stream confirmed');
