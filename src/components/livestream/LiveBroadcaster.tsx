@@ -879,31 +879,42 @@ export function LiveBroadcaster({ eventId }: Props) {
           settings: audioMSTrack.getSettings()
         });
         
-        // CRITICAL: Ensure track is enabled
-        if (!audioMSTrack.enabled) {
-          console.warn('[Broadcaster] ⚠️ Enabling audio track before publish');
-          audioMSTrack.enabled = true;
-          // Give it a moment to start
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        
-        // CRITICAL: Verify track is live
+        // CRITICAL: Verify track is live FIRST
         if (audioMSTrack.readyState !== 'live') {
           console.error('[Broadcaster] ❌ Cannot publish - audio track is NOT live! readyState:', audioMSTrack.readyState);
           throw new Error(`Audio track not live (${audioMSTrack.readyState}) - cannot publish`);
         }
         
-        console.log('[Broadcaster] 📤 Publishing track to LiveKit with audio enabled and unmuted...');
+        // CRITICAL: Force track enabled and add content hint
+        audioMSTrack.enabled = true;
+        audioMSTrack.contentHint = 'speech';
+        console.log('[Broadcaster] ✅ Track enabled and contentHint set to "speech"');
         
         // Ensure LiveKit track itself is unmuted
         audioTrackRef.current.unmute();
         
-        // Publish with explicit options
+        console.log('[Broadcaster] 📤 Publishing track to LiveKit...');
+        
+        // Publish with explicit options (removed delay)
         await room.localParticipant.publishTrack(audioTrackRef.current, {
           name: 'broadcaster-audio',
-          source: Track.Source.Microphone
+          source: Track.Source.Microphone,
+          stopMicTrackOnMute: false,
         });
         console.log('[Broadcaster] ✅ Audio track published');
+        
+        // Verify published track immediately
+        const publishedTracks = Array.from(room.localParticipant.audioTrackPublications.values());
+        if (publishedTracks.length === 0) {
+          console.error('[Broadcaster] ❌ No audio track publications found!');
+          throw new Error('Audio track not published');
+        }
+        const firstPub = publishedTracks[0];
+        if (firstPub.isMuted) {
+          console.error('[Broadcaster] ❌ Published track is muted!');
+          throw new Error('Audio track published but muted');
+        }
+        console.log('[Broadcaster] ✅ Published track verified - unmuted and active');
         
         // CRITICAL FIX #4: Verify publication succeeded
         const audioPubs = Array.from(room.localParticipant.audioTrackPublications.values());

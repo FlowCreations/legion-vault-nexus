@@ -26,27 +26,27 @@ export function useProgressiveLoad({ priority, delay = 0 }: ProgressiveLoadOptio
 
     switch (priority) {
       case 'high':
-        timeoutId = setTimeout(load, delay || 20);
+        timeoutId = setTimeout(load, delay || 0);
         break;
       
       case 'medium':
-        timeoutId = setTimeout(load, delay || 80);
+        timeoutId = setTimeout(load, delay || 10);
         break;
       
       case 'low':
         if ('requestIdleCallback' in window) {
-          idleCallbackId = requestIdleCallback(load, { timeout: delay || 150 });
+          idleCallbackId = requestIdleCallback(load, { timeout: delay || 50 });
         } else {
-          timeoutId = setTimeout(load, delay || 150);
+          timeoutId = setTimeout(load, delay || 50);
         }
         break;
       
       case 'idle':
         // Load only when browser is truly idle
         if ('requestIdleCallback' in window) {
-          idleCallbackId = requestIdleCallback(load, { timeout: delay || 1000 });
+          idleCallbackId = requestIdleCallback(load, { timeout: delay || 200 });
         } else {
-          timeoutId = setTimeout(load, delay || 500);
+          timeoutId = setTimeout(load, delay || 200);
         }
         break;
     }

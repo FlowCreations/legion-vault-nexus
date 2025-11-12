@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info, Download, Calendar, Music, ShoppingBag, Ticket, Users } from "lucide-react";
@@ -97,14 +97,16 @@ export const EarningsOverview = () => {
   
   const currentData = monthsData.find(m => m.month === selectedMonth) || monthsData[0];
   
-  // Calculate sales breakdown based on selected period
-  const periodMultiplier = getPeriodMultiplier(selectedPeriod);
-  const periodSales = {
-    albums: Math.round(dailyBreakdown.albums * periodMultiplier * 100) / 100,
-    merch: Math.round(dailyBreakdown.merch * periodMultiplier * 100) / 100,
-    tickets: Math.round(dailyBreakdown.tickets * periodMultiplier * 100) / 100,
-    community: Math.round(dailyBreakdown.community * periodMultiplier * 100) / 100,
-  };
+  // Memoize expensive calculations
+  const periodSales = useMemo(() => {
+    const periodMultiplier = getPeriodMultiplier(selectedPeriod);
+    return {
+      albums: Math.round(dailyBreakdown.albums * periodMultiplier * 100) / 100,
+      merch: Math.round(dailyBreakdown.merch * periodMultiplier * 100) / 100,
+      tickets: Math.round(dailyBreakdown.tickets * periodMultiplier * 100) / 100,
+      community: Math.round(dailyBreakdown.community * periodMultiplier * 100) / 100,
+    };
+  }, [selectedPeriod]);
 
   const handleDownload = () => {
     const csvContent = `Earnings Report - ${selectedMonth}\n\nTotal Earnings,$${currentData.totalEarnings.toLocaleString()}\n\nSales Breakdown:\nAlbums,$${currentData.sales.albums.toLocaleString()}\nMerch,$${currentData.sales.merch.toLocaleString()}\nTickets,$${currentData.sales.tickets.toLocaleString()}\nCommunity,$${currentData.sales.community.toLocaleString()}`;
