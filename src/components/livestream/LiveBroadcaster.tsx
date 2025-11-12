@@ -247,20 +247,23 @@ export function LiveBroadcaster({ eventId }: Props) {
       settings: processedTrack.getSettings()
     });
 
-    // CRITICAL: Force enable the track
-    processedTrack.enabled = true;
-
-    // Verify track is live
+    // CRITICAL FIX #2: Verify track is live
     if (processedTrack.readyState !== 'live') {
-      console.warn('[Broadcaster] ⚠️ Processed track not live yet, waiting...');
-      processedTrack.onunmute = () => {
-        console.log('[Broadcaster] ✅ Processed track is now live');
-        processedAudioStreamRef.current = processedStream;
-      };
-    } else {
-      processedAudioStreamRef.current = processedStream;
-      console.log('[Broadcaster] ✅ Processed audio stream ready for broadcast');
+      console.error('[Broadcaster] ❌ Processed track is NOT live! readyState:', processedTrack.readyState);
+      if (!isUnmountingRef.current) {
+        setError('Audio processing failed - track not live');
+      }
+      return;
     }
+
+    // CRITICAL: Force enable the track
+    if (!processedTrack.enabled) {
+      console.warn('[Broadcaster] ⚠️ Processed track disabled, enabling it');
+      processedTrack.enabled = true;
+    }
+
+    processedAudioStreamRef.current = processedStream;
+    console.log('[Broadcaster] ✅ Processed audio stream ready for broadcast');
   };
 
   const handleMixerReady = () => {
@@ -768,6 +771,20 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || 'wss://sonsoflegionlivestudio-lvof78tr.livekit.cloud';
       
+      // CRITICAL FIX #5: Resume AudioContext if suspended
+      const ctx = audioContextRef.current || audioContext;
+      if (ctx) {
+        console.log('[Broadcaster] 🔍 AudioContext state before going live:', ctx.state);
+        if (ctx.state === 'suspended') {
+          console.warn('[Broadcaster] ⚠️ AudioContext is suspended, resuming...');
+          await ctx.resume();
+          console.log('[Broadcaster] ✅ AudioContext resumed, new state:', ctx.state);
+        }
+      } else {
+        console.error('[Broadcaster] ❌ No AudioContext available!');
+        throw new Error('AudioContext not initialized');
+      }
+      
       const room = new Room();
       roomRef.current = room;
 
@@ -825,15 +842,41 @@ export function LiveBroadcaster({ eventId }: Props) {
       if (audioTrackRef.current) {
         const audioMSTrack = audioTrackRef.current.mediaStreamTrack;
         console.log('[Broadcaster] 🎙️ Publishing audio track...');
+        console.log('[Broadcaster] 🔍 Audio track details before publish:', {
+          kind: audioMSTrack.kind,
+          enabled: audioMSTrack.enabled,
+          readyState: audioMSTrack.readyState,
+          label: audioMSTrack.label,
+          muted: audioMSTrack.muted
+        });
         
-        // Ensure audio is enabled before publishing
-        if (audioMSTrack && !audioMSTrack.enabled) {
-          console.warn('[Broadcaster] ⚠️ Enabling audio before publish');
+        // CRITICAL FIX #4: Ensure track is enabled
+        if (!audioMSTrack.enabled) {
+          console.warn('[Broadcaster] ⚠️ Enabling audio track before publish');
           audioMSTrack.enabled = true;
         }
         
+        // CRITICAL FIX #2: Verify track is live
+        if (audioMSTrack.readyState !== 'live') {
+          console.error('[Broadcaster] ❌ Cannot publish - audio track is NOT live! readyState:', audioMSTrack.readyState);
+          throw new Error(`Audio track not live (${audioMSTrack.readyState}) - cannot publish`);
+        }
+        
+        console.log('[Broadcaster] 📤 Publishing track to LiveKit...');
         await room.localParticipant.publishTrack(audioTrackRef.current);
         console.log('[Broadcaster] ✅ Audio track published');
+        
+        // CRITICAL FIX #4: Verify publication succeeded
+        const audioPubs = Array.from(room.localParticipant.audioTrackPublications.values());
+        console.log('[Broadcaster] 🔍 Audio publications after publish:', audioPubs.length);
+        audioPubs.forEach(pub => {
+          console.log('[Broadcaster] 🔍 Publication details:', {
+            sid: pub.trackSid,
+            muted: pub.isMuted,
+            trackEnabled: pub.track?.mediaStreamTrack?.enabled,
+            trackReadyState: pub.track?.mediaStreamTrack?.readyState
+          });
+        });
         
         // Track bytes sent to detect transmission issues
         let lastBytesSent = 0;

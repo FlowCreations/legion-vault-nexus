@@ -279,10 +279,37 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           outputs: ['LiveKit Stream', 'Level Meters', 'Diagnostics']
         });
 
+        // CRITICAL FIX #2: Verify processed stream has active audio tracks
+        const processedTracks = destination.stream.getAudioTracks();
+        console.log('[AudioMixer] 🔍 Processed stream has', processedTracks.length, 'audio tracks');
+        
+        if (processedTracks.length === 0) {
+          console.error('[AudioMixer] ❌ CRITICAL: Destination stream has no audio tracks!');
+          throw new Error('Audio processing failed - no output tracks');
+        }
+        
+        processedTracks.forEach((track, i) => {
+          console.log(`[AudioMixer] 🔍 Processed track ${i}:`, {
+            enabled: track.enabled,
+            readyState: track.readyState,
+            muted: track.muted,
+            label: track.label
+          });
+          
+          if (track.readyState !== 'live') {
+            console.error(`[AudioMixer] ❌ Track ${i} is not live! readyState:`, track.readyState);
+          }
+          
+          if (!track.enabled) {
+            console.warn(`[AudioMixer] ⚠️ Track ${i} is disabled, enabling it`);
+            track.enabled = true;
+          }
+        });
+        
         // Notify parent components
         if (onProcessedStream) {
           onProcessedStream(destination.stream);
-          console.log('[AudioMixer] ✅ Processed stream sent to LiveKit');
+          console.log('[AudioMixer] ✅ Processed stream sent to LiveKit with', processedTracks.length, 'active tracks');
         }
 
         if (onProcessedAnalyser) {
