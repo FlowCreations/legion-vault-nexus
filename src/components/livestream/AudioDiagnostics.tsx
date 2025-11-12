@@ -51,29 +51,40 @@ export function AudioDiagnostics({
       
       // Calculate raw signal level
       if (rawAudioAnalyser && rawDataArray) {
-        rawAudioAnalyser.getByteTimeDomainData(rawDataArray);
+        // Use frequency data instead for better signal detection
+        rawAudioAnalyser.getByteFrequencyData(rawDataArray);
         
+        // Calculate RMS from frequency data
         let sum = 0;
         for (let i = 0; i < rawDataArray.length; i++) {
-          const normalized = (rawDataArray[i] - 128) / 128;
-          sum += normalized * normalized;
+          sum += rawDataArray[i] * rawDataArray[i];
         }
         const rms = Math.sqrt(sum / rawDataArray.length);
-        const dbLevel = 20 * Math.log10(rms + 0.0001); // Add small value to avoid log(0)
+        
+        // Convert to dB (0-255 range to dB)
+        const dbLevel = 20 * Math.log10((rms / 255) + 0.0001);
         setRawSignalLevel(Math.max(-60, Math.min(0, dbLevel)));
+        
+        // Debug logging
+        if (rms > 5) {
+          console.log('[AudioDiagnostics] Raw signal detected:', { rms, dbLevel: dbLevel.toFixed(1) });
+        }
       }
       
       // Calculate processed signal level
       if (processedAudioAnalyser && processedDataArray) {
-        processedAudioAnalyser.getByteTimeDomainData(processedDataArray);
+        // Use frequency data for better signal detection
+        processedAudioAnalyser.getByteFrequencyData(processedDataArray);
         
+        // Calculate RMS from frequency data
         let sum = 0;
         for (let i = 0; i < processedDataArray.length; i++) {
-          const normalized = (processedDataArray[i] - 128) / 128;
-          sum += normalized * normalized;
+          sum += processedDataArray[i] * processedDataArray[i];
         }
         const rms = Math.sqrt(sum / processedDataArray.length);
-        const dbLevel = 20 * Math.log10(rms + 0.0001);
+        
+        // Convert to dB (0-255 range to dB)
+        const dbLevel = 20 * Math.log10((rms / 255) + 0.0001);
         setProcessedSignalLevel(Math.max(-60, Math.min(0, dbLevel)));
         
         // Determine signal quality based on processed level
@@ -85,6 +96,11 @@ export function AudioDiagnostics({
           setSignalQuality('poor');
         } else {
           setSignalQuality('none');
+        }
+        
+        // Debug logging
+        if (rms > 5) {
+          console.log('[AudioDiagnostics] Processed signal detected:', { rms, dbLevel: dbLevel.toFixed(1) });
         }
       }
       
