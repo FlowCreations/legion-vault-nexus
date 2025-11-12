@@ -153,7 +153,13 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
   // Effect 1: Create base audio chain (runs once when context/source change)
   useEffect(() => {
-    if (!audioContext || !sourceNode) return;
+    if (!audioContext || !sourceNode) {
+      console.log('[AudioMixer] ⚠️ Missing dependencies:', { 
+        hasContext: !!audioContext, 
+        hasSource: !!sourceNode 
+      });
+      return;
+    }
 
     let animationFrameId: number;
     let lowShelf: BiquadFilterNode;
@@ -169,7 +175,9 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
     (async () => {
       try {
-        console.log('[AudioMixer] Initializing with context state:', audioContext.state);
+        console.log('[AudioMixer] 🔧 Initializing audio chain...');
+        console.log('[AudioMixer] Context state:', audioContext.state);
+        console.log('[AudioMixer] Source node channels:', sourceNode.channelCount);
 
         // Ensure AudioContext is running
         if (audioContext.state === 'suspended') {
@@ -341,24 +349,32 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
         master.connect(analyser);
         analyser.connect(destination);
         
-        console.log('[AudioMixer] Audio chain established:', {
+        console.log('[AudioMixer] ✅ Audio chain established:', {
           contextState: audioContext.state,
           sampleRate: audioContext.sampleRate,
-          analyserFftSize: analyser.fftSize
+          analyserFftSize: analyser.fftSize,
+          streamId: destination.stream.id,
+          streamActive: destination.stream.active,
+          audioTracks: destination.stream.getAudioTracks().length
         });
         
+        // Call callbacks BEFORE ready signal
+        console.log('[AudioMixer] 📤 Sending callbacks...');
         if (onProcessedStream) {
+          console.log('[AudioMixer] → Calling onProcessedStream');
           onProcessedStream(destination.stream);
         }
         
         // Expose analyser for diagnostics
         if (onProcessedAnalyser) {
+          console.log('[AudioMixer] → Calling onProcessedAnalyser');
           onProcessedAnalyser(analyser);
         }
         
-        // Signal that mixer is ready
-        console.log('[AudioMixer] Audio chain fully initialized');
+        // Signal that mixer is ready AFTER callbacks
+        console.log('[AudioMixer] ✅ Audio chain fully initialized');
         if (onReady) {
+          console.log('[AudioMixer] → Calling onReady');
           onReady();
         }
         
@@ -367,11 +383,16 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           const testArray = new Uint8Array(analyser.frequencyBinCount);
           analyser.getByteFrequencyData(testArray);
           const maxValue = Math.max(...testArray);
-          console.log('[AudioMixer] Initial audio check:', {
-            hasSignal: testArray.some(v => v > 0),
+          const hasSignal = testArray.some(v => v > 0);
+          console.log('[AudioMixer] 🎤 Initial audio check:', {
+            hasSignal,
             maxValue,
             avgValue: testArray.reduce((a, b) => a + b) / testArray.length
           });
+          
+          if (!hasSignal) {
+            console.warn('[AudioMixer] ⚠️ No audio signal detected - check microphone connection');
+          }
         }, 500);
 
         // Audio level monitoring with improved scaling and smoothing
