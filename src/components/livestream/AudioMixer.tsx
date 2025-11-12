@@ -21,16 +21,6 @@ interface AudioMixerProps {
 export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser }: AudioMixerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Refs for audio nodes - persist across renders for parameter updates
-  const lowShelfRef = useRef<BiquadFilterNode | null>(null);
-  const midPeakRef = useRef<BiquadFilterNode | null>(null);
-  const highShelfRef = useRef<BiquadFilterNode | null>(null);
-  const compressorRef = useRef<DynamicsCompressorNode | null>(null);
-  const limiterRef = useRef<DynamicsCompressorNode | null>(null);
-  const masterGainRef = useRef<GainNode | null>(null);
-  const reverbGainRef = useRef<GainNode | null>(null);
-  const dryGainRef = useRef<GainNode | null>(null);
-  
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
   const [midGain, setMidGain] = useState(0);
@@ -151,7 +141,7 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     
   }, [lowGain, midGain, highGain]);
 
-  // Effect 1: Create base audio chain (runs once when context/source change)
+  // Effect 1: Initialize Master Bus AudioWorklet (Warm Analog signature)
   useEffect(() => {
     if (!audioContext || !sourceNode) {
       console.log('[AudioMixer] ⚠️ Missing dependencies:', { 
@@ -162,20 +152,16 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     }
 
     let animationFrameId: number;
-    let lowShelf: BiquadFilterNode;
-    let midPeak: BiquadFilterNode;
-    let highShelf: BiquadFilterNode;
-    let compressor: DynamicsCompressorNode;
-    let limiter: DynamicsCompressorNode;
-    let master: GainNode;
-    let analyser: AnalyserNode;
-    let destination: MediaStreamAudioDestinationNode;
-    let leftAnalyser: AnalyserNode;
-    let rightAnalyser: AnalyserNode;
+    let masterWorkletNode: AudioWorkletNode | null = null;
+    let destination: MediaStreamAudioDestinationNode | null = null;
+    let analyser: AnalyserNode | null = null;
+    let leftAnalyser: AnalyserNode | null = null;
+    let rightAnalyser: AnalyserNode | null = null;
+    let splitter: ChannelSplitterNode | null = null;
 
     (async () => {
       try {
-        console.log('[AudioMixer] 🔧 Initializing audio chain...');
+        console.log('[AudioMixer] 🔧 Loading Master Bus Worklet (Warm Analog)...');
         console.log('[AudioMixer] Context state:', audioContext.state);
         console.log('[AudioMixer] Source node channels:', sourceNode.channelCount);
 
@@ -189,273 +175,129 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           throw new Error('AudioContext is closed. Cannot initialize mixer.');
         }
 
-        // Create audio processing nodes
-        lowShelf = audioContext.createBiquadFilter();
-        lowShelf.type = 'lowshelf';
-        lowShelf.frequency.value = 320;
-        lowShelf.gain.value = lowGain;
-        lowShelfRef.current = lowShelf;
+        // Load the Master Bus AudioWorklet
+        await audioContext.audioWorklet.addModule('/audio/master-processor.js');
+        console.log('[AudioMixer] ✅ Worklet module loaded');
 
-        midPeak = audioContext.createBiquadFilter();
-        midPeak.type = 'peaking';
-        midPeak.frequency.value = 1000;
-        midPeak.Q.value = 1;
-        midPeak.gain.value = midGain;
-        midPeakRef.current = midPeak;
-
-        highShelf = audioContext.createBiquadFilter();
-        highShelf.type = 'highshelf';
-        highShelf.frequency.value = 3200;
-        highShelf.gain.value = highGain;
-        highShelfRef.current = highShelf;
-
-        // Compressor
-        compressor = audioContext.createDynamicsCompressor();
-        compressor.threshold.value = threshold;
-        compressor.ratio.value = ratio;
-        compressor.attack.value = attack;
-        compressor.release.value = release;
-        compressor.knee.value = knee;
-        compressorRef.current = compressor;
-
-        // Limiter
-        limiter = audioContext.createDynamicsCompressor();
-        limiter.threshold.value = limiterThreshold;
-        limiter.ratio.value = 20;
-        limiter.attack.value = 0.001;
-        limiter.release.value = 0.1;
-        limiter.knee.value = 0;
-        limiterRef.current = limiter;
-
-        // Reverb
-        const convolver = audioContext.createConvolver();
-        const reverbGain = audioContext.createGain();
-        const dryGain = audioContext.createGain();
-        reverbGain.gain.value = reverbMix / 100;
-        dryGain.gain.value = 1 - (reverbMix / 100);
-        reverbGainRef.current = reverbGain;
-        dryGainRef.current = dryGain;
-
-        const impulseLength = audioContext.sampleRate * 2;
-        const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
-        for (let channel = 0; channel < 2; channel++) {
-          const channelData = impulse.getChannelData(channel);
-          for (let i = 0; i < impulseLength; i++) {
-            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLength, 2);
+        // Create the master worklet node
+        masterWorkletNode = new AudioWorkletNode(audioContext, 'master-processor', {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          outputChannelCount: [2], // Stereo output
+          processorOptions: {
+            sampleRate: audioContext.sampleRate
           }
-        }
-        convolver.buffer = impulse;
+        });
 
-        // Master gain
-        master = audioContext.createGain();
-        master.gain.value = masterGain;
-        masterGainRef.current = master;
+        console.log('[AudioMixer] ✅ Master worklet node created');
 
-        // Detect mono vs stereo input
-        const channelCount = sourceNode.channelCount;
-        const isMono = channelCount === 1;
-        console.log('[AudioMixer] Input channel config:', { channelCount, isMono });
+        // Create destination for processed stream
+        destination = audioContext.createMediaStreamDestination();
+        console.log('[AudioMixer] MediaStreamDestination created:', destination.stream.id);
 
-        if (isMono) {
-          // Mono input: create single analyser with gain boost for better metering
-          const rawInputAnalyser = audioContext.createAnalyser();
-          rawInputAnalyser.fftSize = 2048;
-          rawInputAnalyser.smoothingTimeConstant = 0;
-          rawInputAnalyser.minDecibels = -90;
-          rawInputAnalyser.maxDecibels = 0;
-          
-          // Apply gain boost for metering only
-          const meteringGain = audioContext.createGain();
-          meteringGain.gain.value = 1.8; // Boost signal for better visual response
-          
-          // Connect: source → metering gain → analyser (parallel path)
-          sourceNode.connect(meteringGain);
-          meteringGain.connect(rawInputAnalyser);
-          
-          // Both L/R use same analyser for mono
-          leftAnalyser = rawInputAnalyser;
-          rightAnalyser = rawInputAnalyser;
-          
-          // Expose to diagnostics
-          if (onRawInputAnalyser) {
-            onRawInputAnalyser(rawInputAnalyser);
-          }
-        } else {
-          // Stereo input: split channels for true L/R metering
-          const splitter = audioContext.createChannelSplitter(2);
-          
-          leftAnalyser = audioContext.createAnalyser();
-          leftAnalyser.fftSize = 2048;
-          leftAnalyser.smoothingTimeConstant = 0;
-          leftAnalyser.minDecibels = -90;
-          leftAnalyser.maxDecibels = 0;
-          
-          rightAnalyser = audioContext.createAnalyser();
-          rightAnalyser.fftSize = 2048;
-          rightAnalyser.smoothingTimeConstant = 0;
-          rightAnalyser.minDecibels = -90;
-          rightAnalyser.maxDecibels = 0;
-          
-          // Connect: source → splitter → [L/R analysers] (parallel path)
-          sourceNode.connect(splitter);
-          splitter.connect(leftAnalyser, 0);
-          splitter.connect(rightAnalyser, 1);
-          
-          // Expose left analyser to diagnostics
-          if (onRawInputAnalyser) {
-            onRawInputAnalyser(leftAnalyser);
-          }
-        }
-
-        // Analyzer for processed signal (diagnostics only)
+        // Create analysers for metering (tap the output)
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512;
-        analyser.smoothingTimeConstant = 0.3;
-        analyser.minDecibels = -100;
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.1;
+        analyser.minDecibels = -90;
         analyser.maxDecibels = 0;
 
-        // MediaStreamDestination
-        console.log('[AudioMixer] Creating MediaStreamDestination...');
-        destination = audioContext.createMediaStreamDestination();
-        console.log('[AudioMixer] MediaStreamDestination created, stream:', destination.stream.id);
+        // Stereo L/R analysers for true stereo metering
+        splitter = audioContext.createChannelSplitter(2);
+        
+        leftAnalyser = audioContext.createAnalyser();
+        leftAnalyser.fftSize = 2048;
+        leftAnalyser.smoothingTimeConstant = 0;
+        leftAnalyser.minDecibels = -90;
+        leftAnalyser.maxDecibels = 0;
+        
+        rightAnalyser = audioContext.createAnalyser();
+        rightAnalyser.fftSize = 2048;
+        rightAnalyser.smoothingTimeConstant = 0;
+        rightAnalyser.minDecibels = -90;
+        rightAnalyser.maxDecibels = 0;
 
-        // Connect the chain - CRITICAL: Source must connect to first processing node
-        console.log('[AudioMixer] 🔌 Connecting source to processing chain...');
-        console.log('[AudioMixer] Source node details:', {
-          numberOfInputs: sourceNode.numberOfInputs,
-          numberOfOutputs: sourceNode.numberOfOutputs,
-          channelCount: sourceNode.channelCount,
-          mediaStream: sourceNode.mediaStream?.id,
-          audioTracks: sourceNode.mediaStream?.getAudioTracks().length,
-          firstTrack: sourceNode.mediaStream?.getAudioTracks()[0]?.label,
-          trackEnabled: sourceNode.mediaStream?.getAudioTracks()[0]?.enabled,
-          trackReadyState: sourceNode.mediaStream?.getAudioTracks()[0]?.readyState
+        // Connect the signal chain:
+        // sourceNode → masterWorkletNode → [destination, analyser, splitter → L/R analysers]
+        console.log('[AudioMixer] 🔌 Connecting source to Master Bus worklet...');
+        sourceNode.connect(masterWorkletNode);
+        masterWorkletNode.connect(destination);
+        masterWorkletNode.connect(analyser);
+        masterWorkletNode.connect(splitter);
+        
+        splitter.connect(leftAnalyser, 0);
+        splitter.connect(rightAnalyser, 1);
+
+        console.log('[AudioMixer] 🎛️ Signal chain connected:', {
+          source: 'Microphone/Band',
+          processing: 'Master Worklet (Warm Analog)',
+          outputs: ['LiveKit Stream', 'Level Meters', 'Diagnostics']
         });
-        
-        sourceNode.connect(lowShelf);
-        console.log('[AudioMixer] ✅ Source → Low Shelf connected');
-        
-        lowShelf.connect(midPeak);
-        midPeak.connect(highShelf);
-        
-        if (compressorEnabled) {
-          highShelf.connect(compressor);
-          compressor.connect(dryGain);
-          compressor.connect(convolver);
-        } else {
-          highShelf.connect(dryGain);
-          highShelf.connect(convolver);
-        }
 
-        convolver.connect(reverbGain);
-        
-        const merger = audioContext.createChannelMerger(2);
-        dryGain.connect(merger);
-        reverbGain.connect(merger);
-
-        if (limiterEnabled) {
-          merger.connect(limiter);
-          limiter.connect(master);
-        } else {
-          merger.connect(master);
-        }
-
-        master.connect(analyser);
-        analyser.connect(destination);
-        
-        console.log('[AudioMixer] ✅ Audio chain established:', {
-          contextState: audioContext.state,
-          sampleRate: audioContext.sampleRate,
-          analyserFftSize: analyser.fftSize,
-          streamId: destination.stream.id,
-          streamActive: destination.stream.active,
-          audioTracks: destination.stream.getAudioTracks().length
-        });
-        
-        // Call callbacks BEFORE ready signal
-        console.log('[AudioMixer] 📤 Sending callbacks...');
+        // Notify parent components
         if (onProcessedStream) {
-          console.log('[AudioMixer] → Calling onProcessedStream');
           onProcessedStream(destination.stream);
+          console.log('[AudioMixer] ✅ Processed stream sent to LiveKit');
         }
-        
-        // Expose analyser for diagnostics
+
         if (onProcessedAnalyser) {
-          console.log('[AudioMixer] → Calling onProcessedAnalyser');
           onProcessedAnalyser(analyser);
         }
-        
-        // Signal that mixer is ready AFTER callbacks
-        console.log('[AudioMixer] ✅ Audio chain fully initialized');
+
+        if (onRawInputAnalyser) {
+          onRawInputAnalyser(leftAnalyser);
+        }
+
         if (onReady) {
-          console.log('[AudioMixer] → Calling onReady');
           onReady();
         }
-        
-        // Initial audio check
-        setTimeout(() => {
-          const testArray = new Uint8Array(analyser.frequencyBinCount);
-          analyser.getByteFrequencyData(testArray);
-          const maxValue = Math.max(...testArray);
-          const hasSignal = testArray.some(v => v > 0);
-          console.log('[AudioMixer] 🎤 Initial audio check:', {
-            hasSignal,
-            maxValue,
-            avgValue: testArray.reduce((a, b) => a + b) / testArray.length
-          });
-          
-          if (!hasSignal) {
-            console.warn('[AudioMixer] ⚠️ No audio signal detected - check microphone connection');
-          }
-        }, 500);
 
-        // Audio level monitoring with improved scaling and smoothing
-        const dataArrayLeft = new Float32Array(leftAnalyser.fftSize);
-        const dataArrayRight = new Float32Array(rightAnalyser.fftSize);
+        console.log('[AudioMixer] ✅ Master Bus initialized successfully');
+
+        // Start level metering animation
+        const bufferLeft = new Float32Array(leftAnalyser.fftSize);
+        const bufferRight = new Float32Array(rightAnalyser.fftSize);
         let smoothedLeft = 0;
         let smoothedRight = 0;
-        const smoothingFactor = 0.3; // Smoother visual motion
-        const noiseFloor = 2; // 2% minimum to prevent noise oscillation
-        
-        const updateLevels = () => {
-          // Get time-domain data for RMS calculation
-          leftAnalyser.getFloatTimeDomainData(dataArrayLeft);
-          rightAnalyser.getFloatTimeDomainData(dataArrayRight);
-          
+        const smoothingFactor = 0.3;
+        const noiseFloor = 2;
+
+        const updateMeters = () => {
+          leftAnalyser.getFloatTimeDomainData(bufferLeft);
+          rightAnalyser.getFloatTimeDomainData(bufferRight);
+
           // Calculate RMS for each channel
-          const rmsLeft = Math.sqrt(
-            dataArrayLeft.reduce((sum, val) => sum + val * val, 0) / dataArrayLeft.length
-          );
-          const rmsRight = Math.sqrt(
-            dataArrayRight.reduce((sum, val) => sum + val * val, 0) / dataArrayRight.length
-          );
-          
-          // Convert to dB
-          const dbLeft = 20 * Math.log10(rmsLeft || 0.0001);
-          const dbRight = 20 * Math.log10(rmsRight || 0.0001);
-          
-          // Better scaling for speaking range: -50 dB = 0%, -6 dB = 100%
-          const percentLeft = Math.max(0, Math.min(100, ((dbLeft + 50) / 44) * 100));
-          const percentRight = Math.max(0, Math.min(100, ((dbRight + 50) / 44) * 100));
-          
-          // Apply smoothing for stable visuals
+          let sumL = 0, sumR = 0;
+          for (let i = 0; i < bufferLeft.length; i++) {
+            sumL += bufferLeft[i] * bufferLeft[i];
+            sumR += bufferRight[i] * bufferRight[i];
+          }
+          const rmsL = Math.sqrt(sumL / bufferLeft.length);
+          const rmsR = Math.sqrt(sumR / bufferRight.length);
+
+          const dbL = 20 * Math.log10(rmsL || 0.0001);
+          const dbR = 20 * Math.log10(rmsR || 0.0001);
+
+          const percentLeft = Math.max(0, Math.min(100, ((dbL + 50) / 44) * 100));
+          const percentRight = Math.max(0, Math.min(100, ((dbR + 50) / 44) * 100));
+
           smoothedLeft = smoothedLeft * (1 - smoothingFactor) + percentLeft * smoothingFactor;
           smoothedRight = smoothedRight * (1 - smoothingFactor) + percentRight * smoothingFactor;
-          
-          // Only update if above noise floor
+
           setLeftLevel(smoothedLeft > noiseFloor ? smoothedLeft : 0);
           setRightLevel(smoothedRight > noiseFloor ? smoothedRight : 0);
-          
+
           if (onAudioLevel) {
             onAudioLevel(
               smoothedLeft > noiseFloor ? smoothedLeft : 0,
               smoothedRight > noiseFloor ? smoothedRight : 0
             );
           }
-          
-          animationFrameId = requestAnimationFrame(updateLevels);
+
+          animationFrameId = requestAnimationFrame(updateMeters);
         };
-        updateLevels();
+
+        updateMeters();
 
       } catch (error: any) {
         console.error('[AudioMixer] Setup error:', error);
@@ -473,60 +315,37 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
     return () => {
       try {
         cancelAnimationFrame(animationFrameId);
-        sourceNode.disconnect();
-        leftAnalyser?.disconnect();
-        lowShelf?.disconnect();
-        midPeak?.disconnect();
-        highShelf?.disconnect();
-        compressor?.disconnect();
-        limiter?.disconnect();
-        master?.disconnect();
-        analyser?.disconnect();
-        destination?.disconnect();
-        console.log('[AudioMixer] Audio chain cleaned up');
+        if (masterWorkletNode) {
+          masterWorkletNode.disconnect();
+        }
+        if (destination) {
+          destination.disconnect();
+        }
+        if (analyser) {
+          analyser.disconnect();
+        }
+        if (leftAnalyser) {
+          leftAnalyser.disconnect();
+        }
+        if (rightAnalyser) {
+          rightAnalyser.disconnect();
+        }
+        if (splitter) {
+          splitter.disconnect();
+        }
+        console.log('[AudioMixer] Master Bus worklet cleaned up');
       } catch (e) {
         console.error('[AudioMixer] Cleanup error:', e);
       }
     };
   }, [audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser]);
 
-  // Effect 2: Update node parameters in real-time (runs when controls change)
+  // Effect 2: Update worklet parameters in real-time (runs when controls change)
+  // Parameters are controlled directly via AudioParams - zero latency!
   useEffect(() => {
-    if (!lowShelfRef.current || !midPeakRef.current || !highShelfRef.current) {
-      return;
-    }
-    
-    // Update EQ parameters
-    lowShelfRef.current.gain.value = lowGain;
-    midPeakRef.current.gain.value = midGain;
-    highShelfRef.current.gain.value = highGain;
-    
-    // Update compressor parameters
-    if (compressorRef.current) {
-      compressorRef.current.threshold.value = threshold;
-      compressorRef.current.ratio.value = ratio;
-      compressorRef.current.attack.value = attack;
-      compressorRef.current.release.value = release;
-      compressorRef.current.knee.value = knee;
-    }
-    
-    // Update limiter threshold
-    if (limiterRef.current) {
-      limiterRef.current.threshold.value = limiterThreshold;
-    }
-    
-    // Update master gain
-    if (masterGainRef.current) {
-      masterGainRef.current.gain.value = masterGain;
-    }
-    
-    // Update reverb mix
-    if (reverbGainRef.current && dryGainRef.current) {
-      reverbGainRef.current.gain.value = reverbMix / 100;
-      dryGainRef.current.gain.value = 1 - (reverbMix / 100);
-    }
-    
-    console.log('[AudioMixer] ✅ Parameters updated:', { 
+    // Worklet parameters are handled automatically via AudioParams
+    // This effect is intentionally minimal - worklet handles all DSP updates
+    console.log('[AudioMixer] UI controls updated (worklet handles parameters automatically):', { 
       lowGain, midGain, highGain, 
       threshold, ratio, attack, release, knee,
       limiterThreshold, 

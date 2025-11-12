@@ -211,9 +211,44 @@ export function LiveBroadcaster({ eventId }: Props) {
   };
 
   const handleProcessedStream = (processedStream: MediaStream) => {
-    console.log('[Broadcaster] Received processed audio stream from mixer:', processedStream.id);
-    processedAudioStreamRef.current = processedStream;
-    console.log('[Broadcaster] Processed stream stored for LiveKit');
+    console.log('[Broadcaster] 🎵 Received processed audio from Master Bus:', {
+      streamId: processedStream.id,
+      trackCount: processedStream.getAudioTracks().length
+    });
+
+    const processedTrack = processedStream.getAudioTracks()[0];
+    
+    if (!processedTrack) {
+      console.error('[Broadcaster] ❌ No audio track in processed stream!');
+      if (!isUnmountingRef.current) {
+        setError('Audio processing failed - no track available');
+      }
+      return;
+    }
+
+    console.log('[Broadcaster] 📊 Processed track details:', {
+      id: processedTrack.id,
+      label: processedTrack.label,
+      enabled: processedTrack.enabled,
+      readyState: processedTrack.readyState,
+      muted: processedTrack.muted,
+      settings: processedTrack.getSettings()
+    });
+
+    // CRITICAL: Force enable the track
+    processedTrack.enabled = true;
+
+    // Verify track is live
+    if (processedTrack.readyState !== 'live') {
+      console.warn('[Broadcaster] ⚠️ Processed track not live yet, waiting...');
+      processedTrack.onunmute = () => {
+        console.log('[Broadcaster] ✅ Processed track is now live');
+        processedAudioStreamRef.current = processedStream;
+      };
+    } else {
+      processedAudioStreamRef.current = processedStream;
+      console.log('[Broadcaster] ✅ Processed audio stream ready for broadcast');
+    }
   };
 
   const handleMixerReady = () => {
