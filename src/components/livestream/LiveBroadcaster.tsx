@@ -924,17 +924,50 @@ export function LiveBroadcaster({ eventId }: Props) {
 
   // Effect 2: Full cleanup only on component unmount
   useEffect(() => {
+    console.log('[Broadcaster] Component mounted');
+    
     return () => {
       console.log('[Broadcaster] Component unmounting, full cleanup');
       
-      // Disconnect LiveKit room
+      // Set status to prevent any ongoing operations
+      setStatus('idle');
+      
+      // Disconnect LiveKit room first
       if (roomRef.current) {
+        console.log('[Broadcaster] ❌ Disconnected from room:', roomRef.current.state);
         roomRef.current.disconnect();
         roomRef.current = null;
       }
       
-      // Use full cleanup on unmount
-      fullCleanup();
+      // Stop all tracks
+      if (videoTrackRef.current) {
+        videoTrackRef.current.stop();
+        videoTrackRef.current = null;
+      }
+      if (audioTrackRef.current) {
+        audioTrackRef.current.stop();
+        audioTrackRef.current = null;
+      }
+      
+      // Clean up streams
+      if (rawMicStream) {
+        rawMicStream.getTracks().forEach(track => track.stop());
+      }
+      if (rawAudioStream) {
+        rawAudioStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Disconnect audio nodes
+      if (rawAudioAnalyserRef.current) {
+        rawAudioAnalyserRef.current.disconnect();
+        rawAudioAnalyserRef.current = null;
+      }
+      if (sourceNode) {
+        sourceNode.disconnect();
+      }
+      if (audioContext) {
+        audioContext.close();
+      }
     };
   }, []); // Empty dependencies = only runs on mount/unmount
 

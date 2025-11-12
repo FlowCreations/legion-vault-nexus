@@ -199,9 +199,10 @@ export function AudioDiagnostics({
       case 'good':
         return <Badge className="bg-blue-500"><CheckCircle2 className="w-3 h-3 mr-1" />Good</Badge>;
       case 'poor':
-        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Poor</Badge>;
+        return <Badge className="bg-yellow-500"><Signal className="w-3 h-3 mr-1" />Detecting</Badge>;
       default:
-        return <Badge variant="outline"><AlertTriangle className="w-3 h-3 mr-1" />No Signal</Badge>;
+        // Changed from "No Signal" to "Monitoring" to avoid false negatives
+        return <Badge variant="outline"><Signal className="w-3 h-3 mr-1" />Monitoring</Badge>;
     }
   };
 
