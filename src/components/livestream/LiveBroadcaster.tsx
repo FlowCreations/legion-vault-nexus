@@ -724,15 +724,24 @@ export function LiveBroadcaster({ eventId }: Props) {
       roomRef.current = room;
 
       room.on(RoomEvent.Connected, () => {
-        console.log('[Broadcaster] Connected to room');
-        // Force immediate state update to show live buttons
+        console.log('[Broadcaster] ✅ Connected to room');
         setStatus('live');
-        // Force a re-render
-        setTimeout(() => setStatus('live'), 0);
+      });
+      
+      room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
+        console.log('[Broadcaster] Connection quality:', quality, participant?.identity);
+      });
+      
+      room.on(RoomEvent.Reconnecting, () => {
+        console.warn('[Broadcaster] ⚠️ Reconnecting to room...');
+      });
+      
+      room.on(RoomEvent.Reconnected, () => {
+        console.log('[Broadcaster] ✅ Reconnected to room');
       });
 
-      room.on(RoomEvent.Disconnected, () => {
-        console.log('[Broadcaster] Disconnected from room');
+      room.on(RoomEvent.Disconnected, (reason) => {
+        console.log('[Broadcaster] ❌ Disconnected from room:', reason);
         // Update event status back to scheduled when disconnected
         supabase
           .from('livestream_events')
@@ -742,27 +751,26 @@ export function LiveBroadcaster({ eventId }: Props) {
             if (error) console.error('[Broadcaster] Error updating status on disconnect:', error);
           });
         setStatus('idle');
+        setError('Disconnected from broadcast. Please try reconnecting.');
+      });
+      
+      room.on(RoomEvent.MediaDevicesError, (error) => {
+        console.error('[Broadcaster] ❌ Media device error:', error);
+        setError('Media device error: ' + error.message);
       });
 
+      console.log('[Broadcaster] Connecting to LiveKit...', { url: livekitUrl });
       await room.connect(livekitUrl, tokenData.token);
+      console.log('[Broadcaster] ✅ Connected! Publishing tracks...');
 
       if (videoTrackRef.current) {
         await room.localParticipant.publishTrack(videoTrackRef.current);
-        console.log('[Broadcaster] ✅ Video track published:', {
-          sid: videoTrackRef.current.sid,
-          enabled: videoTrackRef.current.mediaStreamTrack?.enabled
-        });
+        console.log('[Broadcaster] ✅ Video track published');
       }
       
       if (audioTrackRef.current) {
         const audioMSTrack = audioTrackRef.current.mediaStreamTrack;
-        console.log('[Broadcaster] 🎙️ Publishing audio track with status:', {
-          enabled: audioMSTrack?.enabled,
-          readyState: audioMSTrack?.readyState,
-          muted: audioMSTrack?.muted,
-          id: audioMSTrack?.id,
-          label: audioMSTrack?.label
-        });
+        console.log('[Broadcaster] 🎙️ Publishing audio track...');
         
         // Ensure audio is enabled before publishing
         if (audioMSTrack && !audioMSTrack.enabled) {
@@ -771,20 +779,21 @@ export function LiveBroadcaster({ eventId }: Props) {
         }
         
         await room.localParticipant.publishTrack(audioTrackRef.current);
-        console.log('[Broadcaster] ✅ Audio track published:', {
-          sid: audioTrackRef.current.sid,
-          kind: audioTrackRef.current.kind,
-          enabled: audioMSTrack?.enabled,
-          source: audioTrackRef.current.source
-        });
+        console.log('[Broadcaster] ✅ Audio track published');
         
         // Monitor audio transmission after 2 seconds
         setTimeout(async () => {
           console.log('[Broadcaster] 📊 Checking audio transmission stats...');
           const audioPublications = Array.from(room.localParticipant.audioTrackPublications.values());
           
+          if (audioPublications.length === 0) {
+            console.error('[Broadcaster] ❌ No audio publications found!');
+            setError('Audio not publishing. Please restart broadcast.');
+            return;
+          }
+          
           for (const pub of audioPublications) {
-            console.log('[Broadcaster] 📡 Current audio publications:', {
+            console.log('[Broadcaster] 📡 Audio publication:', {
               sid: pub.trackSid,
               trackName: pub.trackName,
               source: pub.source,
@@ -797,41 +806,35 @@ export function LiveBroadcaster({ eventId }: Props) {
             if (pub.track) {
               try {
                 const stats = await pub.track.getRTCStatsReport();
+                let foundStats = false;
                 stats?.forEach((stat: any) => {
                   if (stat.type === 'outbound-rtp' && stat.kind === 'audio') {
+                    foundStats = true;
                     console.log('[Broadcaster] 🔊 Audio RTC Stats:', {
                       bytesSent: stat.bytesSent,
                       packetsSent: stat.packetsSent,
                       timestamp: stat.timestamp
                     });
+                    
+                    if (stat.bytesSent === 0) {
+                      console.error('[Broadcaster] ❌ No audio data being sent!');
+                      setError('Audio not transmitting. Check microphone permissions.');
+                    }
                   }
                 });
+                
+                if (!foundStats) {
+                  console.warn('[Broadcaster] ⚠️ No outbound-rtp stats found');
+                }
               } catch (err) {
                 console.error('[Broadcaster] Failed to get RTC stats:', err);
               }
             }
           }
         }, 2000);
-        
-        // Verify the publication was successful
-        const audioPublications = Array.from(room.localParticipant.audioTrackPublications.values());
-        console.log('[Broadcaster] 📡 Current audio publications:', {
-          count: audioPublications.length,
-          publications: audioPublications.map(pub => ({
-            trackSid: pub.trackSid,
-            trackName: pub.trackName,
-            source: pub.source,
-            isMuted: pub.isMuted,
-            isEnabled: pub.isEnabled,
-            track: pub.track ? {
-              sid: pub.track.sid,
-              enabled: pub.track.mediaStreamTrack?.enabled,
-              readyState: pub.track.mediaStreamTrack?.readyState
-            } : null
-          }))
-        });
       } else {
         console.error('[Broadcaster] ❌ No audio track to publish!');
+        setError('Audio track missing. Please restart preview.');
       }
 
       console.log('[Broadcaster] Broadcasting!');
