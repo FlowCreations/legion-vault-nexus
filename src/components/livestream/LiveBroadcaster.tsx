@@ -432,7 +432,8 @@ export function LiveBroadcaster({ eventId }: Props) {
         label: processedAudioTrack.label,
         enabled: processedAudioTrack.enabled,
         readyState: processedAudioTrack.readyState,
-        muted: processedAudioTrack.muted
+        muted: processedAudioTrack.muted,
+        settings: processedAudioTrack.getSettings()
       });
       
       // Ensure audio track is enabled and live
@@ -445,6 +446,7 @@ export function LiveBroadcaster({ eventId }: Props) {
         throw new Error(`Processed audio track not live: ${processedAudioTrack.readyState}`);
       }
       
+      // Create LiveKit audio track - simple constructor
       const livekitAudioTrack = new LocalAudioTrack(processedAudioTrack);
       
       const tracks = [...videoTracks, livekitAudioTrack];
@@ -847,23 +849,34 @@ export function LiveBroadcaster({ eventId }: Props) {
           enabled: audioMSTrack.enabled,
           readyState: audioMSTrack.readyState,
           label: audioMSTrack.label,
-          muted: audioMSTrack.muted
+          muted: audioMSTrack.muted,
+          settings: audioMSTrack.getSettings()
         });
         
-        // CRITICAL FIX #4: Ensure track is enabled
+        // CRITICAL: Ensure track is enabled
         if (!audioMSTrack.enabled) {
           console.warn('[Broadcaster] ⚠️ Enabling audio track before publish');
           audioMSTrack.enabled = true;
+          // Give it a moment to start
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        // CRITICAL FIX #2: Verify track is live
+        // CRITICAL: Verify track is live
         if (audioMSTrack.readyState !== 'live') {
           console.error('[Broadcaster] ❌ Cannot publish - audio track is NOT live! readyState:', audioMSTrack.readyState);
           throw new Error(`Audio track not live (${audioMSTrack.readyState}) - cannot publish`);
         }
         
-        console.log('[Broadcaster] 📤 Publishing track to LiveKit...');
-        await room.localParticipant.publishTrack(audioTrackRef.current);
+        console.log('[Broadcaster] 📤 Publishing track to LiveKit with audio enabled and unmuted...');
+        
+        // Ensure LiveKit track itself is unmuted
+        audioTrackRef.current.unmute();
+        
+        // Publish with explicit options
+        await room.localParticipant.publishTrack(audioTrackRef.current, {
+          name: 'broadcaster-audio',
+          source: Track.Source.Microphone
+        });
         console.log('[Broadcaster] ✅ Audio track published');
         
         // CRITICAL FIX #4: Verify publication succeeded
