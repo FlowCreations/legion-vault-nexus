@@ -41,6 +41,11 @@ export function LiveBroadcaster({ eventId }: Props) {
   const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
   const sharedAudioContextRef = useRef<AudioContext | null>(null);
   const isUnmountingRef = useRef(false); // Guard against state updates during unmount
+  
+  // Stable refs to prevent re-initialization during re-renders
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const mixerReadyRef = useRef(false);
 
   // Initialize shared AudioContext once
   useEffect(() => {
@@ -52,8 +57,9 @@ export function LiveBroadcaster({ eventId }: Props) {
   }, []);
 
   // Use the reusable mic meter hook with shared context
+  // ONLY run when idle to prevent duplicate mic streams during broadcast
   const { micLevel, hasSignal, error: micError, analyser: micAnalyser, stream: micStream, audioContext: hookAudioContext } = useMicrophoneMeter({
-    selectedMicId: status === 'preview' || status === 'live' ? selectedMicrophone : undefined,
+    selectedMicId: status === 'idle' ? selectedMicrophone : undefined,
     smoothing: 0.3,
     threshold: -50,
     sharedAudioContext: sharedAudioContextRef.current,
@@ -199,6 +205,12 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] Analyser connected. Gain:', gain.gain.value, 'Context state:', ctx.state);
 
       setAudioReady(true);
+      
+      // Store in stable refs to prevent re-renders from changing references
+      audioContextRef.current = ctx;
+      sourceNodeRef.current = source;
+      
+      // Still update state for initial render
       setAudioContext(ctx);
       setSourceNode(source);
 
@@ -256,8 +268,6 @@ export function LiveBroadcaster({ eventId }: Props) {
     mixerReadyRef.current = true;
     setMixerReady(true);
   };
-  
-  const mixerReadyRef = useRef(false);
 
   const handleProcessedAnalyser = (analyser: AnalyserNode) => {
     console.log('[Broadcaster] Received processed analyser for diagnostics');
@@ -356,7 +366,7 @@ export function LiveBroadcaster({ eventId }: Props) {
       console.log('[Broadcaster] ⏳ Waiting for AudioMixer initialization...');
       mixerReadyRef.current = false;
       setMixerReady(false);
-      const mixerTimeout = 10000; // 10 seconds for worklet to load
+      const mixerTimeout = 15000; // 15 seconds for worklet to load
       const mixerStartTime = Date.now();
 
       while (!mixerReadyRef.current && Date.now() - mixerStartTime < mixerTimeout) {
@@ -365,7 +375,7 @@ export function LiveBroadcaster({ eventId }: Props) {
 
       if (!mixerReadyRef.current) {
         console.error('[Broadcaster] ❌ Audio mixer initialization timeout!');
-        throw new Error('Audio processor failed to load within 10 seconds. Please check your connection and try again.');
+        throw new Error('Audio processor failed to load within 15 seconds. Please check your connection and try again.');
       }
       
       console.log('[Broadcaster] ✅ AudioMixer ready! Processing enabled.');
@@ -825,6 +835,11 @@ export function LiveBroadcaster({ eventId }: Props) {
         await room.localParticipant.publishTrack(audioTrackRef.current);
         console.log('[Broadcaster] ✅ Audio track published');
         
+        // Track bytes sent to detect transmission issues
+        let lastBytesSent = 0;
+        let bytesCheckStartTime = Date.now();
+        let checksCount = 0;
+        
         // Monitor audio transmission after 2 seconds
         setTimeout(async () => {
           console.log('[Broadcaster] 📊 Checking audio transmission stats...');
@@ -860,10 +875,22 @@ export function LiveBroadcaster({ eventId }: Props) {
                       timestamp: stat.timestamp
                     });
                     
-                    if (stat.bytesSent === 0) {
-                      console.error('[Broadcaster] ❌ No audio data being sent!');
-                      setError('Audio not transmitting. Check microphone permissions.');
+                    checksCount++;
+                    const elapsedSeconds = (Date.now() - bytesCheckStartTime) / 1000;
+                    const bytesDelta = stat.bytesSent - lastBytesSent;
+                    
+                    // Only check after we've had time to send data (after 5 seconds)
+                    if (checksCount > 2 && elapsedSeconds > 5) {
+                      if (bytesDelta === 0 && stat.bytesSent === lastBytesSent) {
+                        console.error('[Broadcaster] ❌ No audio data being sent after 5 seconds!');
+                        setError('Audio not transmitting. Check microphone permissions.');
+                      } else if (bytesDelta > 0) {
+                        // Audio is flowing, clear any previous errors
+                        console.log('[Broadcaster] ✅ Audio transmitting:', bytesDelta, 'bytes since last check');
+                      }
                     }
+                    
+                    lastBytesSent = stat.bytesSent;
                   }
                 });
                 
@@ -1132,9 +1159,9 @@ export function LiveBroadcaster({ eventId }: Props) {
 
           {/* Professional Audio Mixer - only show when audio is ready */}
           {audioReady && audioContext && sourceNode && (
-            <AudioMixer 
-              audioContext={audioContext}
-              sourceNode={sourceNode}
+          <AudioMixer
+            audioContext={audioContextRef.current || audioContext}
+            sourceNode={sourceNodeRef.current || sourceNode}
               onProcessedStream={handleProcessedStream}
               onAudioLevel={handleAudioLevel}
               onReady={handleMixerReady}

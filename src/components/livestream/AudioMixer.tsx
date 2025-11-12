@@ -20,6 +20,8 @@ interface AudioMixerProps {
 
 export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudioLevel, onReady, onProcessedAnalyser, onRawInputAnalyser }: AudioMixerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isInitializedRef = useRef(false);
+  const masterWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
   
   // EQ Controls
   const [lowGain, setLowGain] = useState(0); // -12 to +12 dB
@@ -151,6 +153,18 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
       return;
     }
 
+    // Prevent double initialization
+    if (isInitializedRef.current) {
+      console.log('[AudioMixer] ⚠️ Already initialized, skipping duplicate init');
+      return;
+    }
+    
+    // Prevent re-initialization if worklet already exists
+    if (masterWorkletNodeRef.current) {
+      console.log('[AudioMixer] ⚠️ Worklet node already exists, skipping');
+      return;
+    }
+    
     let animationFrameId: number;
     let masterWorkletNode: AudioWorkletNode | null = null;
     let destination: MediaStreamAudioDestinationNode | null = null;
@@ -161,6 +175,8 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
 
     (async () => {
       try {
+        isInitializedRef.current = true;
+        
         console.log('[AudioMixer] 🔧 Loading Master Bus Worklet (Warm Analog)...');
         console.log('[AudioMixer] Context state:', audioContext.state);
         console.log('[AudioMixer] Source node channels:', sourceNode.channelCount);
@@ -176,13 +192,33 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           throw new Error('AudioContext is closed. Cannot initialize mixer.');
         }
 
-        // Load the Master Bus AudioWorklet with error handling
+        // Load the Master Bus AudioWorklet with comprehensive error handling
         try {
+          console.log('[AudioMixer] Attempting to load worklet from:', '/audio/master-processor.js');
+          console.log('[AudioMixer] Base URL:', window.location.origin);
+          console.log('[AudioMixer] Full path:', new URL('/audio/master-processor.js', window.location.origin).href);
+          
           await audioContext.audioWorklet.addModule('/audio/master-processor.js');
-          console.log('[AudioMixer] ✅ Worklet module loaded');
-        } catch (moduleError) {
-          console.error('[AudioMixer] ❌ Failed to load worklet module:', moduleError);
-          throw new Error('Failed to load audio processor. Please refresh and try again.');
+          console.log('[AudioMixer] ✅ Worklet module loaded successfully');
+        } catch (moduleError: any) {
+          console.error('[AudioMixer] ❌ Failed to load worklet module');
+          console.error('[AudioMixer] Error name:', moduleError.name);
+          console.error('[AudioMixer] Error message:', moduleError.message);
+          console.error('[AudioMixer] Error stack:', moduleError.stack);
+          
+          // Try to fetch the file manually to debug
+          try {
+            const response = await fetch('/audio/master-processor.js');
+            console.log('[AudioMixer] Manual fetch status:', response.status);
+            if (response.ok) {
+              const text = await response.text();
+              console.log('[AudioMixer] File exists, length:', text.length, 'bytes');
+            }
+          } catch (fetchError) {
+            console.error('[AudioMixer] File cannot be fetched:', fetchError);
+          }
+          
+          throw new Error(`Failed to load audio processor: ${moduleError.message}`);
         }
 
         // Create the master worklet node
@@ -194,6 +230,9 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
             sampleRate: audioContext.sampleRate
           }
         });
+        
+        // Store in ref for guard checks
+        masterWorkletNodeRef.current = masterWorkletNode;
 
         console.log('[AudioMixer] ✅ Master worklet node created');
 
@@ -313,17 +352,30 @@ export const AudioMixer = ({ audioContext, sourceNode, onProcessedStream, onAudi
           contextState: audioContext?.state,
           stack: error.stack
         });
+        
+        // Reset flags on error so it can be retried
+        isInitializedRef.current = false;
+        masterWorkletNodeRef.current = null;
+        
         // DO NOT call onReady() when there's an error
         // This will prevent the broadcast from continuing with broken audio
         throw new Error(`Audio mixer failed to initialize: ${error.message}`);
       }
     })().catch(error => {
       console.error('[AudioMixer] ❌ Unhandled error in audio setup:', error);
+      isInitializedRef.current = false;
+      masterWorkletNodeRef.current = null;
       // The error will propagate and prevent onReady from being called
     });
 
     // Cleanup
     return () => {
+      console.log('[AudioMixer] 🧹 Cleaning up Master Bus...');
+      
+      // Reset initialization flags
+      isInitializedRef.current = false;
+      masterWorkletNodeRef.current = null;
+      
       try {
         cancelAnimationFrame(animationFrameId);
         if (masterWorkletNode) {
