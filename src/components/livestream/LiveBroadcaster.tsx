@@ -778,6 +778,41 @@ export function LiveBroadcaster({ eventId }: Props) {
           source: audioTrackRef.current.source
         });
         
+        // Monitor audio transmission after 2 seconds
+        setTimeout(async () => {
+          console.log('[Broadcaster] 📊 Checking audio transmission stats...');
+          const audioPublications = Array.from(room.localParticipant.audioTrackPublications.values());
+          
+          for (const pub of audioPublications) {
+            console.log('[Broadcaster] 📡 Current audio publications:', {
+              sid: pub.trackSid,
+              trackName: pub.trackName,
+              source: pub.source,
+              muted: pub.isMuted,
+              enabled: pub.track?.mediaStreamTrack?.enabled,
+              readyState: pub.track?.mediaStreamTrack?.readyState
+            });
+            
+            // Get WebRTC stats
+            if (pub.track) {
+              try {
+                const stats = await pub.track.getRTCStatsReport();
+                stats?.forEach((stat: any) => {
+                  if (stat.type === 'outbound-rtp' && stat.kind === 'audio') {
+                    console.log('[Broadcaster] 🔊 Audio RTC Stats:', {
+                      bytesSent: stat.bytesSent,
+                      packetsSent: stat.packetsSent,
+                      timestamp: stat.timestamp
+                    });
+                  }
+                });
+              } catch (err) {
+                console.error('[Broadcaster] Failed to get RTC stats:', err);
+              }
+            }
+          }
+        }, 2000);
+        
         // Verify the publication was successful
         const audioPublications = Array.from(room.localParticipant.audioTrackPublications.values());
         console.log('[Broadcaster] 📡 Current audio publications:', {
