@@ -4,8 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pause, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { MemberProfileCard } from "./MemberProfileCard";
+import { Button } from "@/components/ui/button";
 
 export type Member = {
   id: string;
@@ -22,6 +24,14 @@ export type Member = {
   userId?: string;
   latitude?: number;
   longitude?: number;
+  totalSpend?: number;
+  purchaseCount?: number;
+  favoriteCount?: number;
+  lastActive?: string;
+  joinedDate?: string;
+  engagementScore?: number;
+  isVIP?: boolean;
+  topGenres?: string[];
 };
 
 type Props = {
@@ -79,6 +89,7 @@ export default function GlobalReachMap({
   const [members, setMembers] = useState<Member[]>(membersProp);
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [hoveredMember, setHoveredMember] = useState<Member | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
 
@@ -246,31 +257,29 @@ export default function GlobalReachMap({
           }
         }
 
-        // Pause rotation on user interaction
+        // Click to pause/resume rotation
+        map.on('click', (e) => {
+          // Only toggle if not clicking on a marker
+          if (!e.defaultPrevented) {
+            rotatingRef.current = !rotatingRef.current;
+            setIsRotating(rotatingRef.current);
+            if (rotatingRef.current) {
+              spinGlobe();
+            }
+          }
+        });
+
+        // Pause rotation on drag
         let userInteracting = false;
-        map.on('mousedown', () => { userInteracting = true; rotatingRef.current = false; });
-        map.on('dragstart', () => { userInteracting = true; rotatingRef.current = false; });
-        map.on('mouseup', () => { 
-          userInteracting = false; 
-          if (isRotating) {
-            rotatingRef.current = true;
-            spinGlobe();
-          }
+        map.on('mousedown', () => { userInteracting = true; });
+        map.on('dragstart', () => { 
+          userInteracting = true; 
+          rotatingRef.current = false;
+          setIsRotating(false);
         });
-        map.on('dragend', () => { 
-          userInteracting = false;
-          if (isRotating) {
-            rotatingRef.current = true;
-            spinGlobe();
-          }
-        });
-        map.on('touchend', () => { 
-          userInteracting = false;
-          if (isRotating) {
-            rotatingRef.current = true;
-            spinGlobe();
-          }
-        });
+        map.on('mouseup', () => { userInteracting = false; });
+        map.on('dragend', () => { userInteracting = false; });
+        map.on('touchend', () => { userInteracting = false; });
         map.on('moveend', () => { 
           if (!userInteracting && rotatingRef.current) {
             spinGlobe();
@@ -316,27 +325,38 @@ export default function GlobalReachMap({
             },
           });
 
-          // Remove cluster click handler - only handle individual points
+          // Click handler for individual points
           map.on("click", "member-points", (e) => {
+            e.originalEvent.preventDefault(); // Prevent globe rotation toggle
             const feature = e.features?.[0] as any;
             if (!feature) return;
-            const { properties, geometry } = feature;
-            const [lng, lat] = geometry.coordinates;
+            const { properties } = feature;
 
-            const html = `
-              <div style="display:flex;align-items:center;gap:12px;padding:4px;">
-                ${properties?.avatarUrl ? `<img src="${properties.avatarUrl}" alt="" style="width:40px;height:40px;border-radius:9999px;object-fit:cover;border:2px solid rgba(124,189,255,0.5)" />` : ""}
-                <div style="line-height:1.4">
-                  <div style="font-weight:600;font-size:14px;color:#fff;">${properties?.name ?? "Member"}</div>
-                  <div style="opacity:0.8;font-size:12px;color:#ccc;">${[properties?.city, properties?.country].filter(Boolean).join(", ") || "Location unknown"}</div>
-                </div>
-              </div>
-            `;
-
-            new mapboxgl.Popup({ closeOnClick: true, className: 'member-popup' })
-              .setLngLat([lng, lat])
-              .setHTML(html)
-              .addTo(map);
+            // Set selected member with full data
+            setSelectedMember({
+              id: properties?.userId ?? "",
+              name: properties?.name ?? "Member",
+              lat: properties?.latitude ?? 0,
+              lng: properties?.longitude ?? 0,
+              city: properties?.city ?? "",
+              country: properties?.country ?? "",
+              region: properties?.region ?? "",
+              latitude: properties?.latitude ?? 0,
+              longitude: properties?.longitude ?? 0,
+              avatarUrl: properties?.avatarUrl ?? "",
+              tier: properties?.tier ?? "free",
+              watchTime: properties?.watchTime ?? 0,
+              listenTime: properties?.listenTime ?? 0,
+              userId: properties?.userId ?? "",
+              totalSpend: properties?.totalSpend ?? 0,
+              purchaseCount: properties?.purchaseCount ?? 0,
+              favoriteCount: properties?.favoriteCount ?? 0,
+              lastActive: properties?.lastActive ?? "Recently",
+              joinedDate: properties?.joinedDate ?? "2025",
+              engagementScore: properties?.engagementScore ?? 0,
+              isVIP: properties?.isVIP ?? false,
+              topGenres: properties?.topGenres ? JSON.parse(properties.topGenres) : []
+            });
           });
 
           map.on("mouseenter", "member-points", () => (map.getCanvas().style.cursor = "pointer"));
@@ -507,9 +527,21 @@ export default function GlobalReachMap({
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-white/10 bg-[#1E1E1E]">
         <div ref={containerRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
         
+        {/* Selected Member Profile Card - top right */}
+        <AnimatePresence>
+          {selectedMember && (
+            <div className="absolute top-4 right-4 z-30">
+              <MemberProfileCard 
+                member={selectedMember} 
+                onClose={() => setSelectedMember(null)}
+              />
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Hover Info Panel */}
         <AnimatePresence>
-          {hoveredMember && hoverPosition && (
+          {hoveredMember && hoverPosition && !selectedMember && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -551,12 +583,27 @@ export default function GlobalReachMap({
         </AnimatePresence>
         
         {/* Pause/Play rotation control - bottom right */}
-        <button
-          onClick={toggleRotation}
-          className="absolute bottom-4 right-4 z-10 px-4 py-2 bg-black/80 border border-blue-500/40 rounded-lg text-white text-sm backdrop-blur-sm hover:bg-black/90 transition-colors font-medium"
+        <Button
+          onClick={() => {
+            rotatingRef.current = !rotatingRef.current;
+            setIsRotating(rotatingRef.current);
+          }}
+          variant="secondary"
+          size="sm"
+          className="absolute bottom-4 right-4 z-10 bg-background/80 backdrop-blur-sm border border-border"
         >
-          {isRotating ? "⏸ Pause" : "▶ Play"}
-        </button>
+          {isRotating ? (
+            <>
+              <Pause className="h-4 w-4 mr-2" />
+              Pause
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2" />
+              Play
+            </>
+          )}
+        </Button>
         
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#1E1E1E]/90 backdrop-blur-sm z-20">
