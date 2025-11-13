@@ -2,13 +2,15 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, TrendingUp, Users, Zap } from "lucide-react";
+import { MessageSquare, TrendingUp, Users, Zap, Workflow } from "lucide-react";
 import { SMSCampaignWizard } from "./SMSCampaignWizard";
 import { SMSAnalyticsDashboard } from "./SMSAnalyticsDashboard";
 import { SMSComplianceDashboard } from "./SMSComplianceDashboard";
+import { CrossChannelAutomationBuilder } from "../automation/CrossChannelAutomationBuilder";
 
 export const SMSIntelligenceHub = () => {
   const [showWizard, setShowWizard] = useState(false);
+  const [showAutomationBuilder, setShowAutomationBuilder] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -75,6 +77,7 @@ export const SMSIntelligenceHub = () => {
       <Tabs defaultValue="campaigns" className="space-y-4">
         <TabsList>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="automations">Automations</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
         </TabsList>
@@ -103,6 +106,26 @@ export const SMSIntelligenceHub = () => {
           <SMSAnalyticsDashboard />
         </TabsContent>
 
+        <TabsContent value="automations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cross-Channel Automations</CardTitle>
+              <CardDescription>
+                Create automated workflows combining email and SMS based on user behavior
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12 text-muted-foreground">
+                <Workflow className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="mb-4">No automations yet</p>
+                <Button onClick={() => setShowAutomationBuilder(true)} variant="outline">
+                  Build Your First Automation
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="compliance">
           <SMSComplianceDashboard />
         </TabsContent>
@@ -110,6 +133,10 @@ export const SMSIntelligenceHub = () => {
 
       {showWizard && (
         <SMSCampaignWizard onClose={() => setShowWizard(false)} />
+      )}
+
+      {showAutomationBuilder && (
+        <CrossChannelAutomationBuilder onClose={() => setShowAutomationBuilder(false)} />
       )}
     </div>
   );
