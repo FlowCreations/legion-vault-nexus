@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Maximize2, DollarSign, Share2, Volume2, X } from 'lucide-react';
+import { Maximize2, DollarSign, Share2, Volume2, X, Scissors } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
+import { CreateHighlightDialog } from './CreateHighlightDialog';
+import { StreamHighlights } from './StreamHighlights';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -28,6 +30,8 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
   const [hasAudioTrack, setHasAudioTrack] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
+  const [showHighlightDialog, setShowHighlightDialog] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [audioMuted, setAudioMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
@@ -217,6 +221,22 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
     setHasVideoTrack(false);
     setHasAudioTrack(false);
     setStatus('idle');
+  };
+
+  // Track current playback time
+  useEffect(() => {
+    if (!streamStartTime) return;
+
+    const interval = setInterval(() => {
+      const elapsed = (Date.now() - streamStartTime.getTime()) / 1000;
+      setCurrentTime(Math.floor(elapsed));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [streamStartTime]);
+
+  const handleCreateHighlight = () => {
+    setShowHighlightDialog(true);
   };
 
   // Re-attach tracks when expanding/collapsing
@@ -514,8 +534,21 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
                 <LiveChat eventId={eventId} onTipRequest={handleTip} />
               </div>
 
+              {/* Highlights Section */}
+              <div className="border-t border-border overflow-hidden max-h-48">
+                <StreamHighlights eventId={eventId} />
+              </div>
+
               {/* Action Buttons */}
               <div className="p-4 border-t border-border space-y-2 bg-background">
+                <Button
+                  onClick={handleCreateHighlight}
+                  variant="outline"
+                  className="w-full gap-2"
+                >
+                  <Scissors className="w-4 h-4" />
+                  Create Highlight
+                </Button>
                 <Button
                   onClick={handleTip}
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
@@ -542,6 +575,15 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
         open={showTipDialog} 
         onOpenChange={setShowTipDialog} 
         eventId={eventId}
+      />
+
+      {/* Create Highlight Dialog */}
+      <CreateHighlightDialog
+        open={showHighlightDialog}
+        onOpenChange={setShowHighlightDialog}
+        eventId={eventId}
+        currentTime={currentTime}
+        streamStartTime={streamStartTime}
       />
       
       {error && (
