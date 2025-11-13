@@ -374,20 +374,20 @@ const Merchant = memo(() => {
 
           {activeTab === "marketing" && (
             <TabsContent value="marketing">
-              <Tabs defaultValue="intelligence" className="space-y-6">
-                <TabsList className="grid grid-cols-3 w-full max-w-md">
-                  <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
+              <Tabs defaultValue="campaigns" className="space-y-6">
+                <TabsList>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                  <TabsTrigger value="email">Email</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="intelligence">
+                <TabsContent value="campaigns">
                   <Suspense fallback={<LoadingSpinner />}>
-                    <EmailIntelligenceHub />
+                    <CreateCampaigns />
                   </Suspense>
                 </TabsContent>
                 
-                <TabsContent value="campaigns">
+                <TabsContent value="email">
                   <Suspense fallback={<LoadingSpinner />}>
                     <EmailMarketing />
                   </Suspense>
