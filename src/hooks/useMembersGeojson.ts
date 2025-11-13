@@ -15,6 +15,19 @@ export interface MemberFeature {
     tier: string;
     joined_at: string;
     profile_url: string;
+    watch_time?: number;
+    listen_time?: number;
+    livestream_engagement_score?: number;
+    livestream_reaction_count?: number;
+    community_engagement_score?: number;
+    login_streak?: number;
+    total_sessions?: number;
+    last_active_at?: string;
+    total_spend?: number;
+    mrr?: number;
+    era_label?: string;
+    ptp_status?: boolean;
+    is_super_fan?: boolean;
   };
 }
 
@@ -106,9 +119,15 @@ export const useMembersGeojson = () => {
               name: newRecord.display_name || updatedFeatures[index].properties.name,
               avatar_url: newRecord.avatar_url || updatedFeatures[index].properties.avatar_url,
               location: newRecord.location || updatedFeatures[index].properties.location,
-              tier: newRecord.tier || updatedFeatures[index].properties.tier,
-            },
-          };
+            tier: newRecord.tier || updatedFeatures[index].properties.tier,
+            watch_time: newRecord.watch_time ?? updatedFeatures[index].properties.watch_time,
+            listen_time: newRecord.listen_time ?? updatedFeatures[index].properties.listen_time,
+            livestream_engagement_score: newRecord.livestream_engagement_score ?? updatedFeatures[index].properties.livestream_engagement_score,
+            community_engagement_score: newRecord.community_engagement_score ?? updatedFeatures[index].properties.community_engagement_score,
+            total_spend: newRecord.total_spend ?? updatedFeatures[index].properties.total_spend,
+            mrr: newRecord.mrr ?? updatedFeatures[index].properties.mrr,
+          },
+        };
         } else if (index !== -1 && (!newRecord.latitude || !newRecord.longitude)) {
           // Remove if coordinates were removed
           updatedFeatures.splice(index, 1);
