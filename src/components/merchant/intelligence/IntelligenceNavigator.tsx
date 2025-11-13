@@ -79,24 +79,16 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               {/* Content */}
               <div className="relative h-full flex flex-col items-center justify-center text-white">
                 {/* Icon with sparkle effect */}
-                <div className="relative mb-3">
+                <div className="relative">
                   <Icon className={cn(
-                    "w-16 h-16 transition-all duration-300",
-                    isActive && 'drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]'
+                    "w-20 h-20 transition-all duration-300",
+                    isActive && 'drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]'
                   )} />
                   
                   {isActive && (
-                    <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-300 animate-pulse" />
+                    <Sparkles className="absolute -top-3 -right-3 w-7 h-7 text-yellow-300 animate-pulse" />
                   )}
                 </div>
-                
-                {/* Title */}
-                <h3 className={cn(
-                  "font-black uppercase tracking-wider text-2xl transition-all duration-300",
-                  isActive && 'drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]'
-                )}>
-                  {button.title}
-                </h3>
                 
                 {/* Star decorations */}
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
