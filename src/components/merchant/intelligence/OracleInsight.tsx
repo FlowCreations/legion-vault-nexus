@@ -54,9 +54,9 @@ export const OracleInsight = () => {
         </div>
       </CardHeader>
       {insight && (
-        <CardContent>
-          <div className="p-6 bg-background/50 rounded-lg border border-primary/20">
-            <p className="text-lg font-medium leading-relaxed">
+        <CardContent className="animate-fade-in">
+          <div className="p-6 bg-gradient-to-br from-purple-50/50 to-pink-50/30 dark:from-purple-950/20 dark:to-pink-950/10 rounded-lg border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+            <p className="text-lg font-medium leading-relaxed text-foreground">
               {insight}
             </p>
           </div>

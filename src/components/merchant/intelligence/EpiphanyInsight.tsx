@@ -54,9 +54,9 @@ export const EpiphanyInsight = () => {
         </div>
       </CardHeader>
       {insight && (
-        <CardContent>
-          <div className="p-6 bg-background/50 rounded-lg border border-amber-500/20 animate-pulse-subtle">
-            <p className="text-lg font-medium leading-relaxed italic">
+        <CardContent className="animate-fade-in">
+          <div className="p-6 bg-gradient-to-br from-amber-50/50 to-yellow-50/30 dark:from-amber-950/20 dark:to-yellow-950/10 rounded-lg border border-amber-500/30 shadow-[0_0_30px_rgba(251,191,36,0.15)]">
+            <p className="text-lg font-medium leading-relaxed italic text-foreground">
               {insight}
             </p>
           </div>
