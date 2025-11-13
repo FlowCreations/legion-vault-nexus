@@ -52,7 +52,7 @@ export const Navigation = () => {
       .from('milestone_progress')
       .select('current_badge')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data && !error) {
       setCurrentBadge(data.current_badge);
