@@ -284,14 +284,23 @@ export const LiveChat = ({ eventId, isModerator = false, onTipRequest }: LiveCha
         </div>
       )}
       
-      <form onSubmit={sendMessage} className="p-4 border-t flex gap-2">
+      <form onSubmit={sendMessage} className="p-4 border-t flex gap-2 bg-background">
         <Input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
           maxLength={500}
+          className="min-h-[44px] text-base touch-manipulation"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="sentences"
+          enterKeyHint="send"
         />
-        <Button type="submit" size="icon">
+        <Button 
+          type="submit" 
+          size="icon"
+          className="min-h-[44px] min-w-[44px] touch-manipulation"
+        >
           <Send className="w-4 h-4" />
         </Button>
       </form>

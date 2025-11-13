@@ -3,11 +3,13 @@ import { Room, RoomEvent, Track, RemoteTrack, RemoteVideoTrack, RemoteAudioTrack
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Maximize2, DollarSign, Share2, Volume2 } from 'lucide-react';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Maximize2, DollarSign, Share2, Volume2, X } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type Props = { 
   eventId: string;
@@ -18,6 +20,7 @@ type Props = {
 };
 
 export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare, showExternalControls = false }: Props) {
+  const isMobile = useIsMobile();
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'ended' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -390,12 +393,12 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
         </div>
 
         {/* External Controls - Only show if enabled */}
-        {showExternalControls && (
-          <div className="flex gap-4 mt-4">
+        {showExternalControls && status !== 'ended' && (
+          <div className="flex gap-3 mt-4">
             <Button
               variant="secondary"
               onClick={() => setIsExpanded(true)}
-              className="flex-1 min-w-[100px] h-11"
+              className="flex-1 min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <Maximize2 className="w-4 h-4 mr-2" />
               Expand
@@ -403,7 +406,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
             <Button
               variant="secondary"
               onClick={handleTip}
-              className="flex-1 min-w-[100px] h-11"
+              className="flex-1 min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <DollarSign className="w-4 h-4 mr-2" />
               Tip
@@ -411,7 +414,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
             <Button
               variant="secondary"
               onClick={handleShare}
-              className="flex-1 min-w-[100px] h-11"
+              className="flex-1 min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share
