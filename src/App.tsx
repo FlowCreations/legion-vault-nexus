@@ -33,6 +33,7 @@ const SalesSheets = lazy(() => import("./pages/SalesSheets"));
 const Merch = lazy(() => import("./pages/Merch"));
 const Merchant = lazy(() => import("./pages/Merchant"));
 const LiveStudio = lazy(() => import("./pages/LiveStudio"));
+const VODPage = lazy(() => import("./pages/VODPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const CommunityHub = lazy(() => import("./pages/CommunityHub"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -132,6 +133,7 @@ const App = () => {
               <Route path="/merch" element={<Merch />} />
               <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
               <Route path="/live-studio" element={<LiveStudio />} />
+              <Route path="/vod" element={<VODPage />} />
               <Route path="/community-hub" element={<CommunityHub />} />
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
               <Route path="/free-ep" element={<FreeEP />} />
