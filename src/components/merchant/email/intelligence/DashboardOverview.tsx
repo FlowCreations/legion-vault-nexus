@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Mail, TrendingUp, Users, Loader2, Send, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { dedupeRequest } from "@/lib/performance";
+import { fetchWithCache } from "@/utils/cacheHelper";
 
 export const DashboardOverview = () => {
   const [loading, setLoading] = useState(true);
@@ -27,17 +29,39 @@ export const DashboardOverview = () => {
     try {
       setLoading(true);
 
-      // Load campaign stats
-      const { data: campaigns } = await supabase
-        .from("email_campaigns")
-        .select("analytics");
+      // Use deduplication and caching for both queries in parallel
+      const [campaignsData, insightsData] = await Promise.all([
+        dedupeRequest(
+          'email-campaigns-stats',
+          () => fetchWithCache('email-campaigns-stats', async () => {
+            const { data } = await supabase
+              .from("email_campaigns")
+              .select("analytics");
+            return data;
+          }),
+          2000
+        ),
+        dedupeRequest(
+          'ai-email-insights',
+          () => fetchWithCache('ai-email-insights', async () => {
+            const { data } = await supabase
+              .from("ai_email_insights")
+              .select("insight_title, insight_description, confidence_score, created_at")
+              .order("created_at", { ascending: false })
+              .limit(10);
+            return data;
+          }),
+          2000
+        )
+      ]);
 
+      // Process campaign stats
       let totalSent = 0;
       let totalOpen = 0;
       let totalClick = 0;
       let totalRev = 0;
 
-      campaigns?.forEach((c) => {
+      campaignsData?.forEach((c: any) => {
         const a = c.analytics as any;
         totalSent += a?.totalSent || 0;
         totalOpen += a?.totalOpened || 0;
@@ -51,14 +75,7 @@ export const DashboardOverview = () => {
         totalRevenue: totalRev,
       });
 
-      // Get AI recommendations from ai_email_insights table
-      const { data: insights } = await supabase
-        .from("ai_email_insights")
-        .select("insight_title, insight_description, confidence_score, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      setRecommendations(insights?.map(i => ({
+      setRecommendations(insightsData?.map((i: any) => ({
         title: i.insight_title,
         description: i.insight_description,
         confidence_score: i.confidence_score || 0,

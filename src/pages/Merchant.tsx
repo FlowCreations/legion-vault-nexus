@@ -17,6 +17,7 @@ const FanbaseStats = lazy(() => import("@/components/merchant/analytics/FanbaseS
 const Geography = lazy(() => import("@/components/merchant/Geography"));
 const Demographics = lazy(() => import("@/components/merchant/Demographics"));
 const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview"));
+const EmailIntelligenceHub = lazy(() => import("@/components/merchant/email/EmailIntelligenceHub").then(m => ({ default: m.EmailIntelligenceHub })));
 const CreateCampaigns = lazy(() => import("@/components/merchant/CreateCampaigns").then(m => ({ default: m.CreateCampaigns })));
 const PlatformOverview = lazy(() => import("@/components/merchant/analytics/PlatformOverview"));
 const PlatformDistribution = lazy(() => import("@/components/merchant/analytics/PlatformDistribution"));
@@ -37,7 +38,6 @@ const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview")
 const DistributorIntegration = lazy(() => import("@/components/merchant/DistributorIntegration").then(m => ({ default: m.DistributorIntegration })));
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
 const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
-const EmailIntelligenceHub = lazy(() => import("@/components/merchant/email/EmailIntelligenceHub").then(m => ({ default: m.EmailIntelligenceHub })));
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
 const AbandonedCartToggle = lazy(() => import("@/components/merchant/AbandonedCartToggle").then(m => ({ default: m.AbandonedCartToggle })));
 const AbandonedCartSettings = lazy(() => import("@/components/merchant/AbandonedCartSettings").then(m => ({ default: m.AbandonedCartSettings })));
