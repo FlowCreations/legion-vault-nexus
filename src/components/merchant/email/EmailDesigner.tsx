@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { EmailTemplateLibrary } from "./EmailTemplateLibrary";
 import { SubjectLineGenerator } from "./SubjectLineGenerator";
+import { ImageGallery } from "./ImageGallery";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -70,6 +71,9 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
     try {
       setUploading(true);
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -86,6 +90,27 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
       const { data: { publicUrl } } = supabase.storage
         .from('email-assets')
         .getPublicUrl(filePath);
+
+      // Get image dimensions if it's an image
+      let dimensions = { width: 0, height: 0 };
+      if (file.type.startsWith('image/')) {
+        const img = new Image();
+        dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
+          img.onload = () => resolve({ width: img.width, height: img.height });
+          img.src = URL.createObjectURL(file);
+        });
+      }
+
+      // Save metadata to database
+      await supabase.from('email_assets').insert({
+        user_id: user.id,
+        file_name: file.name,
+        file_url: publicUrl,
+        file_size: file.size,
+        file_type: file.type,
+        width: dimensions.width || null,
+        height: dimensions.height || null,
+      });
 
       // Update the element with the uploaded file URL
       const element = elements.find(el => el.id === elementId);
@@ -578,69 +603,95 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Elements */}
-        <div className="w-64 border-r bg-card p-4 overflow-y-auto">
-          <h3 className="font-semibold mb-4">Elements</h3>
-          
-          {/* Subject Line with AI Generator */}
-          <div className="mb-6 pb-4 border-b space-y-2">
-            <Label htmlFor="subject-line" className="text-xs">Subject Line</Label>
-            <div className="flex gap-2">
-              <Input
-                id="subject-line"
-                value={subjectLine}
-                onChange={(e) => setSubjectLine(e.target.value)}
-                placeholder="Enter subject line..."
-                className="text-sm"
-              />
-              <Dialog open={showSubjectGenerator} onOpenChange={setShowSubjectGenerator}>
-                <DialogTrigger asChild>
-                  <Button size="icon" variant="outline" className="shrink-0">
-                    <Sparkles className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      AI Subject Line Generator
-                    </DialogTitle>
-                    <DialogDescription>
-                      Get AI-powered subject line suggestions optimized for different personality types and past campaign performance.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <SubjectLineGenerator 
-                    onSelect={(subject) => {
-                      setSubjectLine(subject);
-                      setShowSubjectGenerator(false);
-                      toast({
-                        title: "Subject Line Updated",
-                        description: "AI-generated subject line has been applied",
-                      });
-                    }}
-                    currentSubject={subjectLine}
+        {/* Left Sidebar - Elements & Gallery */}
+        <div className="w-80 border-r bg-card flex flex-col">
+          <Tabs defaultValue="elements" className="flex-1 flex flex-col h-full">
+            <TabsList className="w-full grid grid-cols-2 m-2">
+              <TabsTrigger value="elements">Elements</TabsTrigger>
+              <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="elements" className="flex-1 p-4 overflow-y-auto">
+              {/* Subject Line with AI Generator */}
+              <div className="mb-6 pb-4 border-b space-y-2">
+                <Label htmlFor="subject-line" className="text-xs">Subject Line</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="subject-line"
+                    value={subjectLine}
+                    onChange={(e) => setSubjectLine(e.target.value)}
+                    placeholder="Enter subject line..."
+                    className="text-sm"
                   />
-                </DialogContent>
-              </Dialog>
-            </div>
-            {subjectLine && (
-              <p className="text-xs text-muted-foreground">
-                {subjectLine.length} characters
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            {availableElements.map(({ type, label, icon: Icon }) => (
-              <button
-                key={type}
-                onClick={() => addElement(type)}
-                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent hover:border-primary transition-colors"
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-sm font-medium">{label}</span>
-              </button>
-            ))}
-          </div>
+                  <Dialog open={showSubjectGenerator} onOpenChange={setShowSubjectGenerator}>
+                    <DialogTrigger asChild>
+                      <Button size="icon" variant="outline" className="shrink-0">
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                          AI Subject Line Generator
+                        </DialogTitle>
+                        <DialogDescription>
+                          Get AI-powered subject line suggestions optimized for different personality types and past campaign performance.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <SubjectLineGenerator 
+                        onSelect={(subject) => {
+                          setSubjectLine(subject);
+                          setShowSubjectGenerator(false);
+                          toast({
+                            title: "Subject Line Updated",
+                            description: "AI-generated subject line has been applied",
+                          });
+                        }}
+                        currentSubject={subjectLine}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                {subjectLine && (
+                  <p className="text-xs text-muted-foreground">
+                    {subjectLine.length} characters
+                  </p>
+                )}
+              </div>
+
+              <h3 className="font-semibold mb-3 text-sm">Add Elements</h3>
+              <div className="space-y-2">
+                {availableElements.map(({ type, label, icon: Icon }) => (
+                  <button
+                    key={type}
+                    onClick={() => addElement(type)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent hover:border-primary transition-colors"
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="gallery" className="flex-1 m-0 p-0 overflow-hidden">
+              <ImageGallery 
+                onSelectImage={(url, name) => {
+                  const imageElement: EmailElement = {
+                    id: `image-${Date.now()}`,
+                    type: 'image',
+                    content: { url, alt: name }
+                  };
+                  setElements([...elements, imageElement]);
+                  toast({
+                    title: "Image Added",
+                    description: "Image has been added to your email.",
+                  });
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Center - Preview */}
