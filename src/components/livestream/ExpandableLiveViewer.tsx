@@ -442,7 +442,11 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
 
       {/* Expanded View Dialog - YouTube Live Style */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="max-w-[98vw] w-[98vw] h-[95vh] p-0 bg-background overflow-hidden">
+        <DialogContent 
+          className="max-w-[98vw] w-[98vw] h-[95vh] p-0 bg-background overflow-hidden"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <div className="flex h-full gap-0">
             {/* Left side - Video Player (takes remaining space) */}
             <div className="flex-1 flex items-center justify-center bg-black relative min-w-0">
