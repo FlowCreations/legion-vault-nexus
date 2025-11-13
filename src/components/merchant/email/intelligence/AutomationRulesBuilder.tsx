@@ -35,9 +35,10 @@ export const AutomationRulesBuilder = () => {
     try {
       setSaving(true);
 
-      const { error } = await supabase
-        .from("automation_rules")
-        .insert([newRule]);
+      // Use the edge function to create automation rules
+      const { error } = await supabase.functions.invoke("process-automation-rules", {
+        body: { action: "create", rule: newRule }
+      });
 
       if (error) throw error;
 

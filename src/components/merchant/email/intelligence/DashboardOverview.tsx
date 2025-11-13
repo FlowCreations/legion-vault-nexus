@@ -51,15 +51,19 @@ export const DashboardOverview = () => {
         totalRevenue: totalRev,
       });
 
-      // Load AI recommendations
-      const { data: recs } = await supabase
-        .from("email_recommendations")
-        .select("*")
-        .eq("status", "pending")
-        .order("confidence_score", { ascending: false })
+      // Get AI recommendations from ai_email_insights table
+      const { data: insights } = await supabase
+        .from("ai_email_insights")
+        .select("insight_title, insight_description, confidence_score, created_at")
+        .order("created_at", { ascending: false })
         .limit(10);
 
-      setRecommendations(recs || []);
+      setRecommendations(insights?.map(i => ({
+        title: i.insight_title,
+        description: i.insight_description,
+        confidence_score: i.confidence_score || 0,
+        created_at: i.created_at
+      })) || []);
     } catch (error: any) {
       console.error("Error loading data:", error);
     } finally {
