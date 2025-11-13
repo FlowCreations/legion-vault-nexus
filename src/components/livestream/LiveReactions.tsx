@@ -134,7 +134,7 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
           variant="outline"
           onClick={() => handleReaction('heart')}
           className={cn(
-            "gap-1.5 px-3 bg-background/80 backdrop-blur-sm border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 transition-all",
+            "gap-1.5 px-3 py-2 min-h-[44px] touch-manipulation bg-background/80 backdrop-blur-sm border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 transition-all active:scale-95",
             reactionAnimation === 'heart' && "scale-110 bg-red-500/20 border-red-500/70"
           )}
         >
@@ -149,7 +149,7 @@ export const LiveReactions = ({ eventId, streamStartTime }: LiveReactionsProps) 
           variant="outline"
           onClick={() => handleReaction('clap')}
           className={cn(
-            "gap-1.5 px-3 bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all",
+            "gap-1.5 px-3 py-2 min-h-[44px] touch-manipulation bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all active:scale-95",
             reactionAnimation === 'clap' && "scale-110 bg-primary/20 border-primary/60"
           )}
         >
