@@ -8,10 +8,11 @@ import {
   ArrowLeft, Save, Send, Eye, 
   Type, Image as ImageIcon, MousePointerClick, 
   Code, Video, Timer, FormInput, ShoppingCart,
-  Monitor, Smartphone, Clock, Library
+  Monitor, Smartphone, Clock, Library, Upload, Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmailTemplateLibrary } from "./EmailTemplateLibrary";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EmailElement {
   id: string;
@@ -33,8 +34,10 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [autoSave, setAutoSave] = useState(true);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTemplateSelect = (template: any) => {
     setCampaignName(template.name);
@@ -50,6 +53,50 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
       title: "Template Applied",
       description: `${template.name} template has been loaded.`,
     });
+  };
+
+  const handleFileUpload = async (file: File, elementId: string) => {
+    try {
+      setUploading(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('email-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('email-assets')
+        .getPublicUrl(filePath);
+
+      // Update the element with the uploaded file URL
+      const element = elements.find(el => el.id === elementId);
+      if (element?.type === 'image') {
+        updateElement(elementId, { url: publicUrl });
+      } else if (element?.type === 'video') {
+        updateElement(elementId, { url: publicUrl, thumbnail: publicUrl });
+      }
+
+      toast({
+        title: "File Uploaded",
+        description: "Your file has been uploaded successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Available elements to drag
@@ -346,19 +393,47 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
         {element.type === 'image' && (
           <>
             <div>
-              <Label>Image URL</Label>
+              <Label>Upload Image</Label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file, element.id);
+                  }}
+                  disabled={uploading}
+                  className="cursor-pointer"
+                />
+                {uploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Uploading...
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label>Or Enter Image URL</Label>
               <Input
                 value={element.content.url}
                 onChange={(e) => updateElement(element.id, { url: e.target.value })}
                 placeholder="https://example.com/image.jpg"
+                disabled={uploading}
               />
             </div>
+            {element.content.url && (
+              <div className="mt-2">
+                <img src={element.content.url} alt="Preview" className="w-full rounded border" />
+              </div>
+            )}
             <div>
               <Label>Alt Text</Label>
               <Input
                 value={element.content.alt}
                 onChange={(e) => updateElement(element.id, { alt: e.target.value })}
                 placeholder="Image description"
+                disabled={uploading}
               />
             </div>
           </>
@@ -367,13 +442,40 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
         {element.type === 'video' && (
           <>
             <div>
-              <Label>Video URL</Label>
+              <Label>Upload Video</Label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file, element.id);
+                  }}
+                  disabled={uploading}
+                  className="cursor-pointer"
+                />
+                {uploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Uploading...
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label>Or Enter Video URL</Label>
               <Input
                 value={element.content.url}
                 onChange={(e) => updateElement(element.id, { url: e.target.value })}
                 placeholder="https://youtube.com/..."
+                disabled={uploading}
               />
             </div>
+            {element.content.url && (
+              <div className="mt-2 p-2 bg-muted rounded text-sm">
+                Video URL: {element.content.url}
+              </div>
+            )}
           </>
         )}
 
