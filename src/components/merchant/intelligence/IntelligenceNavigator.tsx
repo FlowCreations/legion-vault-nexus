@@ -16,33 +16,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
   const [loading, setLoading] = useState<string | null>(null);
   const handleButtonClick = async (buttonId: 'epiphany' | 'oracle' | 'catalyst') => {
     setLoading(buttonId);
-    try {
-      let functionName = '';
-      let successMessage = '';
-      
-      if (buttonId === 'epiphany') {
-        functionName = 'generate-epiphany-insight';
-        successMessage = 'Epiphany revealed';
-      } else if (buttonId === 'oracle') {
-        functionName = 'generate-oracle-insight';
-        successMessage = 'Oracle insight generated';
-      } else if (buttonId === 'catalyst') {
-        functionName = 'catalyst-deploy';
-        successMessage = 'Catalyst deployed';
-      }
-      
-      const { data, error } = await supabase.functions.invoke(functionName);
-      
-      if (error) throw error;
-      
-      toast.success(successMessage);
-      if (onSelectView) onSelectView(buttonId);
-    } catch (error: any) {
-      console.error(`Error triggering ${buttonId}:`, error);
-      toast.error(error.message || `Failed to trigger ${buttonId}`);
-    } finally {
-      setLoading(null);
-    }
+    if (onSelectView) onSelectView(buttonId);
   };
 
   const buttons = [

@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Zap, Loader2, Rocket, Users, Mail, TrendingUp } from "lucide-react";
+import { Loader2, Rocket, Users, Mail, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,25 +17,29 @@ interface DeploymentSummary {
 }
 
 export const CatalystDeploy = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<DeploymentSummary | null>(null);
 
-  const deployCatalyst = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('catalyst-deploy');
-      
-      if (error) throw error;
-      
-      setSummary(data.summary);
-      toast.success(`🚀 Catalyst deployed! ${data.summary.deploymentsScheduled} campaigns scheduled`);
-    } catch (error: any) {
-      console.error('Error deploying catalyst:', error);
-      toast.error(error.message || "Failed to deploy catalyst");
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const deployCatalyst = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('catalyst-deploy');
+        
+        if (error) throw error;
+        
+        setSummary(data.summary);
+        toast.success(`🚀 Catalyst deployed! ${data.summary.deploymentsScheduled} campaigns scheduled`);
+      } catch (error: any) {
+        console.error('Error deploying catalyst:', error);
+        toast.error(error.message || "Failed to deploy catalyst");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    deployCatalyst();
+  }, []);
 
   return (
     <Card className="border-2 bg-gradient-to-br from-blue-500/10 to-background" style={{ borderColor: '#3b82f633' }}>
