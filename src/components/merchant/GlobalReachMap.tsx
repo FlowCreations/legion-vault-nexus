@@ -32,6 +32,7 @@ export type Member = {
   engagementScore?: number;
   isVIP?: boolean;
   topGenres?: string[];
+  ptpScore?: number;
 };
 
 type Props = {
@@ -159,6 +160,11 @@ export default function GlobalReachMap({
               city: f.properties.city || (f.properties.location?.split(',')[0]?.trim()) || '',
               country: f.properties.country || '',
               avatarUrl: f.properties.avatar_url || f.properties.avatarUrl,
+              tier: f.properties.tier,
+              watchTime: f.properties.watchTime || f.properties.watch_time || 0,
+              listenTime: f.properties.listenTime || f.properties.listen_time || 0,
+              ptpScore: f.properties.ptpScore || f.properties.ptp_score || 0,
+              userId: f.properties.user_id,
             }));
           
           console.log('✅ Converted to members:', membersData.length, 'valid coordinates');
@@ -328,6 +334,9 @@ export default function GlobalReachMap({
           // Click handler for individual points
           map.on("click", "member-points", (e) => {
             e.originalEvent.preventDefault(); // Prevent globe rotation toggle
+            e.originalEvent.stopPropagation(); // Stop event propagation
+            userInteracting = true; // Stop globe rotation immediately
+            rotatingRef.current = false; // Disable rotation
             const feature = e.features?.[0] as any;
             if (!feature) return;
             const { properties } = feature;
@@ -355,7 +364,8 @@ export default function GlobalReachMap({
               joinedDate: properties?.joinedDate ?? "2025",
               engagementScore: properties?.engagementScore ?? 0,
               isVIP: properties?.isVIP ?? false,
-              topGenres: properties?.topGenres ? JSON.parse(properties.topGenres) : []
+              topGenres: properties?.topGenres ? JSON.parse(properties.topGenres) : [],
+              ptpScore: properties?.ptpScore ?? 0
             });
           });
 

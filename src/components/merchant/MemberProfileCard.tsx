@@ -38,6 +38,13 @@ export function MemberProfileCard({ member, onClose }: MemberProfileCardProps) {
     }
   };
 
+  const getPTPColor = (ptpScore?: number) => {
+    if (!ptpScore) return 'bg-gray-500';
+    if (ptpScore >= 67) return 'bg-green-500'; // Green (67-100)
+    if (ptpScore >= 34) return 'bg-yellow-500'; // Yellow (34-66)
+    return 'bg-red-500'; // Red (0-33)
+  };
+
   const getTierIcon = (tier?: string) => {
     switch (tier?.toLowerCase()) {
       case 'legionnaire': return Crown;
@@ -79,9 +86,15 @@ export function MemberProfileCard({ member, onClose }: MemberProfileCardProps) {
                   {[member.city, member.country].filter(Boolean).join(', ') || 'Location unknown'}
                 </p>
               </div>
-              <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold text-white ${getTierColor(member.tier)}`}>
-                <TierIcon className="h-3 w-3" />
-                {member.tier || 'Free'}
+              <div className="flex items-center gap-2">
+                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold text-white ${getTierColor(member.tier)}`}>
+                  <TierIcon className="h-3 w-3" />
+                  {member.tier || 'Free'}
+                </div>
+                <div 
+                  className={`w-3 h-3 rounded-full ${getPTPColor(member.ptpScore)}`}
+                  title={`PTP Score: ${member.ptpScore || 0}`}
+                />
               </div>
             </div>
           </div>

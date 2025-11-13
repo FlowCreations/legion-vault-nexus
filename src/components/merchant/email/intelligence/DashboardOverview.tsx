@@ -91,20 +91,26 @@ export const DashboardOverview = () => {
   const generateRecommendations = async () => {
     try {
       setGenerating(true);
-      const { error } = await supabase.functions.invoke("generate-realtime-recommendations");
       
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("generate-realtime-recommendations");
+      
+      if (error) {
+        console.error("Recommendations error:", error);
+        throw new Error(error.message || "Failed to generate recommendations");
+      }
 
       toast({
         title: "Recommendations Generated",
         description: "AI has analyzed your subscriber behavior and generated new recommendations.",
       });
 
-      loadData();
+      // Reload data after short delay to ensure processing is complete
+      setTimeout(() => loadData(), 1000);
     } catch (error: any) {
+      console.error("Full error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error Generating Recommendations",
+        description: error.message || "There was an error generating recommendations. Please try again.",
         variant: "destructive",
       });
     } finally {

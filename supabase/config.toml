@@ -146,3 +146,6 @@ verify_jwt = false
 
 [functions.generate-subject-lines]
 verify_jwt = true
+
+[functions.generate-realtime-recommendations]
+verify_jwt = true
