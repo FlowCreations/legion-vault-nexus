@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
+const PTPCalculationTrigger = lazy(() => import("@/components/merchant/admin/PTPCalculationTrigger").then(m => ({ default: m.PTPCalculationTrigger })));
 
 export const EmailMarketing = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -318,6 +320,9 @@ export const EmailMarketing = () => {
         </TabsList>
 
         <TabsContent value="hub" className="space-y-6">
+          <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
+            <PTPCalculationTrigger />
+          </Suspense>
           <EmailIntelligenceHub />
         </TabsContent>
 
