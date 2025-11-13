@@ -98,64 +98,28 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
                 loading !== null && loading !== button.id && "opacity-50"
               )}
             >
-              {/* Background gradient */}
-              <div className={cn(
-                "absolute inset-0 bg-gradient-to-br transition-all duration-300",
-                isActive ? button.hoverGradient : button.gradient,
-                "group-hover:" + button.hoverGradient
-              )} />
+              {/* Symbol Image - Full Fill */}
+              <img 
+                src={button.image} 
+                alt={button.id}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               
-              {/* Glossy shine effect - top arc */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-transparent" 
+              {/* Glossy shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent opacity-50" 
                    style={{ clipPath: 'ellipse(100% 35% at 50% 0%)' }} />
               
-              {/* Side shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {/* Loading overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <Loader2 className="w-20 h-20 text-white animate-spin" />
+                </div>
+              )}
               
-              {/* Content */}
-              <div className="relative h-full flex flex-col items-center justify-center text-white">
-                {/* Image or Loading */}
-                <div className="relative">
-                  {isLoading ? (
-                    <Loader2 className="w-20 h-20 animate-spin" />
-                  ) : (
-                    <>
-                      <img 
-                        src={button.image} 
-                        alt={button.id}
-                        className={cn(
-                          "w-24 h-24 object-contain transition-all duration-300",
-                          isActive && 'drop-shadow-[0_0_20px_rgba(255,215,0,0.8)]'
-                        )}
-                      />
-                      
-                      {isActive && (
-                        <Sparkles className="absolute -top-3 -right-3 w-7 h-7 text-yellow-300 animate-pulse" />
-                      )}
-                    </>
-                  )}
-                </div>
-                
-                {/* Star decorations */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className={cn(
-                      "w-1.5 h-1.5 rounded-full bg-white/60 transition-all duration-300",
-                      isActive && "bg-white animate-pulse"
-                    )} />
-                  ))}
-                </div>
-
-                {/* Bottom star decorations */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className={cn(
-                      "w-1.5 h-1.5 rounded-full bg-white/60 transition-all duration-300",
-                      isActive && "bg-white animate-pulse"
-                    )} />
-                  ))}
-                </div>
-              </div>
+              {/* Active indicator */}
+              {isActive && (
+                <Sparkles className="absolute top-4 right-4 w-8 h-8 text-yellow-300 animate-pulse drop-shadow-[0_0_8px_rgba(253,224,71,0.8)]" />
+              )}
 
               {/* Bottom shadow/glow effect */}
               <div className={cn(
