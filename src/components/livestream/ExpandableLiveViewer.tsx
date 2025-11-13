@@ -19,13 +19,22 @@ type Props = {
   onTip?: () => void;
   onShare?: () => void;
   showExternalControls?: boolean;
+  isExpanded?: boolean;
+  onExpandChange?: (expanded: boolean) => void;
 };
 
-export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare, showExternalControls = false }: Props) {
+export function ExpandableLiveViewer({ 
+  eventId, 
+  streamStartTime, 
+  onTip, 
+  onShare, 
+  showExternalControls = false,
+  isExpanded = false,
+  onExpandChange
+}: Props) {
   const isMobile = useIsMobile();
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'ended' | 'error'>('idle');
   const [error, setError] = useState<string>();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
   const [hasAudioTrack, setHasAudioTrack] = useState(false);
@@ -404,7 +413,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
           <div className="grid grid-cols-2 gap-3 mt-4">
             <Button
               variant="secondary"
-              onClick={() => setIsExpanded(true)}
+              onClick={() => onExpandChange?.(true)}
               className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <Maximize2 className="w-4 h-4 mr-2" />
@@ -441,7 +450,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
       </div>
 
       {/* Expanded View Dialog - YouTube Live Style */}
-      <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+      <Dialog open={isExpanded} onOpenChange={onExpandChange}>
         <DialogContent 
           className="max-w-[98vw] w-[98vw] h-[95vh] p-0 bg-background overflow-hidden"
           onInteractOutside={(e) => e.preventDefault()}
@@ -488,7 +497,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsExpanded(false)}
+                  onClick={() => onExpandChange?.(false)}
                   className="bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white h-9 w-9"
                   title="Minimize"
                 >
@@ -537,7 +546,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsExpanded(false)}
+                  onClick={() => onExpandChange?.(false)}
                   className="h-8 w-8 -mr-2"
                 >
                   <X className="w-4 h-4" />
