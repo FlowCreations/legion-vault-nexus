@@ -75,13 +75,17 @@ export function LiveViewerList({ eventId }: LiveViewerListProps) {
           viewers.map((viewer) => (
             <div key={viewer.participant_id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={viewer.avatar_url} />
+                <AvatarImage src={viewer.avatar_url || undefined} />
                 <AvatarFallback className="text-xs">
-                  {viewer.participant_name.slice(0, 2).toUpperCase()}
+                  {viewer.participant_name 
+                    ? viewer.participant_name.slice(0, 2).toUpperCase() 
+                    : '??'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{viewer.participant_name}</p>
+                <p className="text-sm font-medium truncate">
+                  {viewer.participant_name || 'Anonymous Viewer'}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Joined {new Date(viewer.joined_at).toLocaleTimeString()}
                 </p>
