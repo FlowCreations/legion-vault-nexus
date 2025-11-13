@@ -127,8 +127,11 @@ export const SmartCampaignWizard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-primary" />
-            AI-Powered Campaign Wizard
+            Quick Campaign Generator
           </CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            Generate AI-powered email content based on your campaign goals
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">

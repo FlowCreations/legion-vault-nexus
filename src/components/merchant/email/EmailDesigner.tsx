@@ -8,9 +8,10 @@ import {
   ArrowLeft, Save, Send, Eye, 
   Type, Image as ImageIcon, MousePointerClick, 
   Code, Video, Timer, FormInput, ShoppingCart,
-  Monitor, Smartphone, Clock
+  Monitor, Smartphone, Clock, Library
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmailTemplateLibrary } from "./EmailTemplateLibrary";
 
 interface EmailElement {
   id: string;
@@ -31,8 +32,25 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [autoSave, setAutoSave] = useState(true);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(true);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+
+  const handleTemplateSelect = (template: any) => {
+    setCampaignName(template.name);
+    // Parse template body into elements
+    const textElement: EmailElement = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      content: { text: template.body, style: { fontSize: 16, color: '#000000' } }
+    };
+    setElements([textElement]);
+    setShowTemplateLibrary(false);
+    toast({
+      title: "Template Applied",
+      description: `${template.name} template has been loaded.`,
+    });
+  };
 
   // Available elements to drag
   const availableElements = [
@@ -375,6 +393,36 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
     );
   };
 
+  if (showTemplateLibrary) {
+    return (
+      <div className="flex flex-col h-screen bg-background">
+        <div className="border-b bg-card px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <Library className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Choose a Template</h2>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto p-6">
+          <EmailTemplateLibrary onSelectTemplate={handleTemplateSelect} />
+          <div className="mt-6 pt-6 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowTemplateLibrary(false)}
+              className="w-full"
+            >
+              Start from Scratch
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Top Bar */}
@@ -397,6 +445,14 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
         />
 
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setShowTemplateLibrary(true)}
+          >
+            <Library className="h-4 w-4 mr-2" />
+            Templates
+          </Button>
           <Button variant="outline" size="sm" onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />
             Save
