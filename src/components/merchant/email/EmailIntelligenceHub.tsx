@@ -6,6 +6,7 @@ import { DashboardOverview } from "./intelligence/DashboardOverview";
 import { BehaviorAnalytics } from "./intelligence/BehaviorAnalytics";
 import { EmailMetricsReporting } from "./intelligence/EmailMetricsReporting";
 import { SmartCampaignWizard } from "./intelligence/SmartCampaignWizard";
+import { AutomationsView } from "./intelligence/AutomationsView";
 import { EmailDesigner } from "./EmailDesigner";
 
 export const EmailIntelligenceHub = () => {
@@ -49,7 +50,7 @@ export const EmailIntelligenceHub = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl bg-muted/50 p-1">
+        <TabsList className="grid grid-cols-5 w-full max-w-3xl bg-muted/50 p-1">
           <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-background">
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -57,6 +58,10 @@ export const EmailIntelligenceHub = () => {
           <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-background">
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="automations" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">Automations</span>
           </TabsTrigger>
           <TabsTrigger value="send" className="flex items-center gap-2 data-[state=active]:bg-background">
             <Send className="h-4 w-4" />
@@ -74,6 +79,10 @@ export const EmailIntelligenceHub = () => {
 
         <TabsContent value="analytics" className="space-y-6 mt-6">
           <BehaviorAnalytics />
+        </TabsContent>
+
+        <TabsContent value="automations" className="space-y-6 mt-6">
+          <AutomationsView />
         </TabsContent>
 
         <TabsContent value="send" className="space-y-6 mt-6">

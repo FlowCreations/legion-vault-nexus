@@ -16,10 +16,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all user profiles with PTP/ERA scores
+    // Get all user profiles with engagement data
     const { data: profiles, error: profilesError } = await supabase
       .from("user_profiles")
-      .select("user_id, ptp_score, era_label, total_spend, watch_time, listen_time, last_active_at")
+      .select("user_id, total_spend, watch_time, listen_time, last_active_at, tier")
       .not("user_id", "is", null);
 
     if (profilesError) throw profilesError;
@@ -27,11 +27,13 @@ serve(async (req) => {
     const recommendations = [];
 
     for (const profile of profiles || []) {
-      const ptpScore = profile.ptp_score || 0;
-      const eraLabel = profile.era_label || "Discover";
-      const totalSpend = profile.total_spend || 0;
+      // Calculate engagement score based on activity
       const watchTime = profile.watch_time || 0;
       const listenTime = profile.listen_time || 0;
+      const totalEngagement = watchTime + listenTime;
+      const ptpScore = Math.min(100, Math.floor((totalEngagement / 10) + ((profile.total_spend || 0) * 2)));
+      const tier = profile.tier || "free";
+      const totalSpend = profile.total_spend || 0;
       const lastActive = profile.last_active_at ? new Date(profile.last_active_at) : null;
       const daysSinceActive = lastActive 
         ? Math.floor((Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24))
@@ -52,13 +54,13 @@ serve(async (req) => {
           },
           confidence_score: 0.85,
           ptp_score: ptpScore,
-          era_label: eraLabel,
+          tier: tier,
           behavioral_triggers: ["high_ptp", "no_purchase"],
         });
       }
 
       // Engaged but Not Invested
-      if (eraLabel === "Engage" && (watchTime > 30 || listenTime > 30) && totalSpend === 0) {
+      if (tier === "free" && totalEngagement > 30 && totalSpend === 0) {
         recommendations.push({
           user_id: profile.user_id,
           recommendation_type: "content_suggestion",
@@ -71,7 +73,7 @@ serve(async (req) => {
           },
           confidence_score: 0.72,
           ptp_score: ptpScore,
-          era_label: eraLabel,
+          tier: tier,
           behavioral_triggers: ["high_engagement", "no_purchase"],
         });
       }
@@ -90,13 +92,13 @@ serve(async (req) => {
           },
           confidence_score: 0.65,
           ptp_score: ptpScore,
-          era_label: eraLabel,
+          tier: tier,
           behavioral_triggers: ["inactive", "previous_buyer"],
         });
       }
 
       // VIP Upgrade Opportunity
-      if (ptpScore >= 80 && eraLabel === "Invest" && totalSpend > 50) {
+      if (ptpScore >= 80 && tier !== "legionnaire" && totalSpend > 50) {
         recommendations.push({
           user_id: profile.user_id,
           recommendation_type: "vip_upgrade",
@@ -110,7 +112,7 @@ serve(async (req) => {
           },
           confidence_score: 0.90,
           ptp_score: ptpScore,
-          era_label: eraLabel,
+          tier: tier,
           behavioral_triggers: ["high_ptp", "high_spend", "loyal"],
         });
       }
@@ -137,7 +139,7 @@ serve(async (req) => {
           },
           confidence_score: 0.78,
           ptp_score: ptpScore,
-          era_label: eraLabel,
+          tier: tier,
           behavioral_triggers: ["abandoned_cart"],
         });
       }
