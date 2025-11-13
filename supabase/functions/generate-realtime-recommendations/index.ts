@@ -143,11 +143,18 @@ serve(async (req) => {
       }
     }
 
-    // Insert recommendations
+    // Insert recommendations into ai_email_insights instead
     if (recommendations.length > 0) {
+      const insights = recommendations.map(rec => ({
+        insight_title: rec.title,
+        insight_description: rec.description,
+        confidence_score: rec.confidence_score,
+        insight_data: rec.suggested_action,
+      }));
+
       const { error: insertError } = await supabase
-        .from("email_recommendations")
-        .upsert(recommendations, { onConflict: "user_id,recommendation_type" });
+        .from("ai_email_insights")
+        .insert(insights);
 
       if (insertError) throw insertError;
     }

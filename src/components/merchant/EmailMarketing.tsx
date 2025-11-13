@@ -16,6 +16,7 @@ import { AUTOMATION_TEMPLATES } from "./AutomationTemplates";
 import { Switch } from "@/components/ui/switch";
 import { TunepipeSyncButton } from "./TunepipeSyncButton";
 import { AIEmailIntelligence } from "./AIEmailIntelligence";
+import { EmailIntelligenceHub } from "./email/EmailIntelligenceHub";
 import { Heart } from "lucide-react";
 import {
   AlertDialog,
@@ -290,14 +291,18 @@ export const EmailMarketing = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="intelligence" className="flex items-center gap-2">
+          <TabsTrigger value="hub" className="flex items-center gap-2">
             <Brain className="h-4 w-4" />
-            Intelligence
+            Intelligence Hub
+          </TabsTrigger>
+          <TabsTrigger value="intelligence" className="flex items-center gap-2">
+            <Brain className="h-4 w-4 opacity-60" />
+            Legacy AI
           </TabsTrigger>
           <TabsTrigger value="lists" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -312,6 +317,10 @@ export const EmailMarketing = () => {
             Automations
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="hub" className="space-y-6">
+          <EmailIntelligenceHub />
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="flex justify-end mb-4">
