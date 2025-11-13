@@ -110,68 +110,45 @@ export const EmailMetricsReporting = () => {
         </Card>
       </div>
 
-      {/* Campaign Performance Timeline */}
+      {/* Recent Campaigns */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
-            Campaign Performance Timeline
+            Recent Campaigns
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={timelineData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="openRate"
-                stroke="hsl(var(--primary))"
-                name="Open Rate %"
-              />
-              <Line
-                type="monotone"
-                dataKey="clickRate"
-                stroke="hsl(var(--secondary))"
-                name="Click Rate %"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Campaign List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Campaigns</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {campaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div>
-                  <p className="font-semibold">{campaign.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Sent: {new Date(campaign.sent_at).toLocaleDateString()}
-                  </p>
+          {campaigns.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">No campaigns sent yet</p>
+          ) : (
+            <div className="space-y-4">
+              {campaigns.slice(0, 5).map((campaign) => (
+                <div key={campaign.id} className="flex items-center justify-between border-b pb-4 last:border-0">
+                  <div>
+                    <p className="font-medium">{campaign.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(campaign.sent_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-right text-sm">
+                    <div>
+                      <p className="font-semibold">{campaign.analytics?.totalDelivered || 0}</p>
+                      <p className="text-muted-foreground">Delivered</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{campaign.analytics?.totalOpened || 0}</p>
+                      <p className="text-muted-foreground">Opened</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{campaign.analytics?.totalClicked || 0}</p>
+                      <p className="text-muted-foreground">Clicked</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm">
-                    Open: {campaign.analytics?.openRate?.toFixed(1) || 0}%
-                  </p>
-                  <p className="text-sm">
-                    Click: {campaign.analytics?.clickRate?.toFixed(1) || 0}%
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
