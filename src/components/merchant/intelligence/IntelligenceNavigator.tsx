@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import epiphanySymbol from '@/assets/epiphany-symbol.png';
 import oracleSymbol from '@/assets/oracle-symbol.png';
 import catalystSymbol from '@/assets/catalyst-symbol.png';
+import { GenerateSymbolsButton } from './GenerateSymbolsButton';
 
 interface IntelligenceNavigatorProps {
   onSelectView?: (view: 'epiphany' | 'oracle' | 'catalyst') => void;
@@ -72,9 +73,12 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
   return (
     <div className="space-y-4 mb-8">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 bg-clip-text text-transparent">
-          Intelligence Command Center
-        </h2>
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 bg-clip-text text-transparent">
+            Intelligence Command Center
+          </h2>
+          <GenerateSymbolsButton />
+        </div>
         <p className="text-muted-foreground">
           Choose your intelligence layer to unlock insights and take action
         </p>
