@@ -143,3 +143,6 @@ verify_jwt = true
 
 [functions.check-cart-recovery-status]
 verify_jwt = false
+
+[functions.generate-subject-lines]
+verify_jwt = true
