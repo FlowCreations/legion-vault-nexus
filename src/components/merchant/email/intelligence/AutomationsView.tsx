@@ -6,8 +6,10 @@ import {
   Zap, Target, Heart, ShoppingBag
 } from "lucide-react";
 import { AUTOMATION_TEMPLATES } from "../../AutomationTemplates";
+import { useNavigate } from "react-router-dom";
 
 export function AutomationsView() {
+  const navigate = useNavigate();
   // Mock active automations - in real app, fetch from database
   const activeAutomations = AUTOMATION_TEMPLATES.map((template, index) => ({
     ...template,
@@ -133,7 +135,14 @@ export function AutomationsView() {
                       <CardDescription>{automation.description}</CardDescription>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Navigate to automations tab in EmailMarketing
+                      navigate('/merchant?tab=automations');
+                    }}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Edit
                   </Button>
