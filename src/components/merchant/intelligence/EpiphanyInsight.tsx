@@ -29,16 +29,7 @@ export const EpiphanyInsight = () => {
   return (
     <Card className="border-2 bg-gradient-to-br from-pink-500/10 to-background" style={{ borderColor: '#ec489933' }}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <span className="text-2xl">💡</span>
-              Epiphany
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Turn emotion into revelation.
-            </CardDescription>
-          </div>
+        <div className="flex items-center justify-end">
           <Button
             onClick={triggerEpiphany}
             disabled={loading}

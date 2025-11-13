@@ -29,16 +29,7 @@ export const OracleInsight = () => {
   return (
     <Card className="border-2 bg-gradient-to-br from-emerald-500/10 to-background" style={{ borderColor: '#10b98133' }}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <span className="text-2xl">✨</span>
-              Oracle
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Turn data into destiny.
-            </CardDescription>
-          </div>
+        <div className="flex items-center justify-end">
           <Button
             onClick={triggerOracle}
             disabled={loading}
