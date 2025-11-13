@@ -82,22 +82,50 @@ export const createSmartLists = async () => {
       return false;
     }
 
+    // Check existing lists first
+    const { data: existingLists } = await supabase
+      .from('email_lists')
+      .select('name')
+      .eq('user_id', user.id);
+    
+    const existingNames = new Set(existingLists?.map(l => l.name) || []);
+    
+    // Filter out templates that already exist
+    const newTemplates = SMART_LIST_TEMPLATES.filter(
+      template => !existingNames.has(template.name)
+    );
+    
+    if (newTemplates.length === 0) {
+      return true; // All lists already exist
+    }
+
+    // Insert only new lists with ON CONFLICT handling
     const { error } = await supabase
       .from('email_lists')
       .insert(
-        SMART_LIST_TEMPLATES.map(template => ({
+        newTemplates.map(template => ({
           ...template,
           member_count: 0,
           user_id: user.id
         }))
-      );
+      )
+      .select();
 
-    if (error) throw error;
-    toast.success("Smart lists created successfully");
+    if (error) {
+      // Silently handle duplicate key errors (constraint violation)
+      if (error.code === '23505') {
+        return true;
+      }
+      throw error;
+    }
+    
+    if (newTemplates.length > 0) {
+      toast.success(`Created ${newTemplates.length} smart list${newTemplates.length > 1 ? 's' : ''}`);
+    }
     return true;
   } catch (error: any) {
-    // Ignore duplicate errors
-    if (!error.message?.includes('duplicate')) {
+    console.error('Error creating smart lists:', error);
+    if (!error.message?.includes('duplicate') && error.code !== '23505') {
       toast.error("Failed to create smart lists");
     }
     return false;
