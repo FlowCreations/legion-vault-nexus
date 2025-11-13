@@ -1,17 +1,50 @@
 import { useState } from 'react';
-import { Lightbulb, Eye, Zap, Sparkles } from 'lucide-react';
+import { Lightbulb, Eye, Zap, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface IntelligenceNavigatorProps {
-  onSelectView: (view: 'epiphany' | 'oracle' | 'catalyst') => void;
-  currentView: 'epiphany' | 'oracle' | 'catalyst';
+  onSelectView?: (view: 'epiphany' | 'oracle' | 'catalyst') => void;
+  currentView?: 'epiphany' | 'oracle' | 'catalyst';
 }
 
 export function IntelligenceNavigator({ onSelectView, currentView }: IntelligenceNavigatorProps) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const handleButtonClick = async (buttonId: 'epiphany' | 'oracle' | 'catalyst') => {
+    setLoading(buttonId);
+    try {
+      let functionName = '';
+      let successMessage = '';
+      
+      if (buttonId === 'epiphany') {
+        functionName = 'generate-epiphany-insight';
+        successMessage = 'Epiphany revealed';
+      } else if (buttonId === 'oracle') {
+        functionName = 'generate-oracle-insight';
+        successMessage = 'Oracle insight generated';
+      } else if (buttonId === 'catalyst') {
+        functionName = 'catalyst-deploy';
+        successMessage = 'Catalyst deployed';
+      }
+      
+      const { data, error } = await supabase.functions.invoke(functionName);
+      
+      if (error) throw error;
+      
+      toast.success(successMessage);
+      if (onSelectView) onSelectView(buttonId);
+    } catch (error: any) {
+      console.error(`Error triggering ${buttonId}:`, error);
+      toast.error(error.message || `Failed to trigger ${buttonId}`);
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const buttons = [
     {
       id: 'epiphany' as const,
-      title: 'Epiphany',
       icon: Lightbulb,
       gradient: 'from-blue-500 via-cyan-500 to-blue-600',
       hoverGradient: 'from-blue-600 via-cyan-600 to-blue-700',
@@ -19,7 +52,6 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
     },
     {
       id: 'oracle' as const,
-      title: 'Oracle',
       icon: Eye,
       gradient: 'from-purple-600 via-pink-600 to-purple-700',
       hoverGradient: 'from-purple-700 via-pink-700 to-purple-800',
@@ -27,7 +59,6 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
     },
     {
       id: 'catalyst' as const,
-      title: 'Catalyst',
       icon: Zap,
       gradient: 'from-emerald-500 via-green-500 to-emerald-600',
       hoverGradient: 'from-emerald-600 via-green-600 to-emerald-700',
@@ -50,16 +81,19 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
         {buttons.map((button) => {
           const Icon = button.icon;
           const isActive = currentView === button.id;
+          const isLoading = loading === button.id;
           
           return (
             <button
               key={button.id}
-              onClick={() => onSelectView(button.id)}
+              onClick={() => handleButtonClick(button.id)}
+              disabled={loading !== null}
               className={cn(
                 "relative w-48 h-48 rounded-full overflow-hidden transition-all duration-300 group",
                 "focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-background",
                 isActive && `ring-4 ring-offset-2 ${button.glowColor} scale-105`,
-                !isActive && "hover:scale-102"
+                !isActive && "hover:scale-102",
+                loading !== null && loading !== button.id && "opacity-50"
               )}
             >
               {/* Background gradient */}
@@ -78,15 +112,21 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               
               {/* Content */}
               <div className="relative h-full flex flex-col items-center justify-center text-white">
-                {/* Icon with sparkle effect */}
+                {/* Icon with sparkle effect or loading */}
                 <div className="relative">
-                  <Icon className={cn(
-                    "w-20 h-20 transition-all duration-300",
-                    isActive && 'drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]'
-                  )} />
-                  
-                  {isActive && (
-                    <Sparkles className="absolute -top-3 -right-3 w-7 h-7 text-yellow-300 animate-pulse" />
+                  {isLoading ? (
+                    <Loader2 className="w-20 h-20 animate-spin" />
+                  ) : (
+                    <>
+                      <Icon className={cn(
+                        "w-20 h-20 transition-all duration-300",
+                        isActive && 'drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]'
+                      )} />
+                      
+                      {isActive && (
+                        <Sparkles className="absolute -top-3 -right-3 w-7 h-7 text-yellow-300 animate-pulse" />
+                      )}
+                    </>
                   )}
                 </div>
                 
