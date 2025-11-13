@@ -21,15 +21,15 @@ export const BehaviorAnalytics = () => {
       // Get PTP score distribution
       const { data: profiles } = await supabase
         .from("era_ptp_scores_daily")
-        .select("ptp_score, era_label")
-        .order("score_date", { ascending: false })
+        .select("ptp, era_components")
+        .order("date", { ascending: false })
         .limit(1000);
 
       if (profiles) {
         // PTP Distribution (Green/Yellow/Red zones)
-        const greenZone = profiles.filter(p => (p.ptp_score || 0) >= 67).length;
-        const yellowZone = profiles.filter(p => (p.ptp_score || 0) >= 34 && (p.ptp_score || 0) < 67).length;
-        const redZone = profiles.filter(p => (p.ptp_score || 0) < 34).length;
+        const greenZone = profiles.filter(p => (p.ptp || 0) >= 67).length;
+        const yellowZone = profiles.filter(p => (p.ptp || 0) >= 34 && (p.ptp || 0) < 67).length;
+        const redZone = profiles.filter(p => (p.ptp || 0) < 34).length;
 
         setPtpDistribution([
           { name: "Green (67-100)", value: greenZone, color: "#22c55e" },
@@ -37,9 +37,10 @@ export const BehaviorAnalytics = () => {
           { name: "Red (0-33)", value: redZone, color: "#ef4444" },
         ]);
 
-        // ERA Distribution
+        // ERA Distribution - use era score ranges
         const eraGroups = profiles.reduce((acc: any, p) => {
-          const era = p.era_label || "Discover";
+          const eraScore = p.era_components ? (p.era_components as any).era_score || 0 : 0;
+          const era = eraScore >= 75 ? "Loyal" : eraScore >= 50 ? "Invest" : eraScore >= 25 ? "Engage" : "Discover";
           acc[era] = (acc[era] || 0) + 1;
           return acc;
         }, {});
@@ -57,11 +58,29 @@ export const BehaviorAnalytics = () => {
 
       const { data: sends } = await supabase
         .from("email_sends")
-        .select("*, user_profiles(era_label)");
+        .select("*, user_profiles!inner(user_id)");
 
       if (sends && campaigns) {
+        // Get ERA scores for users
+        const userIds = sends.map((s: any) => s.user_profiles?.user_id).filter(Boolean);
+        const { data: eraScores } = await supabase
+          .from("era_ptp_scores_daily")
+          .select("member_id, era_components")
+          .in("member_id", userIds)
+          .order("date", { ascending: false });
+
+        const eraMap = new Map();
+        eraScores?.forEach(score => {
+          if (!eraMap.has(score.member_id)) {
+            const eraScore = score.era_components ? (score.era_components as any).era_score || 0 : 0;
+            const era = eraScore >= 75 ? "Loyal" : eraScore >= 50 ? "Invest" : eraScore >= 25 ? "Engage" : "Discover";
+            eraMap.set(score.member_id, era);
+          }
+        });
+
         const performanceByEra = sends.reduce((acc: any, send: any) => {
-          const era = send.user_profiles?.era_label || "Unknown";
+          const userId = send.user_profiles?.user_id;
+          const era = userId ? eraMap.get(userId) || "Unknown" : "Unknown";
           if (!acc[era]) {
             acc[era] = { era, sent: 0, opened: 0, clicked: 0 };
           }

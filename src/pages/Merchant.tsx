@@ -37,6 +37,7 @@ const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview")
 const DistributorIntegration = lazy(() => import("@/components/merchant/DistributorIntegration").then(m => ({ default: m.DistributorIntegration })));
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
 const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
+const EmailIntelligenceHub = lazy(() => import("@/components/merchant/email/EmailIntelligenceHub").then(m => ({ default: m.EmailIntelligenceHub })));
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
 const AbandonedCartToggle = lazy(() => import("@/components/merchant/AbandonedCartToggle").then(m => ({ default: m.AbandonedCartToggle })));
 const AbandonedCartSettings = lazy(() => import("@/components/merchant/AbandonedCartSettings").then(m => ({ default: m.AbandonedCartSettings })));
@@ -376,6 +377,7 @@ const Merchant = memo(() => {
               <Tabs defaultValue="campaigns" className="space-y-6">
                 <TabsList>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                  <TabsTrigger value="intelligence">Email Intelligence</TabsTrigger>
                   <TabsTrigger value="automations">Automations</TabsTrigger>
                   <TabsTrigger value="funnels">Funnels</TabsTrigger>
                   <TabsTrigger value="email">Email</TabsTrigger>
@@ -385,6 +387,12 @@ const Merchant = memo(() => {
                 <TabsContent value="campaigns">
                   <Suspense fallback={<LoadingSpinner />}>
                     <CreateCampaigns />
+                  </Suspense>
+                </TabsContent>
+                
+                <TabsContent value="intelligence">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <EmailIntelligenceHub />
                   </Suspense>
                 </TabsContent>
                 
