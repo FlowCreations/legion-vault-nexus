@@ -374,21 +374,12 @@ const Merchant = memo(() => {
 
           {activeTab === "marketing" && (
             <TabsContent value="marketing">
-              <Tabs defaultValue="campaigns" className="space-y-6">
-                <TabsList>
+              <Tabs defaultValue="intelligence" className="space-y-6">
+                <TabsList className="grid grid-cols-3 w-full max-w-md">
+                  <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-                  <TabsTrigger value="intelligence">Email Intelligence</TabsTrigger>
-                  <TabsTrigger value="automations">Automations</TabsTrigger>
-                  <TabsTrigger value="funnels">Funnels</TabsTrigger>
-                  <TabsTrigger value="email">Email</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
                 </TabsList>
-                
-                <TabsContent value="campaigns">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <CreateCampaigns />
-                  </Suspense>
-                </TabsContent>
                 
                 <TabsContent value="intelligence">
                   <Suspense fallback={<LoadingSpinner />}>
@@ -396,30 +387,12 @@ const Merchant = memo(() => {
                   </Suspense>
                 </TabsContent>
                 
-                <TabsContent value="automations">
-                  <div className="space-y-6">
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AbandonedCartAnalytics />
-                    </Suspense>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AbandonedCartToggle />
-                    </Suspense>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AbandonedCartSettings />
-                    </Suspense>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="funnels">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <BuildFunnel />
-                  </Suspense>
-                </TabsContent>
-                <TabsContent value="email">
+                <TabsContent value="campaigns">
                   <Suspense fallback={<LoadingSpinner />}>
                     <EmailMarketing />
                   </Suspense>
                 </TabsContent>
+                
                 <TabsContent value="social">
                   <Suspense fallback={<LoadingSpinner />}>
                     <SocialTracking />
