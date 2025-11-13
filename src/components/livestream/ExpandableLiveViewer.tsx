@@ -423,69 +423,59 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
         )}
       </div>
 
-      {/* Expanded View Dialog */}
+      {/* Expanded View Dialog - YouTube Live Style */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="flex w-full h-screen overflow-hidden p-0 bg-black">
-          <div className="flex flex-1 min-h-0 overflow-y-auto items-center justify-center bg-black relative">
-            <video 
-              ref={expandedVideoRef}
-              id="expanded-video"
-              autoPlay 
-              playsInline
-              muted={false}
-              controls
-              className="w-full h-auto max-h-full object-contain" 
-            />
-              
-              {/* Expanded Status & Viewer Count */}
+        <DialogContent className="max-w-[98vw] w-[98vw] h-[95vh] p-0 bg-background overflow-hidden">
+          <div className="flex h-full gap-0">
+            {/* Left side - Video Player (takes remaining space) */}
+            <div className="flex-1 flex items-center justify-center bg-black relative min-w-0">
+              <video 
+                ref={expandedVideoRef}
+                id="expanded-video"
+                autoPlay 
+                playsInline
+                muted={false}
+                controls
+                className="w-full h-full object-contain" 
+              />
+                
+              {/* Status & Viewer Count */}
               <div className="absolute top-4 left-4 flex items-center gap-3 z-10">
                 {status === 'ended' ? (
-                  <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                    <span className="inline-block h-2 w-2 rounded-full bg-gray-500" />
+                  <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                    <span className="inline-block h-2 w-2 rounded-full bg-muted" />
                     <span className="text-white text-sm font-medium">ENDED</span>
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                    <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
                       <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                       <span className="text-white text-sm font-medium">LIVE</span>
                     </div>
                     {viewerCount > 0 && (
-                      <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                      <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
                         <span className="text-white text-sm font-medium">{viewerCount} watching</span>
                       </div>
                     )}
                   </>
                 )}
               </div>
-            
-            {/* Share button in top right */}
-            <div className="absolute top-4 right-4 z-10">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleShare}
-              >
-                <Share2 className="w-4 h-4 mr-1" />
-                Share
-              </Button>
-            </div>
 
-              {/* Unmute Audio Button - Expanded View */}
+              {/* Unmute Audio Button */}
               {hasAudioTrack && audioMuted && status === 'connected' && (
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
                   <Button
                     onClick={handleUnmute}
                     size="lg"
-                    className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                   >
                     <Volume2 className="w-5 h-5 mr-2" />
                     Unmute Audio
                   </Button>
                 </div>
               )}
-              
-              {/* Stream ended message - Expanded View */}
+                
+              {/* Stream ended message */}
               {status === 'ended' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
                   <div className="text-center px-6">
@@ -496,21 +486,52 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
                 </div>
               )}
 
-              {/* Live Reactions Overlay - Expanded View */}
+              {/* Live Reactions Overlay */}
               {status === 'connected' && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
                   <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
                 </div>
               )}
-          </div>
-          
-          {/* Live Chat Sidebar */}
-          <div className="w-[380px] min-w-[380px] border-l border-white/10 overflow-y-auto bg-black">
-            <div className="px-4 py-3 border-b bg-muted/30">
-              <h3 className="font-semibold text-sm">Live Chat</h3>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <LiveChat eventId={eventId} onTipRequest={handleTip} />
+            
+            {/* Right side - Chat & Actions Sidebar */}
+            <div className="w-[380px] min-w-[380px] border-l border-border flex flex-col bg-background">
+              {/* Chat Header */}
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <h3 className="font-semibold text-sm">Live Chat</h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsExpanded(false)}
+                  className="h-8 w-8 -mr-2"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-hidden">
+                <LiveChat eventId={eventId} onTipRequest={handleTip} />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="p-4 border-t border-border space-y-2 bg-background">
+                <Button
+                  onClick={handleTip}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  Send Tip
+                </Button>
+                <Button
+                  onClick={handleShare}
+                  variant="outline"
+                  className="w-full gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
