@@ -50,10 +50,30 @@ export const LiveViewer = ({ eventId, streamUrl, streamStartTime }: LiveViewerPr
   const trackViewer = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     
+    // Get user profile for name and avatar
+    let participantName = 'Anonymous Viewer';
+    let avatarUrl = null;
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('full_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile) {
+        participantName = profile.full_name || 'Anonymous Viewer';
+        avatarUrl = profile.avatar_url;
+      }
+    }
+    
     await supabase.from('livestream_viewers').insert({
       event_id: eventId,
       user_id: user?.id,
       session_id: sessionId.current,
+      participant_id: sessionId.current,
+      participant_name: participantName,
+      avatar_url: avatarUrl,
     });
   };
 
