@@ -142,40 +142,31 @@ const Merchant = memo(() => {
   }), []);
 
   const loadAnalytics = useCallback(async () => {
-    // Load demo data immediately (it's just static data)
+    // Load demo data immediately with no async operations
     setAnalyticsData(getDemoData);
   }, [getDemoData]);
 
   const handleRefreshData = useCallback(async () => {
     setRefreshing(true);
     try {
-      // Run sync in parallel with analytics reload
-      const [viberateResult] = await Promise.allSettled([
-        supabase.functions.invoke('sync-viberate'),
-      ]);
-      
-      if (viberateResult.status === 'rejected') {
-        console.error('Viberate sync error:', viberateResult.reason);
-      }
-      
-      // Force reload analytics data
-      setAnalyticsData(getDemoData);
+      // Only sync viberate, skip heavy operations
+      await supabase.functions.invoke('sync-viberate');
       
       toast({
         title: "Data refreshed",
-        description: "Analytics and Viberate data have been synchronized",
+        description: "Your analytics data has been updated",
       });
     } catch (error) {
       console.error('Refresh error:', error);
       toast({
-        title: "Refresh failed",
-        description: "Unable to refresh data. Please try again.",
+        title: "Error refreshing data",
+        description: "There was an error updating your analytics",
         variant: "destructive",
       });
     } finally {
       setRefreshing(false);
     }
-  }, [getDemoData, toast]);
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -12,7 +12,7 @@ interface CachedData<T> {
 /**
  * Get cached data if it exists and is not expired
  */
-export function getCachedData<T>(key: string): T | null {
+export function getCachedData<T>(key: string, customDuration?: number): T | null {
   try {
     const cached = sessionStorage.getItem(CACHE_PREFIX + key);
     if (!cached) return null;
@@ -20,8 +20,10 @@ export function getCachedData<T>(key: string): T | null {
     const parsed: CachedData<T> = JSON.parse(cached);
     const now = Date.now();
 
+    const duration = customDuration || CACHE_DURATION;
+    
     // Check if cache is expired
-    if (now - parsed.timestamp > CACHE_DURATION) {
+    if (now - parsed.timestamp > duration) {
       sessionStorage.removeItem(CACHE_PREFIX + key);
       return null;
     }
@@ -75,10 +77,11 @@ export function clearCache(): void {
  */
 export async function fetchWithCache<T>(
   key: string,
-  fetchFn: () => Promise<T>
+  fetchFn: () => Promise<T>,
+  customDuration?: number
 ): Promise<T> {
-  // Try cache first
-  const cached = getCachedData<T>(key);
+  // Try cache first with custom duration if provided
+  const cached = getCachedData<T>(key, customDuration);
   if (cached !== null) {
     return cached;
   }

@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Mail, TrendingUp, Users, Loader2, Send, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { dedupeRequest } from "@/lib/performance";
 import { fetchWithCache } from "@/utils/cacheHelper";
 
 export const DashboardOverview = () => {
@@ -29,30 +28,22 @@ export const DashboardOverview = () => {
     try {
       setLoading(true);
 
-      // Use deduplication and caching for both queries in parallel
+      // Use aggressive caching - 5 min cache for dashboard
       const [campaignsData, insightsData] = await Promise.all([
-        dedupeRequest(
-          'email-campaigns-stats',
-          () => fetchWithCache('email-campaigns-stats', async () => {
-            const { data } = await supabase
-              .from("email_campaigns")
-              .select("analytics");
-            return data;
-          }),
-          2000
-        ),
-        dedupeRequest(
-          'ai-email-insights',
-          () => fetchWithCache('ai-email-insights', async () => {
-            const { data } = await supabase
-              .from("ai_email_insights")
-              .select("insight_title, insight_description, confidence_score, created_at")
-              .order("created_at", { ascending: false })
-              .limit(10);
-            return data;
-          }),
-          2000
-        )
+        fetchWithCache('email-campaigns-stats-v2', async () => {
+          const { data } = await supabase
+            .from("email_campaigns")
+            .select("analytics");
+          return data;
+        }, 5 * 60 * 1000),
+        fetchWithCache('ai-email-insights-v2', async () => {
+          const { data } = await supabase
+            .from("ai_email_insights")
+            .select("insight_title, insight_description, confidence_score, created_at")
+            .order("created_at", { ascending: false })
+            .limit(10);
+          return data;
+        }, 5 * 60 * 1000)
       ]);
 
       // Process campaign stats
