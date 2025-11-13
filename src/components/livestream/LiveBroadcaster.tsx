@@ -13,10 +13,15 @@ import { AudioDiagnostics } from './AudioDiagnostics';
 import { useMicrophoneMeter } from '@/hooks/useMicrophoneMeter';
 import { LiveViewerList } from './LiveViewerList';
 import { LiveReactionFeed } from './LiveReactionFeed';
+import { LiveChatPreview } from './LiveChatPreview';
 
-type Props = { eventId: string };
+type Props = { 
+  eventId: string;
+  isVisible?: boolean;
+  onSwitchToChat?: () => void;
+};
 
-export function LiveBroadcaster({ eventId }: Props) {
+export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: Props) {
   const [status, setStatus] = useState<'idle' | 'requesting-permission' | 'initializing-audio' | 'preview' | 'connecting' | 'live' | 'error'>('idle');
   const [error, setError] = useState<string>();
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -1058,6 +1063,10 @@ export function LiveBroadcaster({ eventId }: Props) {
     };
   }, []); // Empty dependencies = only runs on mount/unmount
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div className="space-y-6">
       {/* Device Selection */}
@@ -1143,24 +1152,26 @@ export function LiveBroadcaster({ eventId }: Props) {
       {/* Preview / Live Video */}
       {status !== 'idle' && (
         <>
-          <div className="relative">
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              muted 
-              playsInline 
-              className="w-full rounded-lg border bg-black aspect-video" 
-            />
-            <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-              <span className={`inline-block h-2 w-2 rounded-full ${
-                status === 'live' ? 'bg-red-500 animate-pulse' : 
-                status === 'connecting' ? 'bg-yellow-500' : 
-                status === 'preview' ? 'bg-blue-500' :
-                'bg-gray-500'
-              }`} />
-              <span className="text-white text-sm font-medium uppercase">{status}</span>
-            </div>
-          </div>
+          <div className={`grid gap-6 ${status === 'live' ? 'lg:grid-cols-[1fr,400px]' : ''}`}>
+            <div className="space-y-4">
+              <div className="relative">
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                  className="w-full rounded-lg border bg-black aspect-video" 
+                />
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                  <span className={`inline-block h-2 w-2 rounded-full ${
+                    status === 'live' ? 'bg-red-500 animate-pulse' : 
+                    status === 'connecting' ? 'bg-yellow-500' : 
+                    status === 'preview' ? 'bg-blue-500' :
+                    'bg-gray-500'
+                  }`} />
+                  <span className="text-white text-sm font-medium uppercase">{status}</span>
+                </div>
+              </div>
 
 
           {/* Professional Audio Mixer - only show when audio is ready */}
@@ -1264,6 +1275,22 @@ export function LiveBroadcaster({ eventId }: Props) {
                 </Button>
               </>
             ) : null}
+          </div>
+            </div>
+            
+            {/* Live Interactions Panel - Only shown when live */}
+            {status === 'live' && (
+              <div className="space-y-4">
+                <div className="grid gap-4">
+                  <LiveViewerList eventId={eventId} />
+                  <LiveReactionFeed eventId={eventId} />
+                  <LiveChatPreview 
+                    eventId={eventId} 
+                    onViewFullChat={onSwitchToChat}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

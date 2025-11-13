@@ -28,6 +28,7 @@ export const LiveStreamManager = () => {
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState("broadcast");
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
@@ -196,25 +197,32 @@ export const LiveStreamManager = () => {
       </Card>
 
       {selectedEvent && (
-        <Tabs defaultValue="broadcast">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-            <TabsTrigger value="chat">Chat Monitor</TabsTrigger>
-            <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
-          </TabsList>
+        <>
+          {/* LiveBroadcaster stays mounted to maintain connection */}
+          <div className={activeTab === "broadcast" ? "block" : "hidden"}>
+            <LiveBroadcaster 
+              eventId={selectedEvent} 
+              isVisible={activeTab === "broadcast"}
+              onSwitchToChat={() => setActiveTab("chat")}
+            />
+          </div>
 
-          <TabsContent value="broadcast" className="mt-6">
-            <LiveBroadcaster eventId={selectedEvent} />
-          </TabsContent>
-
-          <TabsContent value="chat" className="mt-6">
-            <LiveChat eventId={selectedEvent} isModerator={true} />
-          </TabsContent>
-
-          <TabsContent value="chatbot" className="mt-6">
-            <ChatbotManager />
-          </TabsContent>
-        </Tabs>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
+              <TabsTrigger value="chat">Chat Monitor</TabsTrigger>
+              <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chat" className="mt-6">
+              <LiveChat eventId={selectedEvent} isModerator={true} />
+            </TabsContent>
+            
+            <TabsContent value="chatbot" className="mt-6">
+              <ChatbotManager />
+            </TabsContent>
+          </Tabs>
+        </>
       )}
     </div>
   );
