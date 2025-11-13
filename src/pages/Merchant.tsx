@@ -18,6 +18,7 @@ const Geography = lazy(() => import("@/components/merchant/Geography"));
 const Demographics = lazy(() => import("@/components/merchant/Demographics"));
 const EarningsOverview = lazy(() => import("@/components/merchant/EarningsOverview"));
 const EmailIntelligenceHub = lazy(() => import("@/components/merchant/email/EmailIntelligenceHub").then(m => ({ default: m.EmailIntelligenceHub })));
+const SMSIntelligenceHub = lazy(() => import("@/components/merchant/sms/SMSIntelligenceHub").then(m => ({ default: m.SMSIntelligenceHub })));
 const CreateCampaigns = lazy(() => import("@/components/merchant/CreateCampaigns").then(m => ({ default: m.CreateCampaigns })));
 const PlatformOverview = lazy(() => import("@/components/merchant/analytics/PlatformOverview"));
 const PlatformDistribution = lazy(() => import("@/components/merchant/analytics/PlatformDistribution"));
@@ -379,6 +380,7 @@ const Merchant = memo(() => {
                 <TabsList>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
                   <TabsTrigger value="email">Email</TabsTrigger>
+                  <TabsTrigger value="sms">SMS</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
                 </TabsList>
                 
@@ -391,6 +393,12 @@ const Merchant = memo(() => {
                 <TabsContent value="email">
                   <Suspense fallback={<LoadingSpinner />}>
                     <EmailMarketing />
+                  </Suspense>
+                </TabsContent>
+                
+                <TabsContent value="sms">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <SMSIntelligenceHub />
                   </Suspense>
                 </TabsContent>
                 
