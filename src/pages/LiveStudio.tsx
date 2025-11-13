@@ -103,15 +103,14 @@ export default function LiveStudio() {
             toast.success("🔴 Stream is now LIVE!", {
               description: "Click 'Join Stream' to watch now!"
             });
-          } else if (eventData.status === 'scheduled' || eventData.status === 'ended') {
-            console.log('[LiveStudio] Stream ended or scheduled, clearing live event');
+          } else if (eventData.status === 'ended') {
+            console.log('[LiveStudio] Stream ended, clearing live event');
             setLiveEventId(null);
             setStreamStartTime(undefined);
-            if (eventData.status === 'ended') {
-              toast.info("Stream has ended", {
-                description: "Thanks for watching!"
-              });
-            }
+            setIsViewingLive(false);
+            toast.info("Stream has ended", {
+              description: "Thanks for watching!"
+            });
           }
         } else if (payload.eventType === 'DELETE') {
           console.log('[LiveStudio] Event deleted, clearing live event ID');

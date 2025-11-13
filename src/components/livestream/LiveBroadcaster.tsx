@@ -11,6 +11,8 @@ import { AudioMixer } from './AudioMixer';
 import { MicrophoneMeter } from './MicrophoneMeter';
 import { AudioDiagnostics } from './AudioDiagnostics';
 import { useMicrophoneMeter } from '@/hooks/useMicrophoneMeter';
+import { LiveViewerList } from './LiveViewerList';
+import { LiveReactionFeed } from './LiveReactionFeed';
 
 type Props = { eventId: string };
 
