@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2 } from 'lucide-react';
+import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2, Minimize2 } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
@@ -460,26 +460,40 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
                 className="w-full h-full object-contain" 
               />
                 
-              {/* Status & Viewer Count */}
-              <div className="absolute top-4 left-4 flex items-center gap-3 z-10">
-                {status === 'ended' ? (
-                  <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                    <span className="inline-block h-2 w-2 rounded-full bg-muted" />
-                    <span className="text-white text-sm font-medium">ENDED</span>
-                  </div>
-                ) : (
-                  <>
+              {/* Top Controls Bar */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+                {/* Left side - Status & Viewer Count */}
+                <div className="flex items-center gap-3">
+                  {status === 'ended' ? (
                     <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-white text-sm font-medium">LIVE</span>
+                      <span className="inline-block h-2 w-2 rounded-full bg-muted" />
+                      <span className="text-white text-sm font-medium">ENDED</span>
                     </div>
-                    {viewerCount > 0 && (
+                  ) : (
+                    <>
                       <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                        <span className="text-white text-sm font-medium">{viewerCount} watching</span>
+                        <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                        <span className="text-white text-sm font-medium">LIVE</span>
                       </div>
-                    )}
-                  </>
-                )}
+                      {viewerCount > 0 && (
+                        <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                          <span className="text-white text-sm font-medium">{viewerCount} watching</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                
+                {/* Right side - Minimize Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsExpanded(false)}
+                  className="bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white h-9 w-9"
+                  title="Minimize"
+                >
+                  <Minimize2 className="w-5 h-5" />
+                </Button>
               </div>
 
               {/* Unmute Audio Button */}
