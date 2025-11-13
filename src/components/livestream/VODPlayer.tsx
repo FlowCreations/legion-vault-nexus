@@ -57,14 +57,14 @@ export function VODPlayer({ vodId, onClose }: VODPlayerProps) {
 
   const loadVOD = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('livestream_vods')
         .select('*')
         .eq('id', vodId)
         .single();
 
       if (error) throw error;
-      setVod(data);
+      setVod((data as unknown) as VOD);
     } catch (error) {
       console.error('Error loading VOD:', error);
       toast.error('Failed to load video');
@@ -76,23 +76,23 @@ export function VODPlayer({ vodId, onClose }: VODPlayerProps) {
   const trackView = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    await supabase.from('vod_views').insert({
+    await (supabase as any).from('vod_views').insert({
       vod_id: vodId,
       user_id: user?.id,
       session_id: sessionId.current
     });
 
     // Increment view count
-    const { data: currentVod } = await supabase
+    const { data: currentVod } = await (supabase as any)
       .from('livestream_vods')
       .select('view_count')
       .eq('id', vodId)
       .single();
 
     if (currentVod) {
-      await supabase
+      await (supabase as any)
         .from('livestream_vods')
-        .update({ view_count: (currentVod.view_count || 0) + 1 })
+        .update({ view_count: ((currentVod as any).view_count || 0) + 1 })
         .eq('id', vodId);
     }
   };
@@ -100,7 +100,7 @@ export function VODPlayer({ vodId, onClose }: VODPlayerProps) {
   const updateWatchProgress = async (duration: number) => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    await supabase
+    await (supabase as any)
       .from('vod_views')
       .update({ 
         watch_duration_seconds: duration,

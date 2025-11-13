@@ -50,7 +50,7 @@ export function CreateHighlightDialog({
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('livestream_highlights')
         .insert({
           event_id: eventId,
