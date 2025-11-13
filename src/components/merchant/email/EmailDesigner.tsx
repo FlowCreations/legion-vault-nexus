@@ -8,11 +8,20 @@ import {
   ArrowLeft, Save, Send, Eye, 
   Type, Image as ImageIcon, MousePointerClick, 
   Code, Video, Timer, FormInput, ShoppingCart,
-  Monitor, Smartphone, Clock, Library, Upload, Loader2
+  Monitor, Smartphone, Clock, Library, Upload, Loader2, Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmailTemplateLibrary } from "./EmailTemplateLibrary";
+import { SubjectLineGenerator } from "./SubjectLineGenerator";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface EmailElement {
   id: string;
@@ -29,12 +38,14 @@ interface EmailDesignerProps {
 export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesignerProps) {
   const { toast } = useToast();
   const [campaignName, setCampaignName] = useState("Untitled campaign name");
+  const [subjectLine, setSubjectLine] = useState("");
   const [elements, setElements] = useState<EmailElement[]>([]);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [autoSave, setAutoSave] = useState(true);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showSubjectGenerator, setShowSubjectGenerator] = useState(false);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -570,6 +581,54 @@ export function EmailDesigner({ onBack, onSave, onSendOrSchedule }: EmailDesigne
         {/* Left Sidebar - Elements */}
         <div className="w-64 border-r bg-card p-4 overflow-y-auto">
           <h3 className="font-semibold mb-4">Elements</h3>
+          
+          {/* Subject Line with AI Generator */}
+          <div className="mb-6 pb-4 border-b space-y-2">
+            <Label htmlFor="subject-line" className="text-xs">Subject Line</Label>
+            <div className="flex gap-2">
+              <Input
+                id="subject-line"
+                value={subjectLine}
+                onChange={(e) => setSubjectLine(e.target.value)}
+                placeholder="Enter subject line..."
+                className="text-sm"
+              />
+              <Dialog open={showSubjectGenerator} onOpenChange={setShowSubjectGenerator}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="outline" className="shrink-0">
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      AI Subject Line Generator
+                    </DialogTitle>
+                    <DialogDescription>
+                      Get AI-powered subject line suggestions optimized for different personality types and past campaign performance.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <SubjectLineGenerator 
+                    onSelect={(subject) => {
+                      setSubjectLine(subject);
+                      setShowSubjectGenerator(false);
+                      toast({
+                        title: "Subject Line Updated",
+                        description: "AI-generated subject line has been applied",
+                      });
+                    }}
+                    currentSubject={subjectLine}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+            {subjectLine && (
+              <p className="text-xs text-muted-foreground">
+                {subjectLine.length} characters
+              </p>
+            )}
+          </div>
           <div className="space-y-2">
             {availableElements.map(({ type, label, icon: Icon }) => (
               <button
