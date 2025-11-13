@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { Lightbulb, Eye, Zap, Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import epiphanySymbol from '@/assets/epiphany-symbol.png';
+import oracleSymbol from '@/assets/oracle-symbol.png';
+import catalystSymbol from '@/assets/catalyst-symbol.png';
 
 interface IntelligenceNavigatorProps {
   onSelectView?: (view: 'epiphany' | 'oracle' | 'catalyst') => void;
@@ -45,21 +48,21 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
   const buttons = [
     {
       id: 'epiphany' as const,
-      icon: Lightbulb,
+      image: epiphanySymbol,
       gradient: 'from-blue-500 via-cyan-500 to-blue-600',
       hoverGradient: 'from-blue-600 via-cyan-600 to-blue-700',
       glowColor: 'shadow-blue-500/50',
     },
     {
       id: 'oracle' as const,
-      icon: Eye,
+      image: oracleSymbol,
       gradient: 'from-purple-600 via-pink-600 to-purple-700',
       hoverGradient: 'from-purple-700 via-pink-700 to-purple-800',
       glowColor: 'shadow-purple-500/60',
     },
     {
       id: 'catalyst' as const,
-      icon: Zap,
+      image: catalystSymbol,
       gradient: 'from-emerald-500 via-green-500 to-emerald-600',
       hoverGradient: 'from-emerald-600 via-green-600 to-emerald-700',
       glowColor: 'shadow-emerald-500/70',
@@ -69,7 +72,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
   return (
     <div className="space-y-4 mb-8">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 via-pink-500 to-emerald-500 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 bg-clip-text text-transparent">
           Intelligence Command Center
         </h2>
         <p className="text-muted-foreground">
@@ -79,7 +82,6 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
 
       <div className="flex items-center justify-center gap-8">
         {buttons.map((button) => {
-          const Icon = button.icon;
           const isActive = currentView === button.id;
           const isLoading = loading === button.id;
           
@@ -112,16 +114,20 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               
               {/* Content */}
               <div className="relative h-full flex flex-col items-center justify-center text-white">
-                {/* Icon with sparkle effect or loading */}
+                {/* Image or Loading */}
                 <div className="relative">
                   {isLoading ? (
                     <Loader2 className="w-20 h-20 animate-spin" />
                   ) : (
                     <>
-                      <Icon className={cn(
-                        "w-20 h-20 transition-all duration-300",
-                        isActive && 'drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]'
-                      )} />
+                      <img 
+                        src={button.image} 
+                        alt={button.id}
+                        className={cn(
+                          "w-24 h-24 object-contain transition-all duration-300",
+                          isActive && 'drop-shadow-[0_0_20px_rgba(255,215,0,0.8)]'
+                        )}
+                      />
                       
                       {isActive && (
                         <Sparkles className="absolute -top-3 -right-3 w-7 h-7 text-yellow-300 animate-pulse" />
