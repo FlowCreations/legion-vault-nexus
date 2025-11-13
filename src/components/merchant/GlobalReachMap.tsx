@@ -14,7 +14,14 @@ export type Member = {
   lng: number;
   city?: string;
   country?: string;
+  region?: string;
   avatarUrl?: string;
+  tier?: string;
+  watchTime?: number;
+  listenTime?: number;
+  userId?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 type Props = {
@@ -293,71 +300,24 @@ export default function GlobalReachMap({
           map.addSource("members", {
             type: "geojson",
             data: { type: "FeatureCollection", features: [] },
-            cluster: true,
-            clusterRadius: 60,
-            clusterMaxZoom: 14,
+            cluster: false, // Disable clustering to show individual members
           });
 
+          // Remove cluster layers - show only individual points
           map.addLayer({
-            id: "clusters",
+            id: "member-points",
             type: "circle",
             source: "members",
-            filter: ["has", "point_count"],
             paint: {
-              "circle-color": [
-                "step", ["get", "point_count"],
-                "rgba(124, 189, 255, 0.6)", 10,
-                "rgba(124, 189, 255, 0.7)", 50,
-                "rgba(124, 189, 255, 0.8)", 100,
-                "rgba(124, 189, 255, 0.9)"
-              ],
-              "circle-radius": [
-                "step", ["get", "point_count"],
-                12, 10, 16, 50, 24, 100, 32
-              ],
-              "circle-stroke-color": "rgba(255, 255, 255, 0.8)",
-              "circle-stroke-width": 2,
-            },
-          });
-
-          map.addLayer({
-            id: "cluster-count",
-            type: "symbol",
-            source: "members",
-            filter: ["has", "point_count"],
-            layout: {
-              "text-field": ["get", "point_count_abbreviated"],
-              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
-              "text-size": 12,
-            },
-            paint: { "text-color": "#ffffff" },
-          });
-
-          map.addLayer({
-            id: "unclustered-point",
-            type: "circle",
-            source: "members",
-            filter: ["!", ["has", "point_count"]],
-            paint: {
-              "circle-color": "rgba(124, 189, 255, 0.8)",
+              "circle-color": "rgba(124, 189, 255, 0.9)",
               "circle-radius": 8,
               "circle-stroke-width": 2,
               "circle-stroke-color": "#fff",
             },
           });
 
-          map.on("click", "clusters", (e) => {
-            const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-            const clusterId = features[0].properties?.cluster_id;
-            const source = map.getSource("members") as any;
-            source?.getClusterExpansionZoom?.(clusterId, (err: any, zoom: number) => {
-              if (err) return;
-              const [lng, lat] = (features[0].geometry as any).coordinates;
-              map.easeTo({ center: [lng, lat], zoom });
-            });
-          });
-
-          map.on("click", "unclustered-point", (e) => {
+          // Remove cluster click handler - only handle individual points
+          map.on("click", "member-points", (e) => {
             const feature = e.features?.[0] as any;
             if (!feature) return;
             const { properties, geometry } = feature;
@@ -379,38 +339,41 @@ export default function GlobalReachMap({
               .addTo(map);
           });
 
-          map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
-          map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-          map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
-          map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
+          map.on("mouseenter", "member-points", () => (map.getCanvas().style.cursor = "pointer"));
+          map.on("mouseleave", "member-points", () => (map.getCanvas().style.cursor = ""));
 
-          // Hover panel for unclustered points
-          map.on("mousemove", "unclustered-point", (e) => {
+          // Hover panel for member points
+          map.on("mousemove", "member-points", (e) => {
             if (e.features && e.features.length > 0) {
               const feature = e.features[0] as any;
-              const { properties } = feature;
+              const { properties, geometry } = feature;
+              const [lng, lat] = geometry.coordinates;
               
               setHoveredMember({
-                id: properties.id || '',
-                name: properties.name || 'Member',
-                lat: properties.lat || 0,
-                lng: properties.lng || 0,
-                city: properties.city,
-                country: properties.country,
-                avatarUrl: properties.avatarUrl,
+                id: properties?.userId ?? "",
+                name: properties?.name ?? "Member",
+                lat: lat ?? 0,
+                lng: lng ?? 0,
+                city: properties?.city ?? "",
+                country: properties?.country ?? "",
+                region: properties?.region ?? "",
+                latitude: lat ?? 0,
+                longitude: lng ?? 0,
+                avatarUrl: properties?.avatarUrl ?? "",
+                tier: properties?.tier ?? "free",
+                watchTime: properties?.watchTime ?? 0,
+                listenTime: properties?.listenTime ?? 0,
+                userId: properties?.userId ?? ""
               });
-              
-              // Get pixel position relative to the container
-              const canvas = map.getCanvas();
-              const rect = canvas.getBoundingClientRect();
+
               setHoverPosition({
                 x: e.point.x,
-                y: e.point.y,
+                y: e.point.y
               });
             }
           });
 
-          map.on("mouseleave", "unclustered-point", () => {
+          map.on("mouseleave", "member-points", () => {
             setHoveredMember(null);
             setHoverPosition(null);
           });

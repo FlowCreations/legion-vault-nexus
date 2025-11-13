@@ -1,11 +1,31 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BrainCircuit, Target, Sparkles, BarChart3, Send, Zap } from "lucide-react";
+import { BrainCircuit, Target, Sparkles, BarChart3, Send, Zap, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DashboardOverview } from "./intelligence/DashboardOverview";
 import { BehaviorAnalytics } from "./intelligence/BehaviorAnalytics";
 import { EmailMetricsReporting } from "./intelligence/EmailMetricsReporting";
 import { SmartCampaignWizard } from "./intelligence/SmartCampaignWizard";
+import { EmailDesigner } from "./EmailDesigner";
 
 export const EmailIntelligenceHub = () => {
+  const [showDesigner, setShowDesigner] = useState(false);
+
+  if (showDesigner) {
+    return (
+      <EmailDesigner
+        onBack={() => setShowDesigner(false)}
+        onSave={(design) => {
+          console.log("Saved design:", design);
+          setShowDesigner(false);
+        }}
+        onSendOrSchedule={(design) => {
+          console.log("Send/Schedule:", design);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -22,6 +42,10 @@ export const EmailIntelligenceHub = () => {
             </p>
           </div>
         </div>
+        <Button onClick={() => setShowDesigner(true)} size="lg">
+          <Mail className="h-4 w-4 mr-2" />
+          Create Campaign
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">

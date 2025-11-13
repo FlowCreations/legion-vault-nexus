@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { trackSongListen, trackSongLike, isFromEmailCampaign } from '@/utils/conversionTracking';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Track {
   id: string;
@@ -87,14 +89,26 @@ export const useMusicPlayer = create<MusicPlayerState>((set, get) => {
     
     setMinimized: (isMinimized) => set({ isMinimized }),
     
-    toggleLike: (trackId: string) => {
+    toggleLike: async (trackId: string) => {
       set((state) => {
         const newLikedTracks = new Set(state.likedTracks);
-        if (newLikedTracks.has(trackId)) {
+        const wasLiked = newLikedTracks.has(trackId);
+        
+        if (wasLiked) {
           newLikedTracks.delete(trackId);
         } else {
           newLikedTracks.add(trackId);
+          
+          // Track conversion if from email campaign
+          if (isFromEmailCampaign()) {
+            supabase.auth.getUser().then(({ data }) => {
+              if (data.user) {
+                trackSongLike(data.user.id, trackId);
+              }
+            });
+          }
         }
+        
         // Save to localStorage
         localStorage.setItem('likedTracks', JSON.stringify(Array.from(newLikedTracks)));
         return { likedTracks: newLikedTracks };
