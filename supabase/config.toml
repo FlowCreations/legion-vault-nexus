@@ -149,3 +149,6 @@ verify_jwt = true
 
 [functions.generate-realtime-recommendations]
 verify_jwt = true
+
+[functions.generate-intelligence-symbols]
+verify_jwt = true
