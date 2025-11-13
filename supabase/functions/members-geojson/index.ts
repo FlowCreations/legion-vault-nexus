@@ -31,7 +31,7 @@ serve(async (req) => {
         user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at,
         watch_time, listen_time, livestream_engagement_score, livestream_reaction_count,
         community_engagement_score, login_streak, total_sessions, last_active_at,
-        total_spend, mrr, era_label, ptp_status, is_super_fan
+        total_spend, mrr, era_label, ptp_status, ptp_current, is_super_fan
       `)
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
@@ -72,6 +72,8 @@ serve(async (req) => {
           mrr: profile.mrr || 0,
           era_label: profile.era_label || '',
           ptp_status: profile.ptp_status || false,
+          ptp_current: profile.ptp_current ?? 50, // Default to 50 (mid-range) if null
+          ptpScore: profile.ptp_current ?? 50, // Default to 50 for map coloring
           is_super_fan: profile.is_super_fan || false,
         }
       }))

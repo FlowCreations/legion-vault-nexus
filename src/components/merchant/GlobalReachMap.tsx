@@ -163,7 +163,7 @@ export default function GlobalReachMap({
               tier: f.properties.tier,
               watchTime: f.properties.watchTime || f.properties.watch_time || 0,
               listenTime: f.properties.listenTime || f.properties.listen_time || 0,
-              ptpScore: f.properties.ptpScore || f.properties.ptp_score || 0,
+              ptpScore: f.properties.ptpScore || f.properties.ptp_score || f.properties.ptp_current || 0,
               userId: f.properties.user_id,
             }));
           
@@ -318,16 +318,22 @@ export default function GlobalReachMap({
             cluster: false, // Disable clustering to show individual members
           });
 
-          // Remove cluster layers - show only individual points
+          // Remove cluster layers - show only individual points with PTP color coding
           map.addLayer({
             id: "member-points",
             type: "circle",
             source: "members",
             paint: {
-              "circle-color": "rgba(124, 189, 255, 0.9)",
+              "circle-color": [
+                "case",
+                [">=", ["get", "ptpScore"], 67], "#10b981", // Green for high PTP (67-100)
+                [">=", ["get", "ptpScore"], 34], "#f59e0b", // Yellow for medium PTP (34-66)
+                "#ef4444" // Red for low PTP (0-33)
+              ],
               "circle-radius": 8,
               "circle-stroke-width": 2,
               "circle-stroke-color": "#fff",
+              "circle-opacity": 0.9,
             },
           });
 
