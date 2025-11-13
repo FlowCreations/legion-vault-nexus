@@ -332,10 +332,19 @@ export function CampaignBuilder({ onClose, onSave }: CampaignBuilderProps) {
             </div>
 
             {listPreview && (
-              <div className="p-4 bg-muted rounded-lg">
-                <h3 className="font-medium mb-2">{listPreview.name}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{listPreview.description}</p>
-                <Badge>{listPreview.member_count} total members</Badge>
+              <div className="p-4 bg-muted rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">{listPreview.name}</h3>
+                  {listPreview.filter_rules?.smart && (
+                    <Badge variant="secondary" className="text-xs">✨ Smart List</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">{listPreview.description}</p>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{listPreview.member_count || 0} members</Badge>
+                  </div>
+                </div>
               </div>
             )}
           </div>
