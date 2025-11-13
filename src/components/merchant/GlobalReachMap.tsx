@@ -326,8 +326,8 @@ export default function GlobalReachMap({
             paint: {
               "circle-color": [
                 "case",
-                [">=", ["get", "ptpScore"], 67], "#10b981", // Green for high PTP (67-100)
-                [">=", ["get", "ptpScore"], 34], "#f59e0b", // Yellow for medium PTP (34-66)
+                [">=", ["get", "ptpScore"], 67], "#22c55e", // Green for high PTP (67-100)
+                [">=", ["get", "ptpScore"], 34], "#eab308", // Yellow for medium PTP (34-66)
                 "#ef4444" // Red for low PTP (0-33)
               ],
               "circle-radius": 8,
