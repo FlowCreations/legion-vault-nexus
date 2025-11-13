@@ -542,14 +542,6 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
               {/* Action Buttons */}
               <div className="p-4 border-t border-border space-y-2 bg-background">
                 <Button
-                  onClick={handleCreateHighlight}
-                  variant="outline"
-                  className="w-full gap-2"
-                >
-                  <Scissors className="w-4 h-4" />
-                  Create Highlight
-                </Button>
-                <Button
                   onClick={handleTip}
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
                 >
