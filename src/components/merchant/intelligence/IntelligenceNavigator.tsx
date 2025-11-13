@@ -1,8 +1,4 @@
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import epiphanySymbol from '@/assets/epiphany-symbol.png';
 import oracleSymbol from '@/assets/oracle-symbol.png';
 import catalystSymbol from '@/assets/catalyst-symbol.png';
@@ -13,36 +9,8 @@ interface IntelligenceNavigatorProps {
 }
 
 export function IntelligenceNavigator({ onSelectView, currentView }: IntelligenceNavigatorProps) {
-  const [loading, setLoading] = useState<string | null>(null);
-  const handleButtonClick = async (buttonId: 'epiphany' | 'oracle' | 'catalyst') => {
-    setLoading(buttonId);
-    try {
-      let functionName = '';
-      let successMessage = '';
-      
-      if (buttonId === 'epiphany') {
-        functionName = 'generate-epiphany-insight';
-        successMessage = 'Epiphany revealed';
-      } else if (buttonId === 'oracle') {
-        functionName = 'generate-oracle-insight';
-        successMessage = 'Oracle insight generated';
-      } else if (buttonId === 'catalyst') {
-        functionName = 'catalyst-deploy';
-        successMessage = 'Catalyst deployed';
-      }
-      
-      const { data, error } = await supabase.functions.invoke(functionName);
-      
-      if (error) throw error;
-      
-      toast.success(successMessage);
-      if (onSelectView) onSelectView(buttonId);
-    } catch (error: any) {
-      console.error(`Error triggering ${buttonId}:`, error);
-      toast.error(error.message || `Failed to trigger ${buttonId}`);
-    } finally {
-      setLoading(null);
-    }
+  const handleButtonClick = (buttonId: 'epiphany' | 'oracle' | 'catalyst') => {
+    if (onSelectView) onSelectView(buttonId);
   };
 
   const buttons = [
@@ -67,19 +35,16 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
     <div className="flex items-center justify-center gap-12 py-12">
       {buttons.map((button) => {
         const isActive = currentView === button.id;
-        const isLoading = loading === button.id;
         
         return (
           <button
             key={button.id}
             onClick={() => handleButtonClick(button.id)}
-            disabled={loading !== null}
             className={cn(
               "group relative w-56 h-56 rounded-full transition-all duration-500",
               "focus:outline-none",
               isActive && "scale-105",
-              !isActive && "hover:scale-103",
-              loading !== null && loading !== button.id && "opacity-40"
+              !isActive && "hover:scale-103"
             )}
           >
             {/* Outer glow ring */}
@@ -149,13 +114,6 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               {/* Active inner radiance */}
               {isActive && (
                 <div className="absolute inset-[16px] rounded-full bg-gradient-radial from-yellow-300/30 via-transparent to-transparent animate-pulse" />
-              )}
-              
-              {/* Loading overlay */}
-              {isLoading && (
-                <div className="absolute inset-0 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center">
-                  <Loader2 className="w-16 h-16 text-yellow-300 animate-spin" />
-                </div>
               )}
             </div>
             
