@@ -50,14 +50,14 @@ export function VODLibrary({ onSelectVOD }: VODLibraryProps) {
 
   const loadVODs = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('livestream_vods')
         .select('*')
         .order('stream_started_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setVods(data || []);
+      setVods((data as unknown) as VOD[]);
     } catch (error) {
       console.error('Error loading VODs:', error);
       toast.error('Failed to load videos');

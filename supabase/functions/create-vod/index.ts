@@ -62,11 +62,34 @@ serve(async (req) => {
 
     console.log('[VOD] VOD created successfully:', vod.id);
 
+    // Trigger AI thumbnail generation
+    try {
+      const thumbnailResponse = await fetch(`${supabaseUrl}/functions/v1/generate-vod-thumbnail`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          vodId: vod.id,
+          title: event.title,
+          description: event.description
+        })
+      });
+
+      if (!thumbnailResponse.ok) {
+        console.error('[VOD] Thumbnail generation failed:', await thumbnailResponse.text());
+      } else {
+        console.log('[VOD] Thumbnail generation triggered');
+      }
+    } catch (thumbnailError) {
+      console.error('[VOD] Error triggering thumbnail generation:', thumbnailError);
+    }
+
     // In a real implementation, you would:
     // 1. Trigger video processing (e.g., download LiveKit recording)
     // 2. Upload to storage bucket
-    // 3. Generate thumbnails
-    // 4. Update VOD with video_url and processing_status
+    // 3. Update VOD with video_url
 
     // For now, mark as completed (in production, this would be done by a separate processing job)
     await supabase

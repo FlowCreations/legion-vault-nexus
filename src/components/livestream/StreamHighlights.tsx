@@ -57,14 +57,14 @@ export function StreamHighlights({ eventId, onPlayHighlight }: StreamHighlightsP
 
   const loadHighlights = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('livestream_highlights')
         .select('*')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setHighlights(data || []);
+      setHighlights((data as unknown) as Highlight[]);
     } catch (error) {
       console.error('Error loading highlights:', error);
       toast.error('Failed to load highlights');
@@ -75,7 +75,7 @@ export function StreamHighlights({ eventId, onPlayHighlight }: StreamHighlightsP
 
   const handleDelete = async (highlightId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('livestream_highlights')
         .delete()
         .eq('id', highlightId);
