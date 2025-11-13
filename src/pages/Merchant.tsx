@@ -41,6 +41,7 @@ const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing")
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
 const AbandonedCartToggle = lazy(() => import("@/components/merchant/AbandonedCartToggle").then(m => ({ default: m.AbandonedCartToggle })));
 const AbandonedCartSettings = lazy(() => import("@/components/merchant/AbandonedCartSettings").then(m => ({ default: m.AbandonedCartSettings })));
+const PTPCalculationTrigger = lazy(() => import("@/components/merchant/admin/PTPCalculationTrigger").then(m => ({ default: m.PTPCalculationTrigger })));
 const AbandonedCartAnalytics = lazy(() => import("@/components/merchant/analytics/AbandonedCartAnalytics").then(m => ({ default: m.AbandonedCartAnalytics })));
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const VideoManager = lazy(() => import("./VideoManager"));
@@ -433,6 +434,10 @@ const Merchant = memo(() => {
 
           {activeTab === "intelligence" && (
             <TabsContent value="intelligence" className="space-y-6">
+              <Suspense fallback={<LoadingSpinner />}>
+                <PTPCalculationTrigger />
+              </Suspense>
+              
               <Suspense fallback={<LoadingSpinner />}>
                 <OracleInsight />
               </Suspense>

@@ -28,7 +28,7 @@ export const LiveStreamManager = () => {
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState("broadcast");
+  const [showChatbot, setShowChatbot] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
@@ -197,32 +197,34 @@ export const LiveStreamManager = () => {
       </Card>
 
       {selectedEvent && (
-        <>
-          {/* LiveBroadcaster stays mounted to maintain connection */}
-          <div className={activeTab === "broadcast" ? "block" : "hidden"}>
-            <LiveBroadcaster 
-              eventId={selectedEvent} 
-              isVisible={activeTab === "broadcast"}
-              onSwitchToChat={() => setActiveTab("chat")}
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main broadcast area */}
+          <div className="lg:col-span-2">
+            <LiveBroadcaster eventId={selectedEvent} />
           </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-              <TabsTrigger value="chat">Chat Monitor</TabsTrigger>
-              <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="chat" className="mt-6">
+          
+          {/* Side panels for chat and chatbot */}
+          <div className="space-y-6">
+            {/* Chat Monitor */}
+            <div className="h-[400px]">
               <LiveChat eventId={selectedEvent} isModerator={true} />
-            </TabsContent>
+            </div>
             
-            <TabsContent value="chatbot" className="mt-6">
-              <ChatbotManager />
-            </TabsContent>
-          </Tabs>
-        </>
+            {/* Chatbot Manager - Collapsible */}
+            <div>
+              <Button 
+                onClick={() => setShowChatbot(!showChatbot)}
+                variant="outline"
+                className="w-full mb-2"
+              >
+                {showChatbot ? 'Hide' : 'Show'} Chatbot Manager
+              </Button>
+              {showChatbot && (
+                <ChatbotManager />
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
