@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -8,8 +8,8 @@ import oracleSymbol from '@/assets/oracle-symbol.png';
 import catalystSymbol from '@/assets/catalyst-symbol.png';
 
 interface IntelligenceNavigatorProps {
-  onSelectView?: (view: 'epiphany' | 'oracle' | 'catalyst') => void;
-  currentView?: 'epiphany' | 'oracle' | 'catalyst';
+  onSelectView?: (view: 'epiphany' | 'oracle' | 'catalyst' | null) => void;
+  currentView?: 'epiphany' | 'oracle' | 'catalyst' | null;
 }
 
 export function IntelligenceNavigator({ onSelectView, currentView }: IntelligenceNavigatorProps) {
@@ -49,87 +49,126 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
     {
       id: 'epiphany' as const,
       image: epiphanySymbol,
-      gradient: 'from-blue-500 via-cyan-500 to-blue-600',
-      hoverGradient: 'from-blue-600 via-cyan-600 to-blue-700',
-      glowColor: 'shadow-blue-500/50',
+      name: 'Epiphany',
     },
     {
       id: 'oracle' as const,
       image: oracleSymbol,
-      gradient: 'from-purple-600 via-pink-600 to-purple-700',
-      hoverGradient: 'from-purple-700 via-pink-700 to-purple-800',
-      glowColor: 'shadow-purple-500/60',
+      name: 'Oracle',
     },
     {
       id: 'catalyst' as const,
       image: catalystSymbol,
-      gradient: 'from-emerald-500 via-green-500 to-emerald-600',
-      hoverGradient: 'from-emerald-600 via-green-600 to-emerald-700',
-      glowColor: 'shadow-emerald-500/70',
+      name: 'Catalyst',
     },
   ];
 
   return (
-    <div className="space-y-4 mb-8">
-      <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 bg-clip-text text-transparent mb-2">
-          Intelligence Command Center
-        </h2>
-        <p className="text-muted-foreground">
-          Choose your intelligence layer to unlock insights and take action
-        </p>
-      </div>
-
-      <div className="flex items-center justify-center gap-8">
-        {buttons.map((button) => {
-          const isActive = currentView === button.id;
-          const isLoading = loading === button.id;
-          
-          return (
-            <button
-              key={button.id}
-              onClick={() => handleButtonClick(button.id)}
-              disabled={loading !== null}
-              className={cn(
-                "relative w-48 h-48 rounded-full overflow-hidden transition-all duration-300 group",
-                "focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-background",
-                isActive && `ring-4 ring-offset-2 ${button.glowColor} scale-105`,
-                !isActive && "hover:scale-102",
-                loading !== null && loading !== button.id && "opacity-50"
-              )}
-            >
-              {/* Symbol Image - Full Fill */}
-              <img 
-                src={button.image} 
-                alt={button.id}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+    <div className="flex items-center justify-center gap-12 py-12">
+      {buttons.map((button) => {
+        const isActive = currentView === button.id;
+        const isLoading = loading === button.id;
+        
+        return (
+          <button
+            key={button.id}
+            onClick={() => handleButtonClick(button.id)}
+            disabled={loading !== null}
+            className={cn(
+              "group relative w-56 h-56 rounded-full transition-all duration-500",
+              "focus:outline-none",
+              isActive && "scale-105",
+              !isActive && "hover:scale-103",
+              loading !== null && loading !== button.id && "opacity-40"
+            )}
+          >
+            {/* Outer glow ring */}
+            <div className={cn(
+              "absolute inset-0 rounded-full blur-xl transition-all duration-500",
+              isActive 
+                ? "bg-gradient-to-br from-yellow-400/60 via-amber-500/60 to-yellow-600/60 scale-110" 
+                : "bg-gradient-to-br from-yellow-400/20 via-amber-500/20 to-yellow-600/20 scale-100 group-hover:scale-110 group-hover:from-yellow-400/40 group-hover:via-amber-500/40 group-hover:to-yellow-600/40"
+            )} />
+            
+            {/* Main medallion body */}
+            <div className="absolute inset-0 rounded-full overflow-hidden">
+              {/* Base gold gradient */}
+              <div className={cn(
+                "absolute inset-0 rounded-full transition-all duration-500",
+                "bg-gradient-to-br from-[#F9D976] via-[#F39F27] to-[#C58E11]",
+                isActive && "from-[#FFE57F] via-[#FFB84D] to-[#D4A024]"
+              )} />
               
-              {/* Glossy shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent opacity-50" 
-                   style={{ clipPath: 'ellipse(100% 35% at 50% 0%)' }} />
+              {/* Outer beveled rim */}
+              <div className="absolute inset-0 rounded-full">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#9A7721] via-transparent to-[#9A7721] opacity-30" />
+                <div className="absolute inset-[8px] rounded-full bg-gradient-to-br from-white/20 via-transparent to-black/20" />
+              </div>
+              
+              {/* Inner surface with brushed effect */}
+              <div className="absolute inset-[12px] rounded-full bg-gradient-radial from-[#F9D976] via-[#EDB454] to-[#D4A024]" />
+              
+              {/* Symbol container - embossed effect */}
+              <div className="absolute inset-[20px] rounded-full flex items-center justify-center">
+                {/* Inner shadow for emboss */}
+                <div className="absolute inset-0 rounded-full shadow-[inset_0_4px_12px_rgba(0,0,0,0.25),inset_0_-4px_12px_rgba(255,255,255,0.15)]" />
+                
+                {/* Symbol */}
+                <div className={cn(
+                  "relative w-full h-full rounded-full flex items-center justify-center transition-all duration-500",
+                  isActive && "drop-shadow-[0_0_12px_rgba(255,223,0,0.9)]"
+                )}>
+                  <img 
+                    src={button.image} 
+                    alt={button.name}
+                    className={cn(
+                      "w-[85%] h-[85%] object-contain transition-all duration-500",
+                      "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]",
+                      isActive && "brightness-110"
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Top arc shine - reflective highlight */}
+              <div className={cn(
+                "absolute inset-0 rounded-full transition-all duration-500",
+                "bg-gradient-to-b from-white/40 via-white/10 to-transparent",
+                "group-hover:from-white/50 group-hover:via-white/15",
+                isActive && "from-white/50 via-white/20"
+              )} 
+                   style={{ clipPath: 'ellipse(95% 30% at 50% 10%)' }} />
+              
+              {/* Holographic moving shine on hover */}
+              <div className={cn(
+                "absolute inset-0 rounded-full opacity-0 transition-all duration-700",
+                "bg-gradient-to-tr from-transparent via-white/30 to-transparent",
+                "group-hover:opacity-100 group-hover:translate-x-2"
+              )} />
+              
+              {/* Active inner radiance */}
+              {isActive && (
+                <div className="absolute inset-[16px] rounded-full bg-gradient-radial from-yellow-300/30 via-transparent to-transparent animate-pulse" />
+              )}
               
               {/* Loading overlay */}
               {isLoading && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <Loader2 className="w-20 h-20 text-white animate-spin" />
+                <div className="absolute inset-0 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center">
+                  <Loader2 className="w-16 h-16 text-yellow-300 animate-spin" />
                 </div>
               )}
-              
-              {/* Active indicator */}
-              {isActive && (
-                <Sparkles className="absolute top-4 right-4 w-8 h-8 text-yellow-300 animate-pulse drop-shadow-[0_0_8px_rgba(253,224,71,0.8)]" />
-              )}
-
-              {/* Bottom shadow/glow effect */}
-              <div className={cn(
-                "absolute -bottom-4 left-1/2 -translate-x-1/2 w-40 h-8 rounded-full blur-2xl transition-all duration-300",
-                isActive ? `bg-current ${button.glowColor} shadow-2xl opacity-80` : 'bg-black/30 opacity-50'
-              )} />
-            </button>
-          );
-        })}
-      </div>
+            </div>
+            
+            {/* Bottom shadow for depth */}
+            <div className={cn(
+              "absolute -bottom-6 left-1/2 -translate-x-1/2 w-48 h-10 rounded-full blur-2xl transition-all duration-500",
+              isActive 
+                ? "bg-yellow-600/60 shadow-2xl" 
+                : "bg-black/40 group-hover:bg-yellow-600/40"
+            )} />
+          </button>
+        );
+      })}
     </div>
   );
 }
