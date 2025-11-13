@@ -41,16 +41,7 @@ export const CatalystDeploy = () => {
   return (
     <Card className="border-2 bg-gradient-to-br from-blue-500/10 to-background" style={{ borderColor: '#3b82f633' }}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <span className="text-2xl">🚀</span>
-              Catalyst
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Turn insight into action. Automate personalized campaigns across your entire fanbase.
-            </CardDescription>
-          </div>
+        <div className="flex items-center justify-end">
           <Button
             onClick={deployCatalyst}
             disabled={loading}
