@@ -143,3 +143,12 @@ verify_jwt = true
 
 [functions.check-cart-recovery-status]
 verify_jwt = false
+
+[functions.detect-abandoned-carts]
+verify_jwt = false
+
+[functions.send-cart-recovery-email]
+verify_jwt = false
+
+[functions.create-shopify-discount]
+verify_jwt = false
