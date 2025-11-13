@@ -4,14 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Maximize2, DollarSign, Share2, Volume2, X, Scissors } from 'lucide-react';
+import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2 } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
-import { CreateHighlightDialog } from './CreateHighlightDialog';
 import { StreamHighlights } from './StreamHighlights';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePictureInPicture } from '@/hooks/usePictureInPicture';
 
 type Props = { 
   eventId: string;
@@ -30,14 +30,17 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
   const [hasAudioTrack, setHasAudioTrack] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
-  const [showHighlightDialog, setShowHighlightDialog] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [audioMuted, setAudioMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
   const videoTrackRef = useRef<RemoteVideoTrack | null>(null);
   const audioTrackRef = useRef<RemoteAudioTrack | null>(null);
+  
+  // Picture-in-Picture support
+  const { isPiPActive, isPiPSupported, togglePiP } = usePictureInPicture(
+    isExpanded ? expandedVideoRef : videoRef
+  );
 
   // Attach video and audio tracks to the active element
   const attachTracks = useCallback(() => {
@@ -223,22 +226,6 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
     setStatus('idle');
   };
 
-  // Track current playback time
-  useEffect(() => {
-    if (!streamStartTime) return;
-
-    const interval = setInterval(() => {
-      const elapsed = (Date.now() - streamStartTime.getTime()) / 1000;
-      setCurrentTime(Math.floor(elapsed));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [streamStartTime]);
-
-  const handleCreateHighlight = () => {
-    setShowHighlightDialog(true);
-  };
-
   // Re-attach tracks when expanding/collapsing
   useEffect(() => {
     if (!isExpanded && !videoTrackRef.current && !audioTrackRef.current) {
@@ -414,19 +401,29 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
 
         {/* External Controls - Only show if enabled */}
         {showExternalControls && status !== 'ended' && (
-          <div className="flex gap-3 mt-4">
+          <div className="grid grid-cols-2 gap-3 mt-4">
             <Button
               variant="secondary"
               onClick={() => setIsExpanded(true)}
-              className="flex-1 min-h-[48px] touch-manipulation active:scale-95 transition-transform"
+              className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <Maximize2 className="w-4 h-4 mr-2" />
               Expand
             </Button>
+            {isPiPSupported && (
+              <Button
+                variant="secondary"
+                onClick={togglePiP}
+                className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
+              >
+                <PictureInPicture2 className="w-4 h-4 mr-2" />
+                {isPiPActive ? 'Exit PiP' : 'PiP'}
+              </Button>
+            )}
             <Button
               variant="secondary"
               onClick={handleTip}
-              className="flex-1 min-h-[48px] touch-manipulation active:scale-95 transition-transform"
+              className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <DollarSign className="w-4 h-4 mr-2" />
               Tip
@@ -434,7 +431,7 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
             <Button
               variant="secondary"
               onClick={handleShare}
-              className="flex-1 min-h-[48px] touch-manipulation active:scale-95 transition-transform"
+              className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -567,15 +564,6 @@ export function ExpandableLiveViewer({ eventId, streamStartTime, onTip, onShare,
         open={showTipDialog} 
         onOpenChange={setShowTipDialog} 
         eventId={eventId}
-      />
-
-      {/* Create Highlight Dialog */}
-      <CreateHighlightDialog
-        open={showHighlightDialog}
-        onOpenChange={setShowHighlightDialog}
-        eventId={eventId}
-        currentTime={currentTime}
-        streamStartTime={streamStartTime}
       />
       
       {error && (
