@@ -14,7 +14,6 @@ import { createSmartLists } from "./SmartListTemplates";
 import { AutomationBuilder } from "./AutomationBuilder";
 import { AUTOMATION_TEMPLATES } from "./AutomationTemplates";
 import { Switch } from "@/components/ui/switch";
-import { TunepipeSyncButton } from "./TunepipeSyncButton";
 import { AIEmailIntelligence } from "./AIEmailIntelligence";
 import { EmailIntelligenceHub } from "./email/EmailIntelligenceHub";
 import { Heart } from "lucide-react";
@@ -323,13 +322,6 @@ export const EmailMarketing = () => {
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="flex justify-end mb-4">
-            <TunepipeSyncButton onSyncComplete={() => {
-              loadLists();
-              loadCampaigns();
-            }} />
-          </div>
-          
           {/* AI Features Section */}
           <div className="grid gap-4 md:grid-cols-2 mb-4">
             <Card className="border-2">
