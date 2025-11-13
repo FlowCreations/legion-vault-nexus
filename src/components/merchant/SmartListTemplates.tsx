@@ -3,6 +3,17 @@ import { toast } from "sonner";
 
 export const SMART_LIST_TEMPLATES = [
   {
+    name: "Warm Prospects",
+    description: "Medium purchase intent ready to convert",
+    filter_rules: {
+      operator: "AND",
+      conditions: [
+        { id: crypto.randomUUID(), field: "ptp_status", operator: "=", value: "Warm" }
+      ],
+      smart: true
+    }
+  },
+  {
     name: "Hot Leads",
     description: "High purchase intent, no recent purchases",
     filter_rules: {
@@ -27,12 +38,12 @@ export const SMART_LIST_TEMPLATES = [
     }
   },
   {
-    name: "New Subscribers",
-    description: "Recently joined members",
+    name: "Cold Leads",
+    description: "Low purchase intent that need nurturing",
     filter_rules: {
       operator: "AND",
       conditions: [
-        { id: crypto.randomUUID(), field: "ptp_current", operator: ">", value: 0 }
+        { id: crypto.randomUUID(), field: "ptp_status", operator: "=", value: "Cold" }
       ],
       smart: true
     }
@@ -50,23 +61,12 @@ export const SMART_LIST_TEMPLATES = [
     }
   },
   {
-    name: "Cold Leads",
-    description: "Low purchase intent that need nurturing",
+    name: "New Subscribers",
+    description: "Recently joined members",
     filter_rules: {
       operator: "AND",
       conditions: [
-        { id: crypto.randomUUID(), field: "ptp_status", operator: "=", value: "Cold" }
-      ],
-      smart: true
-    }
-  },
-  {
-    name: "Warm Prospects",
-    description: "Medium purchase intent ready to convert",
-    filter_rules: {
-      operator: "AND",
-      conditions: [
-        { id: crypto.randomUUID(), field: "ptp_status", operator: "=", value: "Warm" }
+        { id: crypto.randomUUID(), field: "ptp_current", operator: ">", value: 0 }
       ],
       smart: true
     }

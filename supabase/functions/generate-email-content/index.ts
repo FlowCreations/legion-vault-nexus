@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { campaignGoal, targetAudience, tone = 'casual', includeOffer = false } = await req.json();
+    const { campaignGoal, targetAudience, tone = 'casual', includeOffer = false, originalSubject } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -37,7 +37,51 @@ YOUR ROLE:
 Mirror higher consciousness. You do NOT claim divine authority or override free will.
 Your purpose: awaken fans to their power through integrity, empathy, and fearless authenticity.`;
 
-    const userPrompt = `Create Christ-conscious email content for: ${campaignGoal}
+    let userPrompt = '';
+    
+    // Handle retargeting campaigns
+    if (campaignGoal?.startsWith('retarget_')) {
+      if (campaignGoal === 'retarget_not_opened') {
+        userPrompt = `Generate a retargeting email subject line for users who haven't opened the original email.
+Original subject: ${originalSubject}
+Target: ${targetAudience}
+Tone: Urgent but not pushy
+
+Create a NEW subject line that:
+- Creates urgency without being spammy
+- Is different from the original to avoid spam filters
+- Addresses why they might have missed it
+- Is under 60 characters
+
+Format as JSON with "subject" and "body" fields.`;
+      } else if (campaignGoal === 'retarget_opened_not_clicked') {
+        userPrompt = `Generate a retargeting email subject line for users who opened but didn't click.
+Original subject: ${originalSubject}
+Target: ${targetAudience}
+Tone: Helpful and clarifying
+
+Create a subject line that:
+- Reminds them of the value
+- Clarifies the benefit
+- Is under 60 characters
+
+Format as JSON with "subject" and "body" fields.`;
+      } else if (campaignGoal === 'retarget_final_urgency') {
+        userPrompt = `Generate a final urgency email subject line for users who clicked but didn't purchase.
+Original subject: ${originalSubject}
+Target: ${targetAudience}
+Tone: Final urgency with potential discount mention
+
+Create a subject line that:
+- Creates final urgency (last chance)
+- Mentions time sensitivity
+- Is under 60 characters
+
+Format as JSON with "subject" and "body" fields.`;
+      }
+    } else {
+      // Original campaign generation
+      userPrompt = `Create Christ-conscious email content for: ${campaignGoal}
 
 TARGET: ${targetAudience.name} (${targetAudience.memberCount} fans)
 FILTERS: ${JSON.stringify(targetAudience.filters || {})}
@@ -63,6 +107,7 @@ EXAMPLES:
 ✅ GOOD: "We're grateful you're here - this might serve your journey"
 
 Generate now:`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
