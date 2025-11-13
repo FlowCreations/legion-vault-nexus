@@ -88,24 +88,19 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current.clear();
 
-    // Group members by location for clustering
-    const locationGroups = new Map<string, any[]>();
-    geojson.features.forEach(feature => {
-      const key = `${feature.geometry.coordinates[0]},${feature.geometry.coordinates[1]}`;
-      if (!locationGroups.has(key)) {
-        locationGroups.set(key, []);
-      }
-      locationGroups.get(key)!.push(feature);
-    });
-
-    // Create markers
-    locationGroups.forEach((features, key) => {
-      const [lng, lat] = features[0].geometry.coordinates;
-      const count = features.length;
+    // Create individual markers for each member with small offsets to prevent exact overlaps
+    geojson.features.forEach((feature, index) => {
+      let [lng, lat] = feature.geometry.coordinates;
+      
+      // Add small random offset (±0.0001 degrees) to prevent exact overlaps
+      // This keeps members visually grouped but still individually clickable
+      const offset = 0.0001;
+      lng += (Math.random() - 0.5) * offset;
+      lat += (Math.random() - 0.5) * offset;
 
       // Create marker element
       const el = document.createElement('div');
-      const size = Math.max(20, Math.min(40, count * 8));
+      const size = 20;
       
       el.className = 'member-marker';
       el.style.cssText = `
@@ -113,48 +108,31 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
         height: ${size}px;
         background: rgb(59, 130, 246);
         border-radius: 50%;
-        border: 3px solid rgba(255, 255, 255, 0.9);
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: ${size * 0.4}px;
         transition: all 0.3s;
       `;
-      
-      if (count > 1) {
-        el.textContent = count.toString();
-      }
 
       el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.2)';
-        el.style.boxShadow = '0 0 30px rgba(59, 130, 246, 1)';
+        el.style.transform = 'scale(1.3)';
+        el.style.boxShadow = '0 0 25px rgba(59, 130, 246, 1)';
+        el.style.zIndex = '1000';
       });
       
       el.addEventListener('mouseleave', () => {
         el.style.transform = 'scale(1)';
-        el.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8)';
+        el.style.boxShadow = '0 0 15px rgba(59, 130, 246, 0.8)';
+        el.style.zIndex = 'auto';
       });
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         setIsPaused(true);
         spinEnabledRef.current = false;
-        
-        if (features.length === 1) {
-          setSelectedMember(features[0].properties);
-          if (onMemberClick) {
-            onMemberClick(features[0].properties.user_id);
-          }
-        } else {
-          // Show all members at this location
-          setSelectedMember({
-            ...features[0].properties,
-            _multiple: features.map(f => f.properties)
-          });
+        setSelectedMember(feature.properties);
+        if (onMemberClick) {
+          onMemberClick(feature.properties.user_id);
         }
       });
 
@@ -162,7 +140,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
         .setLngLat([lng, lat])
         .addTo(map.current!);
 
-      markersRef.current.set(key, marker);
+      markersRef.current.set(`${feature.properties.user_id}-${index}`, marker);
     });
   }, [geojson, onMemberClick]);
 
@@ -209,11 +187,29 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
       }
     }
 
-    map.current.on('mousedown', () => { userInteracting = true; });
-    map.current.on('dragstart', () => { userInteracting = true; });
-    map.current.on('mouseup', () => { userInteracting = false; spinGlobe(); });
-    map.current.on('touchend', () => { userInteracting = false; spinGlobe(); });
-    map.current.on('moveend', () => { spinGlobe(); });
+    // Stop rotation on any interaction - only resume via play button
+    map.current.on('mousedown', () => { 
+      userInteracting = true;
+      spinEnabledRef.current = false;
+      setIsPaused(true);
+    });
+    map.current.on('touchstart', () => { 
+      userInteracting = true;
+      spinEnabledRef.current = false;
+      setIsPaused(true);
+    });
+    map.current.on('dragstart', () => { 
+      userInteracting = true;
+      spinEnabledRef.current = false;
+      setIsPaused(true);
+    });
+    map.current.on('mouseup', () => { userInteracting = false; });
+    map.current.on('touchend', () => { userInteracting = false; });
+    map.current.on('moveend', () => { 
+      if (spinEnabledRef.current) {
+        spinGlobe(); 
+      }
+    });
 
     spinGlobe();
   }, []);
@@ -259,18 +255,20 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
       </div>
 
       {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => {
-          setSelectedMember(null);
-          setIsPaused(false);
-          spinEnabledRef.current = true;
-        }}>
-          <div className="bg-card border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
+          onClick={() => {
+            setSelectedMember(null);
+          }}
+        >
+          <div 
+            className="bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
+            onClick={(e) => e.stopPropagation()}
+          >
             <MemberCard 
               member={selectedMember}
               onClose={() => {
                 setSelectedMember(null);
-                setIsPaused(false);
-                spinEnabledRef.current = true;
               }}
               onViewProfile={() => {
                 navigate(`/community?member=${selectedMember.user_id}`);

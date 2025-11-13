@@ -24,10 +24,15 @@ serve(async (req) => {
 
     console.log('🔍 Fetching user profiles with coordinates...')
 
-    // Fetch all user profiles that have valid coordinates
+    // Fetch all user profiles that have valid coordinates with comprehensive data
     const { data: profiles, error } = await supabaseClient
       .from('user_profiles')
-      .select('user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at')
+      .select(`
+        user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at,
+        watch_time, listen_time, livestream_engagement_score, livestream_reaction_count,
+        community_engagement_score, login_streak, total_sessions, last_active_at,
+        total_spend, mrr, era_label, ptp_status, is_super_fan
+      `)
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
 
@@ -55,6 +60,19 @@ serve(async (req) => {
           tier: profile.tier || 'free',
           joined_at: profile.created_at,
           profile_url: `/community/${profile.user_id}`,
+          watch_time: profile.watch_time || 0,
+          listen_time: profile.listen_time || 0,
+          livestream_engagement_score: profile.livestream_engagement_score || 0,
+          livestream_reaction_count: profile.livestream_reaction_count || 0,
+          community_engagement_score: profile.community_engagement_score || 0,
+          login_streak: profile.login_streak || 0,
+          total_sessions: profile.total_sessions || 0,
+          last_active_at: profile.last_active_at,
+          total_spend: profile.total_spend || 0,
+          mrr: profile.mrr || 0,
+          era_label: profile.era_label || '',
+          ptp_status: profile.ptp_status || false,
+          is_super_fan: profile.is_super_fan || false,
         }
       }))
     }
