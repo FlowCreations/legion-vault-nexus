@@ -105,18 +105,20 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       
       const devices = await navigator.mediaDevices.enumerateDevices();
       
-      // Filter devices with valid device IDs only
+      // Keep devices with or without deviceId for UI, but track which are real
       const videoDevices = devices
-        .filter(d => d.kind === 'videoinput' && d.deviceId)
+        .filter(d => d.kind === 'videoinput')
         .map((d, idx) => ({
           ...d,
+          deviceId: d.deviceId || `video-${idx}`,
           label: d.label || `Camera ${idx + 1}`
         }));
       
       const audioDevices = devices
-        .filter(d => d.kind === 'audioinput' && d.deviceId)
+        .filter(d => d.kind === 'audioinput')
         .map((d, idx) => ({
           ...d,
+          deviceId: d.deviceId || `audio-${idx}`,
           label: d.label || `Microphone ${idx + 1}`
         }));
       
@@ -328,7 +330,7 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       
       const tracks = await createLocalTracks({
         audio: {
-          deviceId: micId ? { exact: micId } : undefined,
+          deviceId: micId && !micId.startsWith('audio-') ? { exact: micId } : undefined,
           echoCancellation: false,  // Get RAW signal for broadcasting
           noiseSuppression: false,  // Get RAW signal for broadcasting
           autoGainControl: false,   // Get RAW signal for broadcasting
@@ -336,7 +338,7 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
           channelCount: 1,          // Mono for voice (saves bandwidth)
         },
         video: {
-          deviceId: cameraId ? { exact: cameraId } : undefined,
+          deviceId: cameraId && !cameraId.startsWith('video-') ? { exact: cameraId } : undefined,
           resolution: {
             width: 1920,
             height: 1080
@@ -353,7 +355,7 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       // STEP 3a: Get RAW mic stream for monitoring (bypass LiveKit)
       const rawMicForMonitoring = await navigator.mediaDevices.getUserMedia({
         audio: {
-          deviceId: micId ? { exact: micId } : undefined,
+          deviceId: micId && !micId.startsWith('audio-') ? { exact: micId } : undefined,
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
