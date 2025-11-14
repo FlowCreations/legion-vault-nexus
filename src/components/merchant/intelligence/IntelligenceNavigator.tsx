@@ -41,7 +41,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
             key={button.id}
             onClick={() => handleButtonClick(button.id)}
             className={cn(
-              "group relative w-56 h-56 rounded-full transition-all duration-500",
+              "group relative w-56 h-56 rounded-full transition-transform duration-300 will-change-transform",
               "focus:outline-none",
               isActive && "scale-105",
               !isActive && "hover:scale-105"
@@ -49,7 +49,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
           >
             {/* Outer glow ring */}
             <div className={cn(
-              "absolute inset-0 rounded-full blur-xl transition-all duration-500",
+              "absolute inset-0 rounded-full blur-xl transition-all duration-300",
               isActive 
                 ? "bg-gradient-to-br from-yellow-400/60 via-amber-500/60 to-yellow-600/60 scale-110" 
                 : "bg-gradient-to-br from-yellow-400/20 via-amber-500/20 to-yellow-600/20 scale-100 group-hover:scale-110 group-hover:from-yellow-400/40 group-hover:via-amber-500/40 group-hover:to-yellow-600/40"
@@ -59,7 +59,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
             <div className="absolute inset-0 rounded-full overflow-hidden">
               {/* Base gold gradient */}
               <div className={cn(
-                "absolute inset-0 rounded-full transition-all duration-500",
+                "absolute inset-0 rounded-full transition-colors duration-300",
                 "bg-gradient-to-br from-[#F9D976] via-[#F39F27] to-[#C58E11]",
                 isActive && "from-[#FFE57F] via-[#FFB84D] to-[#D4A024]"
               )} />
@@ -80,14 +80,14 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
                 
                 {/* Symbol */}
                 <div className={cn(
-                  "relative w-full h-full rounded-full flex items-center justify-center transition-all duration-500",
+                  "relative w-full h-full rounded-full flex items-center justify-center transition-filter duration-300",
                   isActive && "drop-shadow-[0_0_12px_rgba(255,223,0,0.9)]"
                 )}>
                   <img 
                     src={button.image} 
                     alt={button.name}
                     className={cn(
-                      "w-[70%] h-[70%] object-contain transition-all duration-500",
+                      "w-[70%] h-[70%] object-contain transition-filter duration-300",
                       "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]",
                       isActive && "brightness-110"
                     )}
@@ -97,7 +97,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               
               {/* Top arc shine - reflective highlight */}
               <div className={cn(
-                "absolute inset-0 rounded-full transition-all duration-500",
+                "absolute inset-0 rounded-full transition-opacity duration-300 pointer-events-none",
                 "bg-gradient-to-b from-white/40 via-white/10 to-transparent",
                 "group-hover:from-white/50 group-hover:via-white/15",
                 isActive && "from-white/50 via-white/20"
@@ -106,20 +106,20 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               
               {/* Holographic moving shine on hover */}
               <div className={cn(
-                "absolute inset-0 rounded-full opacity-0 transition-all duration-700",
+                "absolute inset-0 rounded-full opacity-0 transition-all duration-500 pointer-events-none",
                 "bg-gradient-to-tr from-transparent via-white/30 to-transparent",
                 "group-hover:opacity-100 group-hover:translate-x-2"
               )} />
               
               {/* Active inner radiance */}
               {isActive && (
-                <div className="absolute inset-[16px] rounded-full bg-gradient-radial from-yellow-300/30 via-transparent to-transparent animate-pulse" />
+                <div className="absolute inset-[16px] rounded-full bg-gradient-radial from-yellow-300/30 via-transparent to-transparent animate-pulse pointer-events-none" />
               )}
             </div>
             
             {/* Bottom shadow for depth */}
             <div className={cn(
-              "absolute -bottom-6 left-1/2 -translate-x-1/2 w-48 h-10 rounded-full blur-2xl transition-all duration-500",
+              "absolute -bottom-6 left-1/2 -translate-x-1/2 w-48 h-10 rounded-full blur-2xl transition-all duration-300 pointer-events-none",
               isActive 
                 ? "bg-yellow-600/60 shadow-2xl" 
                 : "bg-black/40 group-hover:bg-yellow-600/40"
