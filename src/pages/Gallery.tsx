@@ -115,14 +115,11 @@ export default function Gallery() {
     
     setIsLoading(true);
     try {
-      // Create checkout session
+      // Send only itemId - server will validate and set price
       const { data, error } = await supabase.functions.invoke('create-gallery-checkout', {
         body: {
-          item: {
-            title: selectedItem.title,
-            price: parseFloat(selectedItem.price.replace('$', '')),
-            image: selectedItem.image
-          }
+          itemId: selectedItem.id,
+          clientPrice: parseFloat(selectedItem.price.replace('$', ''))
         }
       });
 
@@ -551,17 +548,24 @@ export default function Gallery() {
 
 const socialReadyPhotos: GalleryItem[] = [
   {
-    id: "1",
-    title: "Social Media Ready Photos (Low Res)",
+    id: "show-1",
+    title: "The Midnight Session",
     image: show1,
-    price: "FREE",
-    isFree: true,
+    price: "$54.99",
+    isFree: false,
   },
   {
-    id: "3",
-    title: "Print Quality Photos (High Res)",
+    id: "show-2",
+    title: "Electric Dreams Tour",
+    image: show2,
+    price: "$64.99",
+    isFree: false,
+  },
+  {
+    id: "show-3",
+    title: "Sunset Acoustics",
     image: show3,
-    price: "$14.99",
+    price: "$44.99",
     isFree: false,
   },
 ];
