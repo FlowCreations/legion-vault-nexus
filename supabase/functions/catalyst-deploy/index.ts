@@ -52,8 +52,8 @@ serve(async (req) => {
     // Get all user profiles with PTP/ERA scores
     const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
-      .select('user_id, first_name, email, ptp, era, ptp_status, era_label, total_spend, inactive_days, last_login')
-      .not('ptp', 'is', null);
+      .select('user_id, full_name, email, ptp_current, era_current, ptp_status, era_label, total_spend, inactive_days, last_login')
+      .not('ptp_current', 'is', null);
 
     if (profilesError) throw profilesError;
 
@@ -85,8 +85,8 @@ serve(async (req) => {
       
       matchMatrix.set(profile.user_id, {
         userId: profile.user_id,
-        ptpScore: profile.ptp || 0,
-        eraScore: profile.era || 0,
+        ptpScore: profile.ptp_current || 0,
+        eraScore: profile.era_current || 0,
         emotionalState: profile.era_label || 'unknown',
         recentBehaviors: userBehaviors,
         inactiveDays: profile.inactive_days || 0,
