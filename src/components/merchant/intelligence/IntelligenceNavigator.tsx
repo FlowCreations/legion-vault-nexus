@@ -44,7 +44,7 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               "group relative w-56 h-56 rounded-full transition-all duration-500",
               "focus:outline-none",
               isActive && "scale-105",
-              !isActive && "hover:scale-105 hover:-rotate-3 hover:animate-[bounce_1s_ease-in-out]"
+              !isActive && "hover:scale-105"
             )}
           >
             {/* Outer glow ring */}
