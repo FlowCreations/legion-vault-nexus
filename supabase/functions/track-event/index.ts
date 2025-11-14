@@ -50,6 +50,34 @@ const ALLOWED_EVENT_TYPES = [
 
 const MAX_EVENT_DATA_SIZE = 10000; // 10KB max for event data
 const MAX_URL_LENGTH = 2048;
+const MAX_JSON_DEPTH = 5;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Helper to validate JSON depth
+function getJsonDepth(obj: any, depth = 0): number {
+  if (depth > MAX_JSON_DEPTH || typeof obj !== 'object' || obj === null) {
+    return depth;
+  }
+  return Math.max(...Object.values(obj).map(v => getJsonDepth(v, depth + 1)));
+}
+
+// Helper to validate URL format
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+// Helper to sanitize user agent
+function sanitizeUserAgent(ua: string | null): string | null {
+  if (!ua) return null;
+  // Limit length and remove potential injection characters
+  return ua.slice(0, 500).replace(/[<>'"]/g, '');
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -74,23 +102,53 @@ serve(async (req) => {
       );
     }
 
-    if (eventData && JSON.stringify(eventData).length > MAX_EVENT_DATA_SIZE) {
+    // Enhanced validation for eventData
+    if (eventData) {
+      const eventDataStr = JSON.stringify(eventData);
+      if (eventDataStr.length > MAX_EVENT_DATA_SIZE) {
+        return new Response(
+          JSON.stringify({ error: 'Event data too large' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Check JSON depth to prevent deeply nested objects
+      if (getJsonDepth(eventData) > MAX_JSON_DEPTH) {
+        return new Response(
+          JSON.stringify({ error: 'Event data structure too complex' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Enhanced URL validation
+    if (pageUrl) {
+      if (pageUrl.length > MAX_URL_LENGTH) {
+        return new Response(
+          JSON.stringify({ error: 'Page URL too long' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (!isValidUrl(pageUrl)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid page URL format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Enhanced session ID validation - enforce UUID format
+    if (!sessionId || typeof sessionId !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Event data too large' }),
+        JSON.stringify({ error: 'Session ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    if (pageUrl && pageUrl.length > MAX_URL_LENGTH) {
+    
+    if (!UUID_REGEX.test(sessionId)) {
       return new Response(
-        JSON.stringify({ error: 'Page URL too long' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 100) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid session ID' }),
+        JSON.stringify({ error: 'Session ID must be a valid UUID' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -118,7 +176,7 @@ serve(async (req) => {
       }
     }
 
-    // Insert event
+    // Insert event with sanitized data
     const { data, error } = await supabaseClient
       .from('user_events')
       .insert({
@@ -127,7 +185,7 @@ serve(async (req) => {
         event_type: eventType,
         event_data: eventData,
         page_url: pageUrl,
-        user_agent: req.headers.get('user-agent'),
+        user_agent: sanitizeUserAgent(req.headers.get('user-agent')),
       })
       .select()
       .single();

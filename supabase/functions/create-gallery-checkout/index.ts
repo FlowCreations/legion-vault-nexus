@@ -7,6 +7,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Server-side price catalog - SINGLE SOURCE OF TRUTH
+const GALLERY_ITEMS: Record<string, { title: string; price: number }> = {
+  'show-1': { title: 'The Midnight Session', price: 54.99 },
+  'show-2': { title: 'Electric Dreams Tour', price: 64.99 },
+  'show-3': { title: 'Sunset Acoustics', price: 44.99 },
+};
+
+// Helper to validate item ID and get server price
+function validateAndGetPrice(itemId: string): { valid: boolean; price?: number; title?: string; error?: string } {
+  const item = GALLERY_ITEMS[itemId];
+  if (!item) {
+    return { valid: false, error: 'Invalid item ID' };
+  }
+  return { valid: true, price: item.price, title: item.title };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,10 +34,36 @@ serve(async (req) => {
   );
 
   try {
-    const { item } = await req.json();
+    const { itemId, clientPrice } = await req.json();
 
-    if (!item || !item.title || !item.price) {
-      throw new Error("Invalid item data");
+    if (!itemId || typeof itemId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Item ID is required' }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // CRITICAL: Validate item and get server-side price
+    const validation = validateAndGetPrice(itemId);
+    if (!validation.valid) {
+      console.error('Invalid item ID attempted:', itemId);
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // CRITICAL: Detect price manipulation attempts
+    if (clientPrice !== undefined && Math.abs(clientPrice - validation.price!) > 0.01) {
+      console.error('Price manipulation attempt detected:', {
+        itemId,
+        clientPrice,
+        serverPrice: validation.price,
+      });
+      return new Response(
+        JSON.stringify({ error: 'Price validation failed' }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -43,7 +85,7 @@ serve(async (req) => {
       }
     }
 
-    // Create checkout session
+    // Create checkout session with SERVER-VALIDATED price
     const session = await stripe.checkout.sessions.create({
       customer_email: customerEmail,
       line_items: [
@@ -51,10 +93,9 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: item.title,
-              images: item.image ? [item.image] : [],
+              name: validation.title!,
             },
-            unit_amount: Math.round(item.price * 100), // Convert to cents
+            unit_amount: Math.round(validation.price! * 100), // Server price only!
           },
           quantity: 1,
         },
@@ -62,6 +103,9 @@ serve(async (req) => {
       mode: "payment",
       success_url: `${req.headers.get("origin")}/shows/gallery?success=true`,
       cancel_url: `${req.headers.get("origin")}/shows/gallery?canceled=true`,
+      metadata: {
+        itemId: itemId,
+      },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
