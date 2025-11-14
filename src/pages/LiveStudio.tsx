@@ -45,7 +45,7 @@ export default function LiveStudio() {
   const [streamStartTime, setStreamStartTime] = useState<Date | undefined>(undefined);
   const [isViewingLive, setIsViewingLive] = useState(false);
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  
 
   useEffect(() => {
     checkAuth();
@@ -129,11 +129,9 @@ export default function LiveStudio() {
     };
   }, []);
 
-  // Reset viewing state when stream ends
   useEffect(() => {
     if (!liveEventId) {
       setIsViewingLive(false);
-      setIsExpanded(false);
     }
   }, [liveEventId]);
 
@@ -380,12 +378,10 @@ export default function LiveStudio() {
               <div className="relative">
                 <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
                   {liveEventId && isViewingLive ? (
-                    <ExpandableLiveViewer 
-                      eventId={liveEventId} 
+                    <ExpandableLiveViewer
+                      eventId={liveEventId}
                       streamStartTime={streamStartTime}
                       showExternalControls
-                      isExpanded={isExpanded}
-                      onExpandChange={setIsExpanded}
                     />
                   ) : (
                     <div className="relative aspect-video">
