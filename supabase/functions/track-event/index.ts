@@ -122,7 +122,7 @@ serve(async (req) => {
     }
 
     // Enhanced URL validation
-    if (pageUrl) {
+    if (pageUrl && typeof pageUrl === 'string' && pageUrl.trim().length > 0) {
       if (pageUrl.length > MAX_URL_LENGTH) {
         return new Response(
           JSON.stringify({ error: 'Page URL too long' }),
@@ -130,11 +130,12 @@ serve(async (req) => {
         );
       }
       
-      if (!isValidUrl(pageUrl)) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid page URL format' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      // Only validate if it looks like a full URL (starts with http/https)
+      if (pageUrl.startsWith('http://') || pageUrl.startsWith('https://')) {
+        if (!isValidUrl(pageUrl)) {
+          console.warn('Invalid page URL format, continuing anyway:', pageUrl);
+          // Don't block the request, just log the warning
+        }
       }
     }
 
