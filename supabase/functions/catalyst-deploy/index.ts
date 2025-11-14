@@ -249,7 +249,7 @@ function personalizeMessage(
   matrix: MatchMatrixInput
 ): string {
   let message = template
-    .replace(/{first_name}/g, profile.first_name || 'Friend')
+    .replace(/{first_name}/g, profile.full_name || 'Friend')
     .replace(/{email}/g, profile.email || '')
     .replace(/{ptp_score}/g, matrix.ptpScore.toString());
 
