@@ -43,11 +43,17 @@ export const useLiveStreamStore = create<LiveStreamState>((set, get) => ({
   },
 
   connect: async (eventId: string) => {
-    const { room: existingRoom, eventId: currentEventId } = get();
+    const { room: existingRoom, eventId: currentEventId, status } = get();
     
-    // If already connected to this event, don't reconnect
+    // Guard: Don't reconnect if already connected to same event
     if (existingRoom && currentEventId === eventId && existingRoom.state === 'connected') {
       console.log('[LiveStreamStore] Already connected to event:', eventId);
+      return;
+    }
+
+    // Guard: Don't start new connection if one is in progress
+    if (status === 'connecting') {
+      console.log('[LiveStreamStore] Connection already in progress');
       return;
     }
 
