@@ -1,10 +1,11 @@
-import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown, X, Share2, Link, Facebook, Twitter } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Download, Heart, Volume2, MoreVertical, ChevronDown, X, Share2, Link, Facebook, Twitter, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
+import { LyricsDialog } from "./LyricsDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -236,6 +238,10 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
                     >
                       Credits
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowLyricsDialog(true)}>
+                      <Music className="mr-2 h-4 w-4" />
+                      Lyrics
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -380,6 +386,14 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
           <div className="flex-1"></div>
         </div>
       </div>
+      
+      <LyricsDialog
+        isOpen={showLyricsDialog}
+        onClose={() => setShowLyricsDialog(false)}
+        trackTitle={currentTrack?.title || ''}
+        artist={currentTrack?.artist || ''}
+        lyrics={(currentTrack as any)?.lyrics}
+      />
     </div>
   );
 }
