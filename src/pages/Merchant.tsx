@@ -381,6 +381,7 @@ const Merchant = memo(() => {
               <Tabs defaultValue="campaigns" className="space-y-6">
                 <TabsList>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+                  <TabsTrigger value="funnel">Sales Funnel</TabsTrigger>
                   <TabsTrigger value="email">Email</TabsTrigger>
                   <TabsTrigger value="sms">SMS</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
@@ -390,6 +391,17 @@ const Merchant = memo(() => {
                   <Suspense fallback={<LoadingSpinner />}>
                     <CreateCampaigns />
                   </Suspense>
+                </TabsContent>
+                
+                <TabsContent value="funnel">
+                  <div className="space-y-6">
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <FunnelOverview />
+                    </Suspense>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <BuildFunnel />
+                    </Suspense>
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="email">
