@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePictureInPicture } from '@/hooks/usePictureInPicture';
 import { useLiveStreamStore } from '@/stores/liveStreamStore';
+import { ErrorBoundary } from '@/diagnostics/ErrorBoundary';
 
 type Props = { 
   eventId: string;
@@ -50,48 +52,52 @@ export function ExpandableLiveViewer({
   // Picture-in-Picture support
   const { isPiPActive, isPiPSupported, togglePiP, enterPiP } = usePictureInPicture(videoRef);
 
-  // Attach video and audio tracks to the single video element
+  // Attach video and audio tracks to the single video element with guards
   const attachTracks = useCallback(() => {
     const activeVideoEl = videoRef.current;
     
     console.log('[Viewer] Attaching tracks:', {
       hasVideo: !!videoTrack,
       hasAudio: !!audioTrack,
-      activeVideoEl: !!activeVideoEl
+      activeVideoEl: !!activeVideoEl,
+      inDOM: activeVideoEl ? document.body.contains(activeVideoEl) : false
     });
     
     if (!activeVideoEl) {
-      console.warn('[Viewer] No active video element');
+      console.warn('[Viewer] No video element');
       return;
     }
 
-    // Attach video track using LiveKit's attach method
-    if (videoTrack) {
-      console.log('[Viewer] Attaching video track');
-      videoTrack.attach(activeVideoEl);
-      
-      // Ensure playback
-      activeVideoEl.play().catch(err => 
-        console.log('[Viewer] Video play prevented:', err.message)
-      );
+    // Ensure element is actually in the DOM
+    if (!document.body.contains(activeVideoEl)) {
+      console.warn('[Viewer] Video element not in DOM yet, retrying...');
+      setTimeout(() => attachTracks(), 100);
+      return;
     }
 
-    // Attach audio track directly to the video element (LiveKit handles this)
+    // Detach and re-attach video track to prevent double-attachment
+    if (videoTrack) {
+      console.log('[Viewer] Attaching video track');
+      videoTrack.detach(); // Cleanup any previous attachment
+      videoTrack.attach(activeVideoEl);
+    }
+
+    // Detach and re-attach audio track
     if (audioTrack) {
       console.log('[Viewer] Attaching audio track');
+      audioTrack.detach(); // Cleanup any previous attachment
       audioTrack.attach(activeVideoEl);
       
       // Force audio playback with explicit volume control
       activeVideoEl.muted = false;
       activeVideoEl.volume = 1.0;
-      
-      // Trigger play to ensure audio context starts
-      activeVideoEl.play().catch(err => {
-        console.warn('[Viewer] Audio autoplay prevented:', err.message);
-        // Show unmute button to user
-        setAudioMuted(true);
-      });
     }
+
+    // Ensure playback starts
+    activeVideoEl.play().catch(err => {
+      console.log('[Viewer] Autoplay prevented:', err.message);
+      setAudioMuted(true);
+    });
   }, [videoTrack, audioTrack]);
 
   // Connect to stream on mount
@@ -102,12 +108,28 @@ export function ExpandableLiveViewer({
     }
   }, [eventId, status, connectStream]);
 
-  // Attach tracks when they become available
+  // Attach tracks when they become available OR when expanded state changes
   useEffect(() => {
     if ((videoTrack || audioTrack) && videoRef.current) {
-      attachTracks();
+      // Small delay to ensure DOM is ready after expand/collapse
+      const timer = setTimeout(() => {
+        attachTracks();
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [videoTrack, audioTrack, attachTracks]);
+  }, [videoTrack, audioTrack, isExpanded, attachTracks]);
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('[Viewer] State Update:', {
+      isExpanded,
+      status,
+      hasVideo: hasVideoTrack,
+      hasAudio: hasAudioTrack,
+      videoRefExists: !!videoRef.current,
+      videoRefInDOM: videoRef.current ? document.body.contains(videoRef.current) : false
+    });
+  }, [isExpanded, status, hasVideoTrack, hasAudioTrack]);
 
   // Auto Picture-in-Picture when navigating away
   useEffect(() => {
@@ -126,10 +148,6 @@ export function ExpandableLiveViewer({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [status, isPiPSupported, enterPiP]);
 
-  const handleExpandChange = (expanded: boolean) => {
-    setExpanded(expanded);
-  };
-
   const handleTipClick = () => {
     if (onTip) {
       onTip();
@@ -138,7 +156,7 @@ export function ExpandableLiveViewer({
     }
   };
 
-  const handleShareClick = () => {
+  const handleShare = () => {
     if (onShare) {
       onShare();
     } else {
@@ -268,14 +286,14 @@ export function ExpandableLiveViewer({
                   <PictureInPicture2 className="h-4 w-4" />
                 </Button>
               )}
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => handleExpandChange(true)}
-                className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setExpanded(true)}
+              className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
             </div>
           )}
         </div>
@@ -287,166 +305,193 @@ export function ExpandableLiveViewer({
               <DollarSign className="h-4 w-4 mr-2" />
               Send Tip
             </Button>
-            <Button onClick={handleShareClick} variant="outline" className="flex-1">
+            <Button onClick={handleShare} variant="outline" className="flex-1">
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
-            <Button onClick={() => handleExpandChange(true)} variant="outline" className="flex-1">
+            <Button onClick={() => setExpanded(true)} variant="outline" className="flex-1">
               <Maximize2 className="h-4 w-4 mr-2" />
               Expand
             </Button>
           </div>
         )}
 
-        <TipDialog 
-          eventId={eventId}
-          open={showTipDialog} 
-          onOpenChange={setShowTipDialog}
-        />
+        <ErrorBoundary>
+          <TipDialog 
+            eventId={eventId}
+            open={showTipDialog} 
+            onOpenChange={setShowTipDialog}
+          />
+        </ErrorBoundary>
       </div>
     );
   }
 
-  // Expanded mode rendering
+  // Mobile expanded mode
   if (isMobile) {
     return (
-      <Drawer open={isExpanded} onOpenChange={handleExpandChange}>
-        <DrawerContent className="h-[95vh]">
-          <div className="flex flex-col h-full">
-            {/* Video Section */}
-            <div className="relative flex-1 bg-black">
-              {videoElement}
+      <>
+        <Drawer open={isExpanded} onOpenChange={setExpanded}>
+          <DrawerContent className="h-[90vh] bg-background">
+            <div className="flex flex-col h-full">
+              {/* Video Area */}
+              <div className="relative bg-black aspect-video">
+                {/* Permanent Video Element - Rendered via Portal */}
+                <div id="video-container-permanent-mobile" className="w-full h-full" />
+                
+                {/* Close Button */}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setExpanded(false)}
+                  className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white z-10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
 
-              {/* Live Badge */}
-              {status === 'connected' && (
-                <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  LIVE
-                </div>
-              )}
-
-              {/* Close Button */}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => handleExpandChange(false)}
-                className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
-              >
-                <Minimize2 className="h-4 w-4" />
-              </Button>
+              {/* Chat */}
+              <div className="flex-1 overflow-hidden">
+                <ErrorBoundary>
+                  <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
+                </ErrorBoundary>
+              </div>
             </div>
+          </DrawerContent>
+        </Drawer>
 
-            {/* Chat & Actions */}
-            <div className="border-t bg-background">
-              <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+        {/* Tip Dialog */}
+        <ErrorBoundary>
+          <TipDialog 
+            eventId={eventId}
+            open={showTipDialog} 
+            onOpenChange={setShowTipDialog}
+          />
+        </ErrorBoundary>
+      </>
     );
   }
 
   // Desktop expanded mode
   return (
-    <Dialog open={isExpanded} onOpenChange={handleExpandChange}>
-      <DialogContent 
-        className="max-w-[98vw] w-[98vw] h-[95vh] p-0"
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => {
-          e.preventDefault();
-          handleExpandChange(false);
-        }}
-      >
-        <div className="flex h-full">
-          {/* Video Section */}
-          <div className="flex-1 bg-black relative flex items-center justify-center">
-            {videoElement}
-
-            {/* Live Badge & Viewer Count */}
-            {status === 'connected' && (
-              <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
-                <div className="bg-red-600 text-white px-4 py-2 rounded-full flex items-center gap-2 font-semibold shadow-lg backdrop-blur-sm">
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
-                  LIVE
+    <>
+      <Dialog open={isExpanded} onOpenChange={setExpanded}>
+        <DialogContent className="max-w-none w-screen h-screen p-0 gap-0 bg-black border-0">
+          <div className="h-full flex flex-col lg:flex-row">
+            {/* Main Video Area */}
+            <div className="flex-1 relative flex items-center justify-center bg-black">
+              {/* Permanent Video Element - Rendered via Portal */}
+              <div id="video-container-permanent" className="w-full h-full" />
+              
+              {/* Stream Status Overlays */}
+              {status === 'connecting' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                  <div className="text-white text-center">
+                    <div className="animate-pulse mb-2">Connecting to stream...</div>
+                  </div>
                 </div>
-                <div className="bg-black/60 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg backdrop-blur-sm">
-                  <span className="text-primary">👁️</span>
-                  {viewerCount} watching
+              )}
+              
+              {error && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                  <div className="text-white text-center max-w-md px-4">
+                    <p className="text-red-400 mb-2">Connection Error</p>
+                    <p className="text-sm text-gray-300">{error}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Duration */}
-            {status === 'connected' && streamDuration > 0 && (
-              <div className="absolute top-6 right-6 bg-black/60 text-white px-4 py-2 rounded-full shadow-lg backdrop-blur-sm">
-                {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
-              </div>
-            )}
-
-            {/* Reactions */}
-            {status === 'connected' && (
-              <div className="absolute right-6 bottom-24 z-10">
-                <LiveReactions eventId={eventId} />
-              </div>
-            )}
-
-            {/* Minimize Button */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleExpandChange(false)}
-              className="absolute bottom-6 left-6 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
-            >
-              <Minimize2 className="h-4 w-4 mr-2" />
-              Minimize
-            </Button>
-
-            {/* PiP Button */}
-            {isPiPSupported && (
+              {/* Minimize Button */}
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={togglePiP}
-                className="absolute bottom-6 left-32 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+                onClick={() => setExpanded(false)}
+                className="absolute bottom-6 left-6 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm z-10"
               >
-                <PictureInPicture2 className="h-4 w-4 mr-2" />
-                Picture-in-Picture
+                <Minimize2 className="h-4 w-4 mr-2" />
+                Minimize
               </Button>
-            )}
+            </div>
+
+            {/* Sidebar with Chat and Actions */}
+            <div className="w-full lg:w-96 bg-background border-l border-border overflow-hidden flex flex-col">
+              {/* Stream Info Header */}
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-sm font-medium">LIVE</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {viewerCount.toLocaleString()} watching
+                  </span>
+                </div>
+              </div>
+
+              {/* Chat Section */}
+              <div className="flex-1 overflow-hidden">
+                <ErrorBoundary>
+                  <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
+                </ErrorBoundary>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="p-4 border-t border-border space-y-3">
+                <ErrorBoundary>
+                  <StreamHighlights eventId={eventId} />
+                </ErrorBoundary>
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleTipClick}
+                    className="flex-1"
+                    variant="default"
+                  >
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Send Tip
+                  </Button>
+                  
+                  <Button
+                    onClick={handleShare}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Sidebar */}
-          <div className="w-[380px] border-l bg-background flex flex-col">
-            {/* Chat */}
-            <div className="flex-1 overflow-hidden">
-              <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
-            </div>
+      {/* Tip Dialog */}
+      <ErrorBoundary>
+        <TipDialog 
+          eventId={eventId}
+          open={showTipDialog} 
+          onOpenChange={setShowTipDialog}
+        />
+      </ErrorBoundary>
 
-            {/* Highlights */}
-            <div className="border-t p-4">
-              <StreamHighlights eventId={eventId} />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="border-t p-4 flex gap-2">
-              <Button onClick={handleTipClick} className="flex-1">
-                <DollarSign className="h-4 w-4 mr-2" />
-                Send Tip
-              </Button>
-              <Button onClick={handleShareClick} variant="outline" className="flex-1">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-      
-      <TipDialog 
-        eventId={eventId}
-        open={showTipDialog} 
-        onOpenChange={setShowTipDialog}
-      />
-    </Dialog>
+      {/* Video Element Portal - Single permanent video that never unmounts */}
+      {typeof window !== 'undefined' && ReactDOM.createPortal(
+        <video 
+          ref={videoRef}
+          id="livekit-video-permanent"
+          autoPlay 
+          playsInline
+          muted={false}
+          className="w-full h-full object-contain bg-black"
+        />,
+        // Render into the appropriate container based on expand state and device
+        isExpanded 
+          ? (isMobile 
+              ? document.getElementById('video-container-permanent-mobile') || document.body
+              : document.getElementById('video-container-permanent') || document.body)
+          : videoRef.current?.parentElement || document.body
+      )}
+    </>
   );
 }
