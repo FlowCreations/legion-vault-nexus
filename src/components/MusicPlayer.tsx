@@ -390,9 +390,9 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
       <LyricsDialog
         isOpen={showLyricsDialog}
         onClose={() => setShowLyricsDialog(false)}
+        trackId={currentTrack?.id || ''}
         trackTitle={currentTrack?.title || ''}
         artist={currentTrack?.artist || ''}
-        lyrics={(currentTrack as any)?.lyrics}
       />
     </div>
   );
