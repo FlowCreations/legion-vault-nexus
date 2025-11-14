@@ -1152,7 +1152,8 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       {/* Preview / Live Video */}
       {status !== 'idle' && (
         <>
-          <div className={`grid gap-6 ${status === 'live' ? 'lg:grid-cols-[1fr,400px]' : ''}`}>
+          <div className={`grid gap-6 ${status === 'live' ? 'lg:grid-cols-[2fr,350px]' : ''}`}>
+            {/* Main Video and Controls Column */}
             <div className="space-y-4">
               <div className="relative">
                 <video 
@@ -1173,31 +1174,19 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
                 </div>
               </div>
 
-
-          {/* Professional Audio Mixer - only show when audio is ready */}
-          {audioReady && audioContext && sourceNode && (
-          <AudioMixer
-            key="audio-mixer-singleton"
-            audioContext={audioContextRef.current || audioContext}
-            sourceNode={sourceNodeRef.current || sourceNode}
-              onProcessedStream={handleProcessedStream}
-              onAudioLevel={handleAudioLevel}
-              onReady={handleMixerReady}
-              onProcessedAnalyser={handleProcessedAnalyser}
-              onRawInputAnalyser={handleRawInputAnalyser}
-            />
-          )}
-
-          {/* Audio Diagnostics Panel */}
-          {(status === 'preview' || status === 'live' || status === 'connecting') && (
-            <AudioDiagnostics
-              audioContext={audioContext}
-              rawAudioAnalyser={rawAudioAnalyserRef.current}
-              processedAudioAnalyser={processedAudioAnalyserRef.current}
-              room={roomRef.current}
-              status={status}
-            />
-          )}
+              {/* Professional Audio Mixer - only show when audio is ready */}
+              {audioReady && audioContext && sourceNode && (
+                <AudioMixer
+                  key="audio-mixer-singleton"
+                  audioContext={audioContextRef.current || audioContext}
+                  sourceNode={sourceNodeRef.current || sourceNode}
+                  onProcessedStream={handleProcessedStream}
+                  onAudioLevel={handleAudioLevel}
+                  onReady={handleMixerReady}
+                  onProcessedAnalyser={handleProcessedAnalyser}
+                  onRawInputAnalyser={handleRawInputAnalyser}
+                />
+              )}
 
           {/* Device Selection During Preview */}
           {status === 'preview' && (
@@ -1278,20 +1267,23 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
           </div>
             </div>
             
-            {/* Live Interactions Panel - Only shown when live */}
+            {/* Live Viewers - Only shown when live */}
             {status === 'live' && (
               <div className="space-y-4">
-                <div className="grid gap-4">
-                  <LiveViewerList eventId={eventId} />
-                  <LiveReactionFeed eventId={eventId} />
-                  <LiveChatPreview 
-                    eventId={eventId} 
-                    onViewFullChat={onSwitchToChat}
-                  />
-                </div>
+                <LiveViewerList eventId={eventId} />
               </div>
             )}
           </div>
+          
+          {/* Live Chat Below Video - Only shown when live */}
+          {status === 'live' && (
+            <div className="mt-6">
+              <LiveChatPreview 
+                eventId={eventId} 
+                onViewFullChat={onSwitchToChat}
+              />
+            </div>
+          )}
         </>
       )}
       
