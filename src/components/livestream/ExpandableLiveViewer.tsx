@@ -41,22 +41,18 @@ export function ExpandableLiveViewer({
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [audioMuted, setAudioMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
   const videoTrackRef = useRef<RemoteVideoTrack | null>(null);
   const audioTrackRef = useRef<RemoteAudioTrack | null>(null);
   
   // Picture-in-Picture support
-  const { isPiPActive, isPiPSupported, togglePiP } = usePictureInPicture(
-    isExpanded ? expandedVideoRef : videoRef
-  );
+  const { isPiPActive, isPiPSupported, togglePiP } = usePictureInPicture(videoRef);
 
-  // Attach video and audio tracks to the active element
+  // Attach video and audio tracks to the single video element
   const attachTracks = useCallback(() => {
-    const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
+    const activeVideoEl = videoRef.current;
     
     console.log('[Viewer] Attaching tracks:', {
-      isExpanded,
       hasVideo: !!videoTrackRef.current,
       hasAudio: !!audioTrackRef.current,
       activeVideoEl: !!activeVideoEl
@@ -94,7 +90,7 @@ export function ExpandableLiveViewer({
         setAudioMuted(true);
       });
     }
-  }, [isExpanded]);
+  }, []);
 
   const connect = async () => {
     setStatus('connecting');
@@ -209,19 +205,13 @@ export function ExpandableLiveViewer({
     console.log('[Viewer] Disconnecting');
     
     // Detach tracks before disconnecting
-    if (videoTrackRef.current) {
-      const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
-      if (activeVideoEl) {
-        videoTrackRef.current.detach(activeVideoEl);
-      }
+    if (videoTrackRef.current && videoRef.current) {
+      videoTrackRef.current.detach(videoRef.current);
       videoTrackRef.current = null;
     }
     
-    if (audioTrackRef.current) {
-      const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
-      if (activeVideoEl) {
-        audioTrackRef.current.detach(activeVideoEl);
-      }
+    if (audioTrackRef.current && videoRef.current) {
+      audioTrackRef.current.detach(videoRef.current);
       audioTrackRef.current = null;
     }
     
@@ -235,29 +225,7 @@ export function ExpandableLiveViewer({
     setStatus('idle');
   };
 
-  // Re-attach tracks when expanding/collapsing
-  useEffect(() => {
-    if (!isExpanded && !videoTrackRef.current && !audioTrackRef.current) {
-      // No tracks yet, nothing to do
-      return;
-    }
-    
-    console.log('[Viewer] View mode changed (isExpanded=' + isExpanded + '), re-attaching tracks');
-    
-    // Detach from old element
-    const oldVideoEl = isExpanded ? videoRef.current : expandedVideoRef.current;
-    if (oldVideoEl) {
-      if (videoTrackRef.current) {
-        videoTrackRef.current.detach(oldVideoEl);
-      }
-      if (audioTrackRef.current) {
-        audioTrackRef.current.detach(oldVideoEl);
-      }
-    }
-    
-    // Attach to new element
-    setTimeout(() => attachTracks(), 100);
-  }, [isExpanded, attachTracks]);
+  // No need to re-attach tracks when expanding/collapsing (single video element)
 
   useEffect(() => {
     return () => {
@@ -275,9 +243,8 @@ export function ExpandableLiveViewer({
 
   // Force volume to 1.0 when audio track is available
   useEffect(() => {
-    if (hasAudioTrack) {
-      if (videoRef.current) videoRef.current.volume = 1.0;
-      if (expandedVideoRef.current) expandedVideoRef.current.volume = 1.0;
+    if (hasAudioTrack && videoRef.current) {
+      videoRef.current.volume = 1.0;
     }
   }, [hasAudioTrack]);
 
@@ -286,12 +253,11 @@ export function ExpandableLiveViewer({
     if (status !== 'connected' || !hasAudioTrack) return;
     
     const interval = setInterval(() => {
-      const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
-      if (activeVideoEl) {
+      if (videoRef.current) {
         console.log('[Audio Debug]', {
-          volume: activeVideoEl.volume,
-          muted: activeVideoEl.muted,
-          paused: activeVideoEl.paused,
+          volume: videoRef.current.volume,
+          muted: videoRef.current.muted,
+          paused: videoRef.current.paused,
           hasAudioTrack: !!audioTrackRef.current,
           audioTrackEnabled: audioTrackRef.current?.mediaStreamTrack?.enabled
         });
@@ -299,7 +265,7 @@ export function ExpandableLiveViewer({
     }, 2000);
     
     return () => clearInterval(interval);
-  }, [status, hasAudioTrack, isExpanded]);
+  }, [status, hasAudioTrack]);
 
   const handleTip = () => {
     if (onTip) {
@@ -319,30 +285,38 @@ export function ExpandableLiveViewer({
   };
 
   const handleUnmute = () => {
-    const activeVideoEl = isExpanded ? expandedVideoRef.current : videoRef.current;
-    if (activeVideoEl) {
-      activeVideoEl.muted = false;
-      activeVideoEl.volume = 1.0;
-      activeVideoEl.play().catch(err => 
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1.0;
+      videoRef.current.play().catch(err => 
         console.error('[Viewer] Error unmuting audio:', err)
       );
     }
     setAudioMuted(false);
   };
 
+  // Single video element shared between compact and expanded modes
+  const videoElement = (
+    <video 
+      ref={videoRef}
+      id="livekit-video"
+      autoPlay 
+      playsInline
+      muted={false}
+      controls
+      className={isExpanded 
+        ? "w-full h-full object-contain bg-black" 
+        : "w-full rounded-2xl border bg-black aspect-video shadow-xl"
+      }
+    />
+  );
+
   return (
     <>
       <div className="space-y-3">
         <div className="relative group">
-          <video 
-            ref={videoRef}
-            id="compact-video"
-            autoPlay 
-            playsInline
-            muted={false}
-            controls
-            className="w-full rounded-2xl border bg-black aspect-video shadow-xl" 
-          />
+          {/* Single video element (shared with expanded mode) */}
+          {videoElement}
           
           {/* Stream ended message */}
           {status === 'ended' && (
@@ -459,15 +433,8 @@ export function ExpandableLiveViewer({
           <div className="flex h-full gap-0">
             {/* Left side - Video Player (takes remaining space) */}
             <div className="flex-1 flex items-center justify-center bg-black relative min-w-0">
-              <video 
-                ref={expandedVideoRef}
-                id="expanded-video"
-                autoPlay 
-                playsInline
-                muted={false}
-                controls
-                className="w-full h-full object-contain" 
-              />
+              {/* Single video element (shared with compact mode) */}
+              {videoElement}
                 
               {/* Top Controls Bar */}
               <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
