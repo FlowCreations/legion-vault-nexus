@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 import { ProgressiveLoader } from "@/components/merchant/ProgressiveLoader";
+import { dedupeRequest, deferNonCritical } from "@/lib/performance";
 
 // Lazy load ALL heavy components for maximum performance
 const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
@@ -93,18 +94,6 @@ const Merchant = memo(() => {
   //   memoryInterval: 15000,
   // });
 
-  useEffect(() => {
-    const state = window.history.state?.usr;
-    if (state?.activeTab) {
-      setActiveTab(state.activeTab);
-      window.history.replaceState({}, document.title);
-    }
-    if (state?.selectedUserId) {
-      setSelectedUserId(state.selectedUserId);
-      setTimeout(() => setSelectedUserId(null), 3000);
-    }
-  }, []);
-
   // Memoize demo data to prevent recreation on every render
   const getDemoData = useMemo((): AnalyticsData => ({
     events: 15847,
@@ -143,16 +132,34 @@ const Merchant = memo(() => {
   }), []);
 
   const loadAnalytics = useCallback(async () => {
-    // Load demo data immediately with no async operations
-    setAnalyticsData(getDemoData);
+    // Deduplicate analytics loading
+    return dedupeRequest('merchant-analytics', async () => {
+      setAnalyticsData(getDemoData);
+      return getDemoData;
+    });
   }, [getDemoData]);
+
+  useEffect(() => {
+    const state = window.history.state?.usr;
+    if (state?.activeTab) {
+      setActiveTab(state.activeTab);
+      window.history.replaceState({}, document.title);
+    }
+    if (state?.selectedUserId) {
+      setSelectedUserId(state.selectedUserId);
+      setTimeout(() => setSelectedUserId(null), 3000);
+    }
+    
+    // Defer analytics loading to speed up initial render
+    deferNonCritical(() => {
+      loadAnalytics();
+    }, 300);
+  }, [loadAnalytics]);
 
   const handleRefreshData = useCallback(async () => {
     setRefreshing(true);
     try {
-      // Only sync viberate, skip heavy operations
       await supabase.functions.invoke('sync-viberate');
-      
       toast({
         title: "Data refreshed",
         description: "Your analytics data has been updated",
@@ -168,6 +175,9 @@ const Merchant = memo(() => {
       setRefreshing(false);
     }
   }, [toast]);
+
+  const showAIChat = showChat;
+  const setShowAIChat = setShowChat;
 
   return (
     <div className="min-h-screen bg-background">
