@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Room, RoomEvent, Track, RemoteTrack, RemoteVideoTrack, RemoteAudioTrack } from 'livekit-client';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
@@ -12,6 +10,7 @@ import { StreamHighlights } from './StreamHighlights';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePictureInPicture } from '@/hooks/usePictureInPicture';
+import { useLiveStreamStore } from '@/stores/liveStreamStore';
 
 type Props = { 
   eventId: string;
@@ -19,8 +18,6 @@ type Props = {
   onTip?: () => void;
   onShare?: () => void;
   showExternalControls?: boolean;
-  isExpanded?: boolean;
-  onExpandChange?: (expanded: boolean) => void;
 };
 
 export function ExpandableLiveViewer({ 
@@ -28,33 +25,38 @@ export function ExpandableLiveViewer({
   streamStartTime, 
   onTip, 
   onShare, 
-  showExternalControls = false,
-  isExpanded = false,
-  onExpandChange
+  showExternalControls = false
 }: Props) {
   const isMobile = useIsMobile();
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'ended' | 'error'>('idle');
-  const [error, setError] = useState<string>();
-  const [viewerCount, setViewerCount] = useState(0);
-  const [hasVideoTrack, setHasVideoTrack] = useState(false);
-  const [hasAudioTrack, setHasAudioTrack] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [audioMuted, setAudioMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const roomRef = useRef<Room | null>(null);
-  const videoTrackRef = useRef<RemoteVideoTrack | null>(null);
-  const audioTrackRef = useRef<RemoteAudioTrack | null>(null);
+  
+  // Global stream state
+  const { 
+    status, 
+    error, 
+    viewerCount, 
+    hasVideoTrack, 
+    hasAudioTrack,
+    videoTrack,
+    audioTrack,
+    isExpanded,
+    setExpanded,
+    connect: connectStream,
+    disconnect: disconnectStream
+  } = useLiveStreamStore();
   
   // Picture-in-Picture support
-  const { isPiPActive, isPiPSupported, togglePiP } = usePictureInPicture(videoRef);
+  const { isPiPActive, isPiPSupported, togglePiP, enterPiP } = usePictureInPicture(videoRef);
 
   // Attach video and audio tracks to the single video element
   const attachTracks = useCallback(() => {
     const activeVideoEl = videoRef.current;
     
     console.log('[Viewer] Attaching tracks:', {
-      hasVideo: !!videoTrackRef.current,
-      hasAudio: !!audioTrackRef.current,
+      hasVideo: !!videoTrack,
+      hasAudio: !!audioTrack,
       activeVideoEl: !!activeVideoEl
     });
     
@@ -64,9 +66,9 @@ export function ExpandableLiveViewer({
     }
 
     // Attach video track using LiveKit's attach method
-    if (videoTrackRef.current) {
+    if (videoTrack) {
       console.log('[Viewer] Attaching video track');
-      videoTrackRef.current.attach(activeVideoEl);
+      videoTrack.attach(activeVideoEl);
       
       // Ensure playback
       activeVideoEl.play().catch(err => 
@@ -75,9 +77,9 @@ export function ExpandableLiveViewer({
     }
 
     // Attach audio track directly to the video element (LiveKit handles this)
-    if (audioTrackRef.current) {
+    if (audioTrack) {
       console.log('[Viewer] Attaching audio track');
-      audioTrackRef.current.attach(activeVideoEl);
+      audioTrack.attach(activeVideoEl);
       
       // Force audio playback with explicit volume control
       activeVideoEl.muted = false;
@@ -90,184 +92,45 @@ export function ExpandableLiveViewer({
         setAudioMuted(true);
       });
     }
-  }, []);
+  }, [videoTrack, audioTrack]);
 
-  const connect = async () => {
-    setStatus('connecting');
-    setError(undefined);
-    console.log('[Viewer] Connecting to room:', eventId);
-
-    try {
-      // Get token from edge function
-      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
-        body: { 
-          roomName: eventId, 
-          participantName: `Viewer-${Math.random().toString(36).substr(2, 9)}`,
-          role: 'viewer' 
-        },
-      });
-
-      if (tokenError) throw tokenError;
-      console.log('[Viewer] Token received');
-
-      const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || 'wss://sonsoflegionlivestudio-lvof78tr.livekit.cloud';
-
-      // Create and connect room
-      const room = new Room();
-      roomRef.current = room;
-
-      room.on(RoomEvent.Connected, () => {
-        console.log('[Viewer] Connected to room');
-        setStatus('connected');
-        // Update viewer count on connect
-        setViewerCount(room.numParticipants);
-      });
-
-      room.on(RoomEvent.Disconnected, () => {
-        console.log('[Viewer] Disconnected from room');
-        setStatus('ended');
-        setHasVideoTrack(false);
-        setHasAudioTrack(false);
-      });
-
-      room.on(RoomEvent.ParticipantConnected, (participant) => {
-        console.log('[Viewer] Participant joined:', participant.identity);
-        if (roomRef.current) {
-          setViewerCount(roomRef.current.numParticipants);
-        }
-      });
-
-      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
-        console.log('[Viewer] Participant left:', participant.identity);
-        if (roomRef.current) {
-          setViewerCount(roomRef.current.numParticipants);
-        }
-        
-        // If broadcaster disconnected, end the stream
-        if (participant.identity.includes('Broadcaster')) {
-          console.log('[Viewer] Broadcaster left - ending stream');
-          setStatus('ended');
-          setHasVideoTrack(false);
-          setHasAudioTrack(false);
-        }
-      });
-
-      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-        console.log('[Viewer] 🎯 Track subscribed:', {
-          kind: track.kind,
-          participant: participant.identity,
-          sid: track.sid,
-          publication: {
-            trackSid: publication.trackSid,
-            trackName: publication.trackName,
-            source: publication.source,
-            isMuted: publication.isMuted,
-            isEnabled: publication.isEnabled
-          }
-        });
-        
-        if (track.kind === Track.Kind.Video && track instanceof RemoteVideoTrack) {
-          console.log('[Viewer] 📹 Storing video track');
-          videoTrackRef.current = track;
-          setHasVideoTrack(true);
-          
-          // Attach immediately to current view
-          setTimeout(() => attachTracks(), 100);
-        } else if (track.kind === Track.Kind.Audio && track instanceof RemoteAudioTrack) {
-          console.log('[Viewer] 🔊 Storing audio track:', {
-            sid: track.sid,
-            mediaStreamTrack: track.mediaStreamTrack ? {
-              id: track.mediaStreamTrack.id,
-              label: track.mediaStreamTrack.label,
-              enabled: track.mediaStreamTrack.enabled,
-              muted: track.mediaStreamTrack.muted,
-              readyState: track.mediaStreamTrack.readyState
-            } : null
-          });
-          audioTrackRef.current = track;
-          setHasAudioTrack(true);
-          
-          // Attach immediately to current view
-          setTimeout(() => attachTracks(), 100);
-        }
-      });
-
-      await room.connect(livekitUrl, tokenData.token);
-      console.log('[Viewer] Viewing stream!');
-    } catch (e: any) {
-      console.error('[Viewer] Error:', e);
-      setError(e.message);
-      setStatus('error');
-    }
-  };
-
-  const disconnect = () => {
-    console.log('[Viewer] Disconnecting');
-    
-    // Detach tracks before disconnecting
-    if (videoTrackRef.current && videoRef.current) {
-      videoTrackRef.current.detach(videoRef.current);
-      videoTrackRef.current = null;
-    }
-    
-    if (audioTrackRef.current && videoRef.current) {
-      audioTrackRef.current.detach(videoRef.current);
-      audioTrackRef.current = null;
-    }
-    
-    if (roomRef.current) {
-      roomRef.current.disconnect();
-      roomRef.current = null;
-    }
-    
-    setHasVideoTrack(false);
-    setHasAudioTrack(false);
-    setStatus('idle');
-  };
-
-  // No need to re-attach tracks when expanding/collapsing (single video element)
-
+  // Connect to stream on mount
   useEffect(() => {
-    return () => {
-      if (roomRef.current) {
-        roomRef.current.disconnect();
+    if (status === 'idle') {
+      console.log('[Viewer] Initiating connection to event:', eventId);
+      connectStream(eventId);
+    }
+  }, [eventId, status, connectStream]);
+
+  // Attach tracks when they become available
+  useEffect(() => {
+    if ((videoTrack || audioTrack) && videoRef.current) {
+      attachTracks();
+    }
+  }, [videoTrack, audioTrack, attachTracks]);
+
+  // Auto Picture-in-Picture when navigating away
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden && videoRef.current && status === 'connected' && isPiPSupported) {
+        try {
+          await enterPiP();
+          console.log('[Viewer] Entered PiP on navigation');
+        } catch (err) {
+          console.log('[Viewer] PiP not available:', err);
+        }
       }
     };
-  }, []);
-
-  useEffect(() => {
-    if (status === 'idle' && eventId) {
-      connect();
-    }
-  }, [eventId]);
-
-  // Force volume to 1.0 when audio track is available
-  useEffect(() => {
-    if (hasAudioTrack && videoRef.current) {
-      videoRef.current.volume = 1.0;
-    }
-  }, [hasAudioTrack]);
-
-  // Audio diagnostic logging - runs every 2 seconds when connected
-  useEffect(() => {
-    if (status !== 'connected' || !hasAudioTrack) return;
     
-    const interval = setInterval(() => {
-      if (videoRef.current) {
-        console.log('[Audio Debug]', {
-          volume: videoRef.current.volume,
-          muted: videoRef.current.muted,
-          paused: videoRef.current.paused,
-          hasAudioTrack: !!audioTrackRef.current,
-          audioTrackEnabled: audioTrackRef.current?.mediaStreamTrack?.enabled
-        });
-      }
-    }, 2000);
-    
-    return () => clearInterval(interval);
-  }, [status, hasAudioTrack]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [status, isPiPSupported, enterPiP]);
 
-  const handleTip = () => {
+  const handleExpandChange = (expanded: boolean) => {
+    setExpanded(expanded);
+  };
+
+  const handleTipClick = () => {
     if (onTip) {
       onTip();
     } else {
@@ -275,12 +138,11 @@ export function ExpandableLiveViewer({
     }
   };
 
-  const handleShare = () => {
+  const handleShareClick = () => {
     if (onShare) {
       onShare();
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+      toast.info("Share feature coming soon!");
     }
   };
 
@@ -288,14 +150,22 @@ export function ExpandableLiveViewer({
     if (videoRef.current) {
       videoRef.current.muted = false;
       videoRef.current.volume = 1.0;
-      videoRef.current.play().catch(err => 
-        console.error('[Viewer] Error unmuting audio:', err)
-      );
+      setAudioMuted(false);
+      
+      videoRef.current.play().catch(err => {
+        console.warn('[Viewer] Play prevented after unmute:', err);
+      });
     }
-    setAudioMuted(false);
   };
 
-  // Single video element shared between compact and expanded modes
+  // Calculate stream duration
+  const streamDuration = streamStartTime 
+    ? Math.floor((Date.now() - streamStartTime.getTime()) / 1000)
+    : 0;
+  const hours = Math.floor(streamDuration / 3600);
+  const minutes = Math.floor((streamDuration % 3600) / 60);
+
+  // Single video element used in both modes
   const videoElement = (
     <video 
       ref={videoRef}
@@ -311,260 +181,272 @@ export function ExpandableLiveViewer({
     />
   );
 
-  return (
-    <>
+  // Compact mode rendering
+  if (!isExpanded) {
+    return (
       <div className="space-y-3">
         <div className="relative group">
-          {/* Single video element (shared with expanded mode) */}
+          {/* Video Container */}
           {videoElement}
-          
-          {/* Stream ended message */}
-          {status === 'ended' && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-              <div className="text-center px-6">
-                <div className="text-4xl mb-4">📺</div>
-                <h3 className="text-white text-2xl font-bold mb-2">Broadcast Has Ended</h3>
-                <p className="text-white/80 text-lg">Thank you for joining us!</p>
-              </div>
-            </div>
-          )}
-          
-          {/* Waiting for stream message */}
-          {status === 'connected' && !hasVideoTrack && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-              <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white border-r-transparent mb-3" />
-                <p className="text-white text-sm font-medium">Waiting for stream...</p>
-              </div>
-            </div>
-          )}
 
-          {/* Status Indicator */}
-          <div className="absolute top-4 left-4 flex items-center gap-3">
-            {status !== 'ended' && (
-              <>
-                <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                  <span className={`inline-block h-2 w-2 rounded-full ${
-                    status === 'connected' ? 'bg-green-500' : 
-                    status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-                    'bg-red-500'
-                  }`} />
-                  <span className="text-white text-xs font-medium uppercase">{status}</span>
-                </div>
-                {status === 'connected' && viewerCount > 0 && (
-                  <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                    <span className="text-white text-xs font-medium">{viewerCount} watching</span>
+          {/* Stream Status Overlay */}
+          {status !== 'connected' && (
+            <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-2xl border">
+              <div className="text-center text-white space-y-4">
+                {status === 'connecting' && (
+                  <>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-sm">Connecting to stream...</p>
+                  </>
+                )}
+                {status === 'ended' && (
+                  <div className="space-y-2">
+                    <p className="text-xl font-bold">Stream Ended</p>
+                    <p className="text-sm text-gray-300">Thank you for watching!</p>
                   </div>
                 )}
-              </>
-            )}
-          </div>
-
-          {/* Unmute Audio Button - Show if browser blocks autoplay */}
-          {hasAudioTrack && audioMuted && status === 'connected' && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-              <Button
-                onClick={handleUnmute}
-                size="lg"
-                className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg"
-              >
-                <Volume2 className="w-5 h-5 mr-2" />
-                Unmute Audio
-              </Button>
+                {status === 'error' && error && (
+                  <div className="space-y-2 text-red-400">
+                    <p className="text-xl font-bold">Connection Error</p>
+                    <p className="text-sm">{error}</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Live Reactions Overlay */}
-          {status === 'connected' && !status.includes('ended') && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-              <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+          {/* Live Badge & Viewer Count - Top Left */}
+          {status === 'connected' && (
+            <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+              <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg backdrop-blur-sm">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                LIVE
+              </div>
+              <div className="bg-black/60 text-white px-3 py-1.5 rounded-full flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
+                <span className="text-primary">👁️</span>
+                {viewerCount}
+              </div>
+            </div>
+          )}
+
+          {/* Duration - Top Right */}
+          {status === 'connected' && streamDuration > 0 && (
+            <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1.5 rounded-full text-sm shadow-lg backdrop-blur-sm">
+              {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
+            </div>
+          )}
+
+          {/* Reactions Overlay - Right Side */}
+          {status === 'connected' && (
+            <div className="absolute right-4 bottom-20 z-10">
+              <LiveReactions eventId={eventId} />
+            </div>
+          )}
+
+          {/* Unmute Button */}
+          {audioMuted && hasAudioTrack && status === 'connected' && (
+            <Button
+              size="sm"
+              onClick={handleUnmute}
+              className="absolute bottom-4 left-4 bg-yellow-500/90 hover:bg-yellow-600 text-white z-10"
+            >
+              <Volume2 className="h-4 w-4 mr-2" />
+              Tap to Unmute
+            </Button>
+          )}
+
+          {/* Quick Actions - Bottom Right */}
+          {status === 'connected' && (
+            <div className="absolute bottom-4 right-4 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+              {isPiPSupported && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={togglePiP}
+                  className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+                >
+                  <PictureInPicture2 className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleExpandChange(true)}
+                className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>
 
-        {/* External Controls - Only show if enabled */}
-        {showExternalControls && status !== 'ended' && (
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <Button
-              variant="secondary"
-              onClick={() => onExpandChange?.(true)}
-              className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
-            >
-              <Maximize2 className="w-4 h-4 mr-2" />
-              Expand
+        {/* External Controls */}
+        {showExternalControls && status === 'connected' && (
+          <div className="flex gap-2 justify-center">
+            <Button onClick={handleTipClick} variant="default" className="flex-1">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Send Tip
             </Button>
-            {isPiPSupported && (
-              <Button
-                variant="secondary"
-                onClick={togglePiP}
-                className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
-              >
-                <PictureInPicture2 className="w-4 h-4 mr-2" />
-                {isPiPActive ? 'Exit PiP' : 'PiP'}
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              onClick={handleTip}
-              className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Tip
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleShare}
-              className="min-h-[48px] touch-manipulation active:scale-95 transition-transform"
-            >
-              <Share2 className="w-4 h-4 mr-2" />
+            <Button onClick={handleShareClick} variant="outline" className="flex-1">
+              <Share2 className="h-4 w-4 mr-2" />
               Share
+            </Button>
+            <Button onClick={() => handleExpandChange(true)} variant="outline" className="flex-1">
+              <Maximize2 className="h-4 w-4 mr-2" />
+              Expand
             </Button>
           </div>
         )}
+
+        <TipDialog 
+          eventId={eventId}
+          open={showTipDialog} 
+          onOpenChange={setShowTipDialog}
+        />
       </div>
+    );
+  }
 
-      {/* Expanded View Dialog - YouTube Live Style */}
-      <Dialog open={isExpanded} onOpenChange={onExpandChange}>
-        <DialogContent 
-          className="max-w-[98vw] w-[98vw] h-[95vh] p-0 bg-background overflow-hidden"
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <div className="flex h-full gap-0">
-            {/* Left side - Video Player (takes remaining space) */}
-            <div className="flex-1 flex items-center justify-center bg-black relative min-w-0">
-              {/* Single video element (shared with compact mode) */}
+  // Expanded mode rendering
+  if (isMobile) {
+    return (
+      <Drawer open={isExpanded} onOpenChange={handleExpandChange}>
+        <DrawerContent className="h-[95vh]">
+          <div className="flex flex-col h-full">
+            {/* Video Section */}
+            <div className="relative flex-1 bg-black">
               {videoElement}
-                
-              {/* Top Controls Bar */}
-              <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                {/* Left side - Status & Viewer Count */}
-                <div className="flex items-center gap-3">
-                  {status === 'ended' ? (
-                    <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <span className="inline-block h-2 w-2 rounded-full bg-muted" />
-                      <span className="text-white text-sm font-medium">ENDED</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                        <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                        <span className="text-white text-sm font-medium">LIVE</span>
-                      </div>
-                      {viewerCount > 0 && (
-                        <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                          <span className="text-white text-sm font-medium">{viewerCount} watching</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                
-                {/* Right side - Minimize Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onExpandChange?.(false)}
-                  className="bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white h-9 w-9"
-                  title="Minimize"
-                >
-                  <Minimize2 className="w-5 h-5" />
-                </Button>
-              </div>
 
-              {/* Unmute Audio Button */}
-              {hasAudioTrack && audioMuted && status === 'connected' && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-                  <Button
-                    onClick={handleUnmute}
-                    size="lg"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                  >
-                    <Volume2 className="w-5 h-5 mr-2" />
-                    Unmute Audio
-                  </Button>
-                </div>
-              )}
-                
-              {/* Stream ended message */}
-              {status === 'ended' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-                  <div className="text-center px-6">
-                    <div className="text-6xl mb-6">📺</div>
-                    <h3 className="text-white text-4xl font-bold mb-3">Broadcast Has Ended</h3>
-                    <p className="text-white/80 text-xl">Thank you for joining us!</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Live Reactions Overlay */}
+              {/* Live Badge */}
               {status === 'connected' && (
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-                  <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  LIVE
                 </div>
               )}
+
+              {/* Close Button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleExpandChange(false)}
+                className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
             </div>
-            
-            {/* Right side - Chat & Actions Sidebar */}
-            <div className="w-[380px] min-w-[380px] border-l border-border flex flex-col bg-background">
-              {/* Chat Header */}
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h3 className="font-semibold text-sm">Live Chat</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onExpandChange?.(false)}
-                  className="h-8 w-8 -mr-2"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-hidden">
-                <LiveChat eventId={eventId} onTipRequest={handleTip} />
-              </div>
 
-              {/* Highlights Section */}
-              <div className="border-t border-border overflow-hidden max-h-48">
-                <StreamHighlights eventId={eventId} />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="p-4 border-t border-border space-y-2 bg-background">
-                <Button
-                  onClick={handleTip}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
-                >
-                  <DollarSign className="w-4 h-4" />
-                  Send Tip
-                </Button>
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  className="w-full gap-2"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
-              </div>
+            {/* Chat & Actions */}
+            <div className="border-t bg-background">
+              <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Tip Dialog */}
-      <TipDialog 
-        open={showTipDialog} 
-        onOpenChange={setShowTipDialog} 
-        eventId={eventId}
-      />
-      
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800 mt-2">
-          {error}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop expanded mode
+  return (
+    <Dialog open={isExpanded} onOpenChange={handleExpandChange}>
+      <DialogContent 
+        className="max-w-[98vw] w-[98vw] h-[95vh] p-0"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          handleExpandChange(false);
+        }}
+      >
+        <div className="flex h-full">
+          {/* Video Section */}
+          <div className="flex-1 bg-black relative flex items-center justify-center">
+            {videoElement}
+
+            {/* Live Badge & Viewer Count */}
+            {status === 'connected' && (
+              <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
+                <div className="bg-red-600 text-white px-4 py-2 rounded-full flex items-center gap-2 font-semibold shadow-lg backdrop-blur-sm">
+                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                  LIVE
+                </div>
+                <div className="bg-black/60 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg backdrop-blur-sm">
+                  <span className="text-primary">👁️</span>
+                  {viewerCount} watching
+                </div>
+              </div>
+            )}
+
+            {/* Duration */}
+            {status === 'connected' && streamDuration > 0 && (
+              <div className="absolute top-6 right-6 bg-black/60 text-white px-4 py-2 rounded-full shadow-lg backdrop-blur-sm">
+                {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
+              </div>
+            )}
+
+            {/* Reactions */}
+            {status === 'connected' && (
+              <div className="absolute right-6 bottom-24 z-10">
+                <LiveReactions eventId={eventId} />
+              </div>
+            )}
+
+            {/* Minimize Button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => handleExpandChange(false)}
+              className="absolute bottom-6 left-6 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+            >
+              <Minimize2 className="h-4 w-4 mr-2" />
+              Minimize
+            </Button>
+
+            {/* PiP Button */}
+            {isPiPSupported && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={togglePiP}
+                className="absolute bottom-6 left-32 bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+              >
+                <PictureInPicture2 className="h-4 w-4 mr-2" />
+                Picture-in-Picture
+              </Button>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-[380px] border-l bg-background flex flex-col">
+            {/* Chat */}
+            <div className="flex-1 overflow-hidden">
+              <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
+            </div>
+
+            {/* Highlights */}
+            <div className="border-t p-4">
+              <StreamHighlights eventId={eventId} />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-t p-4 flex gap-2">
+              <Button onClick={handleTipClick} className="flex-1">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Send Tip
+              </Button>
+              <Button onClick={handleShareClick} variant="outline" className="flex-1">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </div>
+          </div>
         </div>
-      )}
-    </>
+      </DialogContent>
+      
+      <TipDialog 
+        eventId={eventId}
+        open={showTipDialog} 
+        onOpenChange={setShowTipDialog}
+      />
+    </Dialog>
   );
 }
