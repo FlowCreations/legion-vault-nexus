@@ -13,6 +13,7 @@ import { dedupeRequest, deferNonCritical } from "@/lib/performance";
 const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
 const MusicUpload = lazy(() => import("@/components/MusicUpload"));
 const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
+const LyricsManager = lazy(() => import("@/components/merchant/LyricsManager").then(m => ({ default: m.LyricsManager })));
 const TopTracks = lazy(() => import("@/components/merchant/TopTracks"));
 const FanbaseStats = lazy(() => import("@/components/merchant/analytics/FanbaseStats"));
 const Geography = lazy(() => import("@/components/merchant/Geography"));
@@ -337,6 +338,7 @@ const Merchant = memo(() => {
                   <TabsTrigger value="videos">Videos</TabsTrigger>
                   <TabsTrigger value="music">Music Upload</TabsTrigger>
                   <TabsTrigger value="music-manager">Music Manager</TabsTrigger>
+                  <TabsTrigger value="lyrics">Lyrics Manager</TabsTrigger>
                   <TabsTrigger value="livestreams">Live Events</TabsTrigger>
                   <TabsTrigger value="tour">Tour Manager</TabsTrigger>
                   <TabsTrigger value="lab">Content Lab</TabsTrigger>
@@ -355,6 +357,11 @@ const Merchant = memo(() => {
                 <TabsContent value="music-manager">
                   <Suspense fallback={<LoadingSpinner />}>
                     <MusicManager />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="lyrics">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <LyricsManager />
                   </Suspense>
                 </TabsContent>
                 <TabsContent value="livestreams">
