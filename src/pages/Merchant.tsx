@@ -155,7 +155,7 @@ const Merchant = memo(() => {
     deferNonCritical(() => {
       loadAnalytics();
     }, 300);
-  }, [loadAnalytics]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefreshData = useCallback(async () => {
     setRefreshing(true);
