@@ -3215,6 +3215,7 @@ export type Database = {
           duration: string | null
           id: string
           image_url: string | null
+          lyrics: string | null
           public_url: string
           storage_path: string
           title: string
@@ -3232,6 +3233,7 @@ export type Database = {
           duration?: string | null
           id?: string
           image_url?: string | null
+          lyrics?: string | null
           public_url: string
           storage_path: string
           title: string
@@ -3249,6 +3251,7 @@ export type Database = {
           duration?: string | null
           id?: string
           image_url?: string | null
+          lyrics?: string | null
           public_url?: string
           storage_path?: string
           title?: string
