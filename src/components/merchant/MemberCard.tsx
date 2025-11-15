@@ -64,21 +64,21 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div className="relative">
-      {/* CLOSE BUTTON - At the very top */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          console.log('🔴 MemberCard close button clicked');
-          onClose();
-        }}
-        className="absolute -top-2 -right-2 z-[200] w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 border-4 border-white shadow-2xl transition-all hover:scale-110"
-        title="Close Profile"
-      >
-        <X className="w-7 h-7 text-white font-bold" strokeWidth={3} />
-      </button>
-
-      <div>
+    <div>
+      {/* CLOSE BUTTON - Simple and visible at top */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white border-2 border-white shadow-lg transition-all hover:scale-110"
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" strokeWidth={2.5} />
+        </button>
+      </div>
+      
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
         <Avatar className="h-16 w-16 border-2 border-primary/20">
@@ -217,7 +217,6 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
         <Button onClick={onViewProfile} className="flex-1 bg-primary hover:bg-primary/90">
           View Full Profile
         </Button>
-      </div>
       </div>
     </div>
   );
