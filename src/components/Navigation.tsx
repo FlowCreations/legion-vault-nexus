@@ -87,14 +87,14 @@ export const Navigation = () => {
             </Link>
           )}
 
-          <div className={`flex items-center gap-1 ${isHomePage ? 'mx-auto' : ''}`}>
+          <div className={`flex items-center gap-1 ${isHomePage ? 'mx-auto' : 'flex-1 justify-center'}`}>
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-4 py-2 rounded-lg text-base font-medium transition-colors ${
+                  className={`px-5 py-2.5 rounded-lg text-lg font-medium transition-colors ${
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted"
