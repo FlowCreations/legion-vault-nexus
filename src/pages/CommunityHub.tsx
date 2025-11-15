@@ -132,13 +132,20 @@ export default function CommunityHub() {
 
   const loadCurrentUserProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.log('No user found');
+      return;
+    }
 
-    const { data: profile } = await supabase
+    console.log('Loading profile for user:', user.id);
+
+    const { data: profile, error } = await supabase
       .from('user_profiles')
       .select('display_name, avatar_url')
       .eq('user_id', user.id)
       .single();
+
+    console.log('Profile loaded:', profile, 'Error:', error);
 
     if (profile) {
       setCurrentUserProfile(profile);
