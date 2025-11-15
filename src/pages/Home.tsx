@@ -236,7 +236,6 @@ export default function Home() {
               onClick={() => trackEvent('view_album', { name: 'Free EP', source: 'hero_cta' })}
             >
               <Link to="/free-ep">
-                <Sparkles className="w-5 h-5 mr-2" />
                 {t('home.hero.getFreeAlbum')}
               </Link>
             </Button>
