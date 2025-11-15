@@ -64,31 +64,45 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div style={{ position: "relative", width: "100%", minHeight: "200px" }}>
+    <div style={{ 
+      position: "relative", 
+      width: "100%", 
+      minHeight: "200px",
+      background: "hsl(var(--card))",
+      borderRadius: "16px",
+      border: "1px solid hsl(var(--border))"
+    }}>
       <button
         type="button"
-        onClick={onClose}
+        onClick={(e) => {
+          console.log('🔴 CLOSE BUTTON CLICKED IN MEMBERCARD');
+          e.stopPropagation();
+          onClose();
+        }}
         style={{
           position: "absolute",
-          top: 12,
-          right: 12,
-          width: 36,
-          height: 36,
+          top: -10,
+          right: -10,
+          width: 44,
+          height: 44,
           borderRadius: "50%",
           background: "#f44336",
           color: "#fff",
-          border: "2px solid #fff",
+          border: "4px solid #fff",
           fontWeight: "bold",
-          fontSize: 24,
+          fontSize: 28,
           cursor: "pointer",
-          zIndex: 100,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+          zIndex: 9999,
+          boxShadow: "0 4px 12px rgba(244, 67, 54, 0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
         }}
         aria-label="Close profile"
       >
         ×
       </button>
-      <div style={{ maxHeight: "85vh", overflowY: "auto", padding: "24px 12px 12px 12px" }}>
+      <div style={{ maxHeight: "85vh", overflowY: "auto", padding: "48px 24px 24px 24px" }}>
       
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">

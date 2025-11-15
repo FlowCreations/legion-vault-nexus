@@ -282,8 +282,9 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
           >
             <div className="relative max-w-2xl w-full mx-4 my-8">
               <div 
-                className="relative bg-card border border-white/20 rounded-2xl shadow-2xl" 
+                className="relative rounded-2xl shadow-2xl" 
                 onClick={(e) => e.stopPropagation()}
+                style={{ background: "transparent" }}
               >
                 <MemberCard 
                   member={selectedMember}
