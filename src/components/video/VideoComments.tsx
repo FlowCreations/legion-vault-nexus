@@ -74,21 +74,9 @@ export const VideoComments = ({
     return name[0].toUpperCase();
   };
 
-  // Always show floating button when comments are closed
+  // Don't show floating button - comments are integrated into the video player
   if (!showComments) {
-    return (
-      <button
-        onClick={onToggleComments}
-        className="fixed bottom-24 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-primary/90 hover:bg-primary transition-all backdrop-blur-sm shadow-lg shadow-primary/20 border border-primary/20"
-      >
-        <MessageSquare className="w-5 h-5 text-primary-foreground" />
-        {comments.length > 0 && (
-          <span className="bg-accent text-accent-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-            {comments.length}
-          </span>
-        )}
-      </button>
-    );
+    return null;
   }
 
   // Full comments panel
