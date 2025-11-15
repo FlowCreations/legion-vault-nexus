@@ -104,7 +104,30 @@ export const BuildFunnel = () => {
             "Partner with influencers in Nashville/Austin markets for organic reach",
             "Submit top tracks to editorial playlists in rock/country crossover categories"
           ],
-          metrics: "New unique listeners, playlist adds, social reach, first-time stream rate"
+          metrics: "New unique listeners, playlist adds, social reach, first-time stream rate",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "🎵 You just discovered something special",
+              triggerCondition: "User streams featured track for the first time",
+              waitTime: "Immediately after stream",
+              content: "Thank you for discovering our music! Since you loved that track, here are 3 more songs we think you'll enjoy...",
+            },
+            {
+              emailNumber: 2,
+              subject: "Ready to dive deeper? Your personalized playlist awaits",
+              triggerCondition: "User hasn't returned in 48 hours",
+              waitTime: "48 hours after Email 1",
+              content: "We noticed you vibed with our sound. We created a custom playlist just for you featuring our top tracks and similar artists...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Last chance: Exclusive acoustic session for new listeners",
+              triggerCondition: "User hasn't engaged with email 2",
+              waitTime: "72 hours after Email 2",
+              content: "As a welcome gift, get instant access to our unreleased acoustic sessions. Only available for the next 48 hours...",
+            }
+          ]
         },
         {
           stage: "Sampling",
@@ -116,7 +139,37 @@ export const BuildFunnel = () => {
             "Retarget single-track listeners with 30-sec album preview ads",
             "Email campaign to free users: 'If you loved this, you'll love...'"
           ],
-          metrics: "Tracks per listener, album completion rate, skip rate, time spent listening"
+          metrics: "Tracks per listener, album completion rate, skip rate, time spent listening",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "If you loved that track, you'll love the full album",
+              triggerCondition: "User plays same track 3+ times",
+              waitTime: "24 hours after 3rd play",
+              content: "We see you on repeat! The album has 10 more tracks with the same energy. Stream the complete album now...",
+            },
+            {
+              emailNumber: 2,
+              subject: "Your personalized 'Deep Cuts' playlist is ready",
+              triggerCondition: "User streams 2-3 different tracks",
+              waitTime: "3 days after trigger",
+              content: "Based on what you're listening to, we curated our best album tracks + hidden gems you haven't discovered yet...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Complete the journey: Unlock exclusive bonus tracks",
+              triggerCondition: "User hasn't completed full album",
+              waitTime: "5 days after Email 2",
+              content: "Stream the complete album and unlock 2 exclusive bonus tracks not available anywhere else...",
+            },
+            {
+              emailNumber: 4,
+              subject: "🎁 Album superfan reward: Free merch upgrade",
+              triggerCondition: "User completes full album",
+              waitTime: "Immediately after completion",
+              content: "You're an album completionist! As thanks, here's 15% off + free shipping on any album-themed merch...",
+            }
+          ]
         },
         {
           stage: "Album Discovery",
@@ -128,7 +181,38 @@ export const BuildFunnel = () => {
             "Gamification: 'Complete 3 albums for exclusive content' challenge",
             "Bundle album stream with exclusive acoustic versions download"
           ],
-          metrics: "Full album streams, album-to-track ratio, playlist saves, fan conversion"
+          metrics: "Full album streams, album-to-track ratio, playlist saves, fan conversion",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "🔥 The 'Power' album: Your next obsession",
+              triggerCondition: "User streams 5+ tracks from catalog",
+              waitTime: "Immediately",
+              content: "Since you're loving these tracks, dive into the full 'Power' album. Each song builds on the last for an epic listening journey...",
+            },
+            {
+              emailNumber: 2,
+              subject: "Tomorrow only: Live listening party with artist Q&A",
+              triggerCondition: "User hasn't started album",
+              waitTime: "2 days after Email 1",
+              content: "Join us tomorrow for a one-time live listening party where we play the album and answer your questions in real-time...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Challenge accepted? Stream 3 albums, unlock exclusive downloads",
+              triggerCondition: "User completes 1 album",
+              waitTime: "Immediately after completion",
+              content: "You crushed that album! Complete 2 more albums this week and unlock 5 exclusive acoustic tracks + behind-the-scenes videos...",
+            },
+            {
+              emailNumber: 4,
+              subject: "🎁 Album master achievement unlocked!",
+              triggerCondition: "User completes 3 albums",
+              waitTime: "Immediately",
+              content: "You did it! Your exclusive content is ready. Plus, here's early access to our next release...",
+              discountOffer: "Early access to next release"
+            }
+          ]
         },
         {
           stage: "Purchase",
@@ -140,7 +224,40 @@ export const BuildFunnel = () => {
             "Offer 'complete discography' package to super fans (847 identified)",
             "Flash sale: Stream 50+ times = 40% off physical albums"
           ],
-          metrics: "Stream-to-purchase conversion, average order value, super fan acquisition"
+          metrics: "Stream-to-purchase conversion, average order value, super fan acquisition",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "You've earned superfan status (and a special offer)",
+              triggerCondition: "User streams 10+ times",
+              waitTime: "Immediately after 10th stream",
+              content: "10+ streams makes you a true fan! Own the music forever with our limited edition vinyl package. Exclusive offer for superfans like you...",
+              discountOffer: "25% off physical albums"
+            },
+            {
+              emailNumber: 2,
+              subject: "Only 48 hours left: Signed collector's bundle",
+              triggerCondition: "User hasn't purchased",
+              waitTime: "48 hours after Email 1",
+              content: "Your 25% discount expires in 48 hours! Plus, order now and get hand-signed artwork included free...",
+              discountOffer: "25% off + signed artwork"
+            },
+            {
+              emailNumber: 3,
+              subject: "Final call: Your superfan discount expires tonight",
+              triggerCondition: "User still hasn't purchased",
+              waitTime: "72 hours after Email 2",
+              content: "This is it - your exclusive 25% off ends at midnight. We saved one signed vinyl bundle just for you...",
+              discountOffer: "25% off (final hours)"
+            },
+            {
+              emailNumber: 4,
+              subject: "🎉 Welcome to the collector's club!",
+              triggerCondition: "User makes purchase",
+              waitTime: "Immediately after purchase",
+              content: "Thank you for supporting the music! Your vinyl ships tomorrow. As a VIP, here's early access to our next limited release...",
+            }
+          ]
         },
         {
           stage: "Advocacy",
@@ -152,7 +269,32 @@ export const BuildFunnel = () => {
             "Feature top sharers in artist's social media shoutouts",
             "Create 'Legion Insider' badge for album owners with special privileges"
           ],
-          metrics: "Share rate, referral conversions, social mentions, UGC volume"
+          metrics: "Share rate, referral conversions, social mentions, UGC volume",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "Share the love: Get 20% off your next order",
+              triggerCondition: "User receives album purchase",
+              waitTime: "3 days after delivery",
+              content: "Loving your new album? Share it with friends using your unique link and you'll both get 20% off your next purchase...",
+              discountOffer: "20% off for you + friend"
+            },
+            {
+              emailNumber: 2,
+              subject: "You're famous! Check out your shoutout 👀",
+              triggerCondition: "User shares successfully",
+              waitTime: "Immediately after first share",
+              content: "Thank you for spreading the word! We featured you in our latest social post. Here's your Legion Insider badge...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Ambassador status unlocked: Exclusive perks inside",
+              triggerCondition: "User generates 3+ referrals",
+              waitTime: "Immediately after 3rd referral",
+              content: "You're officially a Sons of Legion Ambassador! Enjoy permanent VIP access, early releases, and special merch discounts...",
+              discountOffer: "Permanent 15% VIP discount"
+            }
+          ]
         }
       ],
       'album-engagement': [
@@ -166,7 +308,30 @@ export const BuildFunnel = () => {
             "Submit Strange (176K streams, +5%) to Spotify 'New Music Friday'",
             "Cross-promote on Paramount shows using brand partnership"
           ],
-          metrics: "Brand lift, search volume, social mentions, new follower rate"
+          metrics: "Brand lift, search volume, social mentions, new follower rate",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "You found us! Here's your exclusive welcome gift 🎁",
+              triggerCondition: "User signs up or first visit",
+              waitTime: "Immediately",
+              content: "Welcome to the Sons of Legion family! Download this exclusive acoustic session as our thank you gift...",
+            },
+            {
+              emailNumber: 2,
+              subject: "Discover our most-played tracks",
+              triggerCondition: "User hasn't engaged",
+              waitTime: "3 days after Email 1",
+              content: "Fans can't get enough of these 5 tracks. Start with 'In The Air Tonight' - over 234K streams and counting...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Behind the music: The story you need to hear",
+              triggerCondition: "User opened Email 2",
+              waitTime: "5 days after Email 2",
+              content: "Every song has a story. Watch this exclusive behind-the-scenes video of how we created our breakthrough album...",
+            }
+          ]
         },
         {
           stage: "Interest",
@@ -178,7 +343,31 @@ export const BuildFunnel = () => {
             "Retarget 30-day inactive streamers with 'We miss you' campaign",
             "Create artist radio stations featuring similar artists + your deep cuts"
           ],
-          metrics: "Repeat listen rate, days between streams, monthly active listeners"
+          metrics: "Repeat listen rate, days between streams, monthly active listeners",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "Your weekly dose of new music is here",
+              triggerCondition: "User streams any track",
+              waitTime: "7 days after first stream",
+              content: "It's been a week! Here's what's new in our catalog plus a custom playlist based on what you love...",
+            },
+            {
+              emailNumber: 2,
+              subject: "We miss you! Here's what you've been missing",
+              triggerCondition: "User inactive 30 days",
+              waitTime: "30 days after last stream",
+              content: "It's been a while! We dropped new tracks and exclusive content. Come back and see what's new...",
+              discountOffer: "10% off any merch"
+            },
+            {
+              emailNumber: 3,
+              subject: "Last chance: Your personalized station awaits",
+              triggerCondition: "User still inactive",
+              waitTime: "7 days after Email 2",
+              content: "We created an artist radio station just for you featuring our deep cuts and artists you'll love...",
+            }
+          ]
         },
         {
           stage: "Engagement",
@@ -574,7 +763,31 @@ export const BuildFunnel = () => {
             "Content marketing: Blog about music creation process",
             "Social media campaigns highlighting top 5 markets"
           ],
-          metrics: "Total traffic, traffic sources, bounce rate, time on site"
+          metrics: "Total traffic, traffic sources, bounce rate, time on site",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "Welcome! Your free album download is ready",
+              triggerCondition: "User visits site",
+              waitTime: "Immediately",
+              content: "Thanks for checking us out! Download our latest EP free as our way of saying welcome...",
+            },
+            {
+              emailNumber: 2,
+              subject: "Explore: Top 5 fan-favorite tracks",
+              triggerCondition: "User opens Email 1",
+              waitTime: "2 days after Email 1",
+              content: "Fans love these 5 tracks the most. Give them a listen and discover your new favorite song...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Special offer: 20% off for new fans",
+              triggerCondition: "User engaged with content",
+              waitTime: "5 days after Email 2",
+              content: "We want you in the family! Get 20% off your first merch order. Code: NEWFAN20",
+              discountOffer: "20% off - Code: NEWFAN20"
+            }
+          ]
         },
         {
           stage: "Landing",
@@ -598,7 +811,39 @@ export const BuildFunnel = () => {
             "Limited-time offers for first-time buyers",
             "Testimonials and reviews from super fans"
           ],
-          metrics: "Email engagement, retargeting CTR, nurture-to-purchase rate"
+          metrics: "Email engagement, retargeting CTR, nurture-to-purchase rate",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "Day 1: Meet the band behind the music",
+              triggerCondition: "User joins email list",
+              waitTime: "Immediately",
+              content: "This is where it all started. Learn our story and what drives our music...",
+            },
+            {
+              emailNumber: 2,
+              subject: "Day 3: Fan favorites you can't miss",
+              triggerCondition: "Auto-sequence",
+              waitTime: "2 days after Email 1",
+              content: "These are the tracks fans play on repeat. Discover why 'In The Air Tonight' has over 234K streams...",
+            },
+            {
+              emailNumber: 3,
+              subject: "Day 5: Your exclusive 25% off is waiting",
+              triggerCondition: "Auto-sequence",
+              waitTime: "2 days after Email 2",
+              content: "Ready to represent? Get 25% off your first merch order. This offer expires in 48 hours!",
+              discountOffer: "25% off first purchase"
+            },
+            {
+              emailNumber: 4,
+              subject: "Final hours: Your discount expires tonight",
+              triggerCondition: "User hasn't purchased",
+              waitTime: "46 hours after Email 3",
+              content: "Last call! Your 25% discount ends at midnight. Don't miss out on exclusive fan gear...",
+              discountOffer: "25% off (expires tonight)"
+            }
+          ]
         },
         {
           stage: "Conversion",
@@ -636,7 +881,30 @@ export const BuildFunnel = () => {
             "Influencer partnerships in tour markets for pre-hype",
             "Countdown timer on website to announcement date"
           ],
-          metrics: "Email list growth, social engagement, speculation volume"
+          metrics: "Email list growth, social engagement, speculation volume",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "👀 Something BIG is coming...",
+              triggerCondition: "Tour planning phase",
+              waitTime: "14 days before announcement",
+              content: "We can't say much yet, but you'll want to be first to know about this. Sign up for tour alerts now...",
+            },
+            {
+              emailNumber: 2,
+              subject: "🔥 7 days until the big reveal",
+              triggerCondition: "User signed up for alerts",
+              waitTime: "7 days before announcement",
+              content: "One week away! The countdown is on. Make sure your notifications are enabled...",
+            },
+            {
+              emailNumber: 3,
+              subject: "🎸 Tomorrow: Your city could be on the list",
+              triggerCondition: "Auto-sequence",
+              waitTime: "1 day before announcement",
+              content: "Less than 24 hours until we reveal which cities we're hitting. Are you ready?",
+            }
+          ]
         },
         {
           stage: "Announcement",
@@ -648,7 +916,32 @@ export const BuildFunnel = () => {
             "Early bird pricing for first 100 tickets per city",
             "Target top 5 cities (13,060 fans) with localized ads"
           ],
-          metrics: "Announcement reach, initial ticket sales velocity, waitlist signups"
+          metrics: "Announcement reach, initial ticket sales velocity, waitlist signups",
+          emailSequence: [
+            {
+              emailNumber: 1,
+              subject: "🎉 IT'S HERE! Tour dates announced",
+              triggerCondition: "Tour announcement",
+              waitTime: "Immediately",
+              content: "We're hitting the road! Check out all tour dates and grab early bird tickets before they're gone...",
+            },
+            {
+              emailNumber: 2,
+              subject: "⚡ VIP packages: Only 24 hours left",
+              triggerCondition: "User opened Email 1",
+              waitTime: "24 hours after announcement",
+              content: "VIP meet & greet packages selling fast! Less than 24 hours to secure yours...",
+              discountOffer: "Early bird pricing"
+            },
+            {
+              emailNumber: 3,
+              subject: "🎫 Last chance: Early pricing ends tonight",
+              triggerCondition: "User hasn't purchased",
+              waitTime: "47 hours after announcement",
+              content: "Final hours for early bird pricing! Tickets go to regular price at midnight...",
+              discountOffer: "Early bird (final hours)"
+            }
+          ]
         },
         {
           stage: "Pre-Sale",

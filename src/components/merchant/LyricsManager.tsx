@@ -141,23 +141,13 @@ export const LyricsManager = () => {
               <CardDescription>{track.album}</CardDescription>
             </CardHeader>
             <CardContent>
-              {editingTrackId === track.id ? (
+              {editingTrackId === track.id && (
                 <Textarea
                   value={lyricsText}
                   onChange={(e) => setLyricsText(e.target.value)}
                   placeholder="Paste the song lyrics here..."
                   className="min-h-[300px] font-mono text-sm"
                 />
-              ) : track.lyrics ? (
-                <div className="bg-muted/30 p-4 rounded-md">
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-foreground">
-                    {track.lyrics}
-                  </pre>
-                </div>
-              ) : (
-                <div className="text-muted-foreground text-sm italic">
-                  No lyrics added yet
-                </div>
               )}
             </CardContent>
           </Card>
