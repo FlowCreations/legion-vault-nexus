@@ -280,19 +280,6 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
             onClick={handleCloseProfile}
           >
-            {/* GIANT FLOATING CLOSE BUTTON - Fixed to top right of screen */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('❌ CLOSE BUTTON CLICKED');
-                handleCloseProfile();
-              }}
-              className="fixed top-4 right-4 z-[10000] w-16 h-16 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 border-4 border-white shadow-2xl transition-all hover:scale-110 animate-pulse"
-              title="CLOSE"
-            >
-              <X className="w-10 h-10 text-white font-bold" strokeWidth={4} />
-            </button>
-
             <div className="relative max-w-2xl w-full mx-4 my-8">
               <div 
                 className="relative bg-card border border-white/20 rounded-2xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto" 
