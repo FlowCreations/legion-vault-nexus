@@ -339,18 +339,21 @@ export default function CommunityHub() {
 
   const clearOldPosts = async () => {
     try {
-      // Call edge function to clear posts with service role
-      const { error } = await supabase.functions.invoke('clear-community-posts');
+      console.log('Calling clear-community-posts edge function...');
+      
+      const { data, error } = await supabase.functions.invoke('clear-community-posts');
       
       if (error) {
-        console.error('Error clearing posts:', error);
+        console.error('Edge function error:', error);
       } else {
-        console.log('Community posts cleared successfully');
-        // Reload posts after clearing
-        setTimeout(() => loadPosts(), 500);
+        console.log('Clear posts response:', data);
+        // Reload posts after a delay
+        setTimeout(() => {
+          loadPosts();
+        }, 1000);
       }
     } catch (error) {
-      console.error('Error clearing posts:', error);
+      console.error('Error calling clear function:', error);
     }
   };
 
