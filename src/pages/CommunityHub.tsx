@@ -339,11 +339,16 @@ export default function CommunityHub() {
 
   const clearOldPosts = async () => {
     try {
-      await supabase
-        .from("community_posts")
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-      console.log('Community posts cleared');
+      // Call edge function to clear posts with service role
+      const { error } = await supabase.functions.invoke('clear-community-posts');
+      
+      if (error) {
+        console.error('Error clearing posts:', error);
+      } else {
+        console.log('Community posts cleared successfully');
+        // Reload posts after clearing
+        setTimeout(() => loadPosts(), 500);
+      }
     } catch (error) {
       console.error('Error clearing posts:', error);
     }
