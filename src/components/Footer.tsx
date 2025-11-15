@@ -9,12 +9,16 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export const Footer = () => {
+export const Footer = ({ 
+  showDiagnostics, 
+  setShowDiagnostics 
+}: { 
+  showDiagnostics?: boolean; 
+  setShowDiagnostics?: (show: boolean) => void;
+}) => {
   const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [isAgentActive, setIsAgentActive] = useState(false);
-  const [isAgentExpanded, setIsAgentExpanded] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -70,7 +74,7 @@ export const Footer = () => {
           <div className="flex items-center gap-4">
             {isAdmin && (
               <motion.button
-                onClick={() => setShowDiagnostics(!showDiagnostics)}
+                onClick={() => setShowDiagnostics?.(!showDiagnostics)}
                 className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -120,18 +124,7 @@ export const Footer = () => {
           
           {/* Right Section - Agent Icon */}
           <div className="flex items-center gap-4">
-            {isAgentActive && (
-              <motion.button
-                onClick={() => setIsAgentExpanded(!isAgentExpanded)}
-                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                title="AI Chat"
-              >
-                <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
-              </motion.button>
-            )}
+            {/* Agent icon removed - functionality moved to Agent component */}
           </div>
         </div>
         

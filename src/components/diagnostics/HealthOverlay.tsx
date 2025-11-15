@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { runQuickFix } from "@/diagnostics/performanceFixes";
 import { useToast } from "@/hooks/use-toast";
 
-export const HealthOverlay = () => {
+export const HealthOverlay = ({ showDiagnostics = false }: { showDiagnostics?: boolean }) => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
@@ -21,10 +21,9 @@ export const HealthOverlay = () => {
   const lastTimeRef = useRef(performance.now());
 
   useEffect(() => {
-    if (!isAdmin) return; // Skip initialization if not admin
-    const debugEnabled = localStorage.getItem("debug:health") === "1";
-    setIsVisible(debugEnabled);
-  }, [isAdmin]);
+    if (!isAdmin) return;
+    setIsVisible(showDiagnostics);
+  }, [isAdmin, showDiagnostics]);
 
   useEffect(() => {
     if (!isVisible || !isAdmin) return;
