@@ -1,15 +1,20 @@
 import { Link } from "react-router-dom";
-import { BarChart } from "lucide-react";
+import { BarChart, Activity, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export const Footer = () => {
   const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [isAgentActive, setIsAgentActive] = useState(false);
+  const [isAgentExpanded, setIsAgentExpanded] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -38,25 +43,61 @@ export const Footer = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Check Agent status
+  useEffect(() => {
+    const checkAgentStatus = async () => {
+      try {
+        const { data } = await supabase
+          .from("feature_flags")
+          .select("enabled")
+          .eq("flag_name", "agent_active")
+          .single();
+
+        setIsAgentActive(data?.enabled || false);
+      } catch (error) {
+        console.error("Error checking Agent status:", error);
+      }
+    };
+
+    checkAgentStatus();
+  }, []);
+
   return (
     <footer className="border-t border-border bg-background-dark/50 backdrop-blur-sm mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-            <Link to="/about" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              {t('footer.about')}
-            </Link>
-            <Link to="/contact" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              {t('footer.contact')}
-            </Link>
-            <Link to="/terms" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              {t('footer.terms')}
-            </Link>
-            <Link to="/privacy" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
-              {t('footer.privacy')}
-            </Link>
+          {/* Left Section - Admin Performance Icon */}
+          <div className="flex items-center gap-4">
+            {isAdmin && (
+              <Button
+                onClick={() => setShowDiagnostics(!showDiagnostics)}
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground hover:text-primary"
+                title="Performance Monitor (Admin only)"
+              >
+                <Activity className="w-4 h-4" />
+                <span className="hidden sm:inline">Performance</span>
+              </Button>
+            )}
+            
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+              <Link to="/about" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
+                {t('footer.about')}
+              </Link>
+              <Link to="/contact" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
+                {t('footer.contact')}
+              </Link>
+              <Link to="/terms" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
+                {t('footer.terms')}
+              </Link>
+              <Link to="/privacy" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
+                {t('footer.privacy')}
+              </Link>
+            </div>
           </div>
           
+          {/* Center Section - Merchant Dashboard */}
           {isAdmin && (
             <Button 
               asChild 
@@ -71,9 +112,30 @@ export const Footer = () => {
             </Button>
           )}
           
-          <p className="text-sm text-muted-foreground">
-            {t('footer.copyright')}
-          </p>
+          {/* Right Section - Copyright & Agent */}
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              {t('footer.copyright')}
+            </p>
+            
+            {isAgentActive && (
+              <motion.button
+                onClick={() => setIsAgentExpanded(!isAgentExpanded)}
+                className={cn(
+                  "relative rounded-full w-10 h-10 shadow-lg transition-all duration-300",
+                  "bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500",
+                  "hover:shadow-pink-500/50 hover:scale-110",
+                  isAgentExpanded && "shadow-pink-500/70 scale-110"
+                )}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                title="Agent Active"
+              >
+                <Heart className="w-5 h-5 text-white absolute inset-0 m-auto" />
+              </motion.button>
+            )}
+          </div>
         </div>
         
         {/* Language Selector */}

@@ -140,22 +140,8 @@ export const HealthOverlay = () => {
 
   const hasIssues = fps < 40 || memoryUsage > 60 || diagnosticsStore.getAll().length > 100 || (lastPageLoad && lastPageLoad > 2000);
 
-  // Don't render anything if user is not an admin
-  if (!isAdmin) {
-    return null;
-  }
-
-  if (!isVisible) {
-    return (
-      <button
-        onClick={handleToggle}
-        className="fixed bottom-4 left-4 z-[9999] bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-        title="Show diagnostics (Admin only)"
-      >
-        <Activity className="w-5 h-5" />
-      </button>
-    );
-  }
+  // Don't render anything - now integrated in footer
+  return null;
 
   const getEventIcon = (type: string) => {
     switch (type) {
