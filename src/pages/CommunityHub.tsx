@@ -112,11 +112,13 @@ export default function CommunityHub() {
   const [conversationSearchQuery, setConversationSearchQuery] = useState("");
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
+  const [currentUserProfile, setCurrentUserProfile] = useState<{ display_name: string; avatar_url: string } | null>(null);
   const { toast } = useToast();
 
   // Check authentication and subscription on mount
   useEffect(() => {
     checkAuthAndSubscription();
+    loadCurrentUserProfile();
   }, []);
 
   // Update conversations whenever messages change
@@ -127,6 +129,21 @@ export default function CommunityHub() {
     };
     updateConversations();
   }, [messages]);
+
+  const loadCurrentUserProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('display_name, avatar_url')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profile) {
+      setCurrentUserProfile(profile);
+    }
+  };
 
   const checkAuthAndSubscription = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -961,7 +978,8 @@ export default function CommunityHub() {
             <div className="bg-card rounded-2xl p-6 mb-6 border">
               <div className="flex gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarImage src={currentUserProfile?.avatar_url} />
+                  <AvatarFallback>{currentUserProfile?.display_name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1">
