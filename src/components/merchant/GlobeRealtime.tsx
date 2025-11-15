@@ -128,6 +128,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        console.log('🔵 MARKER CLICKED - Setting selectedMember:', feature.properties);
         // Stop globe rotation immediately when opening profile
         spinEnabledRef.current = false;
         setIsPaused(true);
@@ -273,38 +274,41 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
       </div>
 
       {selectedMember && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
-          onClick={handleCloseProfile}
-        >
-          <div className="relative max-w-2xl w-full mx-4 my-8">
-            <div 
-              className="relative bg-card border border-white/20 rounded-2xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto" 
-              onClick={(e) => e.stopPropagation()}
+        <>
+          {console.log('🟢 RENDERING MODAL - selectedMember exists:', selectedMember)}
+          <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
+            onClick={handleCloseProfile}
+          >
+            {/* GIANT FLOATING CLOSE BUTTON - Fixed to top right of screen */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('❌ CLOSE BUTTON CLICKED');
+                handleCloseProfile();
+              }}
+              className="fixed top-4 right-4 z-[10000] w-16 h-16 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 border-4 border-white shadow-2xl transition-all hover:scale-110 animate-pulse"
+              title="CLOSE"
             >
-              {/* MASSIVE CLOSE BUTTON - Top right inside card */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCloseProfile();
-                }}
-                className="sticky top-0 float-right ml-4 mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 border-4 border-white shadow-2xl z-[100] transition-all hover:scale-110"
-                style={{ marginTop: '-0.5rem', marginRight: '-0.5rem' }}
-                title="Close Profile"
-              >
-                <X className="w-7 h-7 text-white font-bold" strokeWidth={3} />
-              </button>
+              <X className="w-10 h-10 text-white font-bold" strokeWidth={4} />
+            </button>
 
-              <MemberCard 
-                member={selectedMember}
-                onClose={handleCloseProfile}
-                onViewProfile={() => {
-                  navigate(`/community?member=${selectedMember.user_id}`);
-                }}
-              />
+            <div className="relative max-w-2xl w-full mx-4 my-8">
+              <div 
+                className="relative bg-card border border-white/20 rounded-2xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto" 
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MemberCard 
+                  member={selectedMember}
+                  onClose={handleCloseProfile}
+                  onViewProfile={() => {
+                    navigate(`/community?member=${selectedMember.user_id}`);
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
