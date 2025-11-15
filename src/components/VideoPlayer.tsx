@@ -4,6 +4,7 @@ import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, M
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { VideoComments } from "@/components/video/VideoComments";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -537,6 +538,13 @@ export function VideoPlayer({
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Video Comments Section */}
+                    {!isFullscreen && (
+                      <div className="px-4 pb-6">
+                        <VideoComments videoId={videoId} />
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
