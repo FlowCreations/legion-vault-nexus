@@ -31,8 +31,14 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="bg-card border border-white/20 rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-card border border-white/20 rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl max-h-[80vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-2xl font-bold">{cityName}</h3>
@@ -40,7 +46,8 @@ export const GlobeUserPopup = ({ users, cityName, onClose }: GlobeUserPopupProps
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
