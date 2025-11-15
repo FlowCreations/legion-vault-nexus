@@ -11,18 +11,14 @@ import { MessageSquare, Send, X } from 'lucide-react';
 
 interface VideoCommentsProps {
   videoId: string;
-  isCompact?: boolean;
   showComments?: boolean;
   onToggleComments?: () => void;
-  onClose?: () => void;
 }
 
 export const VideoComments = ({ 
   videoId, 
-  isCompact = false, 
   showComments = false,
-  onToggleComments,
-  onClose 
+  onToggleComments
 }: VideoCommentsProps) => {
   const [commentText, setCommentText] = useState('');
   const { comments, isLoading, addComment, isAddingComment } = useVideoComments(videoId);
@@ -78,8 +74,8 @@ export const VideoComments = ({
     return name[0].toUpperCase();
   };
 
-  // Compact mode - just a floating button
-  if (isCompact && !showComments) {
+  // Always show floating button when comments are closed
+  if (!showComments) {
     return (
       <button
         onClick={onToggleComments}
@@ -106,46 +102,44 @@ export const VideoComments = ({
             Comments ({comments.length})
           </h3>
         </div>
-        {onClose && showComments && (
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        <button
+          onClick={onToggleComments}
+          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Comment Input */}
       {user ? (
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-2">
           <Textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Share your thoughts..."
-            className="min-h-[80px] bg-white/10 border-white/10 text-foreground placeholder:text-muted-foreground resize-none focus:ring-primary/20"
+            placeholder="Add a comment..."
+            className="min-h-[60px] bg-white/10 border-white/10 text-foreground placeholder:text-muted-foreground resize-none focus:ring-primary/20 text-sm"
             maxLength={500}
           />
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              {commentText.length}/500 characters
+              {commentText.length}/500
             </span>
             <Button
               type="submit"
               disabled={!commentText.trim() || isAddingComment}
               size="sm"
-              className="gap-2"
+              className="gap-2 h-8 text-xs"
             >
-              <Send className="w-4 h-4" />
-              {isAddingComment ? 'Posting...' : 'Post Comment'}
+              <Send className="w-3 h-3" />
+              {isAddingComment ? 'Posting...' : 'Post'}
             </Button>
           </div>
         </form>
       ) : (
-        <div className="p-4 border border-white/10 rounded-lg bg-white/5 text-center">
-          <p className="text-muted-foreground mb-3">Sign in to leave a comment</p>
-          <Button variant="outline" size="sm">
+        <div className="p-3 border border-white/10 rounded-lg bg-white/5 text-center">
+          <p className="text-muted-foreground text-sm mb-2">Sign in to comment</p>
+          <Button variant="outline" size="sm" className="h-8 text-xs">
             Sign In
           </Button>
         </div>
@@ -203,23 +197,18 @@ export const VideoComments = ({
     </div>
   );
 
-  // Slide-out panel for compact mode when comments are open
-  if (isCompact && showComments) {
-    return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed top-0 right-0 h-full w-full md:w-[400px] bg-background/95 backdrop-blur-xl border-l border-white/10 z-50 p-6 overflow-y-auto"
-        >
-          {commentsPanel}
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
-  // Regular inline display
-  return <div className="mt-6">{commentsPanel}</div>;
+  // Always use slide-out panel when comments are open
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="fixed top-0 right-0 h-full w-full md:w-[400px] bg-background/95 backdrop-blur-xl border-l border-white/10 z-50 p-6 overflow-y-auto"
+      >
+        {commentsPanel}
+      </motion.div>
+    </AnimatePresence>
+  );
 };
