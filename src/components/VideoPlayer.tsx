@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
@@ -437,25 +437,84 @@ export function VideoPlayer({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {/* Favorite button */}
+                          {/* Fullscreen toggle */}
+                          <button
+                            onClick={toggleFullscreen}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                          >
+                            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                          </button>
+
+                          {/* Hide/minimize */}
+                          {!isFullscreen && (
+                            <button
+                              onClick={() => setMinimized(true)}
+                              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                              aria-label="Minimize player"
+                              title="Minimize player"
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Close */}
+                          <button
+                            onClick={handleClose}
+                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            aria-label="Close player"
+                            title="Close player"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* YouTube-style Action Buttons - Below video controls */}
+                      {(!isFullscreen || showUI) && (
+                        <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                          {/* Like button */}
                           <button
                             onClick={toggleFavorite}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-                            title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+                            aria-label={isFavorited ? "Unlike" : "Like"}
                           >
-                            <Heart className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+                            <ThumbsUp className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
+                            <span className="text-sm font-medium hidden sm:inline">{isFavorited ? 'Liked' : 'Like'}</span>
+                          </button>
+
+                          {/* Dislike button */}
+                          <button
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+                            aria-label="Dislike"
+                          >
+                            <ThumbsDown className="w-5 h-5" />
+                            <span className="text-sm font-medium hidden sm:inline">Dislike</span>
+                          </button>
+
+                          {/* Comment button - scrolls to comments */}
+                          <button
+                            onClick={() => {
+                              const commentsSection = document.getElementById('video-comments');
+                              commentsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+                            aria-label="Comments"
+                          >
+                            <MessageSquare className="w-5 h-5" />
+                            <span className="text-sm font-medium hidden sm:inline">Comment</span>
                           </button>
 
                           {/* Share button */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
-                                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                                aria-label="Share video"
-                                title="Share video"
+                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+                                aria-label="Share"
                               >
-                                <Share2 className="w-4 h-4" />
+                                <Share2 className="w-5 h-5" />
+                                <span className="text-sm font-medium hidden sm:inline">Share</span>
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10 backdrop-blur-sm z-[70]">
@@ -505,43 +564,13 @@ export function VideoPlayer({
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-
-                          {/* Fullscreen toggle */}
-                          <button
-                            onClick={toggleFullscreen}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                          >
-                            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                          </button>
-
-                          {/* Hide/minimize */}
-                          <button
-                            onClick={() => setMinimized(true)}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label="Minimize player"
-                            title="Minimize player"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-
-                          {/* Close */}
-                          <button
-                            onClick={handleClose}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label="Close player"
-                            title="Close player"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
                         </div>
-                      </div>
+                      )}
                     </div>
                     
                     {/* Video Comments Section */}
                     {!isFullscreen && (
-                      <div className="px-4 pb-6">
+                      <div id="video-comments" className="px-4 pb-6">
                         <VideoComments videoId={videoId} />
                       </div>
                     )}
