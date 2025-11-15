@@ -10,44 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 export default function Community() {
   const navigate = useNavigate();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasSubscription, setHasSubscription] = useState(false);
-  const [checkComplete, setCheckComplete] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-
-      if (user) {
-        const { data: subData } = await supabase.functions.invoke('check-subscription');
-        setHasSubscription(subData?.subscribed || false);
-      }
-      
-      setCheckComplete(true);
-    };
-
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    // Show auth dialog if not authenticated or not subscribed after check is complete
-    if (checkComplete && (!isAuthenticated || !hasSubscription)) {
-      setShowAuthDialog(true);
-    }
-  }, [checkComplete, isAuthenticated, hasSubscription]);
   const { toast } = useToast();
 
   const handleFeatureClick = async (action: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      setShowAuthDialog(true);
-      return;
-    }
-
-    const { data } = await supabase.functions.invoke('check-subscription');
-    if (!data?.subscribed) {
       setShowAuthDialog(true);
       return;
     }
@@ -74,30 +42,7 @@ export default function Community() {
     navigate('/subscribe');
   };
 
-  // Show loading state while checking
-  if (!checkComplete) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // If not authenticated or subscribed, show only the dialog
-  if (!isAuthenticated || !hasSubscription) {
-    return (
-      <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <SubscribePrompt 
-          open={true}
-          onOpenChange={() => {}} // Don't allow closing
-          title="Subscribe to Access Community"
-          description="Connect with other fans, earn achievements, and join exclusive events with a 7-day free trial."
-        />
-      </div>
-    );
-  }
-  
-  // User is authenticated and subscribed, show full content
+  // Show full content
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
