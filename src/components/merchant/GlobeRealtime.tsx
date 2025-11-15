@@ -1,9 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Pause, Play, X } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import { useMembersGeojson } from '@/hooks/useMembersGeojson';
 import { MemberCard } from './MemberCard';
 import { useNavigate } from 'react-router-dom';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 interface GlobeRealtimeProps {
   focusMemberId?: string | null;
@@ -274,25 +280,24 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
         </div>
       </div>
 
-      {selectedMember && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
-          onClick={handleCloseProfile}
-        >
-          <div 
-            className="relative max-w-2xl w-full mx-4 my-8 rounded-2xl shadow-2xl overflow-visible" 
-            onClick={(e) => e.stopPropagation()}
-          >
+
+      {/* Member Profile Sheet */}
+      <Sheet open={!!selectedMember} onOpenChange={(open) => !open && handleCloseProfile()}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Member Profile</SheetTitle>
+          </SheetHeader>
+          {selectedMember && (
             <MemberCard 
               member={selectedMember}
               onClose={handleCloseProfile}
               onViewProfile={() => {
-                navigate(`/community?member=${selectedMember.user_id}`);
+                navigate(`/merchant/community/${selectedMember.user_id}`);
               }}
             />
-          </div>
-        </div>
-      )}
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 };

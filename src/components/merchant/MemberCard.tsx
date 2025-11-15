@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getTierColor } from "@/lib/tierColors";
-import { X, MapPin, Calendar, Clock, TrendingUp, Zap, Activity, DollarSign, Target, Award, Heart } from "lucide-react";
+import { MapPin, Calendar, Clock, TrendingUp, Zap, Activity, DollarSign, Target, Award, Heart } from "lucide-react";
 
 interface MemberCardProps {
   member: any;
@@ -16,19 +16,14 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
   // Handle multiple members at same location (legacy support)
   if (member._multiple) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold">{member.location}</h3>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
+      <div className="space-y-4 py-4">
+        <h3 className="text-xl font-bold mb-2">{member.location}</h3>
         <p className="text-sm text-muted-foreground mb-4">
           {member._multiple.length} members at this location
         </p>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {member._multiple.map((m: any) => (
-            <div key={m.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer">
+            <div key={m.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-accent hover:bg-accent/80 cursor-pointer">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={m.avatar_url} />
                 <AvatarFallback>{m.name?.[0] || "U"}</AvatarFallback>
@@ -64,47 +59,7 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div style={{ 
-      position: "relative", 
-      width: "100%", 
-      minHeight: "200px",
-      background: "hsl(var(--card))",
-      borderRadius: "16px",
-      border: "1px solid hsl(var(--border))",
-      padding: "60px 20px 20px 20px"
-    }}>
-      {/* MASSIVE UNMISSABLE CLOSE BUTTON */}
-      <div
-        onClick={(e) => {
-          console.log('🔴🔴🔴 CLOSE BUTTON CLICKED!!!');
-          e.stopPropagation();
-          onClose();
-        }}
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          width: "50px",
-          height: "50px",
-          borderRadius: "50%",
-          background: "#ff0000",
-          color: "#ffffff",
-          border: "5px solid #ffffff",
-          fontWeight: "900",
-          fontSize: "32px",
-          cursor: "pointer",
-          zIndex: 999999,
-          boxShadow: "0 0 20px rgba(255, 0, 0, 1)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-        role="button"
-        aria-label="Close profile"
-      >
-        ✕
-      </div>
-      
+    <div className="py-4 space-y-6">
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
         <Avatar className="h-16 w-16 border-2 border-primary/20">
@@ -243,20 +198,10 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
         </p>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex gap-2">
-        <Button onClick={onViewProfile} className="flex-1 bg-primary hover:bg-primary/90">
-          View Full Profile
-        </Button>
-        <Button 
-          onClick={onClose} 
-          variant="outline" 
-          size="icon"
-          className="hover:bg-destructive hover:text-destructive-foreground"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      {/* Action Button */}
+      <Button onClick={onViewProfile} className="w-full bg-primary hover:bg-primary/90">
+        View Full Profile
+      </Button>
     </div>
   );
 };
