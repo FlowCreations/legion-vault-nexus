@@ -281,13 +281,13 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
             className="relative bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button - Visible at top right */}
+            {/* Close Button - Very visible in top right corner */}
             <button
               onClick={handleCloseProfile}
-              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-red-500/90 border border-white/20 hover:border-red-500 transition-all group"
+              className="absolute -top-3 -right-3 z-[100] w-10 h-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 border-2 border-white shadow-2xl transition-all"
               title="Close"
             >
-              <X className="w-5 h-5 text-white" />
+              <X className="w-6 h-6 text-white" />
             </button>
 
             <MemberCard 
