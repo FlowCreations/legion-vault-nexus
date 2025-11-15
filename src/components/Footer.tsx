@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BarChart, Activity, Heart } from "lucide-react";
+import { BarChart, Activity, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import solLogo from "@/assets/sol-logo.png";
 import { useState, useEffect } from "react";
@@ -123,18 +123,13 @@ export const Footer = () => {
             {isAgentActive && (
               <motion.button
                 onClick={() => setIsAgentExpanded(!isAgentExpanded)}
-                className={cn(
-                  "relative rounded-full w-10 h-10 shadow-lg transition-all duration-300",
-                  "bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500",
-                  "hover:shadow-pink-500/50 hover:scale-110",
-                  isAgentExpanded && "shadow-pink-500/70 scale-110"
-                )}
+                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                title="Agent Active"
+                title="AI Chat"
               >
-                <Heart className="w-5 h-5 text-white absolute inset-0 m-auto" />
+                <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
               </motion.button>
             )}
           </div>
