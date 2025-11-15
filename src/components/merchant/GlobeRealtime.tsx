@@ -283,8 +283,8 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
       {/* Member Profile Sheet */}
       <Sheet open={!!selectedMember} onOpenChange={(open) => !open && handleCloseProfile()}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto pt-12">
+          <SheetHeader className="mb-4">
             <SheetTitle>Member Profile</SheetTitle>
           </SheetHeader>
           {selectedMember && (
