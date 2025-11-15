@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Lock, Shuffle } from "lucide-react";
+import { Play, Lock, Shuffle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { Switch } from "@/components/ui/switch";
@@ -49,6 +49,7 @@ export default function Videos() {
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const [isShuffled, setIsShuffled] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
+  const [showLikedOnly, setShowLikedOnly] = useState(false);
 
   // Use React Query hooks for data fetching with caching
   const { data: heroVideoUrl = '', isLoading: heroLoading } = useHeroVideo();
@@ -63,12 +64,23 @@ export default function Videos() {
   // Update local state when React Query data changes
   useEffect(() => {
     if (videoCategories) {
-      setMusicVideos(videoCategories.musicVideos as VideoItem[]);
-      setBehindTheScenes(videoCategories.behindTheScenes as VideoItem[]);
-      setPerformances(videoCategories.performances as VideoItem[]);
-      setDocumentary(videoCategories.documentary as VideoItem[]);
+      const favoriteIds = new Set(favoriteVideos.map(v => v.id));
+      
+      if (showLikedOnly) {
+        // Filter to show only liked videos
+        setMusicVideos((videoCategories.musicVideos as VideoItem[]).filter(v => favoriteIds.has(v.id)));
+        setBehindTheScenes((videoCategories.behindTheScenes as VideoItem[]).filter(v => favoriteIds.has(v.id)));
+        setPerformances((videoCategories.performances as VideoItem[]).filter(v => favoriteIds.has(v.id)));
+        setDocumentary((videoCategories.documentary as VideoItem[]).filter(v => favoriteIds.has(v.id)));
+      } else {
+        // Show all videos
+        setMusicVideos(videoCategories.musicVideos as VideoItem[]);
+        setBehindTheScenes(videoCategories.behindTheScenes as VideoItem[]);
+        setPerformances(videoCategories.performances as VideoItem[]);
+        setDocumentary(videoCategories.documentary as VideoItem[]);
+      }
     }
-  }, [videoCategories]);
+  }, [videoCategories, favoriteVideos, showLikedOnly]);
 
   useEffect(() => {
     checkAuth();
@@ -276,20 +288,33 @@ export default function Videos() {
 
       {/* Content Rows */}
       <div className="px-4 sm:px-8 lg:px-12 pt-20 pb-16 space-y-12">
-        {/* Shuffle Toggle */}
-        <div className="flex items-center justify-end gap-3 pb-4">
-          <Shuffle className={`w-4 h-4 transition-all duration-300 ${isShuffled ? 'text-primary' : 'text-muted-foreground'}`} />
-          <span className="text-sm font-medium">Shuffle</span>
-          <Switch 
-            checked={isShuffled} 
-            onCheckedChange={handleShuffleToggle}
-            disabled={isShuffling}
-          />
+        {/* Filter Controls */}
+        <div className="flex items-center justify-end gap-6 pb-4">
+          {/* Liked Videos Filter */}
+          <div className="flex items-center gap-3">
+            <Heart className={`w-4 h-4 transition-all duration-300 ${showLikedOnly ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
+            <span className="text-sm font-medium">Liked Only</span>
+            <Switch 
+              checked={showLikedOnly} 
+              onCheckedChange={setShowLikedOnly}
+            />
+          </div>
+
+          {/* Shuffle Toggle */}
+          <div className="flex items-center gap-3">
+            <Shuffle className={`w-4 h-4 transition-all duration-300 ${isShuffled ? 'text-primary' : 'text-muted-foreground'}`} />
+            <span className="text-sm font-medium">Shuffle</span>
+            <Switch 
+              checked={isShuffled} 
+              onCheckedChange={handleShuffleToggle}
+              disabled={isShuffling}
+            />
+          </div>
         </div>
 
         {/* Music Videos Row - FREE */}
         <ContentRow
-          title={t('videos.rows.musicVideos')}
+          title={showLikedOnly ? t('videos.rows.likedMusicVideos') : t('videos.rows.musicVideos')}
           items={musicVideos}
           aspectRatio="landscape"
           hoveredId={hoveredId}
@@ -297,21 +322,9 @@ export default function Videos() {
           onVideoClick={handleVideoClick}
         />
 
-        {/* Favorites - Only show if user has favorites */}
-        {favoriteVideos.length > 0 && (
-          <ContentRow
-            title={t('videos.rows.favorites')}
-            items={favoriteVideos as VideoItem[]}
-            aspectRatio="landscape"
-            hoveredId={hoveredId}
-            setHoveredId={setHoveredId}
-            onVideoClick={handleVideoClick}
-          />
-        )}
-
         {/* Performances Row */}
         <ContentRow
-          title={t('videos.rows.performances')}
+          title={showLikedOnly ? t('videos.rows.likedPerformances') : t('videos.rows.performances')}
           items={performances}
           aspectRatio="portrait"
           hoveredId={hoveredId}
@@ -321,7 +334,7 @@ export default function Videos() {
 
         {/* BTS Row */}
         <ContentRow
-          title={t('videos.rows.behindTheScenes')}
+          title={showLikedOnly ? t('videos.rows.likedBehindTheScenes') : t('videos.rows.behindTheScenes')}
           items={behindTheScenes}
           aspectRatio="portrait"
           hoveredId={hoveredId}
@@ -331,7 +344,7 @@ export default function Videos() {
 
         {/* Documentary Row */}
         <ContentRow
-          title={t('videos.rows.documentary')}
+          title={showLikedOnly ? t('videos.rows.likedDocumentary') : t('videos.rows.documentary')}
           items={documentary}
           aspectRatio="landscape"
           hoveredId={hoveredId}
