@@ -70,39 +70,40 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
       minHeight: "200px",
       background: "hsl(var(--card))",
       borderRadius: "16px",
-      border: "1px solid hsl(var(--border))"
+      border: "1px solid hsl(var(--border))",
+      padding: "60px 20px 20px 20px"
     }}>
-      <button
-        type="button"
+      {/* MASSIVE UNMISSABLE CLOSE BUTTON */}
+      <div
         onClick={(e) => {
-          console.log('🔴 CLOSE BUTTON CLICKED IN MEMBERCARD');
+          console.log('🔴🔴🔴 CLOSE BUTTON CLICKED!!!');
           e.stopPropagation();
           onClose();
         }}
         style={{
           position: "absolute",
-          top: -10,
-          right: -10,
-          width: 44,
-          height: 44,
+          top: "10px",
+          right: "10px",
+          width: "50px",
+          height: "50px",
           borderRadius: "50%",
-          background: "#f44336",
-          color: "#fff",
-          border: "4px solid #fff",
-          fontWeight: "bold",
-          fontSize: 28,
+          background: "#ff0000",
+          color: "#ffffff",
+          border: "5px solid #ffffff",
+          fontWeight: "900",
+          fontSize: "32px",
           cursor: "pointer",
-          zIndex: 9999,
-          boxShadow: "0 4px 12px rgba(244, 67, 54, 0.5)",
+          zIndex: 999999,
+          boxShadow: "0 0 20px rgba(255, 0, 0, 1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center"
         }}
+        role="button"
         aria-label="Close profile"
       >
-        ×
-      </button>
-      <div style={{ maxHeight: "85vh", overflowY: "auto", padding: "48px 24px 24px 24px" }}>
+        ✕
+      </div>
       
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
@@ -126,99 +127,104 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{member.location || 'Unknown'}</span>
+            <MapPin className="w-3 h-3" />
+            {member.city}, {member.country}
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <Calendar className="w-4 h-4" />
-            <span>Joined {new Date(member.joined_at).toLocaleDateString()}</span>
-          </div>
+          {member.joined_at && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+              <Calendar className="w-3 h-3" />
+              Joined {new Date(member.joined_at).toLocaleDateString()}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {/* Engagement Metrics */}
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Watch Time</span>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <Card className="p-4 bg-muted/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Activity className="w-3 h-3" />
+              Watch Time
+            </span>
           </div>
-          <p className="text-2xl font-bold">{formatTime(member.watch_time || 0)}</p>
+          <p className="text-2xl font-bold">{formatTime(member.watch_time_seconds)}</p>
         </Card>
-
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Activity className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Listen Time</span>
+        
+        <Card className="p-4 bg-muted/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Listen Time
+            </span>
           </div>
-          <p className="text-2xl font-bold">{formatTime(member.listen_time || 0)}</p>
-        </Card>
-
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Livestream Score</span>
-          </div>
-          <p className="text-2xl font-bold">{member.livestream_engagement_score || 0}</p>
-          {member.livestream_reaction_count > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {member.livestream_reaction_count} reactions
-            </p>
-          )}
-        </Card>
-
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Community Score</span>
-          </div>
-          <p className="text-2xl font-bold">{member.community_engagement_score || 0}</p>
-        </Card>
-
-        {/* Activity Stats */}
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Award className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Login Streak</span>
-          </div>
-          <p className="text-2xl font-bold">{member.login_streak || 0} days</p>
-        </Card>
-
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Sessions</span>
-          </div>
-          <p className="text-2xl font-bold">{member.total_sessions || 0}</p>
-        </Card>
-
-        {/* Revenue Metrics */}
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">Total Spend</span>
-          </div>
-          <p className="text-2xl font-bold">{formatCurrency(member.total_spend || 0)}</p>
-        </Card>
-
-        <Card className="p-4 bg-card/50 border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground uppercase">MRR</span>
-          </div>
-          <p className="text-2xl font-bold">{formatCurrency(member.mrr || 0)}</p>
+          <p className="text-2xl font-bold">{formatTime(member.listen_time_seconds)}</p>
         </Card>
       </div>
 
+      {/* Engagement Row */}
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <Card className="p-3 bg-muted/20 text-center">
+          <div className="flex items-center justify-center mb-1">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-lg font-bold">{member.engagement_score || 0}</p>
+          <p className="text-xs text-muted-foreground">Engagement</p>
+        </Card>
+        
+        <Card className="p-3 bg-muted/20 text-center">
+          <div className="flex items-center justify-center mb-1">
+            <Zap className="w-4 h-4 text-yellow-500" />
+          </div>
+          <p className="text-lg font-bold">{member.activity_score || 0}</p>
+          <p className="text-xs text-muted-foreground">Activity</p>
+        </Card>
+
+        <Card className="p-3 bg-muted/20 text-center">
+          <div className="flex items-center justify-center mb-1">
+            <DollarSign className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-lg font-bold">{formatCurrency(member.total_revenue || 0)}</p>
+          <p className="text-xs text-muted-foreground">Revenue</p>
+        </Card>
+      </div>
+
+      {/* Financial Stats */}
+      {(member.total_spend || member.monthly_recurring_revenue) && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {member.total_spend > 0 && (
+            <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-4 h-4 text-primary" />
+                <span className="text-xs text-muted-foreground">Total Spend</span>
+              </div>
+              <p className="text-2xl font-bold text-primary">{formatCurrency(member.total_spend)}</p>
+            </Card>
+          )}
+          
+          {member.monthly_recurring_revenue > 0 && (
+            <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-4 h-4 text-green-500" />
+                <span className="text-xs text-muted-foreground">MRR</span>
+              </div>
+              <p className="text-2xl font-bold text-green-500">{formatCurrency(member.monthly_recurring_revenue)}</p>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* Behavioral Intelligence */}
-      {(member.era_label || member.ptp_status) && (
-        <Card className="p-4 bg-card/50 border-border/50 mb-6">
-          <h4 className="text-sm font-semibold mb-3 text-foreground">Behavioral Intelligence</h4>
-          <div className="flex flex-wrap gap-2">
-            {member.era_label && (
-              <Badge variant="outline" className="text-xs">
-                ERA: {member.era_label}
+      {(member.era_score || member.ptp_status) && (
+        <Card className="p-4 bg-muted/20 mb-6">
+          <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Behavioral Intelligence
+          </h4>
+          <div className="flex gap-2 flex-wrap">
+            {member.era_score && (
+              <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs">
+                ERA: {member.era_score}
               </Badge>
             )}
             {member.ptp_status && (
@@ -242,7 +248,6 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
         <Button onClick={onViewProfile} className="flex-1 bg-primary hover:bg-primary/90">
           View Full Profile
         </Button>
-      </div>
       </div>
     </div>
   );
