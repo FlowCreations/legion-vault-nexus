@@ -42,6 +42,7 @@ const DistributorIntegration = lazy(() => import("@/components/merchant/Distribu
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
 const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
+const HybridFunnelBuilder = lazy(() => import("@/components/merchant/marketing/HybridFunnelBuilder").then(m => ({ default: m.HybridFunnelBuilder })));
 const AbandonedCartToggle = lazy(() => import("@/components/merchant/AbandonedCartToggle").then(m => ({ default: m.AbandonedCartToggle })));
 const AbandonedCartSettings = lazy(() => import("@/components/merchant/AbandonedCartSettings").then(m => ({ default: m.AbandonedCartSettings })));
 const PTPCalculationTrigger = lazy(() => import("@/components/merchant/admin/PTPCalculationTrigger").then(m => ({ default: m.PTPCalculationTrigger })));
@@ -389,6 +390,7 @@ const Merchant = memo(() => {
                 <TabsList>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
                   <TabsTrigger value="funnel">Sales Funnel</TabsTrigger>
+                  <TabsTrigger value="hybrid">Hybrid Funnel</TabsTrigger>
                   <TabsTrigger value="email">Email</TabsTrigger>
                   <TabsTrigger value="sms">SMS</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
@@ -409,6 +411,12 @@ const Merchant = memo(() => {
                       <BuildFunnel />
                     </Suspense>
                   </div>
+                </TabsContent>
+                
+                <TabsContent value="hybrid">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <HybridFunnelBuilder />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="email">
