@@ -17,17 +17,7 @@ interface MilestoneModalProps {
 }
 
 export const MilestoneModal = ({ milestone, onClose }: MilestoneModalProps) => {
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    address1: '',
-    address2: '',
-    city: '',
-    state: '',
-    zip: '',
-    country: 'USA',
-  });
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     // Trigger confetti
@@ -79,7 +69,7 @@ export const MilestoneModal = ({ milestone, onClose }: MilestoneModalProps) => {
     dunbar_champion: {
       icon: Award,
       title: 'Dunbar Champion!',
-      message: "You've reached the final milestone. Confirm your address — your collectible is on the way.",
+      message: "You're part of the Legion — one of our most loyal fans. As a thank you, choose any digital album from the store for free.",
       color: 'from-amber-600 to-yellow-500',
     },
   };
@@ -87,9 +77,8 @@ export const MilestoneModal = ({ milestone, onClose }: MilestoneModalProps) => {
   const config = milestoneConfig[milestone.milestone_type];
   const Icon = config.icon;
 
-  const handleSubmitAddress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  const handleClaimReward = async () => {
+    setClaiming(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -100,20 +89,21 @@ export const MilestoneModal = ({ milestone, onClose }: MilestoneModalProps) => {
         .update({
           reward_claimed: true,
           reward_claimed_at: new Date().toISOString(),
-          shipping_address: formData,
         })
         .eq('user_id', user.id)
         .eq('milestone_type', 'dunbar_champion');
 
       if (error) throw error;
 
-      toast.success('Address saved! Your collectible will be shipped soon.');
+      toast.success('Reward unlocked! Browse the store to claim your free album.');
       onClose();
+      // Optionally redirect to store
+      window.location.href = '/gallery';
     } catch (error) {
-      console.error('Error saving address:', error);
-      toast.error('Failed to save address. Please try again.');
+      console.error('Error claiming reward:', error);
+      toast.error('Failed to claim reward. Please try again.');
     } finally {
-      setSubmitting(false);
+      setClaiming(false);
     }
   };
 
@@ -132,80 +122,14 @@ export const MilestoneModal = ({ milestone, onClose }: MilestoneModalProps) => {
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">{config.title}</h2>
             <p className="text-muted-foreground">{config.message}</p>
-            <p className="text-sm text-muted-foreground">
-              Achieved after {(milestone.total_minutes_at_achievement / 60).toFixed(1)} hours
-            </p>
           </div>
 
-          {/* Address Form for Dunbar Champion */}
-          {milestone.milestone_type === 'dunbar_champion' && !showAddressForm && (
-            <Button onClick={() => setShowAddressForm(true)} className="w-full gap-2">
+          {/* Claim Button for Dunbar Champion */}
+          {milestone.milestone_type === 'dunbar_champion' && (
+            <Button onClick={handleClaimReward} className="w-full gap-2" disabled={claiming}>
               <Package className="w-4 h-4" />
-              Claim Your Collectible
+              {claiming ? 'Claiming...' : 'Claim Your Free Album'}
             </Button>
-          )}
-
-          {showAddressForm && (
-            <form onSubmit={handleSubmitAddress} className="space-y-4 text-left">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address1">Address Line 1</Label>
-                <Input
-                  id="address1"
-                  required
-                  value={formData.address1}
-                  onChange={(e) => setFormData({ ...formData, address1: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address2">Address Line 2 (Optional)</Label>
-                <Input
-                  id="address2"
-                  value={formData.address2}
-                  onChange={(e) => setFormData({ ...formData, address2: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    required
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    required
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zip">ZIP Code</Label>
-                <Input
-                  id="zip"
-                  required
-                  value={formData.zip}
-                  onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Submitting...' : 'Submit Address'}
-              </Button>
-            </form>
           )}
 
           {/* Close Button */}
