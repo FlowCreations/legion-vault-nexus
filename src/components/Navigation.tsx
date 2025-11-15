@@ -94,7 +94,7 @@ export const Navigation = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-base font-medium transition-colors ${
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted"
