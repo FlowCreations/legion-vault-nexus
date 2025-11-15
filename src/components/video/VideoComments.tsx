@@ -7,13 +7,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { useVideoComments } from '@/hooks/useVideoComments';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare, Send, X } from 'lucide-react';
 
 interface VideoCommentsProps {
   videoId: string;
+  isCompact?: boolean;
+  showComments?: boolean;
+  onToggleComments?: () => void;
+  onClose?: () => void;
 }
 
-export const VideoComments = ({ videoId }: VideoCommentsProps) => {
+export const VideoComments = ({ 
+  videoId, 
+  isCompact = false, 
+  showComments = false,
+  onToggleComments,
+  onClose 
+}: VideoCommentsProps) => {
   const [commentText, setCommentText] = useState('');
   const { comments, isLoading, addComment, isAddingComment } = useVideoComments(videoId);
   const { user } = useAuth();
@@ -51,6 +61,9 @@ export const VideoComments = ({ videoId }: VideoCommentsProps) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Prevent spacebar from triggering video controls
+    e.stopPropagation();
+    
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       handleSubmit(e);
     }
@@ -65,14 +78,42 @@ export const VideoComments = ({ videoId }: VideoCommentsProps) => {
     return name[0].toUpperCase();
   };
 
-  return (
+  // Compact mode - just a floating button
+  if (isCompact && !showComments) {
+    return (
+      <button
+        onClick={onToggleComments}
+        className="fixed bottom-24 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-primary/90 hover:bg-primary transition-all backdrop-blur-sm shadow-lg shadow-primary/20 border border-primary/20"
+      >
+        <MessageSquare className="w-5 h-5 text-primary-foreground" />
+        {comments.length > 0 && (
+          <span className="bg-accent text-accent-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+            {comments.length}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Full comments panel
+  const commentsPanel = (
     <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <MessageSquare className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">
-          Comments ({comments.length})
-        </h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">
+            Comments ({comments.length})
+          </h3>
+        </div>
+        {onClose && showComments && (
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Comment Input */}
@@ -161,4 +202,24 @@ export const VideoComments = ({ videoId }: VideoCommentsProps) => {
       </div>
     </div>
   );
+
+  // Slide-out panel for compact mode when comments are open
+  if (isCompact && showComments) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className="fixed top-0 right-0 h-full w-full md:w-[400px] bg-background/95 backdrop-blur-xl border-l border-white/10 z-50 p-6 overflow-y-auto"
+        >
+          {commentsPanel}
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // Regular inline display
+  return <div className="mt-6">{commentsPanel}</div>;
 };

@@ -43,6 +43,7 @@ export function VideoPlayer({
   const [showUI, setShowUI] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { trackEvent } = useEventTracking();
@@ -79,6 +80,12 @@ export function VideoPlayer({
   // Keyboard controls (spacebar to pause/play)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't interfere with typing in input fields
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT') {
+        return;
+      }
+      
       if (e.code === 'Space' && isOpen && !minimized) {
         e.preventDefault();
         togglePlay();
@@ -493,12 +500,9 @@ export function VideoPlayer({
                             <span className="text-sm font-medium hidden sm:inline">Dislike</span>
                           </button>
 
-                          {/* Comment button - scrolls to comments */}
+                          {/* Comment button */}
                           <button
-                            onClick={() => {
-                              const commentsSection = document.getElementById('video-comments');
-                              commentsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }}
+                            onClick={() => setShowComments(!showComments)}
                             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
                             aria-label="Comments"
                           >
@@ -569,11 +573,13 @@ export function VideoPlayer({
                     </div>
                     
                     {/* Video Comments Section */}
-                    {!isFullscreen && (
-                      <div id="video-comments" className="px-4 pb-6">
-                        <VideoComments videoId={videoId} />
-                      </div>
-                    )}
+                    <VideoComments 
+                      videoId={videoId} 
+                      isCompact={!isFullscreen && minimized}
+                      showComments={showComments}
+                      onToggleComments={() => setShowComments(!showComments)}
+                      onClose={() => setShowComments(false)}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
