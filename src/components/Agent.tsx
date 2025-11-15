@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -83,11 +83,27 @@ export const Agent = () => {
     }
   };
 
-  // Agent button is now integrated in footer, so we only render the expanded panel
-  if (!isActive || !isExpanded) return null;
+
+  if (!isActive) return null;
 
   return (
-    <AnimatePresence>
+    <>
+      {/* Floating Agent Button - Only when not expanded */}
+      {!isExpanded && (
+        <motion.button
+          onClick={() => setIsExpanded(true)}
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90 z-50"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          title="AI Agent"
+        >
+          <MessageCircle className="w-6 h-6 text-primary-foreground absolute inset-0 m-auto" />
+        </motion.button>
+      )}
+
+      {/* Expanded Agent Panel */}
+      {isExpanded && (
       <motion.div
         className="fixed bottom-28 left-8 z-50 w-96 max-w-[calc(100vw-4rem)]"
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -95,12 +111,12 @@ export const Agent = () => {
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="p-6 shadow-2xl border-2 border-pink-500/20 bg-gradient-to-br from-background via-background to-pink-500/5">
+        <Card className="p-6 shadow-2xl border-2 border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
-                <Heart className="h-4 w-4 fill-white text-white" />
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <MessageCircle className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="font-semibold text-sm">Agent</span>
             </div>
@@ -140,12 +156,13 @@ export const Agent = () => {
           {/* Footer */}
           <div className="mt-6 pt-4 border-t border-border/50">
             <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-2">
-              <Heart className="h-3 w-3 fill-pink-500 text-pink-500" />
+              <MessageCircle className="h-3 w-3 text-primary" />
               <span>Guided by Love • Powered by JRNY AI</span>
             </p>
           </div>
         </Card>
       </motion.div>
-    </AnimatePresence>
+      )}
+    </>
   );
 };

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { initMetaPixel } from "@/lib/metaPixel";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
+import { Agent } from "./components/Agent";
 import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import { useAgent } from "./hooks/useAgent";
 import { useDiagnostics } from "./hooks/useDiagnostics";
@@ -65,6 +66,7 @@ const PageLoader = () => (
 const App = () => {
   const pixelInitialized = useRef(false);
   const [showIntro, setShowIntro] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   // Initialize diagnostics monitoring
   useDiagnostics();
@@ -157,10 +159,11 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-          {!showIntro && <Footer />}
+          {!showIntro && <Footer showDiagnostics={showDiagnostics} setShowDiagnostics={setShowDiagnostics} />}
+          <Agent />
           <GlobalMusicPlayer />
           <AbandonedCartPopup />
-          <HealthOverlay />
+          <HealthOverlay showDiagnostics={showDiagnostics} />
         </BrowserRouter>
       </TooltipProvider>
     </ErrorBoundary>
