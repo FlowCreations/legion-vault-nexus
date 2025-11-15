@@ -274,31 +274,24 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
         </div>
       </div>
 
-      {console.log('📊 selectedMember STATE:', selectedMember)}
       {selectedMember && (
-        <>
-          {console.log('🟢🟢🟢 RENDERING MODAL NOW!!!', selectedMember)}
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
+          onClick={handleCloseProfile}
+        >
           <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
-            onClick={handleCloseProfile}
+            className="relative max-w-2xl w-full mx-4 my-8 rounded-2xl shadow-2xl overflow-visible" 
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative max-w-2xl w-full mx-4 my-8">
-              <div 
-                className="relative rounded-2xl shadow-2xl" 
-                onClick={(e) => e.stopPropagation()}
-                style={{ background: "transparent" }}
-              >
-                <MemberCard 
-                  member={selectedMember}
-                  onClose={handleCloseProfile}
-                  onViewProfile={() => {
-                    navigate(`/community?member=${selectedMember.user_id}`);
-                  }}
-                />
-              </div>
-            </div>
+            <MemberCard 
+              member={selectedMember}
+              onClose={handleCloseProfile}
+              onViewProfile={() => {
+                navigate(`/community?member=${selectedMember.user_id}`);
+              }}
+            />
           </div>
-        </>
+        </div>
       )}
     </>
   );
