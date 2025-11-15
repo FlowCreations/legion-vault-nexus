@@ -64,15 +64,16 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", width: "100%", minHeight: "200px" }}>
       <button
+        type="button"
         onClick={onClose}
         style={{
           position: "absolute",
           top: 12,
           right: 12,
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           borderRadius: "50%",
           background: "#f44336",
           color: "#fff",
@@ -80,12 +81,14 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
           fontWeight: "bold",
           fontSize: 24,
           cursor: "pointer",
-          zIndex: 100
+          zIndex: 100,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
         }}
         aria-label="Close profile"
       >
         ×
       </button>
+      <div style={{ maxHeight: "85vh", overflowY: "auto", padding: "24px 12px 12px 12px" }}>
       
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
@@ -225,6 +228,7 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
         <Button onClick={onViewProfile} className="flex-1 bg-primary hover:bg-primary/90">
           View Full Profile
         </Button>
+      </div>
       </div>
     </div>
   );
