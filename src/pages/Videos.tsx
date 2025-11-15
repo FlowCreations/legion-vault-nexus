@@ -312,46 +312,66 @@ export default function Videos() {
           </div>
         </div>
 
-        {/* Music Videos Row - FREE */}
-        <ContentRow
-          title={showLikedOnly ? t('videos.rows.likedMusicVideos') : t('videos.rows.musicVideos')}
-          items={musicVideos}
-          aspectRatio="landscape"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          onVideoClick={handleVideoClick}
-        />
+        {showLikedOnly && favoriteVideos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Heart className="w-16 h-16 text-white/20 mb-4" />
+            <h3 className="text-2xl font-bold text-white mb-2">Your Liked Videos Are Stored</h3>
+            <p className="text-white/60 max-w-md">
+              Videos you like will appear here. Toggle off "Liked Only" to browse all content.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Music Videos Row - Only show if has items or not in liked mode */}
+            {(!showLikedOnly || musicVideos.length > 0) && (
+              <ContentRow
+                title={t('videos.rows.musicVideos')}
+                items={musicVideos}
+                aspectRatio="landscape"
+                hoveredId={hoveredId}
+                setHoveredId={setHoveredId}
+                onVideoClick={handleVideoClick}
+              />
+            )}
 
-        {/* Performances Row */}
-        <ContentRow
-          title={showLikedOnly ? t('videos.rows.likedPerformances') : t('videos.rows.performances')}
-          items={performances}
-          aspectRatio="portrait"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          onVideoClick={handleVideoClick}
-        />
+            {/* Performances Row */}
+            {(!showLikedOnly || performances.length > 0) && (
+              <ContentRow
+                title={t('videos.rows.performances')}
+                items={performances}
+                aspectRatio="portrait"
+                hoveredId={hoveredId}
+                setHoveredId={setHoveredId}
+                onVideoClick={handleVideoClick}
+              />
+            )}
 
-        {/* BTS Row */}
-        <ContentRow
-          title={showLikedOnly ? t('videos.rows.likedBehindTheScenes') : t('videos.rows.behindTheScenes')}
-          items={behindTheScenes}
-          aspectRatio="portrait"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          onVideoClick={handleVideoClick}
-        />
+            {/* BTS Row */}
+            {(!showLikedOnly || behindTheScenes.length > 0) && (
+              <ContentRow
+                title={t('videos.rows.behindTheScenes')}
+                items={behindTheScenes}
+                aspectRatio="portrait"
+                hoveredId={hoveredId}
+                setHoveredId={setHoveredId}
+                onVideoClick={handleVideoClick}
+              />
+            )}
 
-        {/* Documentary Row */}
-        <ContentRow
-          title={showLikedOnly ? t('videos.rows.likedDocumentary') : t('videos.rows.documentary')}
-          items={documentary}
-          aspectRatio="landscape"
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          isPremium
-          onVideoClick={handleVideoClick}
-        />
+            {/* Documentary Row */}
+            {(!showLikedOnly || documentary.length > 0) && (
+              <ContentRow
+                title={t('videos.rows.documentary')}
+                items={documentary}
+                aspectRatio="landscape"
+                hoveredId={hoveredId}
+                setHoveredId={setHoveredId}
+                isPremium
+                onVideoClick={handleVideoClick}
+              />
+            )}
+          </>
+        )}
 
         {/* You Might Also Like */}
         <YouMightAlsoLike contentType="video" limit={5} />
