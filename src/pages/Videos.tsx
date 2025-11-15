@@ -290,10 +290,10 @@ export default function Videos() {
       <div className="px-4 sm:px-8 lg:px-12 pt-20 pb-16 space-y-12">
         {/* Filter Controls */}
         <div className="flex items-center justify-end gap-6 pb-4">
-          {/* Liked Videos Filter */}
+          {/* Favourites Filter */}
           <div className="flex items-center gap-3">
             <Heart className={`w-4 h-4 transition-all duration-300 ${showLikedOnly ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-            <span className="text-sm font-medium">Liked Only</span>
+            <span className="text-sm font-medium">Favourites</span>
             <Switch 
               checked={showLikedOnly} 
               onCheckedChange={setShowLikedOnly}
@@ -315,9 +315,9 @@ export default function Videos() {
         {showLikedOnly && favoriteVideos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Heart className="w-16 h-16 text-white/20 mb-4" />
-            <h3 className="text-2xl font-bold text-white mb-2">Your Liked Videos Are Stored</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Your Favourite Videos Are Stored</h3>
             <p className="text-white/60 max-w-md">
-              Videos you like will appear here. Toggle off "Liked Only" to browse all content.
+              Videos you favourite will appear here. Toggle off "Favourites" to browse all content.
             </p>
           </div>
         ) : (
