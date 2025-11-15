@@ -1050,24 +1050,24 @@ export default function CommunityHub() {
                   <div key={profile.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
                     <div className="flex items-start gap-4">
                       <Avatar className="h-16 w-16">
-                        <AvatarImage src={profile.avatar} />
-                        <AvatarFallback>{profile.name[0]}</AvatarFallback>
+                        <AvatarImage src={profile.avatar || undefined} />
+                        <AvatarFallback>{profile.name?.[0] || '?'}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">{profile.name}</h3>
-                          <Badge className={getTierColor(profile.tier)}>{profile.tier}</Badge>
+                          <h3 className="font-semibold">{profile.name || 'Unknown'}</h3>
+                          {profile.tier && <Badge className={getTierColor(profile.tier)}>{profile.tier}</Badge>}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>
-                        <p className="text-sm mb-4">{profile.bio}</p>
+                        {profile.location && <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>}
+                        {profile.bio && <p className="text-sm mb-4">{profile.bio}</p>}
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
                             setDirectMessageRecipient({
                               id: profile.id,
-                              name: profile.name,
-                              avatar: profile.avatar
+                              name: profile.name || 'Unknown',
+                              avatar: profile.avatar || undefined
                             });
                             setShowDirectMessage(true);
                           }}
