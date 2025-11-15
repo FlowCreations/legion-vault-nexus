@@ -128,7 +128,8 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        console.log('🔵 MARKER CLICKED - Setting selectedMember:', feature.properties);
+        console.log('🔵🔵🔵 MARKER CLICKED!!!', feature.properties);
+        alert('MARKER CLICKED: ' + feature.properties.name);
         // Stop globe rotation immediately when opening profile
         spinEnabledRef.current = false;
         setIsPaused(true);
@@ -273,9 +274,10 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
         </div>
       </div>
 
+      {console.log('📊 selectedMember STATE:', selectedMember)}
       {selectedMember && (
         <>
-          {console.log('🟢 RENDERING MODAL - selectedMember exists:', selectedMember)}
+          {console.log('🟢🟢🟢 RENDERING MODAL NOW!!!', selectedMember)}
           <div 
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
             onClick={handleCloseProfile}
