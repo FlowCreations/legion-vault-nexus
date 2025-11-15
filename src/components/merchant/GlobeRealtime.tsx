@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Pause, Play } from 'lucide-react';
+import { Pause, Play, X } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import { useMembersGeojson } from '@/hooks/useMembersGeojson';
 import { MemberCard } from './MemberCard';
@@ -278,9 +278,18 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
           onClick={handleCloseProfile}
         >
           <div 
-            className="bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
+            className="relative bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button - Visible at top right */}
+            <button
+              onClick={handleCloseProfile}
+              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-red-500/90 border border-white/20 hover:border-red-500 transition-all group"
+              title="Close"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+
             <MemberCard 
               member={selectedMember}
               onClose={handleCloseProfile}

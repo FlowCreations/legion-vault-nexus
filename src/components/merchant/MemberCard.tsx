@@ -64,18 +64,7 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div className="relative">
-      {/* Close Button - Top Right Corner */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        onClick={onClose} 
-        className="absolute -top-2 -right-2 z-10 bg-card/90 hover:bg-destructive/90 hover:text-white border border-border hover:border-destructive rounded-full w-8 h-8"
-        title="Close profile"
-      >
-        <X className="w-5 h-5" />
-      </Button>
-
+    <div>
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
         <Avatar className="h-16 w-16 border-2 border-primary/20">
