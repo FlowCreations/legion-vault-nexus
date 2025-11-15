@@ -24,7 +24,11 @@ const TIER_PRICE_IDS: Record<string, string> = {
   "Legionnaires": "price_1SP6aeFTZjyeQ8pZFmmOX1Uc",
 };
 
-export default function Home() {
+interface HomeProps {
+  onIntroChange?: (showing: boolean) => void;
+}
+
+export default function Home({ onIntroChange }: HomeProps = {}) {
   const { t } = useTranslation();
   const { trackEvent } = useEventTracking();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('other');
@@ -45,11 +49,9 @@ export default function Home() {
       setAuthChecked(true);
       
       // Only show intro if user is NOT authenticated AND intro hasn't been shown
-      if (!authenticated && !sessionStorage.getItem('introShown')) {
-        setShowIntro(true);
-      } else {
-        setShowIntro(false);
-      }
+      const shouldShowIntro = !authenticated && !sessionStorage.getItem('introShown');
+      setShowIntro(shouldShowIntro);
+      onIntroChange?.(shouldShowIntro);
     });
 
     // Also check current session immediately
@@ -58,18 +60,17 @@ export default function Home() {
       setIsAuthenticated(authenticated);
       setAuthChecked(true);
       
-      if (!authenticated && !sessionStorage.getItem('introShown')) {
-        setShowIntro(true);
-      } else {
-        setShowIntro(false);
-      }
+      const shouldShowIntro = !authenticated && !sessionStorage.getItem('introShown');
+      setShowIntro(shouldShowIntro);
+      onIntroChange?.(shouldShowIntro);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [onIntroChange]);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
+    onIntroChange?.(false);
     sessionStorage.setItem('introShown', 'true');
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
