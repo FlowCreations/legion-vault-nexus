@@ -11,10 +11,14 @@ import { cn } from "@/lib/utils";
 
 export const Footer = ({ 
   showDiagnostics, 
-  setShowDiagnostics 
+  setShowDiagnostics,
+  isAgentExpanded,
+  setIsAgentExpanded
 }: { 
   showDiagnostics?: boolean; 
   setShowDiagnostics?: (show: boolean) => void;
+  isAgentExpanded?: boolean;
+  setIsAgentExpanded?: (expanded: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -45,6 +49,25 @@ export const Footer = ({
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Check Agent status
+  useEffect(() => {
+    const checkAgentStatus = async () => {
+      try {
+        const { data } = await supabase
+          .from("feature_flags")
+          .select("enabled")
+          .eq("flag_name", "agent_active")
+          .single();
+
+        setIsAgentActive(data?.enabled || false);
+      } catch (error) {
+        console.error("Error checking Agent status:", error);
+      }
+    };
+
+    checkAgentStatus();
   }, []);
 
   // Check Agent status
@@ -122,9 +145,20 @@ export const Footer = ({
             </p>
           </div>
           
-          {/* Right Section - Agent Icon */}
+          {/* Right Section - AI Chat Icon */}
           <div className="flex items-center gap-4">
-            {/* Agent icon removed - functionality moved to Agent component */}
+            {isAgentActive && (
+              <motion.button
+                onClick={() => setIsAgentExpanded?.(!isAgentExpanded)}
+                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                title="AI Chat"
+              >
+                <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
+              </motion.button>
+            )}
           </div>
         </div>
         

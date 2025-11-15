@@ -67,6 +67,7 @@ const App = () => {
   const pixelInitialized = useRef(false);
   const [showIntro, setShowIntro] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [isAgentExpanded, setIsAgentExpanded] = useState(false);
   
   // Initialize diagnostics monitoring
   useDiagnostics();
@@ -159,8 +160,15 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-          {!showIntro && <Footer showDiagnostics={showDiagnostics} setShowDiagnostics={setShowDiagnostics} />}
-          <Agent />
+          {!showIntro && (
+            <Footer 
+              showDiagnostics={showDiagnostics} 
+              setShowDiagnostics={setShowDiagnostics}
+              isAgentExpanded={isAgentExpanded}
+              setIsAgentExpanded={setIsAgentExpanded}
+            />
+          )}
+          <Agent isExpanded={isAgentExpanded} setIsExpanded={setIsAgentExpanded} />
           <GlobalMusicPlayer />
           <AbandonedCartPopup />
           <HealthOverlay showDiagnostics={showDiagnostics} />

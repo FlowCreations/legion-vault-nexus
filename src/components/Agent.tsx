@@ -13,9 +13,13 @@ interface AgentMessage {
   timestamp: string;
 }
 
-export const Agent = () => {
+interface AgentProps {
+  isExpanded: boolean;
+  setIsExpanded: (expanded: boolean) => void;
+}
+
+export const Agent = ({ isExpanded, setIsExpanded }: AgentProps) => {
   const [isActive, setIsActive] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState<string | null>(null);
   const { toast } = useToast();
@@ -84,26 +88,9 @@ export const Agent = () => {
   };
 
 
-  if (!isActive) return null;
+  if (!isActive || !isExpanded) return null;
 
   return (
-    <>
-      {/* Floating Agent Button - Only when not expanded */}
-      {!isExpanded && (
-        <motion.button
-          onClick={() => setIsExpanded(true)}
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90 z-50"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          title="AI Agent"
-        >
-          <MessageCircle className="w-6 h-6 text-primary-foreground absolute inset-0 m-auto" />
-        </motion.button>
-      )}
-
-      {/* Expanded Agent Panel */}
-      {isExpanded && (
       <motion.div
         className="fixed bottom-28 left-8 z-50 w-96 max-w-[calc(100vw-4rem)]"
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -162,7 +149,5 @@ export const Agent = () => {
           </div>
         </Card>
       </motion.div>
-      )}
-    </>
   );
 };
