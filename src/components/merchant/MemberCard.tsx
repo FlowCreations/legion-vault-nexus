@@ -64,20 +64,28 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div>
-      {/* CLOSE BUTTON - Simple and visible at top */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white border-2 border-white shadow-lg transition-all hover:scale-110"
-          aria-label="Close"
-        >
-          <X className="w-6 h-6" strokeWidth={2.5} />
-        </button>
-      </div>
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          background: "#f44336",
+          color: "#fff",
+          border: "2px solid #fff",
+          fontWeight: "bold",
+          fontSize: 24,
+          cursor: "pointer",
+          zIndex: 100
+        }}
+        aria-label="Close profile"
+      >
+        ×
+      </button>
       
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
