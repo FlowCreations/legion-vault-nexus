@@ -1,4 +1,4 @@
-import { useEffect, useRef, lazy, Suspense } from "react";
+import { useEffect, useRef, lazy, Suspense, useState } from "react";
 import { AbandonedCartPopup } from "@/components/AbandonedCartPopup";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -65,6 +65,7 @@ const PageLoader = () => (
 
 const App = () => {
   const pixelInitialized = useRef(false);
+  const [showIntro, setShowIntro] = useState(false);
   
   // Initialize diagnostics monitoring
   useDiagnostics();
@@ -116,7 +117,7 @@ const App = () => {
           <Navigation />
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Home onIntroChange={setShowIntro} />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<ProtectedRoute requireAuth><Profile /></ProtectedRoute>} />
               <Route path="/subscribe" element={<Subscribe />} />
@@ -157,7 +158,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-          <Footer />
+          {!showIntro && <Footer />}
           <FloatingChatbot />
           <GlobalMusicPlayer />
           <AbandonedCartPopup />
