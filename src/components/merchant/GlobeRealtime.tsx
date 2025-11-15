@@ -277,11 +277,8 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
           onClick={handleCloseProfile}
         >
-          <div 
-            className="relative bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button - Very visible in top right corner */}
+          <div className="relative max-w-2xl w-full mx-4">
+            {/* Close Button - Positioned outside the scrollable card */}
             <button
               onClick={handleCloseProfile}
               className="absolute -top-3 -right-3 z-[100] w-10 h-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 border-2 border-white shadow-2xl transition-all"
@@ -290,13 +287,18 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
               <X className="w-6 h-6 text-white" />
             </button>
 
-            <MemberCard 
-              member={selectedMember}
-              onClose={handleCloseProfile}
-              onViewProfile={() => {
-                navigate(`/community?member=${selectedMember.user_id}`);
-              }}
-            />
+            <div 
+              className="relative bg-card border border-white/20 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MemberCard 
+                member={selectedMember}
+                onClose={handleCloseProfile}
+                onViewProfile={() => {
+                  navigate(`/community?member=${selectedMember.user_id}`);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
