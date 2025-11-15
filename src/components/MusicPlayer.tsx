@@ -239,7 +239,6 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
                       Credits
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowLyricsDialog(true)}>
-                      <Music className="mr-2 h-4 w-4" />
                       Lyrics
                     </DropdownMenuItem>
                   </DropdownMenuContent>
