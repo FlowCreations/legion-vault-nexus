@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { initMetaPixel } from "@/lib/metaPixel";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
-import { Agent } from "./components/Agent";
+import { LiveChat } from "./components/LiveChat";
 import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import { useAgent } from "./hooks/useAgent";
 import { useDiagnostics } from "./hooks/useDiagnostics";
@@ -67,7 +67,7 @@ const App = () => {
   const pixelInitialized = useRef(false);
   const [showIntro, setShowIntro] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [isAgentExpanded, setIsAgentExpanded] = useState(false);
+  const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   
   // Initialize diagnostics monitoring
   useDiagnostics();
@@ -164,11 +164,11 @@ const App = () => {
             <Footer 
               showDiagnostics={showDiagnostics} 
               setShowDiagnostics={setShowDiagnostics}
-              isAgentExpanded={isAgentExpanded}
-              setIsAgentExpanded={setIsAgentExpanded}
+              isLiveChatOpen={isLiveChatOpen}
+              setIsLiveChatOpen={setIsLiveChatOpen}
             />
           )}
-          <Agent isExpanded={isAgentExpanded} setIsExpanded={setIsAgentExpanded} />
+          <LiveChat isOpen={isLiveChatOpen} setIsOpen={setIsLiveChatOpen} />
           <GlobalMusicPlayer />
           <AbandonedCartPopup />
           <HealthOverlay showDiagnostics={showDiagnostics} />
