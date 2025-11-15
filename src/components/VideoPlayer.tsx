@@ -575,10 +575,8 @@ export function VideoPlayer({
                     {/* Video Comments Section */}
                     <VideoComments 
                       videoId={videoId} 
-                      isCompact={!isFullscreen && minimized}
                       showComments={showComments}
                       onToggleComments={() => setShowComments(!showComments)}
-                      onClose={() => setShowComments(false)}
                     />
                   </motion.div>
                 )}
