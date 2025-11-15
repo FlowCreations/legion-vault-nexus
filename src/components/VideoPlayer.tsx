@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, ThumbsDown, MessageSquare, PictureInPicture2 } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, MessageSquare, PictureInPicture2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
@@ -124,12 +124,13 @@ export function VideoPlayer({
     }
   }, [isOpen, videoId]);
 
-  // Auto-play when opened
+  // Auto-play when opened - start in floating mode
   useEffect(() => {
     if (isOpen && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
       setMinimized(false);
+      setIsFloating(true); // Start in floating mode
       kickIdleTimer();
       
       // Track video start
@@ -319,11 +320,6 @@ export function VideoPlayer({
         initial={floatingPosition}
         onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
         className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[100] cursor-move"
-        onClick={(e) => {
-          if ((e.target as HTMLElement).tagName === 'VIDEO') {
-            setIsFloating(false);
-          }
-        }}
       >
         <video
           ref={videoRef}
@@ -331,7 +327,8 @@ export function VideoPlayer({
           poster={thumbnailUrl}
           playsInline
           onTimeUpdate={onTimeUpdate}
-          className="w-full h-full object-contain"
+          onClick={togglePlay}
+          className="w-full h-full object-contain cursor-pointer"
         />
         <div className="absolute top-2 right-2 flex gap-2 z-10">
           <button 
@@ -343,6 +340,7 @@ export function VideoPlayer({
           <button 
             onClick={(e) => { e.stopPropagation(); setIsFloating(false); }}
             className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+            title="Expand player"
           >
             <Maximize className="w-4 h-4" />
           </button>
@@ -565,18 +563,12 @@ export function VideoPlayer({
                             <span className="text-sm font-medium hidden sm:inline">{isFavorited ? 'Liked' : 'Like'}</span>
                           </button>
 
-                          {/* Dislike button */}
-                          <button
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
-                            aria-label="Dislike"
-                          >
-                            <ThumbsDown className="w-5 h-5" />
-                            <span className="text-sm font-medium hidden sm:inline">Dislike</span>
-                          </button>
-
                           {/* Comment button */}
                           <button
-                            onClick={() => setShowComments(!showComments)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowComments(!showComments);
+                            }}
                             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
                             aria-label="Comments"
                           >
