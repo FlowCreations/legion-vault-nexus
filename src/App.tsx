@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { initMetaPixel } from "@/lib/metaPixel";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
-import { FloatingChatbot } from "./components/FloatingChatbot";
 import { GlobalMusicPlayer } from "./components/GlobalMusicPlayer";
 import { useAgent } from "./hooks/useAgent";
 import { useDiagnostics } from "./hooks/useDiagnostics";
@@ -159,7 +158,6 @@ const App = () => {
             </Routes>
           </Suspense>
           {!showIntro && <Footer />}
-          <FloatingChatbot />
           <GlobalMusicPlayer />
           <AbandonedCartPopup />
           <HealthOverlay />
