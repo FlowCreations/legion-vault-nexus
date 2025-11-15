@@ -128,6 +128,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        // Stop globe rotation when opening profile
         setIsPaused(true);
         spinEnabledRef.current = false;
         setSelectedMember(feature.properties);
@@ -219,6 +220,16 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
     spinEnabledRef.current = !spinEnabledRef.current;
   };
 
+  const handleCloseProfile = () => {
+    setSelectedMember(null);
+    // Resume rotation when closing profile
+    setIsPaused(false);
+    spinEnabledRef.current = true;
+    if (map.current) {
+      startGlobeRotation();
+    }
+  };
+
   if (error) {
     return (
       <div className="w-full h-[600px] rounded-lg border border-border bg-destructive/10 flex items-center justify-center">
@@ -257,9 +268,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
       {selectedMember && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
-          onClick={() => {
-            setSelectedMember(null);
-          }}
+          onClick={handleCloseProfile}
         >
           <div 
             className="bg-card border border-white/20 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
@@ -267,9 +276,7 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
           >
             <MemberCard 
               member={selectedMember}
-              onClose={() => {
-                setSelectedMember(null);
-              }}
+              onClose={handleCloseProfile}
               onViewProfile={() => {
                 navigate(`/community?member=${selectedMember.user_id}`);
               }}
