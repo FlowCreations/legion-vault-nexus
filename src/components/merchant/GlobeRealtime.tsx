@@ -274,23 +274,27 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
       {selectedMember && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" 
           onClick={handleCloseProfile}
         >
-          <div className="relative max-w-2xl w-full mx-4">
-            {/* Close Button - Positioned outside the scrollable card */}
-            <button
-              onClick={handleCloseProfile}
-              className="absolute -top-3 -right-3 z-[100] w-10 h-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 border-2 border-white shadow-2xl transition-all"
-              title="Close"
-            >
-              <X className="w-6 h-6 text-white" />
-            </button>
-
+          <div className="relative max-w-2xl w-full mx-4 my-8">
             <div 
-              className="relative bg-card border border-white/20 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300" 
+              className="relative bg-card border border-white/20 rounded-2xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto" 
               onClick={(e) => e.stopPropagation()}
             >
+              {/* MASSIVE CLOSE BUTTON - Top right inside card */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCloseProfile();
+                }}
+                className="sticky top-0 float-right ml-4 mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 border-4 border-white shadow-2xl z-[100] transition-all hover:scale-110"
+                style={{ marginTop: '-0.5rem', marginRight: '-0.5rem' }}
+                title="Close Profile"
+              >
+                <X className="w-7 h-7 text-white font-bold" strokeWidth={3} />
+              </button>
+
               <MemberCard 
                 member={selectedMember}
                 onClose={handleCloseProfile}
