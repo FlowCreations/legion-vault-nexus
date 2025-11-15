@@ -754,20 +754,20 @@ export default function CommunityHub() {
   };
 
   const filteredProfiles = allProfiles.filter(profile =>
-    profile.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    profile.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    profile.tier.toLowerCase().includes(searchQuery.toLowerCase())
+    profile.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    profile.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    profile.tier?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Global search filtering
   const searchResults = {
     posts: posts.filter(post => 
-      post.content.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+      post.content?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
       post.user_profiles?.display_name?.toLowerCase().includes(globalSearchQuery.toLowerCase())
     ).slice(0, 5),
     members: allProfiles.filter(profile =>
-      profile.name.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
-      profile.location.toLowerCase().includes(globalSearchQuery.toLowerCase())
+      profile.name?.toLowerCase().includes(globalSearchQuery.toLowerCase()) ||
+      profile.location?.toLowerCase().includes(globalSearchQuery.toLowerCase())
     ).slice(0, 5)
   };
 
@@ -1302,7 +1302,7 @@ export default function CommunityHub() {
                   .filter(conv => {
                     if (!conversationSearchQuery) return true;
                     const { displayName } = getConversationPartner(conv.userId);
-                    return displayName.toLowerCase().includes(conversationSearchQuery.toLowerCase());
+                    return displayName?.toLowerCase().includes(conversationSearchQuery.toLowerCase());
                   })
                   .map((conv) => {
                     const { displayName, avatarUrl } = getConversationPartner(conv.userId);
@@ -1487,7 +1487,7 @@ export default function CommunityHub() {
             <div className="max-h-[400px] overflow-y-auto space-y-2">
               {availableMembers
                 .filter(member => 
-                  member.name.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                  member.name?.toLowerCase().includes(memberSearchQuery.toLowerCase())
                 )
                 .map(member => (
                   <div
@@ -1507,7 +1507,7 @@ export default function CommunityHub() {
                 ))}
               
               {availableMembers.filter(member => 
-                member.name.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                member.name?.toLowerCase().includes(memberSearchQuery.toLowerCase())
               ).length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
                   <p className="text-sm">No members found</p>
