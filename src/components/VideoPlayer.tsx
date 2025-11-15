@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, ThumbsDown, MessageSquare, PictureInPicture2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { VideoComments } from "@/components/video/VideoComments";
+import { usePictureInPicture } from "@/hooks/usePictureInPicture";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,20 +45,24 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isFloating, setIsFloating] = useState(false);
+  const [floatingPosition, setFloatingPosition] = useState({ x: 20, y: 20 });
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { trackEvent } = useEventTracking();
   const watchStartTime = useRef<number>(0);
+  const { isPiPActive, isPiPSupported, togglePiP } = usePictureInPicture(videoRef);
 
   // Determine if video should be portrait (vertical) based on category
   const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
   const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
   const bottomOffset = `calc(env(safe-area-inset-bottom, 0px) + 16px)`;
 
-  // Auto-hide UI when playing and user is idle
+  // Auto-hide UI when playing and user is idle (but not when comments are open)
   const kickIdleTimer = () => {
     if (idleTimeout.current) clearTimeout(idleTimeout.current);
-    if (isPlaying && !minimized) {
+    // Don't auto-hide UI if comments are open
+    if (isPlaying && !minimized && !showComments) {
       setShowUI(true);
       idleTimeout.current = setTimeout(() => setShowUI(false), 2500);
     } else {
@@ -75,7 +80,7 @@ export function VideoPlayer({
       window.removeEventListener("keydown", onMove);
       window.removeEventListener("touchstart", onMove);
     };
-  }, [isPlaying, minimized]);
+  }, [isPlaying, minimized, showComments]);
 
   // Keyboard controls (spacebar to pause/play)
   useEffect(() => {
@@ -298,6 +303,63 @@ export function VideoPlayer({
 
   if (!isOpen) return null;
 
+  // Floating mini player (draggable PiP mode)
+  if (isFloating && !minimized) {
+    return (
+      <motion.div
+        drag
+        dragMomentum={false}
+        dragElastic={0}
+        dragConstraints={{ 
+          left: 0, 
+          right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, 
+          top: 0, 
+          bottom: typeof window !== 'undefined' ? window.innerHeight - 180 : 0 
+        }}
+        initial={floatingPosition}
+        onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
+        className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[100] cursor-move"
+        onClick={(e) => {
+          if ((e.target as HTMLElement).tagName === 'VIDEO') {
+            setIsFloating(false);
+          }
+        }}
+      >
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          poster={thumbnailUrl}
+          playsInline
+          onTimeUpdate={onTimeUpdate}
+          className="w-full h-full object-contain"
+        />
+        <div className="absolute top-2 right-2 flex gap-2 z-10">
+          <button 
+            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+          >
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setIsFloating(false); }}
+            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+          >
+            <Maximize className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleClose(); }}
+            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="absolute bottom-2 left-2 right-2 text-white text-xs opacity-90 truncate px-2">
+          {title}
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <div
       className={isFullscreen 
@@ -444,6 +506,18 @@ export function VideoPlayer({
                         </div>
 
                         <div className="flex items-center gap-2">
+                          {/* Picture-in-Picture toggle */}
+                          {isPiPSupported && (
+                            <button
+                              onClick={togglePiP}
+                              className={`p-1.5 rounded-full ${isPiPActive ? 'bg-white/30' : 'bg-white/10'} hover:bg-white/20 text-white`}
+                              aria-label="Picture-in-Picture"
+                              title="Picture-in-Picture"
+                            >
+                              <PictureInPicture2 className="w-4 h-4" />
+                            </button>
+                          )}
+
                           {/* Fullscreen toggle */}
                           <button
                             onClick={toggleFullscreen}
@@ -454,13 +528,13 @@ export function VideoPlayer({
                             {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                           </button>
 
-                          {/* Hide/minimize */}
+                          {/* Floating mode toggle */}
                           {!isFullscreen && (
                             <button
-                              onClick={() => setMinimized(true)}
+                              onClick={() => setIsFloating(true)}
                               className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                              aria-label="Minimize player"
-                              title="Minimize player"
+                              aria-label="Float player"
+                              title="Float player"
                             >
                               <ChevronDown className="w-4 h-4" />
                             </button>
@@ -471,7 +545,7 @@ export function VideoPlayer({
                             onClick={handleClose}
                             className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
                             aria-label="Close player"
-                            title="Close player"
+                            title="Close"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -571,16 +645,16 @@ export function VideoPlayer({
                         </div>
                       )}
                     </div>
-                    
-                    {/* Video Comments Section */}
-                    <VideoComments 
-                      videoId={videoId} 
-                      showComments={showComments}
-                      onToggleComments={() => setShowComments(!showComments)}
-                    />
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Video Comments Section - Rendered outside showUI to prevent auto-hide */}
+              <VideoComments 
+                videoId={videoId} 
+                showComments={showComments}
+                onToggleComments={() => setShowComments(!showComments)}
+              />
             </div>
           </motion.div>
         )}
