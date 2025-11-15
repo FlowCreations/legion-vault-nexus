@@ -356,27 +356,16 @@ export function MusicPlayer({ audioRef }: MusicPlayerProps) {
                 {formatTime(duration)}
               </span>
               
-              {/* Volume Control with bars */}
-              <div className="flex items-center gap-2 ml-4">
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-                <div className="flex items-center gap-0.5 h-4">
-                  {[...Array(10)].map((_, i) => {
-                    const barHeight = 8 + (i * 1.6); // Heights from 8px to 22.4px
-                    const isActive = (i + 1) * 10 <= volume;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setVolume((i + 1) * 10)}
-                        className="w-0.5 transition-all duration-150 hover:opacity-80"
-                        style={{
-                          height: `${barHeight}px`,
-                          backgroundColor: isActive ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-                          opacity: isActive ? 1 : 0.3
-                        }}
-                      />
-                    );
-                  })}
-                </div>
+              {/* Volume Control */}
+              <div className="flex items-center gap-2 ml-4 min-w-[140px]">
+                <Volume2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <Slider
+                  value={[volume]}
+                  onValueChange={(value) => setVolume(value[0])}
+                  max={100}
+                  step={1}
+                  className="w-24"
+                />
               </div>
             </div>
           </div>
