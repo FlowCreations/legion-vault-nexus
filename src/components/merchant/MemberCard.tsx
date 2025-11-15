@@ -97,8 +97,14 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="ml-2">
-          <X className="w-5 h-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose} 
+          className="ml-2 hover:bg-destructive/20 hover:text-destructive"
+          title="Close profile"
+        >
+          <X className="w-6 h-6" />
         </Button>
       </div>
 
