@@ -17,16 +17,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Delete all community posts
-    const { error } = await supabase
-      .from('community_posts')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all posts
+    console.log('Starting to delete all community posts...');
 
-    if (error) throw error;
+    // Delete all community posts using service role
+    const { error, count } = await supabase
+      .from('community_posts')
+      .delete({ count: 'exact' })
+      .gte('created_at', '1900-01-01'); // Match all posts
+
+    if (error) {
+      console.error('Delete error:', error);
+      throw error;
+    }
+
+    console.log(`Successfully deleted ${count} posts`);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'All community posts cleared' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'All community posts cleared',
+        deleted_count: count 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
