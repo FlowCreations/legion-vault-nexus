@@ -243,10 +243,18 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
         </p>
       )}
 
-      {/* Action Button */}
+      {/* Action Buttons */}
       <div className="flex gap-2">
         <Button onClick={onViewProfile} className="flex-1 bg-primary hover:bg-primary/90">
           View Full Profile
+        </Button>
+        <Button 
+          onClick={onClose} 
+          variant="outline" 
+          size="icon"
+          className="hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <X className="h-4 w-4" />
         </Button>
       </div>
     </div>
