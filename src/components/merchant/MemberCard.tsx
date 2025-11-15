@@ -64,48 +64,48 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
 
   // Single member view with comprehensive data
   return (
-    <div>
+    <div className="relative">
+      {/* Close Button - Top Right Corner */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={onClose} 
+        className="absolute -top-2 -right-2 z-10 bg-card/90 hover:bg-destructive/90 hover:text-white border border-border hover:border-destructive rounded-full w-8 h-8"
+        title="Close profile"
+      >
+        <X className="w-5 h-5" />
+      </Button>
+
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-start gap-4 flex-1">
-          <Avatar className="h-16 w-16 border-2 border-primary/20">
-            <AvatarImage src={member.avatar_url} />
-            <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-xl font-bold text-foreground">{member.name}</h3>
-              {member.tier && (
-                <Badge className={`${getTierColor(member.tier)} px-3 py-0.5 text-xs`}>
-                  {member.tier}
-                </Badge>
-              )}
-              {member.is_super_fan && (
-                <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2 py-0.5 text-xs">
-                  <Heart className="w-3 h-3 mr-1 inline" />
-                  Super Fan
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-4 h-4" />
-              <span>{member.location || 'Unknown'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-              <Calendar className="w-4 h-4" />
-              <span>Joined {new Date(member.joined_at).toLocaleDateString()}</span>
-            </div>
+      <div className="flex items-start gap-4 mb-6">
+        <Avatar className="h-16 w-16 border-2 border-primary/20">
+          <AvatarImage src={member.avatar_url} />
+          <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-xl font-bold text-foreground">{member.name}</h3>
+            {member.tier && (
+              <Badge className={`${getTierColor(member.tier)} px-3 py-0.5 text-xs`}>
+                {member.tier}
+              </Badge>
+            )}
+            {member.is_super_fan && (
+              <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2 py-0.5 text-xs">
+                <Heart className="w-3 h-3 mr-1 inline" />
+                Super Fan
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4" />
+            <span>{member.location || 'Unknown'}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <Calendar className="w-4 h-4" />
+            <span>Joined {new Date(member.joined_at).toLocaleDateString()}</span>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onClose} 
-          className="ml-2 hover:bg-destructive/20 hover:text-destructive"
-          title="Close profile"
-        >
-          <X className="w-6 h-6" />
-        </Button>
       </div>
 
       {/* Stats Grid */}
