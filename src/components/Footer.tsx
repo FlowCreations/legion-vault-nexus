@@ -69,18 +69,21 @@ export const Footer = () => {
           {/* Left Section - Admin Performance Icon */}
           <div className="flex items-center gap-4">
             {isAdmin && (
-              <Button
+              <motion.button
                 onClick={() => setShowDiagnostics(!showDiagnostics)}
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground hover:text-primary"
+                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
                 title="Performance Monitor (Admin only)"
               >
-                <Activity className="w-4 h-4" />
-                <span className="hidden sm:inline">Performance</span>
-              </Button>
+                <Activity className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
+              </motion.button>
             )}
-            
+          </div>
+          
+          {/* Center Section - Links, Merchant Dashboard, Copyright */}
+          <div className="flex flex-col items-center gap-4">
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <Link to="/about" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
                 {t('footer.about')}
@@ -95,29 +98,28 @@ export const Footer = () => {
                 {t('footer.privacy')}
               </Link>
             </div>
-          </div>
-          
-          {/* Center Section - Merchant Dashboard */}
-          {isAdmin && (
-            <Button 
-              asChild 
-              variant="outline" 
-              size="sm"
-              className="bg-gradient-gold hover:shadow-glow transition-all duration-300 text-black hover:text-black"
-            >
-              <Link to="/merchant" onClick={() => window.scrollTo(0, 0)}>
-                <BarChart className="w-4 h-4 mr-2" />
-                Merchant Dashboard
-              </Link>
-            </Button>
-          )}
-          
-          {/* Right Section - Copyright & Agent */}
-          <div className="flex items-center gap-4">
+            
+            {isAdmin && (
+              <Button 
+                asChild 
+                variant="outline" 
+                size="sm"
+                className="bg-gradient-gold hover:shadow-glow transition-all duration-300 text-black hover:text-black"
+              >
+                <Link to="/merchant" onClick={() => window.scrollTo(0, 0)}>
+                  <BarChart className="w-4 h-4 mr-2" />
+                  Merchant Dashboard
+                </Link>
+              </Button>
+            )}
+            
             <p className="text-sm text-muted-foreground">
               {t('footer.copyright')}
             </p>
-            
+          </div>
+          
+          {/* Right Section - Agent Icon */}
+          <div className="flex items-center gap-4">
             {isAgentActive && (
               <motion.button
                 onClick={() => setIsAgentExpanded(!isAgentExpanded)}
