@@ -128,9 +128,13 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Stop globe rotation when opening profile
-        setIsPaused(true);
+        // Stop globe rotation immediately when opening profile
         spinEnabledRef.current = false;
+        setIsPaused(true);
+        // Stop any ongoing map animations
+        if (map.current) {
+          map.current.stop();
+        }
         setSelectedMember(feature.properties);
         if (onMemberClick) {
           onMemberClick(feature.properties.user_id);
@@ -223,10 +227,13 @@ export const GlobeRealtime: React.FC<GlobeRealtimeProps> = ({ focusMemberId, onM
   const handleCloseProfile = () => {
     setSelectedMember(null);
     // Resume rotation when closing profile
-    setIsPaused(false);
     spinEnabledRef.current = true;
+    setIsPaused(false);
+    // Trigger rotation to start again
     if (map.current) {
-      startGlobeRotation();
+      const center = map.current.getCenter();
+      center.lng -= 360 / 120; // One step
+      map.current.easeTo({ center, duration: 1000, easing: (n) => n });
     }
   };
 
