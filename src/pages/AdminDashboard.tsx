@@ -16,6 +16,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clock, ShoppingBag, BarChart, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -945,41 +952,42 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
         />
       )}
 
-      {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-card border border-white/20 rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedMember.display_name}`} />
-                  <AvatarFallback>{selectedMember.display_name?.[0] || "U"}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-3xl font-bold">{selectedMember.display_name}</h2>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className={`${getTierColor(selectedMember.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
-                      {selectedMember.tier || "N/A"}
-                    </Badge>
-                    {selectedMember.era_current && selectedMember.era_label && (
-                      <ERABadge era={selectedMember.era_current} label={selectedMember.era_label} />
-                    )}
-                    {selectedMember.ptp_current !== undefined && selectedMember.ptp_status && (
-                      <PTPChip ptp={selectedMember.ptp_current} status={selectedMember.ptp_status} />
-                    )}
+      <Drawer open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
+        <DrawerContent className="max-h-[90vh]">
+          {selectedMember && (
+            <>
+              <DrawerHeader className="border-b border-white/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedMember.display_name}`} />
+                      <AvatarFallback>{selectedMember.display_name?.[0] || "U"}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <DrawerTitle className="text-2xl">{selectedMember.display_name}</DrawerTitle>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge className={`${getTierColor(selectedMember.tier)} px-3 py-1 text-xs`}>
+                          {selectedMember.tier || "N/A"}
+                        </Badge>
+                        {selectedMember.era_current && selectedMember.era_label && (
+                          <ERABadge era={selectedMember.era_current} label={selectedMember.era_label} />
+                        )}
+                        {selectedMember.ptp_current !== undefined && selectedMember.ptp_status && (
+                          <PTPChip ptp={selectedMember.ptp_current} status={selectedMember.ptp_status} />
+                        )}
+                      </div>
+                    </div>
                   </div>
+                  <DrawerClose asChild>
+                    <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </DrawerClose>
                 </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedMember(null)}
-                className="hover:bg-white/10"
-              >
-                <X className="h-6 w-6" />
-              </Button>
-            </div>
-
-            <div className="space-y-6">
+              </DrawerHeader>
+              
+              <div className="p-6 overflow-y-auto">
+                <div className="space-y-6">
               {selectedMember.bio && (
                 <div>
                   <h3 className="text-sm font-bold text-foreground/70 mb-2">BIO</h3>
@@ -1056,17 +1064,19 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                 </div>
               )}
 
-              <div className="flex items-center gap-4 text-sm text-foreground/70 pt-4 border-t">
-                <span>Last login: {selectedMember.last_login
-                  ? formatDistanceToNow(new Date(selectedMember.last_login), { addSuffix: true })
-                  : "Never"}</span>
-                <span>•</span>
-                <span>Joined: {new Date(selectedMember.created_at).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-4 text-sm text-foreground/70 pt-4 border-t">
+                    <span>Last login: {selectedMember.last_login
+                      ? formatDistanceToNow(new Date(selectedMember.last_login), { addSuffix: true })
+                      : "Never"}</span>
+                    <span>•</span>
+                    <span>Joined: {new Date(selectedMember.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
