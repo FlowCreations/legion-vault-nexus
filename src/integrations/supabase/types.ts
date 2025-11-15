@@ -217,6 +217,50 @@ export type Database = {
           },
         ]
       }
+      adaptive_sequences: {
+        Row: {
+          created_at: string | null
+          decision_tree: Json
+          fatigue_rules: Json | null
+          goal_id: string | null
+          id: string
+          is_active: boolean | null
+          performance_metrics: Json | null
+          sequence_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          decision_tree?: Json
+          fatigue_rules?: Json | null
+          goal_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          performance_metrics?: Json | null
+          sequence_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          decision_tree?: Json
+          fatigue_rules?: Json | null
+          goal_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          performance_metrics?: Json | null
+          sequence_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adaptive_sequences_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_content: {
         Row: {
           affiliate_id: string | null
@@ -2581,6 +2625,62 @@ export type Database = {
           },
         ]
       }
+      inbox_messages: {
+        Row: {
+          created_at: string | null
+          from_name: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          message_type: string | null
+          metadata: Json | null
+          read_at: string | null
+          replied: boolean | null
+          replied_at: string | null
+          sequence_execution_id: string | null
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_name?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          message_type?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          replied?: boolean | null
+          replied_at?: string | null
+          sequence_execution_id?: string | null
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_name?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          message_type?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          replied?: boolean | null
+          replied_at?: string | null
+          sequence_execution_id?: string | null
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_messages_sequence_execution_id_fkey"
+            columns: ["sequence_execution_id"]
+            isOneToOne: false
+            referencedRelation: "sequence_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_documents: {
         Row: {
           content: string
@@ -2991,6 +3091,90 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_goals: {
+        Row: {
+          created_at: string | null
+          desired_conversion: string
+          goal_name: string
+          goal_type: string
+          id: string
+          merchant_id: string
+          status: string | null
+          target_audience_filter: Json | null
+          total_converted: number | null
+          total_enrolled: number | null
+          total_revenue: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          desired_conversion: string
+          goal_name: string
+          goal_type: string
+          id?: string
+          merchant_id: string
+          status?: string | null
+          target_audience_filter?: Json | null
+          total_converted?: number | null
+          total_enrolled?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          desired_conversion?: string
+          goal_name?: string
+          goal_type?: string
+          id?: string
+          merchant_id?: string
+          status?: string | null
+          target_audience_filter?: Json | null
+          total_converted?: number | null
+          total_enrolled?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      marketing_interactions: {
+        Row: {
+          campaign_id: string | null
+          channel_type: string
+          created_at: string | null
+          goal_id: string | null
+          id: string
+          interaction_timestamp: string
+          interaction_type: string
+          metadata: Json | null
+          sequence_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel_type: string
+          created_at?: string | null
+          goal_id?: string | null
+          id?: string
+          interaction_timestamp?: string
+          interaction_type: string
+          metadata?: Json | null
+          sequence_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel_type?: string
+          created_at?: string | null
+          goal_id?: string | null
+          id?: string
+          interaction_timestamp?: string
+          interaction_type?: string
+          metadata?: Json | null
+          sequence_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       match_matrix_scores: {
         Row: {
@@ -3572,6 +3756,50 @@ export type Database = {
         }
         Relationships: []
       }
+      popup_displays: {
+        Row: {
+          action_taken: string | null
+          action_timestamp: string | null
+          content: Json
+          id: string
+          metadata: Json | null
+          popup_type: string
+          sequence_execution_id: string | null
+          shown_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          action_timestamp?: string | null
+          content: Json
+          id?: string
+          metadata?: Json | null
+          popup_type: string
+          sequence_execution_id?: string | null
+          shown_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          action_timestamp?: string | null
+          content?: Json
+          id?: string
+          metadata?: Json | null
+          popup_type?: string
+          sequence_execution_id?: string | null
+          shown_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popup_displays_sequence_execution_id_fkey"
+            columns: ["sequence_execution_id"]
+            isOneToOne: false
+            referencedRelation: "sequence_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           content: string
@@ -3964,6 +4192,72 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      sequence_executions: {
+        Row: {
+          completed_at: string | null
+          current_decision_node: string | null
+          decision_history: Json | null
+          goal_id: string | null
+          id: string
+          metadata: Json | null
+          next_action_config: Json | null
+          next_action_scheduled_for: string | null
+          next_action_type: string | null
+          sequence_id: string | null
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          current_decision_node?: string | null
+          decision_history?: Json | null
+          goal_id?: string | null
+          id?: string
+          metadata?: Json | null
+          next_action_config?: Json | null
+          next_action_scheduled_for?: string | null
+          next_action_type?: string | null
+          sequence_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          current_decision_node?: string | null
+          decision_history?: Json | null
+          goal_id?: string | null
+          id?: string
+          metadata?: Json | null
+          next_action_config?: Json | null
+          next_action_scheduled_for?: string | null
+          next_action_type?: string | null
+          sequence_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequence_executions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sequence_executions_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "adaptive_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_analytics: {
         Row: {
@@ -4639,6 +4933,66 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_engagement_state: {
+        Row: {
+          channel_preference: string | null
+          consecutive_no_opens: number | null
+          consecutive_popup_dismissals: number | null
+          consecutive_sms_interactions: number | null
+          email_engagement_level: string | null
+          global_cooldown_until: string | null
+          inbox_engagement_level: string | null
+          last_conversion: string | null
+          last_email_sent: string | null
+          last_inbox_sent: string | null
+          last_popup_shown: string | null
+          last_sms_sent: string | null
+          popup_cooldown_until: string | null
+          popup_engagement_level: string | null
+          sms_engagement_level: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_preference?: string | null
+          consecutive_no_opens?: number | null
+          consecutive_popup_dismissals?: number | null
+          consecutive_sms_interactions?: number | null
+          email_engagement_level?: string | null
+          global_cooldown_until?: string | null
+          inbox_engagement_level?: string | null
+          last_conversion?: string | null
+          last_email_sent?: string | null
+          last_inbox_sent?: string | null
+          last_popup_shown?: string | null
+          last_sms_sent?: string | null
+          popup_cooldown_until?: string | null
+          popup_engagement_level?: string | null
+          sms_engagement_level?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_preference?: string | null
+          consecutive_no_opens?: number | null
+          consecutive_popup_dismissals?: number | null
+          consecutive_sms_interactions?: number | null
+          email_engagement_level?: string | null
+          global_cooldown_until?: string | null
+          inbox_engagement_level?: string | null
+          last_conversion?: string | null
+          last_email_sent?: string | null
+          last_inbox_sent?: string | null
+          last_popup_shown?: string | null
+          last_sms_sent?: string | null
+          popup_cooldown_until?: string | null
+          popup_engagement_level?: string | null
+          sms_engagement_level?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_events: {
         Row: {
