@@ -167,6 +167,7 @@ export default function CommunityHub() {
     loadUnreadCount();
     loadMessages();
     loadAvailableMembers();
+    clearOldPosts(); // Clear all existing posts
     setupRealtimeSubscription();
 
     // Listen for profile updates to refresh member avatars
@@ -183,6 +184,7 @@ export default function CommunityHub() {
           loadPosts();
           loadDirectoryProfiles();
           loadMessages();
+          loadCurrentUserProfile(); // Refresh user profile too
         }
       )
       .subscribe();
@@ -335,6 +337,18 @@ export default function CommunityHub() {
     setAllProfiles(formattedRealProfiles);
   };
 
+  const clearOldPosts = async () => {
+    try {
+      await supabase
+        .from("community_posts")
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      console.log('Community posts cleared');
+    } catch (error) {
+      console.error('Error clearing posts:', error);
+    }
+  };
+
   const loadPosts = async () => {
     const { data, error } = await supabase
       .from("community_posts")
@@ -382,12 +396,8 @@ export default function CommunityHub() {
       }));
     }
 
-    // Combine with sample posts for announcements
-    if (activeTab === "announcements") {
-      setPosts([...dbPosts, ...sampleAnnouncements] as any);
-    } else {
-      setPosts(dbPosts as any);
-    }
+    // Don't show sample posts - only real posts
+    setPosts(dbPosts as any);
   };
 
   const loadUnreadCount = async () => {
