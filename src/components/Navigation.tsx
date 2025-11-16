@@ -148,7 +148,7 @@ export const Navigation = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/favorites">
+                    <Link to="/orders">
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
                     </Link>
@@ -240,7 +240,7 @@ export const Navigation = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="py-3 touch-manipulation">
-                      <Link to="/favorites">
+                      <Link to="/orders">
                         <ShoppingBag className="mr-3 h-5 w-5" />
                         <span>My Orders</span>
                       </Link>
