@@ -12,6 +12,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Initialize Supabase client at the top
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -49,10 +54,95 @@ serve(async (req) => {
       console.log("Processing checkout session:", session.id);
       console.log("Session mode:", session.mode);
 
-      // Initialize Supabase client
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      // Handle subscription checkout
+      if (session.mode === "subscription") {
+        const customerEmail = session.customer_details?.email;
+        const customerId = session.customer as string;
+        
+        if (!customerEmail) {
+          console.error("No customer email in subscription session");
+          return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
+        }
+
+        // Get subscription details
+        const subscriptionId = session.subscription as string;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+          expand: ['items.data.price.product']
+        });
+
+        const priceItem = subscription.items.data[0];
+        const product = priceItem.price.product as Stripe.Product;
+        
+        // Update user profile with subscription data
+        const { data: userData } = await supabase.auth.admin.listUsers();
+        const user = userData.users.find(u => u.email === customerEmail);
+
+        if (user) {
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({
+              subscription_status: subscription.status,
+              subscription_plan: product.name,
+              subscription_id: subscription.id,
+              stripe_customer_id: customerId,
+              trial_end_date: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+              billing_cycle_anchor: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            })
+            .eq('user_id', user.id);
+
+          if (updateError) {
+            console.error("Error updating user profile:", updateError);
+          } else {
+            console.log("User profile updated with subscription data");
+          }
+        }
+
+        // Send admin notification email
+        try {
+          await supabase.functions.invoke('send-subscription-admin-notification', {
+            body: {
+              userEmail: customerEmail,
+              userName: session.customer_details?.name || customerEmail,
+              planName: product.name,
+              amount: priceItem.price.unit_amount! / 100,
+              currency: priceItem.price.currency,
+              subscriptionId: subscription.id,
+              trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : undefined,
+            }
+          });
+          console.log("Admin notification sent");
+        } catch (emailError) {
+          console.error("Error sending admin notification:", emailError);
+        }
+
+        // Send user confirmation email
+        try {
+          const firstName = session.customer_details?.name?.split(' ')[0] || 'there';
+          await supabase.functions.invoke('send-subscription-confirmation', {
+            body: {
+              email: customerEmail,
+              firstName,
+              planName: product.name,
+              amount: priceItem.price.unit_amount! / 100,
+              currency: priceItem.price.currency,
+              interval: priceItem.price.recurring?.interval || 'month',
+              trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : undefined,
+              nextBillingDate: new Date(subscription.current_period_end * 1000).toISOString(),
+            }
+          });
+          console.log("User confirmation email sent");
+        } catch (emailError) {
+          console.error("Error sending confirmation email:", emailError);
+        }
+
+        return new Response(JSON.stringify({ received: true, subscription_processed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      // For one-time payments (albums, etc) - supabase client already initialized at top
 
       // Extract purchase details
       const customerEmail = session.customer_details?.email || session.metadata?.email;
@@ -177,10 +267,7 @@ serve(async (req) => {
       if (previousAttributes?.items?.data && previousAttributes.items.data.length > 0) {
         console.log("Processing subscription plan change:", subscription.id);
 
-        // Initialize Supabase client
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        // Supabase client already initialized at top
 
         // Initialize Stripe to get customer details
         const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -251,10 +338,7 @@ serve(async (req) => {
       
       console.log("Processing subscription cancellation:", subscription.id);
 
-      // Initialize Supabase client
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      // Supabase client already initialized at top
 
       // Get customer details
       const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;

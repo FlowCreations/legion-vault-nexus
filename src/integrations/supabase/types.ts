@@ -5528,6 +5528,7 @@ export type Database = {
       user_profiles: {
         Row: {
           avatar_url: string | null
+          billing_cycle_anchor: string | null
           bio: string | null
           birthdate: string | null
           community_engagement_score: number | null
@@ -5572,9 +5573,15 @@ export type Database = {
           real_name: string | null
           sms_opt_in: boolean | null
           sms_opted_out_at: string | null
+          stripe_customer_id: string | null
+          subscription_current_period_end: string | null
+          subscription_id: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
           tier: string | null
           total_sessions: number | null
           total_spend: number | null
+          trial_end_date: string | null
           tunepipe_subscriber_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -5582,6 +5589,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          billing_cycle_anchor?: string | null
           bio?: string | null
           birthdate?: string | null
           community_engagement_score?: number | null
@@ -5626,9 +5634,15 @@ export type Database = {
           real_name?: string | null
           sms_opt_in?: boolean | null
           sms_opted_out_at?: string | null
+          stripe_customer_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_id?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           tier?: string | null
           total_sessions?: number | null
           total_spend?: number | null
+          trial_end_date?: string | null
           tunepipe_subscriber_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -5636,6 +5650,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          billing_cycle_anchor?: string | null
           bio?: string | null
           birthdate?: string | null
           community_engagement_score?: number | null
@@ -5680,9 +5695,15 @@ export type Database = {
           real_name?: string | null
           sms_opt_in?: boolean | null
           sms_opted_out_at?: string | null
+          stripe_customer_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_id?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           tier?: string | null
           total_sessions?: number | null
           total_spend?: number | null
+          trial_end_date?: string | null
           tunepipe_subscriber_id?: string | null
           updated_at?: string | null
           user_id?: string | null
