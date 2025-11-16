@@ -51,6 +51,12 @@ export default function Videos() {
   const [isShuffling, setIsShuffling] = useState(false);
   const [showLikedOnly, setShowLikedOnly] = useState(false);
 
+  // Debug: Log when selectedVideo changes
+  useEffect(() => {
+    console.log('selectedVideo state changed:', selectedVideo);
+    console.log('selectedVideoUrl state changed:', selectedVideoUrl);
+  }, [selectedVideo, selectedVideoUrl]);
+
   // Use React Query hooks for data fetching with caching
   const { data: heroVideoUrl = '', isLoading: heroLoading } = useHeroVideo();
   const { data: videoCategories, isLoading: videosLoading, refetch: refetchVideos } = useVideos();
