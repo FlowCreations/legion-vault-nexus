@@ -88,7 +88,7 @@ serve(async (req) => {
       customer: customerId,
       status: "active",
       limit: 10,
-      expand: ['data.items.data.price.product']
+      expand: ['data.items.data.price']
     });
     
     const hasActiveSub = subscriptions.data.length > 0;
@@ -97,7 +97,12 @@ serve(async (req) => {
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       const priceItem = subscription.items.data[0];
-      const product = priceItem.price.product as Stripe.Product;
+      const productId = typeof priceItem.price.product === 'string' 
+        ? priceItem.price.product 
+        : priceItem.price.product.id;
+      
+      // Fetch product details separately to avoid expansion depth limit
+      const product = await stripe.products.retrieve(productId);
       
       subscriptionData = {
         id: subscription.id,
