@@ -7,11 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail, TrendingUp } from "lucide-react";
+import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail, TrendingUp, Link2 } from "lucide-react";
 import { AffiliateDetail } from "./AffiliateDetail";
 import { BrandPartnershipCard } from "./BrandPartnershipCard";
 import { EthosRequestDialog } from "./EthosRequestDialog";
 import { AddAffiliateForm } from "./AddAffiliateForm";
+import { ConnectPortalDialog } from "./ConnectPortalDialog";
 import { Badge } from "@/components/ui/badge";
 
 interface Partnership {
@@ -84,6 +85,7 @@ export function Partnerships() {
   const [ethosDialogOpen, setEthosDialogOpen] = useState(false);
   const [ethosRecipient, setEthosRecipient] = useState("");
   const [addAffiliateDialogOpen, setAddAffiliateDialogOpen] = useState(false);
+  const [connectPortalDialogOpen, setConnectPortalDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchPartnerships();
@@ -510,9 +512,15 @@ export function Partnerships() {
         {/* Artist Partners Tab */}
         <TabsContent value="partners" className="space-y-4">
           <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Users className="h-6 w-6 text-affirmative-primary" />
-              <h2 className="text-2xl font-bold">Artist Partnerships</h2>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Users className="h-6 w-6 text-affirmative-primary" />
+                <h2 className="text-2xl font-bold">Artist Partnerships</h2>
+              </div>
+              <Button onClick={() => setConnectPortalDialogOpen(true)} className="gap-2">
+                <Link2 className="h-4 w-4" />
+                Connect Portal
+              </Button>
             </div>
 
             <div className="space-y-4">
@@ -595,6 +603,15 @@ export function Partnerships() {
         open={ethosDialogOpen}
         onOpenChange={setEthosDialogOpen}
         recipientEmail={ethosRecipient}
+      />
+
+      <ConnectPortalDialog
+        open={connectPortalDialogOpen}
+        onOpenChange={setConnectPortalDialogOpen}
+        onSuccess={() => {
+          fetchPartnerships();
+          fetchAffiliates();
+        }}
       />
 
       {/* Add Affiliate Dialog */}
