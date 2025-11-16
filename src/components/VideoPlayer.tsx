@@ -322,7 +322,7 @@ export function VideoPlayer({
           top: 0, 
           bottom: typeof window !== 'undefined' ? window.innerHeight - 180 : 0 
         }}
-        initial={floatingPosition}
+        style={{ x: floatingPosition.x, y: floatingPosition.y }}
         onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
         className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[100] cursor-move"
       >
