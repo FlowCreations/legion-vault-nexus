@@ -213,11 +213,11 @@ export function VideoPlayer({
       dragElastic={0}
       dragConstraints={!isExpanded ? { left: 0, right: window.innerWidth - 384, top: 0, bottom: window.innerHeight - 216 } : undefined}
       initial={false}
-      animate={isExpanded ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } : { position: 'fixed', top: 20, left: 20, width: 384, height: 216, borderRadius: 12 }}
+      animate={isExpanded ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } : { position: 'fixed', top: '50%', left: '50%', width: 384, height: 216, borderRadius: 12, x: '-50%', y: '-50%' }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       ref={containerRef}
       className={isExpanded ? "z-[9999] bg-black" : "z-[9999] bg-black rounded-xl shadow-2xl border border-white/20 cursor-move"}
-      style={!isExpanded ? { left: '20px', top: '20px' } : undefined}
+      style={!isExpanded ? { left: '50%', top: '50%', x: '-50%', y: '-50%' } : undefined}
       onMouseMove={kickIdleTimer}
     >
       <div className={isExpanded ? "relative w-full h-full flex items-center justify-center" : "relative w-full h-full"}>
