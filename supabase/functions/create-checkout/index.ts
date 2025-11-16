@@ -29,30 +29,40 @@ serve(async (req) => {
     if (!priceId) throw new Error("Price ID is required");
     logStep("Price ID received", { priceId, embedded });
 
+    // Try to get authenticated user, but allow guest checkout
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    let user = null;
+    
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData } = await supabaseClient.auth.getUser(token);
+      user = userData.user;
+      if (user?.email) {
+        logStep("User authenticated", { userId: user.id, email: user.email });
+      }
+    }
+    
+    if (!user) {
+      logStep("Guest checkout - user will enter email in Stripe");
+    }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Check if customer exists (only if user is authenticated)
     let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
+    if (user?.email) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found existing customer", { customerId });
+      } else {
+        logStep("No existing customer found");
+      }
     } else {
-      logStep("No existing customer found");
+      logStep("Guest checkout - no customer lookup needed");
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
@@ -60,7 +70,7 @@ serve(async (req) => {
     // Create checkout session with 7-day free trial
     const sessionConfig: any = {
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : (user?.email || undefined),
       line_items: [
         {
           price: priceId,
@@ -71,6 +81,7 @@ serve(async (req) => {
       subscription_data: {
         trial_period_days: 7,
       },
+      allow_promotion_codes: true,
     };
 
     // Configure for embedded or hosted checkout
