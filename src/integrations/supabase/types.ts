@@ -1211,6 +1211,50 @@ export type Database = {
           },
         ]
       }
+      campaign_message_log: {
+        Row: {
+          campaign_id: string
+          channel: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          message_content: Json
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          channel: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_content: Json
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          channel?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_content?: Json
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_message_log_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_performance: {
         Row: {
           campaign_id: string | null
@@ -1307,6 +1351,59 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "smart_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_targets_v2: {
+        Row: {
+          campaign_id: string
+          converted_at: string | null
+          created_at: string | null
+          id: string
+          message_clicked_at: string | null
+          message_opened_at: string | null
+          message_sent_at: string | null
+          personalization_data: Json | null
+          ptp_score: number
+          ptp_status: string
+          revenue_generated: number | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          converted_at?: string | null
+          created_at?: string | null
+          id?: string
+          message_clicked_at?: string | null
+          message_opened_at?: string | null
+          message_sent_at?: string | null
+          personalization_data?: Json | null
+          ptp_score: number
+          ptp_status: string
+          revenue_generated?: number | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          converted_at?: string | null
+          created_at?: string | null
+          id?: string
+          message_clicked_at?: string | null
+          message_opened_at?: string | null
+          message_sent_at?: string | null
+          personalization_data?: Json | null
+          ptp_score?: number
+          ptp_status?: string
+          revenue_generated?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_targets_v2_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -3192,6 +3289,54 @@ export type Database = {
           },
         ]
       }
+      marketing_campaigns: {
+        Row: {
+          budget_tier: string
+          created_at: string | null
+          enabled_channels: Json
+          end_date: string
+          goal: string
+          id: string
+          merchant_id: string
+          performance_metrics: Json | null
+          start_date: string
+          start_time: string
+          status: string
+          target_criteria: Json
+          updated_at: string | null
+        }
+        Insert: {
+          budget_tier?: string
+          created_at?: string | null
+          enabled_channels?: Json
+          end_date: string
+          goal: string
+          id?: string
+          merchant_id: string
+          performance_metrics?: Json | null
+          start_date: string
+          start_time: string
+          status?: string
+          target_criteria?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          budget_tier?: string
+          created_at?: string | null
+          enabled_channels?: Json
+          end_date?: string
+          goal?: string
+          id?: string
+          merchant_id?: string
+          performance_metrics?: Json | null
+          start_date?: string
+          start_time?: string
+          status?: string
+          target_criteria?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       marketing_goals: {
         Row: {
           created_at: string | null
@@ -4137,6 +4282,33 @@ export type Database = {
           tier?: string
           weight?: number
           zone?: string
+        }
+        Relationships: []
+      }
+      ptp_score_history: {
+        Row: {
+          calculated_at: string | null
+          contributing_factors: Json | null
+          id: string
+          score: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string | null
+          contributing_factors?: Json | null
+          id?: string
+          score: number
+          status: string
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string | null
+          contributing_factors?: Json | null
+          id?: string
+          score?: number
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -5379,6 +5551,7 @@ export type Database = {
           last_livestream_reaction: string | null
           last_login: string | null
           last_login_date: string | null
+          last_ptp_calculation: string | null
           latitude: number | null
           listen_time: number | null
           livestream_claps_sent: number | null
@@ -5393,6 +5566,7 @@ export type Database = {
           phone_number: string | null
           products_purchased: string[] | null
           ptp_current: number | null
+          ptp_score: number | null
           ptp_status: string | null
           purchase_history: Json | null
           real_name: string | null
@@ -5431,6 +5605,7 @@ export type Database = {
           last_livestream_reaction?: string | null
           last_login?: string | null
           last_login_date?: string | null
+          last_ptp_calculation?: string | null
           latitude?: number | null
           listen_time?: number | null
           livestream_claps_sent?: number | null
@@ -5445,6 +5620,7 @@ export type Database = {
           phone_number?: string | null
           products_purchased?: string[] | null
           ptp_current?: number | null
+          ptp_score?: number | null
           ptp_status?: string | null
           purchase_history?: Json | null
           real_name?: string | null
@@ -5483,6 +5659,7 @@ export type Database = {
           last_livestream_reaction?: string | null
           last_login?: string | null
           last_login_date?: string | null
+          last_ptp_calculation?: string | null
           latitude?: number | null
           listen_time?: number | null
           livestream_claps_sent?: number | null
@@ -5497,6 +5674,7 @@ export type Database = {
           phone_number?: string | null
           products_purchased?: string[] | null
           ptp_current?: number | null
+          ptp_score?: number | null
           ptp_status?: string | null
           purchase_history?: Json | null
           real_name?: string | null
