@@ -45,7 +45,7 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [isFloating, setIsFloating] = useState(false);
+  const [isFloating, setIsFloating] = useState(true);  // Start in floating mode by default
   const [floatingPosition, setFloatingPosition] = useState({ x: 20, y: 20 });
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
