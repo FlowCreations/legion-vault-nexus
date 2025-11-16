@@ -61,7 +61,8 @@ export function VideoPlayer({
   // Debug: Log when props change
   useEffect(() => {
     console.log('VideoPlayer mounted/updated - isOpen:', isOpen, 'videoUrl:', videoUrl, 'title:', title);
-  }, [isOpen, videoUrl, title]);
+    console.log('isFloating:', isFloating, 'minimized:', minimized);
+  }, [isOpen, videoUrl, title, isFloating, minimized]);
 
   // Auto-hide UI when playing and user is idle (but not when comments are open)
   const kickIdleTimer = () => {
@@ -311,6 +312,7 @@ export function VideoPlayer({
 
   // Floating mini player (draggable PiP mode)
   if (isFloating && !minimized) {
+    console.log('Rendering floating player at position:', floatingPosition);
     return (
       <motion.div
         drag
@@ -322,9 +324,10 @@ export function VideoPlayer({
           top: 0, 
           bottom: typeof window !== 'undefined' ? window.innerHeight - 180 : 0 
         }}
-        style={{ x: floatingPosition.x, y: floatingPosition.y }}
+        initial={{ x: 20, y: 20 }}
+        style={{ left: '20px', top: '20px' }}
         onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
-        className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[100] cursor-move"
+        className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border-4 border-red-500 z-[9999] cursor-move"
       >
         <video
           ref={videoRef}
