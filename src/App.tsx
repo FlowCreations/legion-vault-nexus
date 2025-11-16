@@ -166,6 +166,7 @@ const App = () => {
               setShowDiagnostics={setShowDiagnostics}
               isLiveChatOpen={isLiveChatOpen}
               setIsLiveChatOpen={setIsLiveChatOpen}
+              hideChat={false}
             />
           )}
           <LiveChat isOpen={isLiveChatOpen} setIsOpen={setIsLiveChatOpen} />

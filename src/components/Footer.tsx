@@ -13,12 +13,14 @@ export const Footer = ({
   showDiagnostics, 
   setShowDiagnostics,
   isLiveChatOpen,
-  setIsLiveChatOpen
+  setIsLiveChatOpen,
+  hideChat
 }: { 
   showDiagnostics?: boolean; 
   setShowDiagnostics?: (show: boolean) => void;
   isLiveChatOpen?: boolean;
   setIsLiveChatOpen?: (open: boolean) => void;
+  hideChat?: boolean;
 }) => {
   const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -108,18 +110,20 @@ export const Footer = ({
           </div>
           
           {/* Right Section - Live Chat Icon */}
-          <div className="flex items-center gap-4">
-            <motion.button
-              onClick={() => setIsLiveChatOpen?.(!isLiveChatOpen)}
-              className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              title="Live Chat"
-            >
-              <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
-            </motion.button>
-          </div>
+          {!hideChat && (
+            <div className="flex items-center gap-4">
+              <motion.button
+                onClick={() => setIsLiveChatOpen?.(!isLiveChatOpen)}
+                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                title="Live Chat"
+              >
+                <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
+              </motion.button>
+            </div>
+          )}
         </div>
         
         {/* Language Selector */}

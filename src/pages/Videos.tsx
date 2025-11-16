@@ -272,7 +272,7 @@ export default function Videos() {
           videoId={selectedVideo.id}
           videoUrl={selectedVideoUrl}
           title={selectedVideo.title}
-          description={selectedVideo.description}
+          description={selectedVideo.description || ""}
           thumbnailUrl={selectedVideo.thumbnail_url}
           isOpen={!!selectedVideo}
           onClose={() => {
