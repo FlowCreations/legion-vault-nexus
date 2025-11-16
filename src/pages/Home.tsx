@@ -234,7 +234,7 @@ export default function Home({ onIntroChange }: HomeProps = {}) {
               variant="secondary"
               className="hover:shadow-glow transition-all duration-300"
               asChild
-              onClick={() => trackEvent('view_album', { name: 'Free EP', source: 'hero_cta' })}
+              onClick={() => trackEvent('album_view', { name: 'Free EP', source: 'hero_cta' })}
             >
               <Link to="/free-ep">
                 {t('home.hero.getFreeAlbum')}
