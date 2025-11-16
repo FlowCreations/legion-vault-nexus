@@ -31,53 +31,65 @@ export const HybridFunnelBuilder = () => {
   // Generated sequence
   const [generatedSequence, setGeneratedSequence] = useState<any>(null);
 
-  const handleGenerateSequence = async () => {
-    if (!goalDescription || !targetAudience) {
+  const handleCreateCampaign = async () => {
+    if (!goal || !eventCity || !eventDate) {
       toast({
-        title: "Missing information",
-        description: "Please fill in goal description and target audience",
+        title: "Missing Information",
+        description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
     }
 
-    setGenerating(true);
+    setIsAnalyzing(true);
 
     try {
-      const channelsEnabled = [];
-      if (emailEnabled) channelsEnabled.push("email");
-      if (smsEnabled) channelsEnabled.push("sms");
-      if (inboxEnabled) channelsEnabled.push("inbox");
-      if (popupEnabled) channelsEnabled.push("popup");
+      // Create campaign
+      const { data: campaign, error: campaignError } = await supabase
+        .from('smart_campaigns')
+        .insert({
+          goal,
+          campaign_type: campaignType,
+          event_location: {
+            city: eventCity,
+            state: eventState,
+            latitude: 40.7128,
+            longitude: -74.0060
+          },
+          event_date: eventDate,
+          target_radius_miles: 120,
+          ptp_min: 0.4,
+          ptp_max: 1.0,
+          min_loyalty_score: 0
+        })
+        .select()
+        .single();
 
-      const { data, error } = await supabase.functions.invoke("generate-adaptive-sequence", {
-        body: {
-          goalDescription,
-          targetAudience,
-          channelsEnabled,
-          budgetTier
-        }
+      if (campaignError) throw campaignError;
+
+      // Trigger AI analysis
+      const { data, error } = await supabase.functions.invoke('analyze-campaign-targets', {
+        body: { campaignId: campaign.id }
       });
 
       if (error) throw error;
 
-      setGeneratedSequence(data.decisionTree);
-      setStep(2);
-
+      setAnalysisResults(data);
+      
       toast({
-        title: "Sequence generated!",
-        description: "Review your adaptive marketing sequence below"
+        title: "Campaign Analyzed!",
+        description: `${data.targetCount} users automatically targeted based on your goal`
       });
 
     } catch (error: any) {
-      console.error("Error generating sequence:", error);
+      console.error('Campaign creation error:', error);
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate sequence",
+        title: "Error",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
-      setGenerating(false);
+      setIsAnalyzing(false);
     }
   };
 
