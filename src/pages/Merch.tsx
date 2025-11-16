@@ -321,7 +321,7 @@ export default function Merch() {
       {/* Coming Soon Banner */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <Card className="mb-8 p-8 text-center bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <h2 className="text-3xl font-bold text-primary mb-4">🎸 Merch Store Coming Soon! 🎸</h2>
+          <h2 className="text-3xl font-bold text-primary mb-4">Merch Store Coming Soon!</h2>
           <p className="text-muted-foreground text-lg mb-4">
             We're crafting exclusive Sons of Legion merchandise just for you.
           </p>
