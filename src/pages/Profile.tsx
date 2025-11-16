@@ -633,6 +633,14 @@ export default function Profile() {
                               ${subscriptionData.subscription.amount}/{subscriptionData.subscription.interval}
                             </span>
                           </div>
+                          {subscriptionData.subscription.trial_end && new Date(subscriptionData.subscription.trial_end) > new Date() && (
+                            <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent rounded mt-2">
+                              <span className="text-sm font-medium">🎁 Free Trial:</span>
+                              <span className="text-sm">
+                                Ends {new Date(subscriptionData.subscription.trial_end).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Renews on</span>
                             <span className="font-semibold">

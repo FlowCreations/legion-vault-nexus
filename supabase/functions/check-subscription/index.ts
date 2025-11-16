@@ -109,7 +109,25 @@ serve(async (req) => {
         amount: priceItem.price.unit_amount! / 100,
         currency: priceItem.price.currency,
         interval: priceItem.price.recurring?.interval,
+        trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
       };
+
+      // Update user profile with latest subscription data
+      const { data: userData } = await supabaseClient.auth.getUser(token);
+      if (userData.user) {
+        await supabaseClient
+          .from('user_profiles')
+          .update({
+            subscription_status: subscription.status,
+            subscription_plan: product.name,
+            subscription_id: subscription.id,
+            stripe_customer_id: customerId,
+            trial_end_date: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+            billing_cycle_anchor: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          })
+          .eq('user_id', userData.user.id);
+      }
       
       logStep("Active subscription found", { subscriptionId: subscription.id, plan: product.name });
     } else {
