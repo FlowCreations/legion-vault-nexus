@@ -211,9 +211,9 @@ export function VideoPlayer({
       drag={!isExpanded}
       dragMomentum={false}
       dragElastic={0}
-      dragConstraints={!isExpanded ? { left: 0, right: window.innerWidth - 384, top: 0, bottom: window.innerHeight - 216 } : undefined}
+      dragConstraints={!isExpanded ? { left: 0, right: window.innerWidth - 538, top: 0, bottom: window.innerHeight - 302 } : undefined}
       initial={false}
-      animate={isExpanded ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } : { position: 'fixed', top: '50%', left: '50%', width: 384, height: 216, borderRadius: 12, x: '-50%', y: '-50%' }}
+      animate={isExpanded ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } : { position: 'fixed', top: '50%', left: '50%', width: 538, height: 302, borderRadius: 12, x: '-50%', y: '-50%' }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       ref={containerRef}
       className={isExpanded ? "z-[9999] bg-black" : "z-[9999] bg-black rounded-xl shadow-2xl border border-white/20 cursor-move"}
