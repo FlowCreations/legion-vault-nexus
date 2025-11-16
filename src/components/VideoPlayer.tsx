@@ -58,6 +58,11 @@ export function VideoPlayer({
   const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
   const bottomOffset = `calc(env(safe-area-inset-bottom, 0px) + 16px)`;
 
+  // Debug: Log when props change
+  useEffect(() => {
+    console.log('VideoPlayer mounted/updated - isOpen:', isOpen, 'videoUrl:', videoUrl, 'title:', title);
+  }, [isOpen, videoUrl, title]);
+
   // Auto-hide UI when playing and user is idle (but not when comments are open)
   const kickIdleTimer = () => {
     if (idleTimeout.current) clearTimeout(idleTimeout.current);
