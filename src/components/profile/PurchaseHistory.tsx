@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -166,7 +167,7 @@ export function PurchaseHistory() {
               Your purchase history will appear here once you buy albums or merchandise.
             </p>
             <Button asChild className="bg-gradient-gold hover:shadow-glow">
-              <a href="/music">Browse Music</a>
+              <Link to="/music">Browse Music</Link>
             </Button>
           </div>
         </CardContent>
