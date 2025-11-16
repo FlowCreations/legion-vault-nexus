@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Target, MapPin, Users, TrendingUp } from "lucide-react";
+import { Loader2, Sparkles, Target, Users, TrendingUp, Send, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const HybridFunnelBuilder = () => {
@@ -26,6 +26,49 @@ export const HybridFunnelBuilder = () => {
   const [popupEnabled, setPopupEnabled] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [estimatedReach, setEstimatedReach] = useState<any>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(null);
+
+  // Real-time targeting analysis when goal changes
+  useEffect(() => {
+    const analyzeReach = async () => {
+      if (!goal || goal.length < 10) {
+        setEstimatedReach(null);
+        return;
+      }
+
+      try {
+        const { data: users, error } = await supabase
+          .from('user_profiles')
+          .select('ptp_score, ptp_status')
+          .not('ptp_score', 'is', null);
+
+        if (error) throw error;
+
+        const greenUsers = users?.filter(u => (u.ptp_score || 0) >= 70).length || 0;
+        const yellowUsers = users?.filter(u => (u.ptp_score || 0) >= 40 && (u.ptp_score || 0) < 70).length || 0;
+        const redUsers = users?.filter(u => (u.ptp_score || 0) < 40).length || 0;
+
+        let estimated = 0;
+        if (budgetTier === 'minimal') estimated = greenUsers;
+        else if (budgetTier === 'moderate') estimated = greenUsers + yellowUsers;
+        else estimated = greenUsers + yellowUsers + redUsers;
+
+        setEstimatedReach({
+          total: estimated,
+          green: greenUsers,
+          yellow: yellowUsers,
+          red: redUsers
+        });
+      } catch (error) {
+        console.error('Error analyzing reach:', error);
+      }
+    };
+
+    const debounce = setTimeout(analyzeReach, 500);
+    return () => clearTimeout(debounce);
+  }, [goal, budgetTier]);
 
   const handleCreateCampaign = async () => {
     if (!goal || !startDate || !startTime) {
@@ -37,7 +80,6 @@ export const HybridFunnelBuilder = () => {
       return;
     }
 
-    // Calculate end date (max 7 days from start)
     const startDateTime = new Date(`${startDate}T${startTime}`);
     const endDateTime = new Date(startDateTime);
     endDateTime.setDate(endDateTime.getDate() + 7);
@@ -45,41 +87,54 @@ export const HybridFunnelBuilder = () => {
     setIsAnalyzing(true);
 
     try {
-      // Create campaign
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Create marketing campaign
       const { data: campaign, error: campaignError } = await supabase
-        .from('smart_campaigns')
+        .from('marketing_campaigns')
         .insert({
+          merchant_id: user.id,
           goal,
-          campaign_type: campaignType,
-          event_location: {
-            state: eventState,
-            latitude: 40.7128,
-            longitude: -74.0060
+          start_date: startDate,
+          start_time: startTime,
+          end_date: endDateTime.toISOString().split('T')[0],
+          budget_tier: budgetTier,
+          enabled_channels: {
+            email: emailEnabled,
+            sms: smsEnabled,
+            inbox: inboxEnabled,
+            popup: popupEnabled
           },
-          event_date: startDateTime.toISOString(),
-          campaign_end_date: endDateTime.toISOString(),
-          target_radius_miles: 120,
-          ptp_min: 0.4,
-          ptp_max: 1.0,
-          min_loyalty_score: 0
+          target_criteria: {
+            eventState,
+            budgetTier
+          }
         })
         .select()
         .single();
 
       if (campaignError) throw campaignError;
 
-      // Trigger AI analysis
-      const { data, error } = await supabase.functions.invoke('analyze-campaign-targets', {
+      setCurrentCampaignId(campaign.id);
+
+      // Generate AI targets
+      const { data, error } = await supabase.functions.invoke('generate-ai-targets', {
         body: { campaignId: campaign.id }
       });
 
       if (error) throw error;
 
-      setAnalysisResults(data);
+      setAnalysisResults({
+        targetCount: data.targetsGenerated,
+        breakdown: data.breakdown,
+        aiStrategy: data.aiStrategy,
+        minPtpScore: data.minPtpScore
+      });
       
       toast({
-        title: "Campaign Analyzed!",
-        description: `${data.targetCount} users automatically targeted based on your goal`
+        title: "Campaign Created!",
+        description: `${data.targetsGenerated} users targeted with AI intelligence`
       });
 
     } catch (error: any) {
@@ -91,6 +146,42 @@ export const HybridFunnelBuilder = () => {
       });
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleSendNow = async () => {
+    if (!currentCampaignId) {
+      toast({
+        title: "No Campaign",
+        description: "Create a campaign first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      const { error } = await supabase.functions.invoke('process-campaigns', {
+        body: { campaignId: currentCampaignId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Messages Sent!",
+        description: "Your campaign messages are being delivered"
+      });
+
+    } catch (error: any) {
+      console.error('Send error:', error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -221,23 +312,73 @@ export const HybridFunnelBuilder = () => {
                 </div>
               </div>
 
-              <Button
-                onClick={handleCreateCampaign}
-                disabled={isAnalyzing}
-                className="w-full h-12 text-lg"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    AI Analyzing Audience...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Auto-Target with AI
-                  </>
+              {/* Estimated Reach Preview */}
+              {estimatedReach && (
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Estimated Reach
+                  </h4>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 bg-green-500/10 border border-green-500/20 rounded">
+                      <div className="text-2xl font-bold text-green-500">{estimatedReach.green}</div>
+                      <div className="text-xs text-muted-foreground">Green (High)</div>
+                    </div>
+                    <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded">
+                      <div className="text-2xl font-bold text-yellow-500">{estimatedReach.yellow}</div>
+                      <div className="text-xs text-muted-foreground">Yellow (Med)</div>
+                    </div>
+                    <div className="p-2 bg-red-500/10 border border-red-500/20 rounded">
+                      <div className="text-2xl font-bold text-red-500">{estimatedReach.red}</div>
+                      <div className="text-xs text-muted-foreground">Red (Low)</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center text-sm text-muted-foreground">
+                    Total: <span className="font-semibold text-primary">{estimatedReach.total}</span> users will be targeted
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Button
+                  onClick={handleCreateCampaign}
+                  disabled={isAnalyzing}
+                  className="w-full h-12 text-lg"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      AI Analyzing Audience...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Auto-Target with AI
+                    </>
+                  )}
+                </Button>
+
+                {currentCampaignId && (
+                  <Button
+                    onClick={handleSendNow}
+                    disabled={isSending}
+                    variant="outline"
+                    className="w-full h-12 text-lg border-primary/20 hover:bg-primary/5"
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Sending Messages...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-5 w-5" />
+                        Send Now (Test)
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -290,63 +431,73 @@ export const HybridFunnelBuilder = () => {
                       <div className="text-sm text-muted-foreground">Users Automatically Selected</div>
                     </div>
 
-                    {/* Breakdown */}
+                    {/* PTP Breakdown */}
                     <div className="space-y-3">
                       <h4 className="font-semibold flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        Audience Breakdown
+                        <BarChart3 className="w-4 h-4" />
+                        PTP Score Distribution
                       </h4>
                       
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center p-3 bg-muted/50 rounded">
-                          <span className="text-sm">Within 50 miles (local)</span>
-                          <span className="font-semibold text-primary">
-                            {analysisResults.breakdown?.within_50_miles || 0}
-                          </span>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-lg text-center">
+                          <div className="text-3xl font-bold text-green-500 mb-1">
+                            {analysisResults.breakdown?.green || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground mb-1">Green Users</div>
+                          <div className="text-xs font-semibold text-green-600">70-100 PTP</div>
+                          <div className="text-xs text-muted-foreground mt-1">High conversion</div>
                         </div>
                         
-                        <div className="flex justify-between items-center p-3 bg-muted/50 rounded">
-                          <span className="text-sm">Within 2h drive (50-120 mi)</span>
-                          <span className="font-semibold text-primary">
-                            {analysisResults.breakdown?.within_120_miles || 0}
-                          </span>
+                        <div className="p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/20 rounded-lg text-center">
+                          <div className="text-3xl font-bold text-yellow-500 mb-1">
+                            {analysisResults.breakdown?.yellow || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground mb-1">Yellow Users</div>
+                          <div className="text-xs font-semibold text-yellow-600">40-69 PTP</div>
+                          <div className="text-xs text-muted-foreground mt-1">Nurture needed</div>
                         </div>
                         
-                        <div className="flex justify-between items-center p-3 bg-muted/50 rounded">
-                          <span className="text-sm">Loyal fans (high loyalty)</span>
-                          <span className="font-semibold text-primary">
-                            {analysisResults.breakdown?.loyal_fans || 0}
-                          </span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center p-3 bg-muted/50 rounded">
-                          <span className="text-sm">High motivation (PTP)</span>
-                          <span className="font-semibold text-primary">
-                            {analysisResults.breakdown?.high_ptp || 0}
-                          </span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center p-3 bg-muted/50 rounded">
-                          <span className="text-sm">Recently engaged</span>
-                          <span className="font-semibold text-primary">
-                            {analysisResults.breakdown?.recent_engagement || 0}
-                          </span>
+                        <div className="p-4 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-lg text-center">
+                          <div className="text-3xl font-bold text-red-500 mb-1">
+                            {analysisResults.breakdown?.red || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground mb-1">Red Users</div>
+                          <div className="text-xs font-semibold text-red-600">0-39 PTP</div>
+                          <div className="text-xs text-muted-foreground mt-1">Re-engagement</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* AI Reasoning */}
-                    {analysisResults.analysis?.reasoning && (
-                      <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    {/* AI Strategy */}
+                    {analysisResults.aiStrategy && (
+                      <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg">
                         <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4" />
+                          <Sparkles className="w-4 h-4 text-primary" />
                           AI Targeting Strategy
                         </h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysisResults.analysis.reasoning}
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">
+                          {analysisResults.aiStrategy}
                         </p>
                       </div>
                     )}
+
+                    {/* Performance Metrics */}
+                    <div className="p-4 bg-muted/50 border border-border rounded-lg">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4" />
+                        Campaign Performance
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-xs text-muted-foreground">Min PTP Score</div>
+                          <div className="text-2xl font-bold text-primary">{analysisResults.minPtpScore || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Budget Tier</div>
+                          <div className="text-lg font-semibold capitalize">{budgetTier}</div>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
