@@ -128,20 +128,6 @@ export default function Videos() {
       return;
     }
 
-    // Check if user has active subscription
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: subscriptionData, error } = await supabase.functions.invoke('check-subscription');
-      console.log('Subscription check:', subscriptionData, error);
-      
-      if (!subscriptionData?.subscribed) {
-        // User is logged in but not subscribed - show subscribe prompt
-        console.log('User not subscribed, showing auth dialog');
-        setShowAuthDialog(true);
-        return;
-      }
-    }
-
     // Get the video URL from storage
     const { data: { publicUrl } } = supabase.storage
       .from('videos')
