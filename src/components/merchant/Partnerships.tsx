@@ -7,12 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail, TrendingUp, Link2 } from "lucide-react";
+import { Users, UserPlus, CheckCircle, XCircle, Clock, Building2, Send, Mail, TrendingUp, Link2, Compass, Inbox } from "lucide-react";
 import { AffiliateDetail } from "./AffiliateDetail";
 import { BrandPartnershipCard } from "./BrandPartnershipCard";
 import { EthosRequestDialog } from "./EthosRequestDialog";
 import { AddAffiliateForm } from "./AddAffiliateForm";
 import { ConnectPortalDialog } from "./ConnectPortalDialog";
+import { DiscoverPortals } from "./partnerships/DiscoverPortals";
+import { PendingOffers } from "./partnerships/PendingOffers";
 import { Badge } from "@/components/ui/badge";
 
 interface Partnership {
@@ -332,13 +334,47 @@ export function Partnerships() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="affiliates" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="discover" className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="discover">
+            <Compass className="h-4 w-4 mr-2" />
+            Discover Portals
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            <Inbox className="h-4 w-4 mr-2" />
+            Pending Offers
+          </TabsTrigger>
           <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
           <TabsTrigger value="brands">Brand Partnerships</TabsTrigger>
           <TabsTrigger value="requests">Ethos Requests {ethosRequests.length > 0 && `(${ethosRequests.length})`}</TabsTrigger>
           <TabsTrigger value="partners">Artist Partners</TabsTrigger>
         </TabsList>
+
+        {/* Discover Portals Tab */}
+        <TabsContent value="discover" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Discover Partnership Opportunities</CardTitle>
+              <CardDescription>Explore artists and portals looking for collaboration</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DiscoverPortals />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Pending Offers Tab */}
+        <TabsContent value="pending" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Incoming Partnership Offers</CardTitle>
+              <CardDescription>Review and respond to partnership proposals from other artists</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PendingOffers />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Affiliates Tab */}
         <TabsContent value="affiliates" className="space-y-4">
