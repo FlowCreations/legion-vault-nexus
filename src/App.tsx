@@ -56,6 +56,7 @@ const Step10PortalOnboarding = lazy(() => import("./pages/funnel/Step10PortalOnb
 const Step11MerchUpsell = lazy(() => import("./pages/funnel/Step11MerchUpsell"));
 const Step12RewardsLoop = lazy(() => import("./pages/funnel/Step12RewardsLoop"));
 const SmartCampaignBuilder = lazy(() => import("./pages/SmartCampaignBuilder"));
+const Orders = lazy(() => import("./pages/Orders"));
 
 
 // Optimized loading fallback component
@@ -160,6 +161,7 @@ const App = () => {
               <Route path="/funnel/step-11" element={<Step11MerchUpsell />} />
               <Route path="/funnel/step-12" element={<Step12RewardsLoop />} />
               <Route path="/sales-sheets" element={<SalesSheets />} />
+              <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
