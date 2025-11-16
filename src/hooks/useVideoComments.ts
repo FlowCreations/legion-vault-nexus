@@ -72,15 +72,19 @@ export const useVideoComments = (videoId: string) => {
 
       if (error) throw error;
 
-      // Track comment event for analytics  
-      await supabase.from('events').insert([{
-        member_id: user.id,
-        content_id: videoId,
-        type: 'comment',
-        meta: {
-          comment_length: content.length,
-        },
-      }]);
+      // Track comment event for analytics (don't block on this)
+      try {
+        await supabase.from('events').insert([{
+          member_id: user.id,
+          content_id: videoId,
+          type: 'comment',
+          meta: {
+            comment_length: content.length,
+          },
+        }]);
+      } catch (err) {
+        console.warn('Failed to track comment event:', err);
+      }
 
       return data;
     },
