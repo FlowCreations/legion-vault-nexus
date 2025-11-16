@@ -45,7 +45,7 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [isFloating, setIsFloating] = useState(false);
+  const [isFloating, setIsFloating] = useState(true); // Start in floating mode by default
   const [floatingPosition, setFloatingPosition] = useState({ x: 20, y: 20 });
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -343,15 +343,16 @@ export function VideoPlayer({
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
           <button 
-            onClick={(e) => { e.stopPropagation(); setIsFloating(false); }}
+            onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
             className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
-            title="Expand player"
+            title="Fullscreen"
           >
             <Maximize className="w-4 h-4" />
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleClose(); }}
             className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+            title="Close"
           >
             <X className="w-4 h-4" />
           </button>
