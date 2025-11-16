@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ interface QuickSignupDialogProps {
 }
 
 export function QuickSignupDialog({ open, onOpenChange, onSignupSuccess }: QuickSignupDialogProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -138,6 +140,20 @@ export function QuickSignupDialog({ open, onOpenChange, onSignupSuccess }: Quick
               "Continue to Checkout"
             )}
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                navigate('/auth');
+              }}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign In
+            </button>
+          </p>
         </form>
       </DialogContent>
     </Dialog>
