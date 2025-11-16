@@ -55,6 +55,8 @@ const Step9ThankYouPurchase = lazy(() => import("./pages/funnel/Step9ThankYouPur
 const Step10PortalOnboarding = lazy(() => import("./pages/funnel/Step10PortalOnboarding"));
 const Step11MerchUpsell = lazy(() => import("./pages/funnel/Step11MerchUpsell"));
 const Step12RewardsLoop = lazy(() => import("./pages/funnel/Step12RewardsLoop"));
+const SmartCampaignBuilder = lazy(() => import("./pages/SmartCampaignBuilder"));
+
 
 // Optimized loading fallback component
 const PageLoader = () => (
@@ -136,9 +138,10 @@ const App = () => {
               <Route path="/community" element={<CommunityHub />} />
               <Route path="/merch" element={<Merch />} />
               <Route path="/merchant" element={<ProtectedRoute requireAdmin><Merchant /></ProtectedRoute>} />
+              <Route path="/merchant/smart-campaigns" element={<ProtectedRoute requireAdmin><SmartCampaignBuilder /></ProtectedRoute>} />
               <Route path="/live-studio" element={<LiveStudio />} />
-          <Route path="/vod" element={<VODPage />} />
-          <Route path="/stream-analytics/:eventId" element={<StreamAnalyticsPage />} />
+              <Route path="/vod" element={<VODPage />} />
+              <Route path="/stream-analytics/:eventId" element={<StreamAnalyticsPage />} />
               <Route path="/community-hub" element={<CommunityHub />} />
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
               <Route path="/free-ep" element={<FreeEP />} />
