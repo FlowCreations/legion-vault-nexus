@@ -193,7 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "Sons of Legion <onboarding@resend.dev>",
+      from: "Sons of Legion <hello@sonsoflegion.com>",
       to: [email],
       subject: `${isUpgrade ? "🚀 " : ""}Subscription Plan ${isUpgrade ? "Upgraded" : "Changed"} - ${newPlanName}`,
       html: emailHtml,

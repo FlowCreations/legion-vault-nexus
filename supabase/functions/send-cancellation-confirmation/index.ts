@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
     const reactivateUrl = `${Deno.env.get("VITE_SUPABASE_URL") || "https://dlwyndcvnunvomgkbkhn.supabase.co"}/subscribe`;
 
     const emailResponse = await resend.emails.send({
-      from: "Sons of Legion <onboarding@resend.dev>",
+      from: "Sons of Legion <hello@sonsoflegion.com>",
       to: [email],
       subject: "We're Sorry to See You Go - Special Offer Inside",
       html: `
