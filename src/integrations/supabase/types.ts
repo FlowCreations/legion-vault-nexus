@@ -3900,6 +3900,51 @@ export type Database = {
           },
         ]
       }
+      portal_connections: {
+        Row: {
+          analytics: Json | null
+          created_at: string
+          disconnected_at: string | null
+          host_artist_id: string
+          id: string
+          offer_duration_days: number | null
+          partner_artist_id: string
+          partner_avatar_url: string | null
+          partner_bio: string | null
+          partner_name: string
+          special_offer: string | null
+          status: string
+        }
+        Insert: {
+          analytics?: Json | null
+          created_at?: string
+          disconnected_at?: string | null
+          host_artist_id: string
+          id?: string
+          offer_duration_days?: number | null
+          partner_artist_id: string
+          partner_avatar_url?: string | null
+          partner_bio?: string | null
+          partner_name: string
+          special_offer?: string | null
+          status?: string
+        }
+        Update: {
+          analytics?: Json | null
+          created_at?: string
+          disconnected_at?: string | null
+          host_artist_id?: string
+          id?: string
+          offer_duration_days?: number | null
+          partner_artist_id?: string
+          partner_avatar_url?: string | null
+          partner_bio?: string | null
+          partner_name?: string
+          special_offer?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
