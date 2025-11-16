@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import * as MetaPixel from '@/lib/metaPixel';
+import { useAuth } from '@/hooks/useAuth';
 
 const SESSION_KEY = 'sol_session_id';
 
@@ -40,8 +41,16 @@ const getSessionId = () => {
 };
 
 export const useEventTracking = () => {
+  const { user } = useAuth();
+  
   const trackEvent = async (eventType: string, eventData?: any) => {
     try {
+      // Only track events for authenticated users
+      if (!user) {
+        console.log('Skipping event tracking - user not authenticated:', eventType);
+        return;
+      }
+      
       const sessionId = getSessionId();
       const { data: { session } } = await supabase.auth.getSession();
       
