@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, MapPin, TrendingUp, TrendingDown, Send, Search } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Users, MapPin, TrendingUp, TrendingDown, Send, Search, Eye } from "lucide-react";
 import { PartnershipOfferDialog } from "./PartnershipOfferDialog";
 
 interface Portal {
@@ -207,6 +208,8 @@ const GROWTH_TRENDS = [
 export function DiscoverPortals() {
   const [selectedPortal, setSelectedPortal] = useState<Portal | null>(null);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
+  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+  const [viewingPortal, setViewingPortal] = useState<Portal | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [industryFilter, setIndustryFilter] = useState("All");
   const [countryFilter, setCountryFilter] = useState("All");
@@ -216,6 +219,11 @@ export function DiscoverPortals() {
   const handleSubmitOffer = (portal: Portal) => {
     setSelectedPortal(portal);
     setOfferDialogOpen(true);
+  };
+
+  const handleViewDetails = (portal: Portal) => {
+    setViewingPortal(portal);
+    setDetailDrawerOpen(true);
   };
 
   const filteredPortals = MOCK_PORTALS.filter((portal) => {
@@ -391,14 +399,22 @@ export function DiscoverPortals() {
                 ))}
               </div>
 
-              {/* Submit Offer Button */}
-              <Button 
-                className="w-full" 
-                onClick={() => handleSubmitOffer(portal)}
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Submit Partnership Offer
-              </Button>
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleViewDetails(portal)}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Details
+                </Button>
+                <Button 
+                  onClick={() => handleSubmitOffer(portal)}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Submit Offer
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -409,6 +425,165 @@ export function DiscoverPortals() {
           <p className="text-muted-foreground">No portals found matching your criteria</p>
         </div>
       )}
+
+      {/* Detail Drawer */}
+      <Sheet open={detailDrawerOpen} onOpenChange={setDetailDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          {viewingPortal && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="sr-only">Portal Details</SheetTitle>
+                {/* Profile Header */}
+                <div className="flex items-start gap-4 pb-4">
+                  <Avatar className="w-20 h-20 border-2 border-primary/20">
+                    <AvatarImage src={viewingPortal.avatar_url} alt={viewingPortal.name} />
+                    <AvatarFallback>{viewingPortal.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-semibold text-2xl">{viewingPortal.name}</h2>
+                    <Badge variant="secondary" className="mt-2">
+                      {viewingPortal.industry}
+                    </Badge>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="space-y-6 mt-6">
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm">Portal Members</span>
+                    </div>
+                    <p className="text-2xl font-semibold">{formatNumber(viewingPortal.portal_followers)}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-sm">Social Reach</span>
+                    </div>
+                    <p className="text-2xl font-semibold">{formatNumber(viewingPortal.social_followers)}</p>
+                  </div>
+                </div>
+
+                {/* Growth Trend */}
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">30-Day Growth Trend</span>
+                    <div className={`flex items-center gap-2 font-semibold text-lg ${
+                      viewingPortal.growth_trend > 0 ? 'text-green-600' : viewingPortal.growth_trend < 0 ? 'text-red-600' : 'text-muted-foreground'
+                    }`}>
+                      {viewingPortal.growth_trend > 0 ? (
+                        <TrendingUp className="w-5 h-5" />
+                      ) : viewingPortal.growth_trend < 0 ? (
+                        <TrendingDown className="w-5 h-5" />
+                      ) : null}
+                      <span>{viewingPortal.growth_trend > 0 ? '+' : ''}{viewingPortal.growth_trend}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Demographics */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Demographics</h3>
+                  <p className="text-sm">{viewingPortal.core_demographic}</p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>{viewingPortal.location}</span>
+                  </div>
+                </div>
+
+                {/* Gender Distribution */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Gender Distribution</h3>
+                  <div className="flex gap-3">
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                      ♂ Male: {viewingPortal.gender_distribution.male}%
+                    </Badge>
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                      ♀ Female: {viewingPortal.gender_distribution.female}%
+                    </Badge>
+                    {viewingPortal.gender_distribution.other > 0 && (
+                      <Badge variant="secondary" className="text-sm px-3 py-1">
+                        ⚥ Other: {viewingPortal.gender_distribution.other}%
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Keywords */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Keywords</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingPortal.tags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* About */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">About</h3>
+                  <p className="text-sm leading-relaxed">{viewingPortal.personal_message}</p>
+                </div>
+
+                {/* Behavioral Highlights */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Behavioral Highlights</h3>
+                  <ul className="space-y-2">
+                    {viewingPortal.behavioral_highlights.map((highlight, idx) => (
+                      <li key={idx} className="text-sm flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Ethos Card */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">What I Stand For</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {viewingPortal.ethos.stands_for.map((value, idx) => (
+                        <Badge key={idx} variant="default">
+                          {value}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">What I Avoid</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {viewingPortal.ethos.avoids.map((value, idx) => (
+                        <Badge key={idx} variant="outline">
+                          {value}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Offer Button */}
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={() => {
+                    setDetailDrawerOpen(false);
+                    handleSubmitOffer(viewingPortal);
+                  }}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Submit Partnership Offer
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {selectedPortal && (
         <PartnershipOfferDialog
