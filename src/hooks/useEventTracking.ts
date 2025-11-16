@@ -90,10 +90,9 @@ export const useEventTracking = () => {
         MetaPixel.trackPageView();
         break;
       
-      case 'view_product':
-      case 'view_merch':
-      case 'view_album':
-      case 'view_video':
+      case 'video_view':
+      case 'album_view':
+      case 'merch_view':
         MetaPixel.trackViewContent({
           content_name: eventData?.name || eventData?.title || 'Unknown',
           content_category: eventData?.category || eventType,
