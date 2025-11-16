@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
     const communityUrl = `${req.headers.get("origin") || "https://sonsoflegion.com"}/community`;
 
     const emailResponse = await resend.emails.send({
-      from: "Sons of Legion <onboarding@resend.dev>",
+      from: "Sons of Legion <hello@sonsoflegion.com>",
       to: [email],
       subject: "🎉 Your Legion Community Access is Now Active!",
       html: `

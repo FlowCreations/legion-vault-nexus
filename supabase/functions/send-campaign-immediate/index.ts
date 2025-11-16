@@ -98,7 +98,7 @@ serve(async (req) => {
           "Authorization": `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: "Sons of Legion <noreply@sonsoflegion.com>",
+          from: "Sons of Legion <hello@sonsoflegion.com>",
           to: [email],
           subject: campaign.subject,
           html: personalizedBody,

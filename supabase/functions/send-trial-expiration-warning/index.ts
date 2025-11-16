@@ -434,7 +434,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Sons of Legion <onboarding@resend.dev>',
+        from: 'Sons of Legion <hello@sonsoflegion.com>',
         to: [data.email],
         subject,
         html,
