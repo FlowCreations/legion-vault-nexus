@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
 import { 
   Clock, Play, Headphones, Heart, ShoppingBag, 
-  MapPin, Calendar, Activity, Star, Crown, Zap
+  MapPin, Calendar, Activity, Star, Crown, Zap, X
 } from "lucide-react";
 import { Member } from "./GlobalReachMap";
 
@@ -64,7 +64,17 @@ export function MemberProfileCard({ member, onClose }: MemberProfileCardProps) {
       transition={{ duration: 0.2 }}
       className="pointer-events-auto"
     >
-      <Card className="w-80 bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl">
+      <Card className="w-80 bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl relative">
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground flex items-center justify-center transition-colors shadow-lg"
+            aria-label="Close profile card"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
         <CardHeader className="pb-4">
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary/20">
