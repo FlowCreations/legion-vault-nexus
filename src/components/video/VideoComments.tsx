@@ -60,7 +60,15 @@ export const VideoComments = ({
     // Prevent spacebar from triggering video controls
     e.stopPropagation();
     
+    // Prevent Enter key from submitting form (which could cause navigation)
+    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault();
+      return;
+    }
+    
+    // Only submit with Cmd/Ctrl+Enter
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
       handleSubmit(e);
     }
   };
