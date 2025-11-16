@@ -80,7 +80,6 @@ export const Navigation = () => {
                 alt="Sons of Legion"
                 className="h-12 w-auto object-contain"
                 onError={(e) => {
-                  console.error('Logo failed to load');
                   e.currentTarget.style.display = 'none';
                 }}
               />
@@ -180,10 +179,9 @@ export const Navigation = () => {
                 src={logoImage}
                 alt="Sons of Legion"
                 className="h-8 w-auto object-contain"
-                onError={(e) => {
-                  console.error('Mobile logo failed to load');
-                  e.currentTarget.style.display = 'none';
-                }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
               />
             </Link>
 

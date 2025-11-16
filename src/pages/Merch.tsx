@@ -4,6 +4,7 @@ import { PersonalitySurvey } from "@/components/PersonalitySurvey";
 import { useSurveyTrigger } from "@/hooks/useSurveyTrigger";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
 import spinningRecord from "@/assets/spinning-record.mp4";
 import apparelVideo from "@/assets/apparel-video.mp4";
 import { useEventTracking } from "@/hooks/useEventTracking";
@@ -76,7 +77,7 @@ export default function Merch() {
       const products = await fetchProducts();
       setShopifyProducts(products);
     } catch (error) {
-      console.error('Error loading Shopify products:', error);
+      // Error loading products
     }
   };
 
@@ -96,12 +97,8 @@ export default function Merch() {
 
       if (error) throw error;
       
-      // Log to debug variant loading
-      console.log('Loaded products with variants:', data?.slice(0, 2));
-      
       setProducts(data || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
@@ -180,12 +177,6 @@ export default function Merch() {
 
 
   const handleAddToCart = async (product: Product) => {
-    console.log('handleAddToCart called with product:', { 
-      title: product.title, 
-      hasVariants: !!product.variants, 
-      variantCount: product.variants?.length 
-    });
-    
     trackEvent('add_to_cart', {
       id: product.id,
       name: product.title,
@@ -195,12 +186,9 @@ export default function Merch() {
 
     // For products with variants, open customizer
     if (product.variants && product.variants.length > 0) {
-      console.log('Opening customizer with variants:', product.variants);
       setSelectedProduct(product);
       return;
     }
-    
-    console.log('No variants, adding directly to cart');
     
     // Create a Shopify-compatible product structure from Supabase product
     const mockShopifyProduct: ShopifyProduct = {
@@ -495,9 +483,7 @@ export default function Merch() {
           </div>
 
           {loading && (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
+            <ProductGridSkeleton />
           )}
 
           {!loading && sortedProducts.length === 0 && (
