@@ -11,6 +11,8 @@ import { dedupeRequest, deferNonCritical } from "@/lib/performance";
 
 // Lazy load ALL heavy components for maximum performance
 const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
+const MarketingAnalyticsDashboard = lazy(() => import("@/components/merchant/marketing/MarketingAnalyticsDashboard").then(m => ({ default: m.MarketingAnalyticsDashboard })));
+const UserDataQualityPanel = lazy(() => import("@/components/merchant/marketing/UserDataQualityPanel").then(m => ({ default: m.UserDataQualityPanel })));
 const MusicUpload = lazy(() => import("@/components/MusicUpload"));
 const MusicManager = lazy(() => import("@/components/merchant/MusicManager").then(m => ({ default: m.MusicManager })));
 const LyricsManager = lazy(() => import("@/components/merchant/LyricsManager").then(m => ({ default: m.LyricsManager })));
@@ -386,8 +388,9 @@ const Merchant = memo(() => {
 
           {activeTab === "marketing" && (
             <TabsContent value="marketing">
-              <Tabs defaultValue="campaigns" className="space-y-6">
+              <Tabs defaultValue="analytics" className="space-y-6">
                 <TabsList>
+                  <TabsTrigger value="analytics">Analytics & AI</TabsTrigger>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
                   <TabsTrigger value="funnel">Sales Funnel</TabsTrigger>
                   <TabsTrigger value="hybrid">Hybrid Funnel</TabsTrigger>
@@ -395,6 +398,15 @@ const Merchant = memo(() => {
                   <TabsTrigger value="sms">SMS</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="analytics" className="space-y-6">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <MarketingAnalyticsDashboard />
+                  </Suspense>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <UserDataQualityPanel />
+                  </Suspense>
+                </TabsContent>
                 
                 <TabsContent value="campaigns">
                   <Suspense fallback={<LoadingSpinner />}>
