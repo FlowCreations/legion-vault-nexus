@@ -62,32 +62,52 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const merchantStatus = merchantRoleData && merchantRoleData.length > 0;
       setIsMerchant(merchantStatus);
 
-      // Check subscription via edge function
-      const { data: subData, error } = await supabase.functions.invoke('check-subscription');
+      // Check subscription via edge function with timeout
+      const checkSubPromise = supabase.functions.invoke('check-subscription');
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Subscription check timeout')), 5000)
+      );
       
-      if (error) {
-        console.error('Error checking subscription:', error);
-        setIsSubscribed(false);
-        setTier(TIERS.FREE);
-        return;
-      }
+      try {
+        const { data: subData, error } = await Promise.race([
+          checkSubPromise,
+          timeoutPromise
+        ]) as { data: any; error: any };
+        
+        if (error) {
+          console.error('Error checking subscription:', error);
+          setIsSubscribed(false);
+          setTier(TIERS.FREE);
+          return;
+        }
 
-      if (subData?.subscribed && subData?.subscription?.plan_name) {
-        setIsSubscribed(true);
-        // Map Stripe plan name to tier
-        const planName = subData.subscription.plan_name;
-        if (planName.includes('Legionnaires')) {
-          setTier(TIERS.LEGIONNAIRES);
-        } else if (planName.includes('Outlaws')) {
-          setTier(TIERS.OUTLAWS);
-        } else if (planName.includes('Rebels')) {
-          setTier(TIERS.REBELS);
+        if (subData?.subscribed && subData?.subscription?.plan_name) {
+          setIsSubscribed(true);
+          // Map Stripe plan name to tier
+          const planName = subData.subscription.plan_name;
+          if (planName.includes('Legionnaires')) {
+            setTier(TIERS.LEGIONNAIRES);
+          } else if (planName.includes('Outlaws')) {
+            setTier(TIERS.OUTLAWS);
+          } else if (planName.includes('Rebels')) {
+            setTier(TIERS.REBELS);
+          } else {
+            setTier(TIERS.FREE);
+          }
         } else {
+          setIsSubscribed(false);
           setTier(TIERS.FREE);
         }
-      } else {
-        setIsSubscribed(false);
-        setTier(TIERS.FREE);
+      } catch (timeoutError) {
+        console.error('Subscription check timed out:', timeoutError);
+        // Allow access for admins even if subscription check fails
+        if (adminStatus) {
+          setIsSubscribed(true);
+          setTier(TIERS.LEGIONNAIRES);
+        } else {
+          setIsSubscribed(false);
+          setTier(TIERS.FREE);
+        }
       }
     } catch (error) {
       console.error('Error in checkSubscription:', error);
