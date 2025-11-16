@@ -16,9 +16,9 @@ export const HybridFunnelBuilder = () => {
   
   const [goal, setGoal] = useState("");
   const [campaignType, setCampaignType] = useState("event");
-  const [eventCity, setEventCity] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [eventState, setEventState] = useState("");
-  const [eventDate, setEventDate] = useState("");
   const [budgetTier, setBudgetTier] = useState("moderate");
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(true);
@@ -28,7 +28,7 @@ export const HybridFunnelBuilder = () => {
   const [analysisResults, setAnalysisResults] = useState<any>(null);
 
   const handleCreateCampaign = async () => {
-    if (!goal || !eventCity || !eventDate) {
+    if (!goal || !startDate || !startTime) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -36,6 +36,11 @@ export const HybridFunnelBuilder = () => {
       });
       return;
     }
+
+    // Calculate end date (max 7 days from start)
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const endDateTime = new Date(startDateTime);
+    endDateTime.setDate(endDateTime.getDate() + 7);
 
     setIsAnalyzing(true);
 
@@ -47,12 +52,12 @@ export const HybridFunnelBuilder = () => {
           goal,
           campaign_type: campaignType,
           event_location: {
-            city: eventCity,
             state: eventState,
             latitude: 40.7128,
             longitude: -74.0060
           },
-          event_date: eventDate,
+          event_date: startDateTime.toISOString(),
+          campaign_end_date: endDateTime.toISOString(),
           target_radius_miles: 120,
           ptp_min: 0.4,
           ptp_max: 1.0,
@@ -118,33 +123,29 @@ export const HybridFunnelBuilder = () => {
               </div>
 
               <div>
-                <Label htmlFor="eventCity">Event City</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    id="eventCity"
-                    placeholder="New York"
-                    value={eventCity}
-                    onChange={(e) => setEventCity(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    placeholder="NY"
-                    value={eventState}
-                    onChange={(e) => setEventState(e.target.value)}
-                    className="w-20"
-                  />
-                </div>
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="mt-1"
+                />
               </div>
 
               <div>
-                <Label htmlFor="eventDate">Event Date</Label>
+                <Label htmlFor="startTime">Start Time</Label>
                 <Input
-                  id="eventDate"
-                  type="datetime-local"
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
+                  id="startTime"
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
                   className="mt-1"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Campaign will run for 7 days maximum
+                </p>
               </div>
 
               <div>
