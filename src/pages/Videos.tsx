@@ -115,6 +115,7 @@ export default function Videos() {
 
   const handleVideoClick = async (video: VideoItem) => {
     console.log('Video clicked, authenticated:', isAuthenticated);
+    console.log('Current selectedVideo state:', selectedVideo);
     
     trackEvent('video_view', {
       id: video.id,
@@ -136,6 +137,7 @@ export default function Videos() {
     console.log('Setting video:', video.title, publicUrl);
     setSelectedVideo(video);
     setSelectedVideoUrl(publicUrl);
+    console.log('State should be set now. New video:', video);
   };
 
   const shuffleArray = <T,>(array: T[]): T[] => {
