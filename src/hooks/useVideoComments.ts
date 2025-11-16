@@ -72,6 +72,7 @@ export const useVideoComments = (videoId: string) => {
           video_id: videoId,
           user_id: user.id,
           content: content.trim(),
+          is_deleted: false,
         })
         .select()
         .single();
