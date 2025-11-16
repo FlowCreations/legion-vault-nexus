@@ -29,11 +29,11 @@ export const UserDataQualityPanel = () => {
     try {
       // Check events quality
       const { data: allEvents } = await supabase
-        .from('events')
-        .select('member_id, created_at, meta');
+        .from('user_events')
+        .select('user_id, created_at, event_data');
 
       const { data: recentEvents } = await supabase
-        .from('events')
+        .from('user_events')
         .select('id')
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
@@ -42,9 +42,9 @@ export const UserDataQualityPanel = () => {
         .from('user_profiles')
         .select('user_id, last_active_at, watch_time, listen_time');
 
-      const eventsWithUserIds = allEvents?.filter(e => e.member_id).length || 0;
+      const eventsWithUserIds = allEvents?.filter(e => e.user_id).length || 0;
       const eventsWithTimestamps = allEvents?.filter(e => e.created_at).length || 0;
-      const eventsWithMetadata = allEvents?.filter(e => e.meta && Object.keys(e.meta).length > 0).length || 0;
+      const eventsWithMetadata = allEvents?.filter(e => e.event_data && Object.keys(e.event_data).length > 0).length || 0;
       const profilesWithActivity = allProfiles?.filter(p => 
         p.last_active_at || (p.watch_time && p.watch_time > 0) || (p.listen_time && p.listen_time > 0)
       ).length || 0;
