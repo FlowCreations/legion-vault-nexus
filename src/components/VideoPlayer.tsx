@@ -330,14 +330,14 @@ export function VideoPlayer({
         dragElastic={0}
         dragConstraints={{ 
           left: 0, 
-          right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, 
+          right: typeof window !== 'undefined' ? window.innerWidth - 384 : 0, 
           top: 0, 
-          bottom: typeof window !== 'undefined' ? window.innerHeight - 180 : 0 
+          bottom: typeof window !== 'undefined' ? window.innerHeight - 216 : 0 
         }}
         initial={{ x: 20, y: 20 }}
         style={{ left: '20px', top: '20px' }}
         onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
-        className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[9999] cursor-move"
+        className="fixed w-96 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[9999] cursor-move"
       >
         <video
           ref={videoRef}
