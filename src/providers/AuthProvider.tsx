@@ -87,7 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initialize = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-        if (error) console.warn('[AUTH] getSession error', error);
+        if (error) {
+          console.warn('[AUTH] getSession error', error);
+          // Clear invalid session data on error
+          localStorage.removeItem('sb-dlwyndcvnunvomgkbkhn-auth-token');
+        }
         
         if (!mounted) return;
 
