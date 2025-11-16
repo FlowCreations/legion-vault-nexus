@@ -314,13 +314,24 @@ export default function Profile() {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
-        console.error('Error checking subscription:', error);
-        return;
+        console.error('Subscription check error:', error);
+        throw error;
       }
       
+      console.log('Subscription data received:', data);
       setSubscriptionData(data);
+      
+      // Refresh profile to get updated membership tier
+      if (user) {
+        await loadProfile(user.id);
+      }
     } catch (error) {
       console.error('Error loading subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscription data",
+        variant: "destructive",
+      });
     } finally {
       setLoadingSubscription(false);
     }
