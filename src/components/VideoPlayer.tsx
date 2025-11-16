@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, MessageSquare, PictureInPicture2 } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
 import { VideoComments } from "@/components/video/VideoComments";
-import { usePictureInPicture } from "@/hooks/usePictureInPicture";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,7 +50,6 @@ export function VideoPlayer({
   const { toast } = useToast();
   const { trackEvent } = useEventTracking();
   const watchStartTime = useRef<number>(0);
-  const { isPiPActive, isPiPSupported, togglePiP } = usePictureInPicture(videoRef);
 
   // Determine if video should be portrait (vertical) based on category
   const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
@@ -523,18 +521,6 @@ export function VideoPlayer({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {/* Picture-in-Picture toggle */}
-                          {isPiPSupported && (
-                            <button
-                              onClick={togglePiP}
-                              className={`p-1.5 rounded-full ${isPiPActive ? 'bg-white/30' : 'bg-white/10'} hover:bg-white/20 text-white`}
-                              aria-label="Picture-in-Picture"
-                              title="Picture-in-Picture"
-                            >
-                              <PictureInPicture2 className="w-4 h-4" />
-                            </button>
-                          )}
-
                           {/* Fullscreen toggle */}
                           <button
                             onClick={toggleFullscreen}
@@ -551,7 +537,7 @@ export function VideoPlayer({
                               onClick={() => setIsFloating(true)}
                               className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
                               aria-label="Float player"
-                              title="Float player"
+                              title="Minimize to floating player"
                             >
                               <ChevronDown className="w-4 h-4" />
                             </button>
