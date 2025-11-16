@@ -68,14 +68,7 @@ export default function Subscribe() {
       type: 'subscription'
     });
 
-    // Check if user is logged in
-    if (!user) {
-      setSelectedTier(tierName);
-      setShowSignupDialog(true);
-      return;
-    }
-
-    // User is logged in, proceed directly to checkout
+    // Proceed directly to checkout - Stripe handles guest checkout
     await proceedToCheckout(tierName);
   };
 
