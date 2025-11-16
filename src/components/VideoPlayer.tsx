@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Minimize, Heart, Share2, Link, Mail, Facebook, Twitter, ThumbsUp, MessageSquare } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Heart, Share2, Link, Mail, Facebook, Twitter, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
@@ -39,33 +39,20 @@ export function VideoPlayer({
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [minimized, setMinimized] = useState(false);
   const [showUI, setShowUI] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [isFloating, setIsFloating] = useState(true); // Start in floating mode by default
-  const [floatingPosition, setFloatingPosition] = useState({ x: 20, y: 20 });
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { trackEvent } = useEventTracking();
   const watchStartTime = useRef<number>(0);
 
-  // Determine if video should be portrait (vertical) based on category
   const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
-  const shouldBeFullscreen = category === 'music_videos' || category === 'documentary';
-  const bottomOffset = `calc(env(safe-area-inset-bottom, 0px) + 16px)`;
 
-  // Debug: Log when props change
-  useEffect(() => {
-    console.log('VideoPlayer mounted/updated - isOpen:', isOpen, 'videoUrl:', videoUrl, 'title:', title);
-  }, [isOpen, videoUrl, title]);
-
-  // Auto-hide UI when playing and user is idle (but not when comments are open)
   const kickIdleTimer = () => {
     if (idleTimeout.current) clearTimeout(idleTimeout.current);
-    // Don't auto-hide UI if comments are open
-    if (isPlaying && !minimized && !showComments) {
+    if (isPlaying && isExpanded && !showComments) {
       setShowUI(true);
       idleTimeout.current = setTimeout(() => setShowUI(false), 2500);
     } else {
@@ -83,108 +70,80 @@ export function VideoPlayer({
       window.removeEventListener("keydown", onMove);
       window.removeEventListener("touchstart", onMove);
     };
-  }, [isPlaying, minimized, showComments]);
+  }, [isPlaying, isExpanded, showComments]);
 
-  // Keyboard controls (spacebar to pause/play)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't interfere with typing in input fields
       const activeElement = document.activeElement;
-      if (activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT') {
-        return;
-      }
-      
-      if (e.code === 'Space' && isOpen && !minimized) {
+      if (activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT') return;
+      if (e.code === 'Space' && isOpen) {
         e.preventDefault();
         togglePlay();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, minimized]);
+  }, [isOpen]);
 
-  // Check if video is favorited
   useEffect(() => {
     const checkFavorite = async () => {
       if (!videoId) return;
-      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data } = await supabase
         .from('video_favorites')
         .select('id')
         .eq('user_id', user.id)
         .eq('video_id', videoId)
         .maybeSingle();
-
       setIsFavorited(!!data);
     };
-
-    if (isOpen) {
-      checkFavorite();
-    }
+    if (isOpen) checkFavorite();
   }, [isOpen, videoId]);
 
-  // Auto-play when opened - start in floating mode
   useEffect(() => {
     if (isOpen && videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
-      setMinimized(false);
-      setIsFloating(true); // Start in floating mode
+      setIsExpanded(false);
       kickIdleTimer();
-      
-      // Track video start
       watchStartTime.current = Date.now();
-      trackEvent('video_view', { 
-        video_id: videoId,
-        title: title,
-        category: category
-      });
+      trackEvent('video_view', { video_id: videoId, title, category });
     }
   }, [isOpen]);
 
   const onTimeUpdate = () => {
     if (!videoRef.current) return;
-    const v = videoRef.current;
-    setProgress(v.currentTime);
-    setDuration(v.duration || 0);
+    setProgress(videoRef.current.currentTime);
+    setDuration(videoRef.current.duration || 0);
   };
 
   const togglePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) {
-      v.play();
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
       setIsPlaying(true);
     } else {
-      v.pause();
+      videoRef.current.pause();
       setIsPlaying(false);
       setShowUI(true);
     }
   };
 
   const toggleMute = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+    setMuted(videoRef.current.muted);
   };
 
   const onSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = videoRef.current;
-    if (!v) return;
-    const value = Number(e.target.value);
-    v.currentTime = value;
-    setProgress(value);
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = Number(e.target.value);
+    setProgress(Number(e.target.value));
   };
 
   const skip = (seconds: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += seconds;
-    }
+    if (videoRef.current) videoRef.current.currentTime += seconds;
   };
 
   const fmt = (t: number) => {
@@ -194,65 +153,24 @@ export function VideoPlayer({
     return `${m}:${s}`;
   };
 
-  const toggleFullscreen = () => {
-    // Exit floating mode when going fullscreen
-    if (isFloating) {
-      setIsFloating(false);
-      // Wait a frame for the expanded player to render, then go fullscreen
-      requestAnimationFrame(() => {
-        const container = containerRef.current;
-        if (container?.requestFullscreen) {
-          container.requestFullscreen();
-        }
-      });
-    } else {
-      const container = containerRef.current;
-      if (!container) return;
-
-      if (!isFullscreen) {
-        if (container.requestFullscreen) {
-          container.requestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
-    }
-  };
-
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
+  const toggleExpand = () => setIsExpanded(!isExpanded);
 
   const handleClose = () => {
-    // Track watch duration before closing
     if (watchStartTime.current > 0) {
-      const watchDuration = Math.floor((Date.now() - watchStartTime.current) / 1000);
       trackEvent('video_watch', {
         video_id: videoId,
-        title: title,
-        duration: watchDuration,
-        completed: progress >= duration * 0.9 // 90% completion
+        title,
+        duration: Math.floor((Date.now() - watchStartTime.current) / 1000),
+        completed: progress >= duration * 0.9
       });
-      watchStartTime.current = 0;
     }
-
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
     setIsPlaying(false);
     setProgress(0);
-    setMinimized(false);
+    setIsExpanded(false);
     onClose();
   };
 
@@ -262,400 +180,102 @@ export function VideoPlayer({
       toast({ description: "Please sign in to favorite videos", variant: "destructive" });
       return;
     }
-
     if (isFavorited) {
-      // Remove from favorites
-      const { error } = await supabase
-        .from('video_favorites')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('video_id', videoId);
-
-      if (error) {
-        toast({ description: "Failed to remove favorite", variant: "destructive" });
-      } else {
-        setIsFavorited(false);
-        toast({ description: "Removed from favorites" });
-      }
+      await supabase.from('video_favorites').delete().eq('user_id', user.id).eq('video_id', videoId);
+      setIsFavorited(false);
+      toast({ description: "Removed from favorites" });
     } else {
-      // Add to favorites
-      const { error } = await supabase
-        .from('video_favorites')
-        .insert({ user_id: user.id, video_id: videoId });
-
-      if (error) {
-        toast({ description: "Failed to add favorite", variant: "destructive" });
-      } else {
-        setIsFavorited(true);
-        toast({ description: "Added to favorites" });
-      }
+      await supabase.from('video_favorites').insert({ user_id: user.id, video_id: videoId });
+      setIsFavorited(true);
+      toast({ description: "Added to favorites" });
     }
   };
 
   const copyToClipboard = async () => {
-    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(`${window.location.origin}/videos?v=${videoId}`);
       toast({ description: "Link copied to clipboard" });
-    } catch (err) {
+    } catch {
       toast({ description: "Failed to copy link", variant: "destructive" });
     }
   };
 
-  const shareViaEmail = () => {
-    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out this video: ${shareUrl}`)}`;
-  };
-
-  const shareViaTwitter = () => {
-    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
-    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`, '_blank');
-  };
-
-  const shareViaFacebook = () => {
-    const shareUrl = `${window.location.origin}/videos?v=${videoId}`;
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
-  };
+  const shareViaEmail = () => window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out: ${window.location.origin}/videos?v=${videoId}`)}`;
+  const shareViaTwitter = () => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}&text=${encodeURIComponent(title)}`, '_blank');
+  const shareViaFacebook = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}`, '_blank');
 
   if (!isOpen) return null;
 
-  // Floating mini player (draggable PiP mode)
-  if (isFloating && !minimized) {
-    return (
-      <motion.div
-        drag
-        dragMomentum={false}
-        dragElastic={0}
-        dragConstraints={{ 
-          left: 0, 
-          right: typeof window !== 'undefined' ? window.innerWidth - 384 : 0, 
-          top: 0, 
-          bottom: typeof window !== 'undefined' ? window.innerHeight - 216 : 0 
-        }}
-        initial={{ x: 20, y: 20 }}
-        style={{ left: '20px', top: '20px' }}
-        onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
-        className="fixed w-96 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[9999] cursor-move"
-      >
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          poster={thumbnailUrl}
-          playsInline
-          onTimeUpdate={onTimeUpdate}
-          onClick={togglePlay}
-          className="w-full h-full object-contain cursor-pointer"
-        />
-        <div className="absolute top-2 right-2 flex gap-2 z-10">
-          <button 
-            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
-          >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
-            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
-            title="Fullscreen"
-          >
-            <Maximize className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleClose(); }}
-            className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
-            title="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="absolute bottom-2 left-2 right-2 text-white text-xs opacity-90 truncate px-2">
-          {title}
-        </div>
-      </motion.div>
-    );
-  }
-
   return (
-    <div
-      className={isFullscreen 
-        ? "fixed inset-0 z-[60] bg-black" 
-        : "fixed left-1/2 -translate-x-1/2 z-[60] w-full max-w-5xl px-4"
-      }
-      style={isFullscreen ? undefined : { bottom: bottomOffset }}
+    <motion.div
+      drag={!isExpanded}
+      dragMomentum={false}
+      dragElastic={0}
+      dragConstraints={!isExpanded ? { left: 0, right: window.innerWidth - 384, top: 0, bottom: window.innerHeight - 216 } : undefined}
+      initial={false}
+      animate={isExpanded ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } : { position: 'fixed', top: 20, left: 20, width: 384, height: 216, borderRadius: 12 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      ref={containerRef}
+      className={isExpanded ? "z-[9999] bg-black" : "z-[9999] bg-black rounded-xl shadow-2xl border border-white/20 cursor-move"}
+      style={!isExpanded ? { left: '20px', top: '20px' } : undefined}
+      onMouseMove={kickIdleTimer}
     >
-      {/* Minimized pill - only show when not fullscreen */}
-      <AnimatePresence>
-        {minimized && !isFullscreen && (
-          <motion.button
-            key="pill"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            onClick={() => setMinimized(false)}
-            className="mx-auto block rounded-full shadow-lg backdrop-blur bg-black/40 text-white px-4 py-2 text-sm hover:bg-black/60"
-          >
-            <div className="flex items-center gap-2">
-              <ChevronDown className="w-4 h-4 rotate-180" />
-              <span>Show player</span>
-              {title && <span className="opacity-80">– {title}</span>}
-            </div>
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* Main player card */}
-      <AnimatePresence>
-        {!minimized && (
-          <motion.div
-            key="card"
-            ref={containerRef}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            className={isFullscreen 
-              ? "w-full h-full bg-black flex flex-col" 
-              : "rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/80 backdrop-blur border border-white/10"
-            }
-            onMouseMove={kickIdleTimer}
-          >
-            <div 
-              className={isFullscreen 
-                ? "relative w-full h-full flex items-center justify-center bg-black" 
-                : isPortraitVideo
-                  ? "relative w-full max-w-md mx-auto aspect-[9/16] bg-black"
-                  : "relative w-full bg-black"
-              }
-              onClick={togglePlay}
-            >
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                poster={thumbnailUrl}
-                playsInline
-                className={isFullscreen 
-                  ? "w-full h-full object-contain" 
-                  : isPortraitVideo 
-                    ? "w-full h-full object-contain" 
-                    : shouldBeFullscreen
-                      ? "w-full h-[60vh] md:h-[70vh] object-contain bg-black"
-                      : "w-full h-[42vh] md:h-[50vh] object-cover"
-                }
-                onTimeUpdate={onTimeUpdate}
-                onPlay={() => { setIsPlaying(true); kickIdleTimer(); }}
-                onPause={() => { setIsPlaying(false); setShowUI(true); }}
-                onLoadedMetadata={onTimeUpdate}
-                controls={false}
-              />
-
-              {/* Auto-hide chrome */}
-              <AnimatePresence>
-                {showUI && (
-                  <motion.div
-                    key="chrome"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className={isFullscreen 
-                      ? "absolute inset-x-0 bottom-0 p-4 md:p-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent" 
-                      : "absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
-                    }
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="space-y-3">
-                      {/* Title - hide in fullscreen when UI is hidden */}
-                      {(!isFullscreen || showUI) && (
-                        <div>
-                          <h3 className="font-semibold text-white text-sm md:text-base">{title}</h3>
-                          <p className="text-xs text-white/70">{description}</p>
-                        </div>
-                      )}
-                      {/* Progress bar */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-white text-xs tabular-nums w-10 text-right">{fmt(progress)}</span>
-                        <input
-                          type="range"
-                          min={0}
-                          max={duration || 0}
-                          step={0.1}
-                          value={progress}
-                          onChange={onSeek}
-                          className="w-full accent-white"
-                        />
-                        <span className="text-white text-xs tabular-nums w-10">{fmt(duration)}</span>
-                      </div>
-
-                      {/* Controls */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => skip(-10)}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label="Skip back 10s"
-                          >
-                            <SkipBack className="w-4 h-4"/>
-                          </button>
-
-                          <button
-                            onClick={togglePlay}
-                            className="p-2 rounded-full bg-white hover:bg-white/90 text-black"
-                            aria-label={isPlaying ? "Pause" : "Play"}
-                          >
-                            {isPlaying ? <Pause className="w-5 h-5 fill-black"/> : <Play className="w-5 h-5 fill-black"/>}
-                          </button>
-
-                          <button
-                            onClick={() => skip(10)}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label="Skip forward 10s"
-                          >
-                            <SkipForward className="w-4 h-4"/>
-                          </button>
-
-                          <button
-                            onClick={toggleMute}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white ml-1"
-                            aria-label={muted ? "Unmute" : "Mute"}
-                          >
-                            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {/* Fullscreen toggle */}
-                          <button
-                            onClick={toggleFullscreen}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                          >
-                            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                          </button>
-
-                          {/* Floating mode toggle */}
-                          {!isFullscreen && (
-                            <button
-                              onClick={() => setIsFloating(true)}
-                              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                              aria-label="Float player"
-                              title="Minimize to floating player"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {/* Close */}
-                          <button
-                            onClick={handleClose}
-                            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            aria-label="Close player"
-                            title="Close"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* YouTube-style Action Buttons - Below video controls */}
-                      {(!isFullscreen || showUI) && (
-                        <div className="flex items-center gap-2 pt-3 border-t border-white/10">
-                          {/* Like button */}
-                          <button
-                            onClick={toggleFavorite}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
-                            aria-label={isFavorited ? "Unlike" : "Like"}
-                          >
-                            <ThumbsUp className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
-                            <span className="text-sm font-medium hidden sm:inline">{isFavorited ? 'Liked' : 'Like'}</span>
-                          </button>
-
-                          {/* Comment button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowComments(!showComments);
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
-                            aria-label="Comments"
-                          >
-                            <MessageSquare className="w-5 h-5" />
-                            <span className="text-sm font-medium hidden sm:inline">Comment</span>
-                          </button>
-
-                          {/* Share button */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
-                                aria-label="Share"
-                              >
-                                <Share2 className="w-5 h-5" />
-                                <span className="text-sm font-medium hidden sm:inline">Share</span>
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-zinc-900/95 border-white/10 backdrop-blur-sm z-[70]">
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  copyToClipboard();
-                                }}
-                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
-                              >
-                                <Link className="w-4 h-4 mr-2" />
-                                Copy link
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  shareViaEmail();
-                                }}
-                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
-                              >
-                                <Mail className="w-4 h-4 mr-2" />
-                                Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  shareViaTwitter();
-                                }}
-                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
-                              >
-                                <Twitter className="w-4 h-4 mr-2" />
-                                Twitter
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  shareViaFacebook();
-                                }}
-                                className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10"
-                              >
-                                <Facebook className="w-4 h-4 mr-2" />
-                                Facebook
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Video Comments Section - Rendered outside showUI to prevent auto-hide */}
-              <VideoComments 
-                videoId={videoId} 
-                showComments={showComments}
-                onToggleComments={() => setShowComments(!showComments)}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      <div className={isExpanded ? "relative w-full h-full flex items-center justify-center" : "relative w-full h-full"}>
+        <video ref={videoRef} src={videoUrl} poster={thumbnailUrl} playsInline onTimeUpdate={onTimeUpdate} onClick={togglePlay}
+          className={isExpanded ? (isPortraitVideo ? "h-full object-contain" : "w-full h-full object-contain") : "w-full h-full object-cover cursor-pointer"} />
+        
+        <AnimatePresence>
+          {(showUI || !isPlaying) && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none">
+              <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between pointer-events-auto">
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold text-sm md:text-lg">{title}</h3>
+                  {description && isExpanded && <p className="text-white/80 text-xs md:text-sm mt-1 line-clamp-2">{description}</p>}
+                </div>
+                <div className="flex gap-2 ml-4">
+                  {isExpanded && <button onClick={toggleExpand} className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors" title="Minimize"><ChevronDown className="w-5 h-5" /></button>}
+                  <button onClick={handleClose} className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors" title="Close"><X className="w-5 h-5" /></button>
+                </div>
+              </div>
+              {!isPlaying && <button onClick={togglePlay} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-4 rounded-full bg-primary/80 hover:bg-primary text-white transition-all hover:scale-110 pointer-events-auto"><Play className="w-8 h-8 md:w-12 md:h-12" /></button>}
+              <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-auto">
+                <div className="mb-3">
+                  <input type="range" min="0" max={duration || 100} value={progress} onChange={onSeek} className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer" />
+                  <div className="flex justify-between text-xs text-white/80 mt-1"><span>{fmt(progress)}</span><span>{fmt(duration)}</span></div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => skip(-10)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><SkipBack className="w-5 h-5" /></button>
+                    <button onClick={togglePlay} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}</button>
+                    <button onClick={() => skip(10)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><SkipForward className="w-5 h-5" /></button>
+                    <button onClick={toggleMute} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isExpanded && <button onClick={toggleExpand} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors" title="Expand"><Maximize className="w-5 h-5" /></button>}
+                    {isExpanded && (
+                      <>
+                        <button onClick={toggleFavorite} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><Heart className={`w-5 h-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} /></button>
+                        <button onClick={() => setShowComments(!showComments)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><MessageSquare className="w-5 h-5" /></button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><Share2 className="w-5 h-5" /></button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover text-popover-foreground">
+                            <DropdownMenuItem onClick={copyToClipboard} className="cursor-pointer"><Link className="w-4 h-4 mr-2" />Copy link</DropdownMenuItem>
+                            <DropdownMenuItem onClick={shareViaEmail} className="cursor-pointer"><Mail className="w-4 h-4 mr-2" />Share via email</DropdownMenuItem>
+                            <DropdownMenuItem onClick={shareViaTwitter} className="cursor-pointer"><Twitter className="w-4 h-4 mr-2" />Share on X</DropdownMenuItem>
+                            <DropdownMenuItem onClick={shareViaFacebook} className="cursor-pointer"><Facebook className="w-4 h-4 mr-2" />Share on Facebook</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      {isExpanded && <VideoComments videoId={videoId} showComments={showComments} onToggleComments={() => setShowComments(!showComments)} />}
+    </motion.div>
   );
 }
