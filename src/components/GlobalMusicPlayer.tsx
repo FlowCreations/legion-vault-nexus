@@ -13,6 +13,8 @@ export function GlobalMusicPlayer() {
   const { trackEvent } = useEventTracking();
   const { newMilestone, clearMilestone } = useMilestoneProgress();
   const listenStartTime = useRef<number>(0);
+  const progressMilestones = useRef<Set<number>>(new Set());
+  const lastTrackId = useRef<string | null>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -104,17 +106,46 @@ export function GlobalMusicPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
 
+    const handleTimeUpdate = () => {
+      if (!currentTrack || !audio.duration) return;
+      
+      const currentTime = audio.currentTime;
+      const duration = audio.duration;
+      const completionPercent = (currentTime / duration) * 100;
+      const milestones = [25, 50, 75];
+      
+      milestones.forEach(milestone => {
+        if (completionPercent >= milestone && !progressMilestones.current.has(milestone)) {
+          progressMilestones.current.add(milestone);
+          trackEvent('music_progress', {
+            track_id: currentTrack.id,
+            title: currentTrack.title,
+            artist: currentTrack.artist,
+            album: currentTrack.album,
+            duration: Math.floor(duration),
+            current_time: Math.floor(currentTime),
+            completion_percent: milestone,
+            listen_duration: Math.floor((Date.now() - listenStartTime.current) / 1000)
+          });
+        }
+      });
+    };
+
     const handleEnded = () => {
       // Track listen duration when track ends
       if (listenStartTime.current > 0 && currentTrack) {
         const listenDuration = Math.floor((Date.now() - listenStartTime.current) / 1000);
-        trackEvent('music_listen', {
+        trackEvent('music_complete', {
           track_id: currentTrack.id,
           title: currentTrack.title,
-          duration: listenDuration,
-          completed: true
+          artist: currentTrack.artist,
+          album: currentTrack.album,
+          duration: Math.floor(audio.duration || 0),
+          listen_duration: listenDuration,
+          completion_percent: 100
         });
         listenStartTime.current = 0;
+        progressMilestones.current.clear();
         
         // Increment song listen count for survey trigger
         incrementSongListenCount();
@@ -125,12 +156,17 @@ export function GlobalMusicPlayer() {
     
     const handlePause = () => {
       // Track partial listen on pause
-      if (listenStartTime.current > 0 && currentTrack) {
+      if (listenStartTime.current > 0 && currentTrack && audio.duration) {
         const listenDuration = Math.floor((Date.now() - listenStartTime.current) / 1000);
+        const completionPercent = (audio.currentTime / audio.duration) * 100;
         trackEvent('music_listen', {
           track_id: currentTrack.id,
           title: currentTrack.title,
-          duration: listenDuration,
+          artist: currentTrack.artist,
+          album: currentTrack.album,
+          duration: Math.floor(audio.duration),
+          listen_duration: listenDuration,
+          completion_percent: Math.floor(completionPercent),
           completed: false
         });
         listenStartTime.current = 0;
@@ -141,18 +177,34 @@ export function GlobalMusicPlayer() {
     const handlePlay = () => {
       listenStartTime.current = Date.now();
       setIsPlaying(true);
+      
+      // Track skip if this is a different track than the last one and it started quickly
+      if (currentTrack && lastTrackId.current && lastTrackId.current !== currentTrack.id) {
+        trackEvent('music_skip', {
+          from_track_id: lastTrackId.current,
+          to_track_id: currentTrack.id,
+          to_title: currentTrack.title,
+          to_artist: currentTrack.artist
+        });
+      }
+      
+      if (currentTrack) {
+        lastTrackId.current = currentTrack.id;
+      }
     };
 
+    audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('play', handlePlay);
 
     return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('play', handlePlay);
     };
-  }, []);
+  }, [currentTrack]);
 
   return (
     <>

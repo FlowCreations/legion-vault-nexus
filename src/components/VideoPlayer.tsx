@@ -47,6 +47,7 @@ export function VideoPlayer({
   const { toast } = useToast();
   const { trackEvent } = useEventTracking();
   const watchStartTime = useRef<number>(0);
+  const progressMilestones = useRef<Set<number>>(new Set());
 
   const isPortraitVideo = category === 'behind_the_scenes' || category === 'performances';
 
@@ -114,8 +115,31 @@ export function VideoPlayer({
 
   const onTimeUpdate = () => {
     if (!videoRef.current) return;
-    setProgress(videoRef.current.currentTime);
-    setDuration(videoRef.current.duration || 0);
+    const currentTime = videoRef.current.currentTime;
+    const videoDuration = videoRef.current.duration || 0;
+    setProgress(currentTime);
+    setDuration(videoDuration);
+    
+    // Track progress milestones
+    if (videoDuration > 0) {
+      const completionPercent = (currentTime / videoDuration) * 100;
+      const milestones = [25, 50, 75, 100];
+      
+      milestones.forEach(milestone => {
+        if (completionPercent >= milestone && !progressMilestones.current.has(milestone)) {
+          progressMilestones.current.add(milestone);
+          trackEvent('video_progress', {
+            video_id: videoId,
+            title,
+            category,
+            duration: Math.floor(videoDuration),
+            current_time: Math.floor(currentTime),
+            completion_percent: milestone,
+            watch_duration: Math.floor((Date.now() - watchStartTime.current) / 1000)
+          });
+        }
+      });
+    }
   };
 
   const togglePlay = () => {
@@ -156,21 +180,29 @@ export function VideoPlayer({
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
   const handleClose = () => {
-    if (watchStartTime.current > 0) {
+    if (videoRef.current) {
+      const watchDuration = Math.floor((Date.now() - watchStartTime.current) / 1000);
+      const completionPercent = duration > 0 ? (progress / duration) * 100 : 0;
+      
       trackEvent('video_watch', {
         video_id: videoId,
         title,
-        duration: Math.floor((Date.now() - watchStartTime.current) / 1000),
-        completed: progress >= duration * 0.9
+        category,
+        duration: Math.floor(duration),
+        watch_duration: watchDuration,
+        completion_percent: Math.floor(completionPercent),
+        completed: completionPercent >= 95
       });
-    }
-    if (videoRef.current) {
+      
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
     setIsPlaying(false);
     setProgress(0);
     setIsExpanded(false);
+    setShowComments(false);
+    progressMilestones.current.clear();
+    watchStartTime.current = 0;
     onClose();
   };
 
@@ -222,8 +254,28 @@ export function VideoPlayer({
       onMouseMove={kickIdleTimer}
     >
       <div className={isExpanded ? "relative w-full h-full flex items-center justify-center" : "relative w-full h-full"}>
-        <video ref={videoRef} src={videoUrl} poster={thumbnailUrl} playsInline onTimeUpdate={onTimeUpdate} onClick={togglePlay}
-          className={isExpanded ? (isPortraitVideo ? "h-full object-contain" : "w-full h-full object-contain") : "w-full h-full object-cover cursor-pointer"} />
+        <video 
+          ref={videoRef} 
+          src={videoUrl} 
+          poster={thumbnailUrl} 
+          playsInline 
+          onTimeUpdate={onTimeUpdate} 
+          onClick={togglePlay}
+          onEnded={() => {
+            setIsPlaying(false);
+            const watchDuration = Math.floor((Date.now() - watchStartTime.current) / 1000);
+            trackEvent('video_complete', {
+              video_id: videoId,
+              title,
+              category,
+              duration: Math.floor(duration),
+              watch_duration: watchDuration,
+              completion_percent: 100
+            });
+            kickIdleTimer();
+          }}
+          className={isExpanded ? (isPortraitVideo ? "h-full object-contain" : "w-full h-full object-contain") : "w-full h-full object-cover cursor-pointer"} 
+        />
         
         <AnimatePresence>
           {(showUI || !isPlaying) && (
