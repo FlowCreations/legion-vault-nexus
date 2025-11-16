@@ -61,8 +61,7 @@ export function VideoPlayer({
   // Debug: Log when props change
   useEffect(() => {
     console.log('VideoPlayer mounted/updated - isOpen:', isOpen, 'videoUrl:', videoUrl, 'title:', title);
-    console.log('isFloating:', isFloating, 'minimized:', minimized);
-  }, [isOpen, videoUrl, title, isFloating, minimized]);
+  }, [isOpen, videoUrl, title]);
 
   // Auto-hide UI when playing and user is idle (but not when comments are open)
   const kickIdleTimer = () => {
@@ -198,16 +197,28 @@ export function VideoPlayer({
   };
 
   const toggleFullscreen = () => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    if (!isFullscreen) {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
-      }
+    // Exit floating mode when going fullscreen
+    if (isFloating) {
+      setIsFloating(false);
+      // Wait a frame for the expanded player to render, then go fullscreen
+      requestAnimationFrame(() => {
+        const container = containerRef.current;
+        if (container?.requestFullscreen) {
+          container.requestFullscreen();
+        }
+      });
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
+      const container = containerRef.current;
+      if (!container) return;
+
+      if (!isFullscreen) {
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
       }
     }
   };
@@ -312,7 +323,6 @@ export function VideoPlayer({
 
   // Floating mini player (draggable PiP mode)
   if (isFloating && !minimized) {
-    console.log('Rendering floating player at position:', floatingPosition);
     return (
       <motion.div
         drag
@@ -327,7 +337,7 @@ export function VideoPlayer({
         initial={{ x: 20, y: 20 }}
         style={{ left: '20px', top: '20px' }}
         onDragEnd={(_, info) => setFloatingPosition({ x: info.point.x, y: info.point.y })}
-        className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border-4 border-red-500 z-[9999] cursor-move"
+        className="fixed w-80 aspect-video bg-black rounded-xl shadow-2xl overflow-hidden border border-white/20 z-[9999] cursor-move"
       >
         <video
           ref={videoRef}
