@@ -205,6 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
         to: [user.email],
         subject,
         html,
+        reply_to: 'hello@sonsoflegion.com',
       }),
     });
 
