@@ -78,6 +78,17 @@ serve(async (req) => {
         const user = userData.users.find(u => u.email === customerEmail);
 
         if (user) {
+          // Determine membership tier from product name
+          let membershipTier = 'free';
+          const productNameLower = product.name.toLowerCase();
+          if (productNameLower.includes('rebel')) {
+            membershipTier = 'rebel';
+          } else if (productNameLower.includes('outlaw')) {
+            membershipTier = 'outlaw';
+          } else if (productNameLower.includes('legionnaire')) {
+            membershipTier = 'legionnaire';
+          }
+
           const { error: updateError } = await supabase
             .from('user_profiles')
             .update({
@@ -85,6 +96,7 @@ serve(async (req) => {
               subscription_plan: product.name,
               subscription_id: subscription.id,
               stripe_customer_id: customerId,
+              membership_tier: membershipTier,
               trial_end_date: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
               billing_cycle_anchor: new Date(subscription.current_period_end * 1000).toISOString(),
               subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -94,7 +106,7 @@ serve(async (req) => {
           if (updateError) {
             console.error("Error updating user profile:", updateError);
           } else {
-            console.log("User profile updated with subscription data");
+            console.log("User profile updated with subscription data and tier:", membershipTier);
           }
         }
 
@@ -261,28 +273,68 @@ serve(async (req) => {
     // Handle customer.subscription.updated event (plan changes)
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
+      console.log("Processing subscription update:", subscription.id);
+
+      // Get customer details
+      const customer = await stripe.customers.retrieve(subscription.customer as string);
+      const customerEmail = (customer as Stripe.Customer).email;
+
+      if (!customerEmail) {
+        console.error("No customer email found");
+        return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
+      }
+
+      // Get user by email
+      const { data: userData } = await supabase.auth.admin.listUsers();
+      const user = userData.users.find(u => u.email === customerEmail);
+
+      if (user) {
+        // Get product details
+        const priceItem = subscription.items.data[0];
+        const product = await stripe.products.retrieve(
+          typeof priceItem.price.product === 'string' 
+            ? priceItem.price.product 
+            : priceItem.price.product.id
+        );
+
+        // Determine membership tier
+        let membershipTier = 'free';
+        const productNameLower = product.name.toLowerCase();
+        if (productNameLower.includes('rebel')) {
+          membershipTier = 'rebel';
+        } else if (productNameLower.includes('outlaw')) {
+          membershipTier = 'outlaw';
+        } else if (productNameLower.includes('legionnaire')) {
+          membershipTier = 'legionnaire';
+        }
+
+        // Update user profile
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({
+            subscription_status: subscription.status,
+            subscription_plan: product.name,
+            membership_tier: membershipTier,
+            subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          })
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          console.error("Error updating user profile on subscription update:", updateError);
+        } else {
+          console.log("User profile updated on subscription change");
+        }
+      }
+
       const previousAttributes = event.data.previous_attributes as any;
       
       // Check if items changed (indicating a plan change)
       if (previousAttributes?.items?.data && previousAttributes.items.data.length > 0) {
         console.log("Processing subscription plan change:", subscription.id);
 
-        // Supabase client already initialized at top
-
-        // Initialize Stripe to get customer details
-        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-        if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-        const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-        // Get customer details
         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
         const customerEmail = customer.email;
         const customerName = customer.name || customer.email?.split('@')[0] || "Member";
-        
-        if (!customerEmail) {
-          console.error("No customer email found for subscription update");
-          return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
-        }
 
         // Get current plan details
         const currentItem = subscription.items.data[0];
@@ -324,12 +376,12 @@ serve(async (req) => {
         } else {
           console.log("Plan change confirmation email triggered for:", customerEmail);
         }
-
-        return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
       }
+
+      return new Response(JSON.stringify({ received: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     // Handle customer.subscription.deleted event (cancellation)
@@ -337,8 +389,6 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       
       console.log("Processing subscription cancellation:", subscription.id);
-
-      // Supabase client already initialized at top
 
       // Get customer details
       const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
@@ -348,6 +398,28 @@ serve(async (req) => {
       if (!customerEmail) {
         console.error("No customer email found for subscription cancellation");
         return new Response(JSON.stringify({ error: "No customer email" }), { status: 400 });
+      }
+
+      // Update user profile - reset to free tier
+      const { data: userData } = await supabase.auth.admin.listUsers();
+      const user = userData.users.find(u => u.email === customerEmail);
+
+      if (user) {
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({
+            subscription_status: 'cancelled',
+            membership_tier: 'free',
+            subscription_plan: null,
+            subscription_id: null,
+          })
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          console.error("Error updating user profile on cancellation:", updateError);
+        } else {
+          console.log("User profile updated to free tier on subscription cancellation");
+        }
       }
 
       // Get plan details
