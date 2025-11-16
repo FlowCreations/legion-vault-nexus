@@ -108,6 +108,31 @@ serve(async (req) => {
           } else {
             console.log("User profile updated with subscription data and tier:", membershipTier);
           }
+
+          // Send subscription created email
+          try {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('email, first_name, display_name')
+              .eq('user_id', user.id)
+              .single();
+
+            if (profile?.email) {
+              await supabase.functions.invoke('send-subscription-emails', {
+                body: {
+                  email: profile.email,
+                  firstName: profile.first_name || profile.display_name || 'Member',
+                  eventType: 'subscription_created',
+                  planName: product.name,
+                  amount: session.amount_total,
+                  nextBillingDate: new Date(subscription.current_period_end * 1000).toISOString()
+                }
+              });
+              console.log('Subscription created email sent to:', profile.email);
+            }
+          } catch (emailError) {
+            console.error('Error sending subscription created email:', emailError);
+          }
         }
 
         // Send admin notification email
