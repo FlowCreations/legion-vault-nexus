@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
 import { useMusicTracks } from "@/hooks/useMusicTracks";
 import { usePagePerformance } from "@/hooks/usePagePerformance";
+import { MusicGridSkeleton, HeroSkeleton } from "@/components/ui/skeleton-loaders";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
 import acousticAlbum from "@/assets/acoustic-album.jpg";

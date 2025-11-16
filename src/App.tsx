@@ -59,10 +59,21 @@ const SmartCampaignBuilder = lazy(() => import("./pages/SmartCampaignBuilder"));
 const Orders = lazy(() => import("./pages/Orders"));
 
 
-// Optimized loading fallback component
+// Optimized loading fallback component with skeleton
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-full max-w-7xl px-4 space-y-8">
+      <div className="h-[60vh] bg-muted animate-pulse rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="space-y-3">
+            <div className="h-48 bg-muted animate-pulse rounded-lg" />
+            <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+            <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 
@@ -77,7 +88,6 @@ const App = () => {
   
   // Initialize Agent
   useAgent({ enabled: true, checkInterval: 5 });
-
   useEffect(() => {
     // Only run once per session using ref
     if (pixelInitialized.current) return;
@@ -105,7 +115,7 @@ const App = () => {
           initMetaPixel(pixelId);
         }
       } catch (error) {
-        console.error("[App] Error initializing Meta Pixel:", error);
+        // Meta Pixel initialization failed silently
       }
     };
 

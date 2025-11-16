@@ -24,6 +24,7 @@ import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useTranslation } from "react-i18next";
 import { useVideos, useHeroVideo, useFavoriteVideos } from "@/hooks/useVideos";
 import { usePagePerformance } from "@/hooks/usePagePerformance";
+import { VideoGridSkeleton, HeroSkeleton } from "@/components/ui/skeleton-loaders";
 
 interface VideoItem {
   id: string;
@@ -50,12 +51,6 @@ export default function Videos() {
   const [isShuffled, setIsShuffled] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
   const [showLikedOnly, setShowLikedOnly] = useState(false);
-
-  // Debug: Log when selectedVideo changes
-  useEffect(() => {
-    console.log('selectedVideo state changed:', selectedVideo);
-    console.log('selectedVideoUrl state changed:', selectedVideoUrl);
-  }, [selectedVideo, selectedVideoUrl]);
 
   // Use React Query hooks for data fetching with caching
   const { data: heroVideoUrl = '', isLoading: heroLoading } = useHeroVideo();
@@ -180,59 +175,61 @@ export default function Videos() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Trailer Section - Apple TV Style */}
-      <div className="relative h-screen w-full overflow-hidden">
-        <div className="absolute inset-0 bg-black">
-          <video
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover"
-            src={heroVideoUrl}
-            autoPlay
-            muted
-            loop
-            playsInline
-          />
-        </div>
-        
-        {/* Gradient Overlay - Subtle bottom fade */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
-        {/* Hero Content - Bottom left like Apple TV */}
-        <div className="absolute inset-0 flex items-end justify-start pl-4 sm:pl-6 lg:pl-8 pr-8 pb-8 sm:pb-10 lg:pb-12">
-          <div className="max-w-xl">
-            {isAuthenticated ? (
-              <>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
-                  {t('videos.hero.welcome')}
-                </h1>
-                <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
-                  {t('videos.hero.subtitle')}
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
-                  {t('videos.hero.enter')}
-                </h1>
-                <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
-                  {t('videos.hero.subtitle')}
-                </p>
-                <div className="flex flex-col items-start gap-3">
-                  <Button 
-                    size="lg" 
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-sm rounded-lg shadow-lg gold-glow transition-all"
-                    onClick={() => navigate('/subscribe')}
-                  >
-                    {t('videos.hero.acceptFreeTrial')}
-                  </Button>
-                  <p className="text-xs text-gray-300">
-                    {t('videos.hero.freeTrialNote')}
+      {/* Hero Trailer Section */}
+      {heroLoading ? (
+        <HeroSkeleton />
+      ) : (
+        <div className="relative h-screen w-full overflow-hidden">
+          <div className="absolute inset-0 bg-black">
+            <video
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover"
+              src={heroVideoUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          </div>
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          <div className="absolute inset-0 flex items-end justify-start pl-4 sm:pl-6 lg:pl-8 pr-8 pb-8 sm:pb-10 lg:pb-12">
+            <div className="max-w-xl">
+              {isAuthenticated ? (
+                <>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
+                    {t('videos.hero.welcome')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
+                    {t('videos.hero.subtitle')}
                   </p>
-                </div>
-              </>
-            )}
+                </>
+              ) : (
+                <>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white leading-tight">
+                    {t('videos.hero.enter')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-gray-200 mb-6 max-w-md">
+                    {t('videos.hero.subtitle')}
+                  </p>
+                  <div className="flex flex-col items-start gap-3">
+                    <Button 
+                      size="lg" 
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-sm rounded-lg shadow-lg gold-glow transition-all"
+                      onClick={() => navigate('/subscribe')}
+                    >
+                      {t('videos.hero.acceptFreeTrial')}
+                    </Button>
+                    <p className="text-xs text-gray-300">
+                      {t('videos.hero.freeTrialNote')}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
 
       {/* Auth/Subscribe Dialog */}
@@ -287,7 +284,6 @@ export default function Videos() {
       <div className="px-4 sm:px-8 lg:px-12 pt-20 pb-16 space-y-12">
         {/* Filter Controls */}
         <div className="flex items-center justify-end gap-6 pb-4">
-          {/* Favourites Filter */}
           <div className="flex items-center gap-3">
             <Heart className={`w-4 h-4 transition-all duration-300 ${showLikedOnly ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
             <span className="text-sm font-medium">Favourites</span>
@@ -297,7 +293,6 @@ export default function Videos() {
             />
           </div>
 
-          {/* Shuffle Toggle */}
           <div className="flex items-center gap-3">
             <Shuffle className={`w-4 h-4 transition-all duration-300 ${isShuffled ? 'text-primary' : 'text-muted-foreground'}`} />
             <span className="text-sm font-medium">Shuffle</span>
@@ -309,7 +304,9 @@ export default function Videos() {
           </div>
         </div>
 
-        {showLikedOnly && favoriteVideos.length === 0 ? (
+        {videosLoading ? (
+          <VideoGridSkeleton />
+        ) : showLikedOnly && favoriteVideos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Heart className="w-16 h-16 text-white/20 mb-4" />
             <h3 className="text-2xl font-bold text-white mb-2">Your Favourite Videos Are Stored</h3>
@@ -319,7 +316,6 @@ export default function Videos() {
           </div>
         ) : (
           <>
-            {/* Music Videos Row - Only show if has items or not in liked mode */}
             {(!showLikedOnly || musicVideos.length > 0) && (
               <ContentRow
                 title={t('videos.rows.musicVideos')}
@@ -331,7 +327,6 @@ export default function Videos() {
               />
             )}
 
-            {/* Performances Row */}
             {(!showLikedOnly || performances.length > 0) && (
               <ContentRow
                 title={t('videos.rows.performances')}
@@ -343,7 +338,6 @@ export default function Videos() {
               />
             )}
 
-            {/* BTS Row */}
             {(!showLikedOnly || behindTheScenes.length > 0) && (
               <ContentRow
                 title={t('videos.rows.behindTheScenes')}
@@ -355,7 +349,6 @@ export default function Videos() {
               />
             )}
 
-            {/* Documentary Row */}
             {(!showLikedOnly || documentary.length > 0) && (
               <ContentRow
                 title={t('videos.rows.documentary')}
