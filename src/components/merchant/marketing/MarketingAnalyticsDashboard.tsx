@@ -37,8 +37,8 @@ export const MarketingAnalyticsDashboard = () => {
     try {
       // Get events summary
       const { data: eventStats } = await supabase
-        .from('events')
-        .select('type, member_id, created_at')
+        .from('user_events')
+        .select('event_type, user_id, created_at')
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       // Get PTP score distribution
@@ -47,18 +47,18 @@ export const MarketingAnalyticsDashboard = () => {
         .select('ptp_status, watch_time, listen_time');
 
       // Process data
-      const uniqueUsers = new Set(eventStats?.map(e => e.member_id) || []).size;
+      const uniqueUsers = new Set(eventStats?.map(e => e.user_id) || []).size;
       const videoViews = eventStats?.filter(e => 
-        e.type === 'watch_start' || e.type === 'watch_complete'
+        e.event_type === 'video_view' || e.event_type === 'video_watch' || e.event_type === 'video_complete'
       ).length || 0;
       const musicPlays = eventStats?.filter(e => 
-        e.type === 'listen_start' || e.type === 'listen_complete'
+        e.event_type === 'music_play' || e.event_type === 'music_listen' || e.event_type === 'music_complete'
       ).length || 0;
 
       // Count event types
       const eventCounts: Record<string, number> = {};
       eventStats?.forEach(e => {
-        eventCounts[e.type] = (eventCounts[e.type] || 0) + 1;
+        eventCounts[e.event_type] = (eventCounts[e.event_type] || 0) + 1;
       });
 
       const topEvents = Object.entries(eventCounts)
@@ -89,8 +89,8 @@ export const MarketingAnalyticsDashboard = () => {
         ptpScores,
         topEvents,
         recentActivity: (eventStats || []).slice(0, 10).map(e => ({
-          user_id: e.member_id || 'Anonymous',
-          type: e.type,
+          user_id: e.user_id || 'Anonymous',
+          type: e.event_type,
           created_at: e.created_at,
         })),
       });
