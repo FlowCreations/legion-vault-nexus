@@ -143,8 +143,8 @@ async function sendAutomationEmail(step: any, stepConfig: any, supabase: any) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'JRNY <onboarding@resend.dev>',
-        to: [profile.user_id],
+        from: 'Sons of Legion <hello@sonsoflegion.com>',
+        to: [profile.email],
         subject: renderedSubject,
         html: renderedBody,
       }),

@@ -69,7 +69,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'JRNY <onboarding@resend.dev>',
+            from: 'Sons of Legion <hello@sonsoflegion.com>',
             to: [email],
             subject: campaign.subject,
             html: personalizedBody,
