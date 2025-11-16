@@ -1211,6 +1211,106 @@ export type Database = {
           },
         ]
       }
+      campaign_performance: {
+        Row: {
+          campaign_id: string | null
+          conversion_rate: number | null
+          id: string
+          location_breakdown: Json | null
+          revenue_generated: number | null
+          total_clicked: number | null
+          total_converted: number | null
+          total_opened: number | null
+          total_sent: number | null
+          total_targeted: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          conversion_rate?: number | null
+          id?: string
+          location_breakdown?: Json | null
+          revenue_generated?: number | null
+          total_clicked?: number | null
+          total_converted?: number | null
+          total_opened?: number | null
+          total_sent?: number | null
+          total_targeted?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          conversion_rate?: number | null
+          id?: string
+          location_breakdown?: Json | null
+          revenue_generated?: number | null
+          total_clicked?: number | null
+          total_converted?: number | null
+          total_opened?: number | null
+          total_sent?: number | null
+          total_targeted?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_performance_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "smart_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_targets: {
+        Row: {
+          campaign_id: string | null
+          clicked_at: string | null
+          converted_at: string | null
+          created_at: string | null
+          engagement_score: number | null
+          id: string
+          opened_at: string | null
+          predicted_conversion_probability: number | null
+          sent_at: string | null
+          targeting_reasons: Json
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          clicked_at?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          engagement_score?: number | null
+          id?: string
+          opened_at?: string | null
+          predicted_conversion_probability?: number | null
+          sent_at?: string | null
+          targeting_reasons: Json
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          clicked_at?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          engagement_score?: number | null
+          id?: string
+          opened_at?: string | null
+          predicted_conversion_probability?: number | null
+          sent_at?: string | null
+          targeting_reasons?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_targets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "smart_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_sessions: {
         Row: {
           cart_items: Json
@@ -4342,6 +4442,60 @@ export type Database = {
           },
         ]
       }
+      smart_campaigns: {
+        Row: {
+          ai_analysis: Json | null
+          campaign_type: string
+          created_at: string | null
+          created_by: string | null
+          event_date: string | null
+          event_location: Json | null
+          goal: string
+          id: string
+          min_loyalty_score: number | null
+          ptp_max: number | null
+          ptp_min: number | null
+          status: string | null
+          target_count: number | null
+          target_radius_miles: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          campaign_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          event_date?: string | null
+          event_location?: Json | null
+          goal: string
+          id?: string
+          min_loyalty_score?: number | null
+          ptp_max?: number | null
+          ptp_min?: number | null
+          status?: string | null
+          target_count?: number | null
+          target_radius_miles?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          campaign_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          event_date?: string | null
+          event_location?: Json | null
+          goal?: string
+          id?: string
+          min_loyalty_score?: number | null
+          ptp_max?: number | null
+          ptp_min?: number | null
+          status?: string | null
+          target_count?: number | null
+          target_radius_miles?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sms_sends: {
         Row: {
           campaign_id: string | null
@@ -5593,6 +5747,10 @@ export type Database = {
     }
     Functions: {
       archive_old_events: { Args: never; Returns: number }
+      calculate_distance_miles: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       compute_community_analytics: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
       has_role: {
