@@ -58,8 +58,14 @@ export const useVideoComments = (videoId: string) => {
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!user) throw new Error('Must be logged in to comment');
+      console.log('Starting comment submission...', { videoId, userId: user?.id, content });
       
+      if (!user) {
+        console.error('No user found');
+        throw new Error('Must be logged in to comment');
+      }
+      
+      console.log('Inserting comment into database...');
       const { data, error } = await supabase
         .from('video_comments')
         .insert({
@@ -70,11 +76,17 @@ export const useVideoComments = (videoId: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Failed to insert comment:', error);
+        throw error;
+      }
+      
+      console.log('Comment inserted successfully:', data);
 
       // Track comment event for analytics (don't block on this)
       try {
-        await supabase.from('events').insert([{
+        console.log('Tracking comment event...');
+        const { error: eventError } = await supabase.from('events').insert([{
           member_id: user.id,
           content_id: videoId,
           type: 'comment',
@@ -82,13 +94,19 @@ export const useVideoComments = (videoId: string) => {
             comment_length: content.length,
           },
         }]);
+        if (eventError) {
+          console.warn('Failed to track comment event:', eventError);
+        } else {
+          console.log('Event tracked successfully');
+        }
       } catch (err) {
-        console.warn('Failed to track comment event:', err);
+        console.warn('Exception tracking comment event:', err);
       }
 
       return data;
     },
     onSuccess: () => {
+      console.log('Comment mutation succeeded, invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['video-comments', videoId] });
       toast({
         title: 'Comment posted',
@@ -96,6 +114,7 @@ export const useVideoComments = (videoId: string) => {
       });
     },
     onError: (error: Error) => {
+      console.error('Comment mutation failed:', error);
       toast({
         title: 'Failed to post comment',
         description: error.message,
