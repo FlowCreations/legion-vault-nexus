@@ -431,6 +431,56 @@ export async function computePTP(
       addBehavior('cost_of_living_adjusted');
     }
   }
+
+  // ============= PAYDAY PATTERN INTELLIGENCE =============
+  const paydayPattern = profile?.payday_pattern as any;
+  const likelyPaydays = (profile?.likely_payday_dates || []) as number[];
+  const paydayConfidence = profile?.payday_confidence_score || 0;
+  const payrollCycle = profile?.payroll_cycle_type;
+
+  if (paydayPattern?.detected && paydayConfidence >= 40 && profile?.allow_economic_profiling !== false) {
+    // Behavior: Payday pattern identified
+    addBehavior('payday_detected');
+
+    // Check if user is near payday window
+    const today = new Date();
+    const currentDay = today.getDate();
+    
+    const isNearPayday = likelyPaydays.some(payday => {
+      const diff = currentDay - payday;
+      return diff >= 0 && diff <= 3; // 0-3 days after payday
+    });
+
+    const isPrePayday = likelyPaydays.some(payday => {
+      const diff = payday - currentDay;
+      return diff >= 1 && diff <= 5; // 1-5 days before payday
+    });
+
+    if (isNearPayday) {
+      addBehavior('near_payday'); // +15 points
+      addBehavior('post_payday_purchaser'); // +12 points
+    } else if (isPrePayday) {
+      addBehavior('pre_payday_contacted'); // -5 points
+    }
+
+    // Biweekly bonus
+    if (payrollCycle === 'biweekly') {
+      addBehavior('biweekly_payday'); // +10 points
+    }
+
+    // Proximity boost - additional points based on days since payday
+    if (isNearPayday) {
+      const daysSincePayday = likelyPaydays
+        .map(payday => currentDay - payday)
+        .filter(diff => diff >= 0 && diff <= 3)
+        .sort((a, b) => a - b)[0];
+      
+      if (daysSincePayday !== undefined) {
+        const proximityBoost = Math.floor((3 - daysSincePayday) * 3);
+        totalScore += proximityBoost;
+      }
+    }
+  }
   
   // Clamp to 0-100
   totalScore = Math.max(0, Math.min(100, totalScore));
