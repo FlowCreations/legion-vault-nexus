@@ -5552,8 +5552,10 @@ export type Database = {
           last_livestream_reaction: string | null
           last_login: string | null
           last_login_date: string | null
+          last_payday_analysis: string | null
           last_ptp_calculation: string | null
           latitude: number | null
+          likely_payday_dates: number[] | null
           listen_time: number | null
           livestream_claps_sent: number | null
           livestream_engagement_score: number | null
@@ -5564,6 +5566,9 @@ export type Database = {
           longitude: number | null
           membership_tier: string | null
           mrr: number | null
+          payday_confidence_score: number | null
+          payday_pattern: Json | null
+          payroll_cycle_type: string | null
           phone_number: string | null
           products_purchased: string[] | null
           ptp_current: number | null
@@ -5613,8 +5618,10 @@ export type Database = {
           last_livestream_reaction?: string | null
           last_login?: string | null
           last_login_date?: string | null
+          last_payday_analysis?: string | null
           last_ptp_calculation?: string | null
           latitude?: number | null
+          likely_payday_dates?: number[] | null
           listen_time?: number | null
           livestream_claps_sent?: number | null
           livestream_engagement_score?: number | null
@@ -5625,6 +5632,9 @@ export type Database = {
           longitude?: number | null
           membership_tier?: string | null
           mrr?: number | null
+          payday_confidence_score?: number | null
+          payday_pattern?: Json | null
+          payroll_cycle_type?: string | null
           phone_number?: string | null
           products_purchased?: string[] | null
           ptp_current?: number | null
@@ -5674,8 +5684,10 @@ export type Database = {
           last_livestream_reaction?: string | null
           last_login?: string | null
           last_login_date?: string | null
+          last_payday_analysis?: string | null
           last_ptp_calculation?: string | null
           latitude?: number | null
+          likely_payday_dates?: number[] | null
           listen_time?: number | null
           livestream_claps_sent?: number | null
           livestream_engagement_score?: number | null
@@ -5686,6 +5698,9 @@ export type Database = {
           longitude?: number | null
           membership_tier?: string | null
           mrr?: number | null
+          payday_confidence_score?: number | null
+          payday_pattern?: Json | null
+          payroll_cycle_type?: string | null
           phone_number?: string | null
           products_purchased?: string[] | null
           ptp_current?: number | null
