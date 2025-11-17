@@ -394,6 +394,43 @@ export async function computePTP(
       });
     }
   }
+
+  // ============= ECONOMIC INTELLIGENCE LAYER =============
+  const areaCode = profile?.area_code;
+  const estimatedIncome = profile?.estimated_household_income;
+  const purchasingPower = profile?.purchasing_power_score;
+  const location = profile?.location;
+
+  if (areaCode && estimatedIncome && profile?.allow_economic_profiling !== false) {
+    // Income-based scoring
+    if (estimatedIncome >= 100000) {
+      addBehavior('high_income_area');
+    } else if (estimatedIncome >= 50000) {
+      addBehavior('moderate_income_area');
+    } else {
+      addBehavior('low_income_area');
+    }
+    
+    // Purchasing power adjustment
+    if (purchasingPower) {
+      if (purchasingPower >= 75) {
+        addBehavior('high_purchasing_power');
+      } else if (purchasingPower >= 40) {
+        addBehavior('moderate_purchasing_power');
+      }
+    }
+    
+    // Urban/Rural classification impact
+    const majorMetroAreas = ['New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Boston', 'Seattle', 'Washington'];
+    if (location && majorMetroAreas.some(city => location.includes(city))) {
+      addBehavior('urban_premium');
+    }
+    
+    // Cost-of-living normalization flag
+    if (purchasingPower) {
+      addBehavior('cost_of_living_adjusted');
+    }
+  }
   
   // Clamp to 0-100
   totalScore = Math.max(0, Math.min(100, totalScore));
