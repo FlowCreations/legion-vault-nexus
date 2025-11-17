@@ -289,6 +289,11 @@ export function Partnerships() {
   };
 
   const updatePartnershipStatus = async (id: string, status: string) => {
+    // Optimistic update - update UI immediately
+    setPartnerships(prev => 
+      prev.map(p => p.id === id ? { ...p, status, approved_at: status === "approved" ? new Date().toISOString() : null } : p)
+    );
+
     const { error } = await supabase
       .from("artist_partnerships")
       .update({ 
@@ -299,9 +304,10 @@ export function Partnerships() {
 
     if (error) {
       toast.error("Failed to update partnership");
+      // Revert optimistic update on error
+      fetchPartnerships();
     } else {
       toast.success(`Partnership ${status}`);
-      fetchPartnerships();
     }
   };
 

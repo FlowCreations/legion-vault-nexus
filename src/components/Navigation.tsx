@@ -60,11 +60,21 @@ export const Navigation = () => {
   };
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Failed to log out");
-    } else {
+    try {
+      // Force sign out and clear all local state
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear any cached data
+      localStorage.clear();
+      sessionStorage.clear();
+      
       toast.success("Logged out successfully");
+      
+      // Force reload to clear all state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error("Failed to log out");
     }
   };
 

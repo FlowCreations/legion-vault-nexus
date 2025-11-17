@@ -58,7 +58,7 @@ export const Footer = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           {/* Left Section - Admin Performance Icon */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 md:ml-8">
             {isAdmin && (
               <motion.button
                 onClick={() => setShowDiagnostics?.(!showDiagnostics)}
@@ -111,7 +111,7 @@ export const Footer = ({
           
           {/* Right Section - Live Chat Icon */}
           {!hideChat && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 md:mr-8">
               <motion.button
                 onClick={() => setIsLiveChatOpen?.(!isLiveChatOpen)}
                 className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
