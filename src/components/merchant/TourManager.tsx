@@ -156,6 +156,9 @@ export function TourManager() {
         });
       }
 
+      // Reload shows first to get updated data
+      await loadShows();
+      
       setIsDialogOpen(false);
       setEditingShow(null);
       setFormData({
@@ -168,7 +171,6 @@ export function TourManager() {
         status: "on_sale",
         special_guests: "",
       });
-      loadShows();
     } catch (error: any) {
       toast({
         title: "Error",

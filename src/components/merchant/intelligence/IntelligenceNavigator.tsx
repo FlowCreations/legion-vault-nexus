@@ -33,8 +33,9 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
 
   return (
     <div className="flex items-center justify-center gap-12 py-12">
-      {buttons.map((button) => {
+      {buttons.map((button, index) => {
         const isActive = currentView === button.id;
+        const isMiddle = index === 1;
         
         return (
           <button
@@ -44,7 +45,8 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
               "group relative w-56 h-56 rounded-full transition-transform duration-300 will-change-transform",
               "focus:outline-none",
               isActive && "scale-105",
-              !isActive && "hover:scale-105"
+              !isActive && "hover:scale-105",
+              isMiddle && "mt-0"
             )}
           >
             {/* Outer glow ring */}
