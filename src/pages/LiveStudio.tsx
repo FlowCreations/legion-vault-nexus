@@ -141,18 +141,19 @@ export default function LiveStudio() {
       .from('livestream_events')
       .select('id, status, title, stream_start_time')
       .eq('status', 'live')
-      .maybeSingle();
+      .single();
     
     console.log('[LiveStudio] Live stream check result:', { data, error });
     
-    if (data) {
+    if (data && !error) {
       console.log('[LiveStudio] Found live event:', data);
       setLiveEventId(data.id);
       setStreamStartTime(data.stream_start_time ? new Date(data.stream_start_time) : undefined);
     } else {
-      console.log('[LiveStudio] No live events found');
+      console.log('[LiveStudio] No live events found or error occurred');
       setLiveEventId(null);
       setStreamStartTime(undefined);
+      setIsViewingLive(false);
     }
   };
 
