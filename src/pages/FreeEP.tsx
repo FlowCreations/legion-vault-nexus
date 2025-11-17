@@ -18,8 +18,39 @@ export default function FreeEP() {
     setLoading(true);
 
     try {
-      // For demo purposes, just show success message
-      // In production, you would integrate with email service
+      // Store the lead in the database
+      const { data: leadData, error: leadError } = await supabase
+        .from('user_profiles')
+        .insert({
+          email,
+          display_name: name,
+          phone,
+          zip_code: zipCode,
+          membership_tier: 'free',
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (leadError) {
+        console.error('Error storing lead:', leadError);
+        throw leadError;
+      }
+
+      // Send the free album email
+      const { error: emailError } = await supabase.functions.invoke('send-free-album-email', {
+        body: {
+          email,
+          name,
+          phone,
+          zipCode,
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending email:', emailError);
+        // Don't throw here - we still want to show success even if email fails
+      }
       
       toast({
         title: "Success!",
@@ -32,6 +63,7 @@ export default function FreeEP() {
       setPhone("");
       setZipCode("");
     } catch (error) {
+      console.error('Free EP signup error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
