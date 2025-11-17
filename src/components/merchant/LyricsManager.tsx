@@ -88,8 +88,7 @@ export const LyricsManager = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Music className="h-6 w-6" />
+        <h2 className="text-2xl font-bold text-foreground">
           Lyrics Manager
         </h2>
         <p className="text-muted-foreground mt-1">
