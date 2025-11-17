@@ -84,24 +84,7 @@ export default function Gallery() {
       return;
     }
 
-    // For Low Res - check if user is signed in
-    if (item.id === 'low-res') {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Direct download for signed-in users
-        const link = document.createElement('a');
-        link.href = item.image;
-        link.download = `low-res-${Date.now()}.jpg`;
-        link.click();
-        toast.success("Download started!");
-        return;
-      }
-      // Not signed in - open email dialog
-      setSelectedItem(item);
-      return;
-    }
-
-    // For High Res - open checkout dialog
+    // For High Res Print Quality - open checkout dialog
     setSelectedItem(item);
   };
 
@@ -585,23 +568,16 @@ export default function Gallery() {
 
 const socialReadyPhotos: GalleryItem[] = [
   {
-    id: "low-res",
-    title: "Low Res",
-    image: show1,
-    price: "FREE",
-    isFree: true,
-  },
-  {
     id: "social-media",
     title: "Social Media Quality",
-    image: show1,
+    image: show2,
     price: "FREE",
     isFree: true,
   },
   {
     id: "high-res",
-    title: "High Res",
-    image: show1,
+    title: "High Res Print Quality",
+    image: show3,
     price: "$14.99",
     isFree: false,
   },
