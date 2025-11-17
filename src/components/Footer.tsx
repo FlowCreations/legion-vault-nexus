@@ -55,23 +55,21 @@ export const Footer = ({
 
   return (
     <footer className="border-t border-border bg-background-dark/50 backdrop-blur-sm mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          {/* Left Section - Admin Performance Icon */}
-          <div className="flex items-center gap-4 md:ml-8">
-            {isAdmin && (
-              <motion.button
-                onClick={() => setShowDiagnostics?.(!showDiagnostics)}
-                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                title="Performance Monitor (Admin only)"
-              >
-                <Activity className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
-              </motion.button>
-            )}
-          </div>
+          {/* Left Section - Admin Performance Icon (positioned absolutely to bottom left) */}
+          {isAdmin && (
+            <motion.button
+              onClick={() => setShowDiagnostics?.(!showDiagnostics)}
+              className="fixed bottom-4 left-4 rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90 z-50"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              title="Performance Monitor (Admin only)"
+            >
+              <Activity className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
+            </motion.button>
+          )}
           
           {/* Center Section - Links, Merchant Dashboard, Copyright */}
           <div className="flex flex-col items-center gap-4">
@@ -109,20 +107,18 @@ export const Footer = ({
             </p>
           </div>
           
-          {/* Right Section - Live Chat Icon */}
+          {/* Right Section - Live Chat Icon (positioned absolutely to bottom right) */}
           {!hideChat && (
-            <div className="flex items-center gap-4 md:mr-8">
-              <motion.button
-                onClick={() => setIsLiveChatOpen?.(!isLiveChatOpen)}
-                className="relative rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                title="Live Chat"
-              >
-                <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
-              </motion.button>
-            </div>
+            <motion.button
+              onClick={() => setIsLiveChatOpen?.(!isLiveChatOpen)}
+              className="fixed bottom-4 right-4 rounded-full w-10 h-10 shadow-lg transition-all duration-300 bg-primary hover:bg-primary/90 z-50"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              title="Live Chat"
+            >
+              <MessageCircle className="w-5 h-5 text-primary-foreground absolute inset-0 m-auto" />
+            </motion.button>
           )}
         </div>
         
