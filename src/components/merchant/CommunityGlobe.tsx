@@ -222,8 +222,12 @@ export default function CommunityGlobe() {
     
     console.log("✅ Added community-points layer");
 
-    // Click handler
+    // Click handler - stop rotation immediately
     mapRef.current.on("click", "community-points", (e) => {
+      // Stop rotation immediately
+      isInteractingRef.current = true;
+      userPausedRef.current = true;
+      
       const feature = e.features?.[0];
       if (!feature || feature.geometry.type !== "Point") return;
 
