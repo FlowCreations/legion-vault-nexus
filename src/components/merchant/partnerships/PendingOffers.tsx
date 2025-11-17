@@ -257,25 +257,18 @@ export function PendingOffers() {
                     </Button>
                   </CollapsibleTrigger>
                   <Button
-                    variant="default"
-                    onClick={() => handleAccept(offer.id, offer.sender.name)}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Accept
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleRequestInfo(offer.id, offer.sender.name)}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Request Info
-                  </Button>
-                  <Button
                     variant="ghost"
                     onClick={() => handleDecline(offer.id, offer.sender.name)}
                   >
                     <XCircle className="w-4 h-4 mr-2" />
                     Decline
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={() => handleAccept(offer.id, offer.sender.name)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Accept
                   </Button>
                 </div>
 
@@ -340,6 +333,18 @@ export function PendingOffers() {
                       <h4 className="font-semibold text-sm mb-2">Full Personal Message</h4>
                       <p className="text-sm text-muted-foreground leading-relaxed">{offer.personal_message}</p>
                     </div>
+                  </div>
+
+                  {/* Request More Info Button */}
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => handleRequestInfo(offer.id, offer.sender.name)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Request More Info
+                    </Button>
                   </div>
                 </CollapsibleContent>
               </div>
