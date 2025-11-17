@@ -15,7 +15,8 @@ import { useDiagnostics } from "./hooks/useDiagnostics";
 import { ErrorBoundary } from "./diagnostics/ErrorBoundary";
 import { HealthOverlay } from "./components/diagnostics/HealthOverlay";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { useScrollToTop } from "./hooks/useRouteOptimizations";
+import { ScrollToTop } from "./components/ScrollToTop";
+
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -89,9 +90,6 @@ const App = () => {
   
   // Initialize Agent
   useAgent({ enabled: true, checkInterval: 5 });
-  
-  // Scroll to top on route changes
-  useScrollToTop();
   useEffect(() => {
     // Only run once per session using ref
     if (pixelInitialized.current) return;
@@ -133,6 +131,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Navigation />
           <Suspense fallback={<PageLoader />}>
             <Routes>
