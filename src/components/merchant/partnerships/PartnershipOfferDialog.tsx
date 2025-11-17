@@ -50,24 +50,77 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user's profile data to pre-fill
+  // Fetch merchant's complete profile data to pre-fill
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!user) return;
       
       setLoading(true);
       try {
+        // Fetch user profile data
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('location')
+          .select('location, birthdate, gender, bio')
           .eq('user_id', user.id)
           .maybeSingle();
 
+        // Fetch affiliate/merchant data
         const { data: affiliate } = await supabase
           .from('affiliates')
           .select('ethos, non_negotiables')
           .eq('artist_id', user.id)
           .maybeSingle();
+
+        // Fetch demographic distribution from all users
+        const { data: demographics } = await supabase
+          .from('user_profiles')
+          .select('gender, birthdate')
+          .not('gender', 'is', null);
+
+        // Calculate gender percentages
+        let malePercent = "";
+        let femalePercent = "";
+        let otherPercent = "";
+        
+        // Calculate age demographic from birthdate
+        let ageDemographic = "18-35";
+        
+        if (demographics && demographics.length > 0) {
+          const total = demographics.length;
+          const maleCount = demographics.filter(d => d.gender?.toLowerCase() === 'male').length;
+          const femaleCount = demographics.filter(d => d.gender?.toLowerCase() === 'female').length;
+          const otherCount = total - maleCount - femaleCount;
+          
+          malePercent = Math.round((maleCount / total) * 100) + "%";
+          femalePercent = Math.round((femaleCount / total) * 100) + "%";
+          otherPercent = Math.round((otherCount / total) * 100) + "%";
+
+          // Calculate most common age range from birthdates
+          const today = new Date();
+          const ageGroups = demographics
+            .filter(d => d.birthdate)
+            .map(d => {
+              const birthDate = new Date(d.birthdate);
+              const age = today.getFullYear() - birthDate.getFullYear();
+              if (age < 18) return '13-17';
+              if (age < 25) return '18-24';
+              if (age < 35) return '25-34';
+              if (age < 45) return '35-44';
+              if (age < 55) return '45-54';
+              return '55+';
+            });
+          
+          // Get most common age group
+          const ageCounts = ageGroups.reduce((acc, group) => {
+            acc[group] = (acc[group] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+          
+          const mostCommonAge = Object.entries(ageCounts)
+            .sort(([,a], [,b]) => b - a)[0]?.[0];
+          
+          if (mostCommonAge) ageDemographic = mostCommonAge;
+        }
 
         if (profile || affiliate) {
           const location = profile?.location || "";
@@ -76,13 +129,18 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
           
           setFormData(prev => ({
             ...prev,
+            coreDemographic: ageDemographic,
+            genderMale: malePercent,
+            genderFemale: femalePercent,
+            genderOther: otherPercent,
             primaryLocation: location,
+            audienceBehaviors: "",
             standsFor: ethos,
             avoids: avoids
           }));
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching merchant profile:', error);
       } finally {
         setLoading(false);
       }
