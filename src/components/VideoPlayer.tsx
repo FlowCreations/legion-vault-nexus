@@ -245,22 +245,19 @@ export function VideoPlayer({
     }
   };
 
-  const shareViaEmail = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out: ${window.location.origin}/videos?v=${videoId}`)}`;
+  const shareViaEmail = () => {
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out: ${window.location.origin}/videos?v=${videoId}`)}`;
+    window.location.href = mailtoUrl;
   };
   
-  const shareViaTwitter = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}&text=${encodeURIComponent(title)}`, '_blank');
+  const shareViaTwitter = () => {
+    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}&text=${encodeURIComponent(title)}`;
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
   };
   
-  const shareViaFacebook = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}`, '_blank');
+  const shareViaFacebook = () => {
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}`;
+    window.open(facebookUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (!isOpen) return null;
@@ -370,13 +367,41 @@ export function VideoPlayer({
                       <>
                         <button onClick={toggleFavorite} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><Heart className={`w-5 h-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} /></button>
                         <button onClick={() => setShowComments(!showComments)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><MessageSquare className="w-5 h-5" /></button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><Share2 className="w-5 h-5" /></button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-popover text-popover-foreground" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(); }} className="cursor-pointer"><Link className="w-4 h-4 mr-2" />Copy link</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); shareViaEmail(e as any); }} className="cursor-pointer"><Mail className="w-4 h-4 mr-2" />Share via email</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); shareViaTwitter(e as any); }} className="cursor-pointer"><Twitter className="w-4 h-4 mr-2" />Share on X</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); shareViaFacebook(e as any); }} className="cursor-pointer"><Facebook className="w-4 h-4 mr-2" />Share on Facebook</DropdownMenuItem>
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">
+                              <Share2 className="w-5 h-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent 
+                            align="end" 
+                            className="bg-background border-border z-[99999]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <DropdownMenuItem 
+                              onClick={(e) => { e.stopPropagation(); copyToClipboard(); }} 
+                              className="cursor-pointer"
+                            >
+                              <Link className="w-4 h-4 mr-2" />Copy link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => { e.stopPropagation(); shareViaEmail(); }} 
+                              className="cursor-pointer"
+                            >
+                              <Mail className="w-4 h-4 mr-2" />Share via email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => { e.stopPropagation(); shareViaTwitter(); }} 
+                              className="cursor-pointer"
+                            >
+                              <Twitter className="w-4 h-4 mr-2" />Share on X
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => { e.stopPropagation(); shareViaFacebook(); }} 
+                              className="cursor-pointer"
+                            >
+                              <Facebook className="w-4 h-4 mr-2" />Share on Facebook
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </>
