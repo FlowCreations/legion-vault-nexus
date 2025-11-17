@@ -37,6 +37,7 @@ export function VideoPlayer({
   const idleTimeout = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showUI, setShowUI] = useState(true);
@@ -160,6 +161,17 @@ export function VideoPlayer({
     setMuted(videoRef.current.muted);
   };
 
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!videoRef.current) return;
+    const newVolume = Number(e.target.value);
+    videoRef.current.volume = newVolume;
+    setVolume(newVolume);
+    setMuted(newVolume === 0);
+    if (newVolume > 0 && videoRef.current.muted) {
+      videoRef.current.muted = false;
+    }
+  };
+
   const onSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!videoRef.current) return;
     videoRef.current.currentTime = Number(e.target.value);
@@ -232,9 +244,23 @@ export function VideoPlayer({
     }
   };
 
-  const shareViaEmail = () => window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out: ${window.location.origin}/videos?v=${videoId}`)}`;
-  const shareViaTwitter = () => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}&text=${encodeURIComponent(title)}`, '_blank');
-  const shareViaFacebook = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}`, '_blank');
+  const shareViaEmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out: ${window.location.origin}/videos?v=${videoId}`)}`;
+  };
+  
+  const shareViaTwitter = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}&text=${encodeURIComponent(title)}`, '_blank');
+  };
+  
+  const shareViaFacebook = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}`, '_blank');
+  };
 
   if (!isOpen) return null;
 
@@ -302,7 +328,18 @@ export function VideoPlayer({
                     <button onClick={() => skip(-10)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><SkipBack className="w-5 h-5" /></button>
                     <button onClick={togglePlay} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}</button>
                     <button onClick={() => skip(10)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><SkipForward className="w-5 h-5" /></button>
-                    <button onClick={toggleMute} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
+                    <div className="flex items-center gap-2 group">
+                      <button onClick={toggleMute} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="1" 
+                        step="0.01" 
+                        value={muted ? 0 : volume} 
+                        onChange={handleVolumeChange}
+                        className="w-0 group-hover:w-20 transition-all duration-200 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {!isExpanded && <button onClick={toggleExpand} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors" title="Expand"><Maximize className="w-5 h-5" /></button>}
