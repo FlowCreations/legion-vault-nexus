@@ -258,10 +258,14 @@ export function VideoPlayer({
       drag={!isExpanded}
       dragMomentum={false}
       dragElastic={0.05}
-      dragConstraints={{ left: -window.innerWidth/2 + 350, right: window.innerWidth/2 - 350, top: -window.innerHeight/2 + 196, bottom: window.innerHeight/2 - 196 }}
+      dragConstraints={isPortraitVideo 
+        ? { left: -window.innerWidth/2 + 196, right: window.innerWidth/2 - 196, top: -window.innerHeight/2 + 350, bottom: window.innerHeight/2 - 350 }
+        : { left: -window.innerWidth/2 + 350, right: window.innerWidth/2 - 350, top: -window.innerHeight/2 + 196, bottom: window.innerHeight/2 - 196 }}
       initial={false}
       animate={isExpanded 
         ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } 
+        : isPortraitVideo
+        ? { position: 'fixed', width: 393, height: 700, borderRadius: 12 }
         : { position: 'fixed', width: 700, height: 393, borderRadius: 12 }}
       transition={isExpanded ? { type: "spring", stiffness: 300, damping: 30 } : { type: "tween", duration: 0 }}
       ref={containerRef}
