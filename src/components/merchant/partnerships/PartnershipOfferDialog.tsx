@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Portal {
   id: string;
@@ -25,6 +27,7 @@ interface PartnershipOfferDialogProps {
 }
 
 export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: PartnershipOfferDialogProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     coreDemographic: "",
     genderMale: "",
@@ -45,6 +48,50 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
   const [standsForInput, setStandsForInput] = useState("");
   const [avoidsInput, setAvoidsInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user's profile data to pre-fill
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('location')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const { data: affiliate } = await supabase
+          .from('affiliates')
+          .select('ethos, non_negotiables')
+          .eq('artist_id', user.id)
+          .maybeSingle();
+
+        if (profile || affiliate) {
+          const location = profile?.location || "";
+          const ethos = affiliate?.ethos ? affiliate.ethos.split(',').map(v => v.trim()) : [];
+          const avoids = affiliate?.non_negotiables || [];
+          
+          setFormData(prev => ({
+            ...prev,
+            primaryLocation: location,
+            standsFor: ethos,
+            avoids: avoids
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchProfileData();
+    }
+  }, [open, user]);
 
   const handleAddTag = (field: 'standsFor' | 'avoids', value: string) => {
     if (!value.trim()) return;
@@ -67,8 +114,13 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
 
   const handleSubmit = async () => {
     // Validation
-    if (!formData.coreDemographic || !formData.primaryLocation || !formData.partnershipType) {
-      toast.error("Please fill in all required fields");
+    if (!formData.partnershipType) {
+      toast.error("Please select a partnership type");
+      return;
+    }
+
+    if (formData.compensation && !/^\d+$/.test(formData.compensation.trim())) {
+      toast.error("Compensation must be a number only (e.g., 500, 1000)");
       return;
     }
 
@@ -140,171 +192,7 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
             </div>
           </div>
 
-          {/* Your Portal Information */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm">Your Portal Information</h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="coreDemographic">Core Demographic *</Label>
-              <Input
-                id="coreDemographic"
-                placeholder="e.g., Ages 25-34, Urban professionals, Creative industry workers"
-                value={formData.coreDemographic}
-                onChange={(e) => setFormData(prev => ({ ...prev, coreDemographic: e.target.value }))}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="genderMale">Male %</Label>
-                <Input
-                  id="genderMale"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="0"
-                  value={formData.genderMale}
-                  onChange={(e) => setFormData(prev => ({ ...prev, genderMale: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="genderFemale">Female %</Label>
-                <Input
-                  id="genderFemale"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="0"
-                  value={formData.genderFemale}
-                  onChange={(e) => setFormData(prev => ({ ...prev, genderFemale: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="genderOther">Other %</Label>
-                <Input
-                  id="genderOther"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="0"
-                  value={formData.genderOther}
-                  onChange={(e) => setFormData(prev => ({ ...prev, genderOther: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="primaryLocation">Primary Country/Region *</Label>
-              <Select value={formData.primaryLocation} onValueChange={(value) => setFormData(prev => ({ ...prev, primaryLocation: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="usa">United States</SelectItem>
-                  <SelectItem value="uk">United Kingdom</SelectItem>
-                  <SelectItem value="canada">Canada</SelectItem>
-                  <SelectItem value="australia">Australia</SelectItem>
-                  <SelectItem value="germany">Germany</SelectItem>
-                  <SelectItem value="france">France</SelectItem>
-                  <SelectItem value="japan">Japan</SelectItem>
-                  <SelectItem value="brazil">Brazil</SelectItem>
-                  <SelectItem value="mexico">Mexico</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="audienceBehaviors">Your Audience Behaviors</Label>
-              <Textarea
-                id="audienceBehaviors"
-                placeholder="Describe key behavioral patterns of your audience..."
-                rows={3}
-                value={formData.audienceBehaviors}
-                onChange={(e) => setFormData(prev => ({ ...prev, audienceBehaviors: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="standsFor">What You Stand For</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="standsFor"
-                  placeholder="Add a value and press Enter"
-                  value={standsForInput}
-                  onChange={(e) => setStandsForInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag('standsFor', standsForInput);
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => handleAddTag('standsFor', standsForInput)}
-                >
-                  Add
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.standsFor.map((tag, idx) => (
-                  <Badge key={idx} variant="default" className="gap-1">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag('standsFor', idx)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="avoids">What You Avoid</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="avoids"
-                  placeholder="Add a boundary and press Enter"
-                  value={avoidsInput}
-                  onChange={(e) => setAvoidsInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag('avoids', avoidsInput);
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => handleAddTag('avoids', avoidsInput)}
-                >
-                  Add
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.avoids.map((tag, idx) => (
-                  <Badge key={idx} variant="outline" className="gap-1">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag('avoids', idx)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Partnership Details */}
+          {/* Partnership Details - MOVED TO TOP */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm">Partnership Details</h3>
 
@@ -357,13 +245,17 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="compensation">Commission/Compensation</Label>
+                <Label htmlFor="compensation">Commission/Compensation ($ amount)</Label>
                 <Input
                   id="compensation"
-                  placeholder="e.g., 20% revenue share, $500"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="e.g., 500, 1000"
                   value={formData.compensation}
                   onChange={(e) => setFormData(prev => ({ ...prev, compensation: e.target.value }))}
                 />
+                <p className="text-xs text-muted-foreground">Enter flat rate amount (numbers only)</p>
               </div>
             </div>
 
@@ -381,6 +273,165 @@ export function PartnershipOfferDialog({ open, onOpenChange, targetPortal }: Par
                 value={formData.personalMessage}
                 onChange={(e) => setFormData(prev => ({ ...prev, personalMessage: e.target.value }))}
               />
+            </div>
+          </div>
+
+          {/* Your Portal Information - MOVED TO BOTTOM */}
+          <div className="space-y-4 bg-muted/20 p-4 rounded-lg">
+            <h3 className="font-semibold text-sm">Your Portal Information (Auto-filled from Profile)</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="coreDemographic">Core Demographic</Label>
+              <Input
+                id="coreDemographic"
+                placeholder="e.g., Ages 25-34, Urban professionals, Creative industry workers"
+                value={formData.coreDemographic}
+                onChange={(e) => setFormData(prev => ({ ...prev, coreDemographic: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">This should come from your demographics data</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="genderMale">Male %</Label>
+                <Input
+                  id="genderMale"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  value={formData.genderMale}
+                  onChange={(e) => setFormData(prev => ({ ...prev, genderMale: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="genderFemale">Female %</Label>
+                <Input
+                  id="genderFemale"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  value={formData.genderFemale}
+                  onChange={(e) => setFormData(prev => ({ ...prev, genderFemale: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="genderOther">Other %</Label>
+                <Input
+                  id="genderOther"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  value={formData.genderOther}
+                  onChange={(e) => setFormData(prev => ({ ...prev, genderOther: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="primaryLocation">Primary Country/Region</Label>
+              <Input
+                id="primaryLocation"
+                placeholder="Your location"
+                value={formData.primaryLocation}
+                onChange={(e) => setFormData(prev => ({ ...prev, primaryLocation: e.target.value }))}
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">Auto-filled from your profile</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="audienceBehaviors">Your Audience Behaviors</Label>
+              <Textarea
+                id="audienceBehaviors"
+                placeholder="Describe key behavioral patterns of your audience..."
+                rows={3}
+                value={formData.audienceBehaviors}
+                onChange={(e) => setFormData(prev => ({ ...prev, audienceBehaviors: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">This should come from your analytics</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="standsFor">What You Stand For</Label>
+              <div className="flex flex-wrap gap-2">
+                {formData.standsFor.map((tag, idx) => (
+                  <Badge key={idx} variant="default" className="gap-1">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag('standsFor', idx)}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="standsFor"
+                  placeholder="Add a value and press Enter"
+                  value={standsForInput}
+                  onChange={(e) => setStandsForInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag('standsFor', standsForInput);
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleAddTag('standsFor', standsForInput)}
+                >
+                  Add
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Auto-filled from your ethos/profile</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="avoids">What You Avoid</Label>
+              <div className="flex flex-wrap gap-2">
+                {formData.avoids.map((tag, idx) => (
+                  <Badge key={idx} variant="outline" className="gap-1">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag('avoids', idx)}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="avoids"
+                  placeholder="Add a boundary and press Enter"
+                  value={avoidsInput}
+                  onChange={(e) => setAvoidsInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag('avoids', avoidsInput);
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleAddTag('avoids', avoidsInput)}
+                >
+                  Add
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Auto-filled from your ethos/profile</p>
             </div>
           </div>
         </div>
