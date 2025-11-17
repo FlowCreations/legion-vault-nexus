@@ -261,19 +261,7 @@ export function ExpandableLiveViewer({
             </div>
           )}
 
-          {/* Unmute Button */}
-          {audioMuted && hasAudioTrack && status === 'connected' && (
-            <Button
-              size="sm"
-              onClick={handleUnmute}
-              className="absolute bottom-4 left-4 bg-yellow-500/90 hover:bg-yellow-600 text-white z-10"
-            >
-              <Volume2 className="h-4 w-4 mr-2" />
-              Tap to Unmute
-            </Button>
-          )}
-
-          {/* Quick Actions - Bottom Right */}
+          {/* Quick Actions - Bottom Right (only on hover) */}
           {status === 'connected' && (
             <div className="absolute bottom-4 right-4 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
               {isPiPSupported && (
@@ -290,7 +278,7 @@ export function ExpandableLiveViewer({
               size="sm"
               variant="secondary"
               onClick={() => setExpanded(true)}
-              className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+              className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm rounded-md"
             >
               <Maximize2 className="h-4 w-4" />
             </Button>
@@ -298,8 +286,8 @@ export function ExpandableLiveViewer({
           )}
         </div>
 
-        {/* External Controls */}
-        {showExternalControls && status === 'connected' && (
+        {/* External Controls - Only show when NOT expanded */}
+        {showExternalControls && status === 'connected' && !isExpanded && (
           <div className="flex gap-2 justify-center">
             <Button onClick={handleTipClick} variant="default" className="flex-1">
               <DollarSign className="h-4 w-4 mr-2" />
@@ -350,11 +338,11 @@ export function ExpandableLiveViewer({
                 </Button>
               </div>
 
-              {/* Chat */}
-              <div className="flex-1 overflow-hidden">
-                <ErrorBoundary>
-                  <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
-                </ErrorBoundary>
+              {/* Info message - Chat and Tips disabled in expanded mode */}
+              <div className="p-4 bg-yellow-500/10 border-t border-yellow-500/20">
+                <p className="text-sm text-yellow-500 text-center">
+                  Chat and tips are disabled in expanded view
+                </p>
               </div>
             </div>
           </DrawerContent>
@@ -413,52 +401,21 @@ export function ExpandableLiveViewer({
               </Button>
             </div>
 
-            {/* Sidebar with Chat and Actions */}
-            <div className="w-full lg:w-96 bg-background border-l border-border overflow-hidden flex flex-col">
-              {/* Stream Info Header */}
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-sm font-medium">LIVE</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {viewerCount.toLocaleString()} watching
-                  </span>
+            {/* Sidebar - Info message that chat/tips are disabled */}
+            <div className="w-full lg:w-96 bg-background border-l border-border flex items-center justify-center">
+              <div className="p-8 text-center space-y-4">
+                <div className="text-muted-foreground">
+                  <p className="text-lg font-semibold mb-2">Expanded View</p>
+                  <p className="text-sm">
+                    Chat and tips are disabled in fullscreen mode.
+                  </p>
+                  <p className="text-sm mt-2">
+                    Exit fullscreen to interact with the stream.
+                  </p>
                 </div>
-              </div>
-
-              {/* Chat Section */}
-              <div className="flex-1 overflow-hidden">
-                <ErrorBoundary>
-                  <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
-                </ErrorBoundary>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="p-4 border-t border-border space-y-3">
-                <ErrorBoundary>
-                  <StreamHighlights eventId={eventId} />
-                </ErrorBoundary>
-                
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleTipClick}
-                    className="flex-1"
-                    variant="default"
-                  >
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Send Tip
-                  </Button>
-                  
-                  <Button
-                    onClick={handleShare}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span>{viewerCount.toLocaleString()} watching</span>
                 </div>
               </div>
             </div>
