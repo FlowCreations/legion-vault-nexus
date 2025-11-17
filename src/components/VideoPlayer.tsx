@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Heart, Share2, Link, Mail, Facebook, Twitter, MessageSquare } from "lucide-react";
+import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, Maximize, Heart, Share2, Link, Mail, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
@@ -245,19 +245,10 @@ export function VideoPlayer({
     }
   };
 
-  const shareViaEmail = () => {
-    const mailtoUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check out: ${window.location.origin}/videos?v=${videoId}`)}`;
-    window.location.href = mailtoUrl;
-  };
-  
-  const shareViaTwitter = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}&text=${encodeURIComponent(title)}`;
-    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
-  };
-  
-  const shareViaFacebook = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/videos?v=' + videoId)}`;
-    window.open(facebookUrl, '_blank', 'noopener,noreferrer');
+  const shareViaText = () => {
+    const text = `Check out this video: ${title}\n${window.location.origin}/videos?v=${videoId}`;
+    const smsUrl = `sms:?&body=${encodeURIComponent(text)}`;
+    window.location.href = smsUrl;
   };
 
   if (!isOpen) return null;
@@ -385,22 +376,10 @@ export function VideoPlayer({
                               <Link className="w-4 h-4 mr-2" />Copy link
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={(e) => { e.stopPropagation(); shareViaEmail(); }} 
+                              onClick={(e) => { e.stopPropagation(); shareViaText(); }} 
                               className="cursor-pointer"
                             >
-                              <Mail className="w-4 h-4 mr-2" />Share via email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => { e.stopPropagation(); shareViaTwitter(); }} 
-                              className="cursor-pointer"
-                            >
-                              <Twitter className="w-4 h-4 mr-2" />Share on X
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => { e.stopPropagation(); shareViaFacebook(); }} 
-                              className="cursor-pointer"
-                            >
-                              <Facebook className="w-4 h-4 mr-2" />Share on Facebook
+                              <MessageSquare className="w-4 h-4 mr-2" />Share via text
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

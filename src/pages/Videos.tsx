@@ -425,7 +425,7 @@ function ContentRow({ title, items, aspectRatio, hoveredId, setHoveredId, isPrem
               >
                 <div className="relative rounded-lg overflow-hidden mb-3 bg-card shadow-sm group-hover:shadow-glow transition-all duration-500 transform group-hover:scale-105">
                   <div className={`${
-                    aspectRatio === "portrait" ? "aspect-[2/3]" : "aspect-video"
+                    aspectRatio === "portrait" ? "aspect-[9/16]" : "aspect-video"
                    } bg-gradient-to-br from-card to-card-hover flex items-center justify-center relative`}>
                     {item.thumbnail_url && (
                       <img 
