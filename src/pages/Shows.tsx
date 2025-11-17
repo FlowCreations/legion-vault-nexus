@@ -87,7 +87,7 @@ export default function Shows() {
               <div className="aspect-square rounded-lg bg-card overflow-hidden relative">
                 <img src={show2} alt="Sons of Legion on stage" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
-                  <span className="text-white font-bold text-sm">Miami, Florida</span>
+                  <span className="text-white font-bold text-sm">Denver, Colorado</span>
                 </div>
               </div>
               <div className="aspect-square rounded-lg bg-card overflow-hidden relative">

@@ -4,69 +4,89 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export default function FreeEP() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Store the lead in the database
-      const { data: leadData, error: leadError } = await supabase
+      // Create account with email verification
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: name,
+            phone,
+            zip_code: zipCode,
+          },
+          emailRedirectTo: `${window.location.origin}/music`,
+        }
+      });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('No user data returned');
+      }
+
+      // Update user profile with additional info
+      const { error: profileError } = await supabase
         .from('user_profiles')
-        .insert({
-          email,
+        .update({
           display_name: name,
           phone,
           zip_code: zipCode,
           membership_tier: 'free',
-          created_at: new Date().toISOString(),
         })
-        .select()
-        .single();
+        .eq('user_id', authData.user.id);
 
-      if (leadError) {
-        console.error('Error storing lead:', leadError);
-        throw leadError;
+      if (profileError) {
+        console.error('Profile update error:', profileError);
       }
 
-      // Send the free album email
+      // Send the free album welcome email
       const { error: emailError } = await supabase.functions.invoke('send-free-album-email', {
         body: {
           email,
           name,
-          phone,
-          zipCode,
         }
       });
 
       if (emailError) {
         console.error('Error sending email:', emailError);
-        // Don't throw here - we still want to show success even if email fails
       }
       
       toast({
-        title: "Success!",
-        description: "Check your email for the download link to your free Power album!",
+        title: "Account Created!",
+        description: "Check your email to verify your account and unlock your free Power album!",
       });
 
       // Reset form
       setName("");
       setEmail("");
+      setPassword("");
       setPhone("");
       setZipCode("");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Free EP signup error:', error);
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -128,6 +148,20 @@ export default function FreeEP() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="bg-background/50"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password" className="sr-only">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Create Password (min 6 characters)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
                   className="bg-background/50"
                 />
               </div>

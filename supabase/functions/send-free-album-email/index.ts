@@ -42,43 +42,30 @@ const createFreeAlbumEmailHtml = (name: string) => `
               
               <!-- Welcome Message -->
               <h2 style="margin: 0 0 20px; color: #d4af37; font-size: 28px; font-weight: 700; line-height: 1.3;">
-                🎸 Your Free Power Album is Ready, ${name}!
+                🎸 Welcome to the Legion, ${name}!
               </h2>
               
               <p style="margin: 0 0 20px; color: #e5e5e5; font-size: 16px; line-height: 1.6;">
-                Thanks for joining the Legion! We're excited to share our raw, soulful sounds with you.
+                Your account is almost ready! <strong style="color: #d4af37;">Verify your email</strong> to unlock your free Power album.
               </p>
 
               <p style="margin: 0 0 30px; color: #e5e5e5; font-size: 16px; line-height: 1.6;">
-                Your free download of the <strong style="color: #d4af37;">POWER</strong> album is ready. Just click the button below to grab it.
+                Once you verify your email, you'll have instant access to the full <strong style="color: #d4af37;">POWER</strong> album in your music library. You'll be able to stream it and download any track you want.
               </p>
 
-              <!-- Download Button -->
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                  <td style="text-align: center; padding: 20px 0;">
-                    <a href="https://sonsoflegion.com/albums/power" style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); color: #0a0a0a; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);">
-                      Download Power Album
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Album Info Box -->
+              <!-- Next Steps Box -->
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0; background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37; border-radius: 8px;">
                 <tr>
                   <td style="padding: 25px;">
                     <h3 style="margin: 0 0 15px; color: #d4af37; font-size: 18px; font-weight: 700;">
-                      What's Inside POWER
+                      📧 Next Steps:
                     </h3>
-                    <p style="margin: 0; color: #c5c5c5; font-size: 15px; line-height: 1.6;">
-                      Turn up the volume and hit the open road with 12 raw, unfiltered tracks that capture the heart of Sons of Legion.
-                    </p>
-                    <ul style="margin: 15px 0 0; padding-left: 20px; color: #c5c5c5; font-size: 15px; line-height: 1.8;">
-                      <li>High-quality MP3 downloads</li>
-                      <li>Album artwork included</li>
-                      <li>Exclusive behind-the-scenes stories</li>
-                    </ul>
+                    <ol style="margin: 0; padding-left: 20px; color: #c5c5c5; font-size: 15px; line-height: 1.8;">
+                      <li><strong>Verify your email</strong> (check your inbox for the verification link)</li>
+                      <li>Once verified, <strong>visit the Music section</strong> on our site</li>
+                      <li>Find the Power album and <strong>hover over any track</strong> to see the download button</li>
+                      <li>Download and enjoy!</li>
+                    </ol>
                   </td>
                 </tr>
               </table>
