@@ -42,6 +42,7 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [showUI, setShowUI] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -268,14 +269,15 @@ export function VideoPlayer({
     <motion.div
       drag={!isExpanded}
       dragMomentum={false}
-      dragElastic={0}
-      dragTransition={{ bounceStiffness: 600, bounceDamping: 20, power: 0.3 }}
-      dragConstraints={!isExpanded ? { left: 0, right: window.innerWidth - 700, top: 0, bottom: window.innerHeight - 393 } : undefined}
+      dragElastic={0.05}
+      dragConstraints={{ left: -window.innerWidth/2 + 350, right: window.innerWidth/2 - 350, top: -window.innerHeight/2 + 196, bottom: window.innerHeight/2 - 196 }}
       initial={false}
-      animate={isExpanded ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } : { position: 'fixed', top: '50%', left: '50%', width: 700, height: 393, borderRadius: 12, x: '-50%', y: '-50%' }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      animate={isExpanded 
+        ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0, x: 0, y: 0 } 
+        : { position: 'fixed', width: 700, height: 393, borderRadius: 12 }}
+      transition={isExpanded ? { type: "spring", stiffness: 300, damping: 30 } : { type: "tween", duration: 0 }}
       ref={containerRef}
-      className={isExpanded ? "z-[9999] bg-black" : "z-[9999] bg-black rounded-xl shadow-2xl border border-white/20 cursor-move"}
+      className={isExpanded ? "z-[9999] bg-black" : "z-[9999] bg-black rounded-xl shadow-2xl border border-white/20"}
       style={!isExpanded ? { left: '50%', top: '50%', x: '-50%', y: '-50%' } : undefined}
       onMouseMove={kickIdleTimer}
     >
@@ -328,17 +330,38 @@ export function VideoPlayer({
                     <button onClick={() => skip(-10)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><SkipBack className="w-5 h-5" /></button>
                     <button onClick={togglePlay} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}</button>
                     <button onClick={() => skip(10)} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"><SkipForward className="w-5 h-5" /></button>
-                    <div className="flex items-center gap-2 group">
-                      <button onClick={toggleMute} className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">{muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.01" 
-                        value={muted ? 0 : volume} 
-                        onChange={handleVolumeChange}
-                        className="w-0 group-hover:w-20 transition-all duration-200 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
-                      />
+                    <div 
+                      className="flex items-center gap-2"
+                      onMouseEnter={() => setShowVolumeSlider(true)}
+                      onMouseLeave={() => setShowVolumeSlider(false)}
+                    >
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleMute(); }} 
+                        className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+                      >
+                        {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                      </button>
+                      <motion.div
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ 
+                          width: showVolumeSlider ? 80 : 0,
+                          opacity: showVolumeSlider ? 1 : 0
+                        }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="1" 
+                          step="0.01" 
+                          value={muted ? 0 : volume} 
+                          onChange={handleVolumeChange}
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="w-20 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                        />
+                      </motion.div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
