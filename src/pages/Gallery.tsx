@@ -50,6 +50,7 @@ export default function Gallery() {
   const addItem = useCartStore(state => state.addItem);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchNYProducts();
   }, []);
 
@@ -72,7 +73,35 @@ export default function Gallery() {
     }
   };
 
-  const handleItemClick = (item: GalleryItem) => {
+  const handleItemClick = async (item: GalleryItem) => {
+    // For Social Media Quality - direct download
+    if (item.id === 'social-media') {
+      const link = document.createElement('a');
+      link.href = item.image;
+      link.download = `social-media-quality-${Date.now()}.jpg`;
+      link.click();
+      toast.success("Download started!");
+      return;
+    }
+
+    // For Low Res - check if user is signed in
+    if (item.id === 'low-res') {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Direct download for signed-in users
+        const link = document.createElement('a');
+        link.href = item.image;
+        link.download = `low-res-${Date.now()}.jpg`;
+        link.click();
+        toast.success("Download started!");
+        return;
+      }
+      // Not signed in - open email dialog
+      setSelectedItem(item);
+      return;
+    }
+
+    // For High Res - open checkout dialog
     setSelectedItem(item);
   };
 
@@ -310,26 +339,34 @@ export default function Gallery() {
                     {item.title}
                   </h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-primary">{item.price}</span>
                     {item.isFree ? (
-                      <Button 
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleItemClick(item)}
-                        className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
+                      <>
+                        <Badge variant="secondary" className="bg-green-600 text-white">
+                          FREE
+                        </Badge>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleItemClick(item)}
+                          className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </Button>
+                      </>
                     ) : (
-                      <Button 
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => handleAddPhotoToCart(item, e)}
-                        className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
-                      >
-                        Add to Cart
-                      </Button>
+                      <>
+                        <span className="text-lg font-bold text-primary">{item.price}</span>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleItemClick(item)}
+                          className="border-foreground text-foreground hover:bg-foreground hover:text-background font-normal tracking-wide uppercase"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Purchase
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -548,24 +585,24 @@ export default function Gallery() {
 
 const socialReadyPhotos: GalleryItem[] = [
   {
-    id: "show-1",
-    title: "The Midnight Session",
+    id: "low-res",
+    title: "Low Res",
     image: show1,
-    price: "$54.99",
-    isFree: false,
+    price: "FREE",
+    isFree: true,
   },
   {
-    id: "show-2",
-    title: "Electric Dreams Tour",
-    image: show2,
-    price: "$64.99",
-    isFree: false,
+    id: "social-media",
+    title: "Social Media Quality",
+    image: show1,
+    price: "FREE",
+    isFree: true,
   },
   {
-    id: "show-3",
-    title: "Sunset Acoustics",
-    image: show3,
-    price: "$44.99",
+    id: "high-res",
+    title: "High Res",
+    image: show1,
+    price: "$14.99",
     isFree: false,
   },
 ];

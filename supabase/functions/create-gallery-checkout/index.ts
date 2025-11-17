@@ -9,9 +9,7 @@ const corsHeaders = {
 
 // Server-side price catalog - SINGLE SOURCE OF TRUTH
 const GALLERY_ITEMS: Record<string, { title: string; price: number }> = {
-  'show-1': { title: 'The Midnight Session', price: 54.99 },
-  'show-2': { title: 'Electric Dreams Tour', price: 64.99 },
-  'show-3': { title: 'Sunset Acoustics', price: 44.99 },
+  'high-res': { title: 'High Res Tour Photo', price: 14.99 },
 };
 
 // Helper to validate item ID and get server price
