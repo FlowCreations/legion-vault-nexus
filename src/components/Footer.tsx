@@ -71,8 +71,8 @@ export const Footer = ({
             </motion.button>
           )}
           
-          {/* Center Section - Links, Merchant Dashboard, Copyright */}
-          <div className="flex flex-col items-center gap-4">
+          {/* Center Section - Links, Copyright */}
+          <div className="flex flex-col items-center gap-4 flex-1 justify-center">
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <Link to="/about" onClick={() => window.scrollTo(0, 0)} className="hover:text-primary transition-colors">
                 {t('footer.about')}
