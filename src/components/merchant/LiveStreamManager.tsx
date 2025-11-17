@@ -172,7 +172,9 @@ export const LiveStreamManager = () => {
                   <Calendar className="w-4 h-4" />
                   {event.title} - {new Date(event.scheduled_start).toLocaleDateString()}
                   <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
-                    event.status === 'live' ? 'bg-red-500 text-white' : 'bg-gray-200'
+                    event.status === 'live' 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-primary/20 text-primary border border-primary/30'
                   }`}>
                     {event.status}
                   </span>
