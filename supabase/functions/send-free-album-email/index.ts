@@ -42,15 +42,15 @@ const createFreeAlbumEmailHtml = (name: string) => `
               
               <!-- Welcome Message -->
               <h2 style="margin: 0 0 20px; color: #d4af37; font-size: 28px; font-weight: 700; line-height: 1.3;">
-                🎸 Welcome to the Legion, ${name}!
+                🎸 Power Album Unlocked!
               </h2>
               
               <p style="margin: 0 0 20px; color: #e5e5e5; font-size: 16px; line-height: 1.6;">
-                Your account is almost ready! <strong style="color: #d4af37;">Verify your email</strong> to unlock your free Power album.
+                Welcome to the Legion, ${name}! Your free Power album is ready.
               </p>
 
               <p style="margin: 0 0 30px; color: #e5e5e5; font-size: 16px; line-height: 1.6;">
-                Once you verify your email, you'll have instant access to the full <strong style="color: #d4af37;">POWER</strong> album in your music library. You'll be able to stream it and download any track you want.
+                Go to the music section and listen now. You'll have instant access to the full <strong style="color: #d4af37;">POWER</strong> album in your music library. Stream it and download any track you want.
               </p>
 
               <!-- Next Steps Box -->
@@ -61,8 +61,7 @@ const createFreeAlbumEmailHtml = (name: string) => `
                       📧 Next Steps:
                     </h3>
                     <ol style="margin: 0; padding-left: 20px; color: #c5c5c5; font-size: 15px; line-height: 1.8;">
-                      <li><strong>Verify your email</strong> (check your inbox for the verification link)</li>
-                      <li>Once verified, <strong>visit the Music section</strong> on our site</li>
+                      <li><strong>Visit the Music section</strong> on our portal</li>
                       <li>Find the Power album and <strong>hover over any track</strong> to see the download button</li>
                       <li>Download and enjoy!</li>
                     </ol>
@@ -72,37 +71,27 @@ const createFreeAlbumEmailHtml = (name: string) => `
 
               <!-- What's Next -->
               <h3 style="margin: 30px 0 15px; color: #d4af37; font-size: 20px; font-weight: 700;">
-                What's Next?
+                🔓 Community Access
               </h3>
               
               <p style="margin: 0 0 20px; color: #e5e5e5; font-size: 16px; line-height: 1.6;">
-                This is just the beginning. Join our community to get:
+                After 7 days in the portal, you'll automatically unlock access to the Legion Community Hub — where you can connect with thousands of members from around the world, share your journey, and be part of something bigger.
               </p>
 
-              <ul style="margin: 0 0 30px; padding-left: 20px; color: #c5c5c5; font-size: 15px; line-height: 1.8;">
-                <li>Early access to new releases</li>
-                <li>Exclusive live performances and videos</li>
-                <li>Behind-the-scenes content</li>
-                <li>Special merch and limited editions</li>
-                <li>Direct connection with the band</li>
-              </ul>
-
               <!-- CTA Box -->
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: rgba(212, 175, 55, 0.15); border-radius: 8px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); border-radius: 8px;">
                 <tr>
-                  <td style="padding: 25px; text-align: center;">
-                    <h3 style="margin: 0 0 15px; color: #d4af37; font-size: 18px; font-weight: 700;">
-                      Want More?
-                    </h3>
-                    <p style="margin: 0 0 20px; color: #c5c5c5; font-size: 15px; line-height: 1.6;">
-                      Explore our full catalog, watch exclusive videos, and connect with other fans.
-                    </p>
-                    <a href="https://sonsoflegion.com" style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); color: #0a0a0a; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 30px; border-radius: 6px;">
-                      Visit sonsoflegion.com
+                  <td style="padding: 40px 25px; text-align: center;">
+                    <a href="https://sol-portal.com" style="display: inline-block; background: #0a0a0a; color: #d4af37; font-size: 18px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
+                      Enter Your Portal →
                     </a>
                   </td>
                 </tr>
               </table>
+
+              <p style="margin: 30px 0 0; color: #e5e5e5; font-size: 16px; line-height: 1.6; text-align: center;">
+                This is more than music. This is <strong style="color: #d4af37;">The Journey</strong>.
+              </p>
 
               <p style="margin: 30px 0 0; color: #a5a5a5; font-size: 14px; line-height: 1.6;">
                 Rock on,<br>
