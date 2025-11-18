@@ -439,7 +439,6 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
           <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
           <TabsTrigger value="pixels">Tracking</TabsTrigger>
           <TabsTrigger value="legal">Legal</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members" className="space-y-4">
