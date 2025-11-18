@@ -35,16 +35,36 @@ export default function Contact() {
     },
   });
 
-  const onSubmit = (data: ContactFormData) => {
+  const onSubmit = async (data: ContactFormData) => {
     console.log("Form submitted:", data);
-    trackEvent('contact_form', {
-      subject: data.subject
-    });
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
-    form.reset();
+    
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const { error } = await supabase.functions.invoke('send-contact-email', {
+        body: data
+      });
+
+      if (error) throw error;
+
+      trackEvent('contact_form', {
+        subject: data.subject
+      });
+      
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you as soon as possible.",
+      });
+      
+      form.reset();
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
