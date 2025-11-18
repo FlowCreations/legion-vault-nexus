@@ -20,6 +20,7 @@ type AuthCtx = {
   signInWithGoogle: (returnTo?: string) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -239,6 +240,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Password reset email sent', {
+        description: 'Check your inbox for a link to reset your password.',
+      });
+    } catch (err: any) {
+      console.error('[AUTH] Password reset error', err);
+      toast.error('Failed to send reset email', { description: err.message });
+      throw err;
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -271,9 +290,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       ready, session, user, profile, isAdmin,
-      signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, refreshProfile,
+      signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, signOut, refreshProfile,
     }),
-    [ready, session, user, profile, isAdmin, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, refreshProfile]
+    [ready, session, user, profile, isAdmin, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, signOut, refreshProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
