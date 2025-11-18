@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email to Sons of Legion
     const emailResponse = await resend.emails.send({
-      from: "Sons of Legion Contact Form <onboarding@resend.dev>",
+      from: "Sons of Legion Contact Form <contact@sonsoflegion.com>",
       to: ["sonsoflegionmusic@gmail.com"],
       reply_to: email,
       subject: `Contact Form: ${subject}`,
