@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { usePurchases } from "@/hooks/usePurchases";
 
 export default function FreeEP() {
   const [name, setName] = useState("");
@@ -16,6 +17,7 @@ export default function FreeEP() {
   const [success, setSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { purchaseAlbum } = usePurchases();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +73,9 @@ export default function FreeEP() {
       if (emailError) {
         console.error('Error sending email:', emailError);
       }
+
+      // Unlock the Power album for the user
+      purchaseAlbum('a1');
       
       toast({
         title: "Account Created!",
