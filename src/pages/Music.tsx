@@ -600,7 +600,7 @@ export default function Music() {
                 return (
                 <CarouselItem key={album.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <div 
-                    className="group cursor-pointer relative"
+                    className="group cursor-pointer relative h-full flex flex-col"
                     onClick={handleAlbumClick}
                   >
                     <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-card shadow-cinematic group-hover:shadow-gold transition-all duration-200 relative">
@@ -647,7 +647,7 @@ export default function Music() {
                         </div>
                       )}
                     </div>
-                    <div>
+                    <div className="flex-grow flex flex-col">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
                           {album.title}
@@ -660,19 +660,21 @@ export default function Music() {
                       <p className="text-xs text-muted-foreground">
                         {album.year} • {album.tracks} tracks
                       </p>
-                      {isLocked && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <StripeCheckout
-                            albumId={album.id}
-                            albumTitle={album.title}
-                            price={album.price}
-                            onSuccess={() => {
-                              purchaseAlbum(album.id);
-                            }}
-                            className="h-7 text-xs px-3"
-                          />
-                        </div>
-                      )}
+                      <div className="min-h-[36px] mt-2">
+                        {isLocked && (
+                          <div className="flex items-center gap-2">
+                            <StripeCheckout
+                              albumId={album.id}
+                              albumTitle={album.title}
+                              price={album.price}
+                              onSuccess={() => {
+                                purchaseAlbum(album.id);
+                              }}
+                              className="h-7 text-xs px-3"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CarouselItem>
