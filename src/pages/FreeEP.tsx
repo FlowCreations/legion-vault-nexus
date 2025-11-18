@@ -13,6 +13,7 @@ export default function FreeEP() {
   const [phone, setPhone] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -76,12 +77,8 @@ export default function FreeEP() {
         description: "Check your email to verify your account and unlock your free Power album!",
       });
 
-      // Reset form
-      setName("");
-      setEmail("");
-      setPassword("");
-      setPhone("");
-      setZipCode("");
+      // Show success message
+      setSuccess(true);
     } catch (error: any) {
       console.error('Free EP signup error:', error);
       toast({
@@ -121,11 +118,28 @@ export default function FreeEP() {
 
           {/* Form Box - Same Size as Album */}
           <div className="w-[450px] h-[450px] bg-card/95 backdrop-blur-sm rounded-lg shadow-2xl p-8 flex flex-col justify-center opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
-            <h1 className="text-lg font-bold mb-6 text-balance leading-tight text-center">
-              TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
-            </h1>
+            {success ? (
+              <div className="text-center space-y-6">
+                <h1 className="text-2xl font-bold text-balance leading-tight">
+                  POWER ALBUM UNLOCKED!
+                </h1>
+                <p className="text-lg">
+                  Go to the music page and listen now.
+                </p>
+                <Button
+                  onClick={() => navigate('/music')}
+                  className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
+                >
+                  GO TO MUSIC
+                </Button>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-lg font-bold mb-6 text-balance leading-tight text-center">
+                  TURN UP THE VOLUME, HIT THE OPEN ROAD, AND GRAB A FREE DOWNLOAD OF SONS OF LEGION&apos;S RAW AND SOULFUL &quot;POWER&quot; ALBUM...
+                </h1>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="name" className="sr-only">Name</Label>
                 <Input
@@ -190,14 +204,16 @@ export default function FreeEP() {
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
-                disabled={loading}
-              >
-                {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
-              </Button>
-            </form>
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
+                    disabled={loading}
+                  >
+                    {loading ? "DOWNLOADING..." : "DOWNLOAD NOW"}
+                  </Button>
+                </form>
+              </>
+            )}
           </div>
         </div>
 
