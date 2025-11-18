@@ -121,11 +121,8 @@ export default function FreeEP() {
             {success ? (
               <div className="text-center space-y-6">
                 <h1 className="text-2xl font-bold text-balance leading-tight">
-                  POWER ALBUM UNLOCKED!
+                  Power album unlocked! go to music tab and listen now.
                 </h1>
-                <p className="text-lg">
-                  Go to the music page and listen now.
-                </p>
                 <Button
                   onClick={() => navigate('/music')}
                   className="w-full bg-gradient-gold hover:shadow-glow text-lg py-6 font-bold"
