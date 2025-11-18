@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -686,7 +686,7 @@ export default function Profile() {
                     <div className="text-center py-8">
                       <p className="text-muted-foreground mb-4">You don't have an active subscription</p>
                       <Button asChild>
-                        <a href="/subscribe">View Plans</a>
+                        <Link to="/subscribe">View Plans</Link>
                       </Button>
                     </div>
                   )}
@@ -760,9 +760,9 @@ export default function Profile() {
                         </Button>
                       ) : (
                         <Button asChild className="bg-gradient-gold hover:shadow-glow">
-                          <a href="/subscribe">
+                          <Link to="/subscribe">
                             View Subscription Plans
-                          </a>
+                          </Link>
                         </Button>
                       )}
                     </div>

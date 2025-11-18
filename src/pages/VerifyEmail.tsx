@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -123,9 +123,9 @@ export default function VerifyEmail() {
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground">
             Need help?{" "}
-            <a href="/contact" className="text-primary hover:underline">
+            <Link to="/contact" className="text-primary hover:underline">
               Contact Support
-            </a>
+            </Link>
           </p>
         </div>
       </div>
