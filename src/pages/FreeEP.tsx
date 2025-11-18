@@ -62,6 +62,28 @@ export default function FreeEP() {
         console.error('Profile update error:', profileError);
       }
 
+      // Add Power album to purchase history
+      const { error: purchaseError } = await supabase
+        .from('purchases')
+        .insert({
+          user_id: authData.user.id,
+          email: email,
+          product_id: 'a1',
+          product_name: 'Power Album',
+          product_type: 'album',
+          amount_total: 0,
+          currency: 'usd',
+          status: 'completed',
+          stripe_session_id: `free-album-${authData.user.id}`,
+        });
+
+      if (purchaseError) {
+        console.error('Error adding purchase record:', purchaseError);
+      }
+
+      // Unlock the Power album for the user
+      purchaseAlbum('a1');
+
       // Send the free album welcome email
       const { error: emailError } = await supabase.functions.invoke('send-free-album-email', {
         body: {
@@ -73,9 +95,6 @@ export default function FreeEP() {
       if (emailError) {
         console.error('Error sending email:', emailError);
       }
-
-      // Unlock the Power album for the user
-      purchaseAlbum('a1');
       
       toast({
         title: "Account Created!",
