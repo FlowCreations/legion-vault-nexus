@@ -89,14 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.warn('[AUTH] getSession error', error);
-          // Clear invalid session data on error
-          localStorage.removeItem('sb-dlwyndcvnunvomgkbkhn-auth-token');
+          // Clear all auth-related storage on error
+          await supabase.auth.signOut({ scope: 'local' });
         }
         
         if (!mounted) return;
 
-        const initialSession = data.session;
-        setSession(initialSession);
+        const initialSession = data?.session;
+        setSession(initialSession ?? null);
         setUser(initialSession?.user ?? null);
         
         if (initialSession?.user) {
@@ -125,6 +125,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         unsubscribe = subscription.unsubscribe;
       } catch (err) {
         console.error('[AUTH] initialization error', err);
+        // Clear potentially corrupted session
+        await supabase.auth.signOut({ scope: 'local' });
         if (mounted) setReady(true);
       }
     };
@@ -157,6 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     try {
+      // Clear any stale session first
+      await supabase.auth.signOut({ scope: 'local' });
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -165,7 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success('Signed in successfully');
     } catch (err: any) {
       console.error('[AUTH] Email sign-in error', err);
-      toast.error('Sign-in failed', { description: err.message });
+      const errorMessage = err.message || 'An error occurred during sign-in';
+      toast.error('Sign-in failed', { description: errorMessage });
       throw err;
     }
   }, []);
