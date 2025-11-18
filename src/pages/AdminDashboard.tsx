@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,13 +157,14 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     }
   ];
 
+
   useEffect(() => {
     loadMembers();
     loadTierCounts();
     loadPixels();
     loadLegalDocs();
     loadFeatureFlags();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // If a user was selected from the globe, show their profile
@@ -175,7 +176,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     }
   }, [selectedUserId, members]);
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     // Fetch real user profiles with ERA/PTP scores
     const { data, error } = await supabase
       .from("user_profiles")
@@ -234,9 +235,9 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     
     // Combine real members with demo members
     setMembers([...realMembersWithScores, ...mockWithScores] as Member[]);
-  };
+  }, []);
 
-  const loadTierCounts = async () => {
+  const loadTierCounts = useCallback(async () => {
     const { data } = await supabase
       .from("user_profiles")
       .select("tier");
@@ -248,27 +249,27 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       "Legionnaires": 80
     };
     setTierCounts(counts);
-  };
+  }, []);
 
-  const loadPixels = async () => {
+  const loadPixels = useCallback(async () => {
     const { data } = await supabase
       .from("tracking_pixels")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (data) setPixels(data);
-  };
+  }, []);
 
-  const loadLegalDocs = async () => {
+  const loadLegalDocs = useCallback(async () => {
     const { data } = await supabase
       .from("legal_documents")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (data) setLegalDocs(data);
-  };
+  }, []);
 
-  const loadFeatureFlags = async () => {
+  const loadFeatureFlags = useCallback(async () => {
     const { data } = await supabase
       .from('feature_flags')
       .select('enabled')
@@ -278,7 +279,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     if (data) {
       setCameoFlagEnabled(data.enabled);
     }
-  };
+  }, []);
 
   const toggleCameoFeature = async () => {
     const { error } = await supabase
