@@ -184,7 +184,8 @@ export default function GlobalReachMap({
     }
     
     load();
-    const id = setInterval(load, 30_000);
+    // Reduced polling frequency from 30s to 5 minutes with caching
+    const id = setInterval(load, 5 * 60 * 1000);
     return () => {
       stopped = true;
       clearInterval(id);
