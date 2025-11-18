@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { userId, email, firstName }: WelcomeEmailRequest = await req.json();
 
     const displayName = firstName || "there";
-    const portalUrl = `${req.headers.get("origin") || "https://sonsoflegion.com"}/`;
+    const portalUrl = "https://sol-portal.com";
 
     const emailResponse = await resend.emails.send({
       from: "Sons of Legion <hello@sonsoflegion.com>",
@@ -182,7 +182,7 @@ const handler = async (req: Request): Promise<Response> => {
 
                 <p>Your email is verified and your portal is now <span class="highlight">fully activated</span>.</p>
 
-                <p>You're officially part of the Sons of Legion community — a brotherhood united by music, purpose, and shared values.</p>
+                <p>You're officially part of the Sons of Legion community — here we are united by music, purpose, and shared values.</p>
 
                 <div class="features">
                   <div class="feature-item">
