@@ -47,8 +47,9 @@ export default function Contact() {
 
       if (error) throw error;
 
-      trackEvent('contact_form', {
-        subject: data.subject
+      trackEvent('chat_interaction', {
+        subject: data.subject,
+        interaction_type: 'contact_form'
       });
       
       toast({
