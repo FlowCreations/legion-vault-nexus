@@ -459,24 +459,9 @@ const Merchant = memo(() => {
                   <HeartbeatToggle />
                 </Suspense>
                 
-                <Tabs defaultValue="members" className="space-y-6">
-                  <TabsList>
-                    <TabsTrigger value="members">Community Members</TabsTrigger>
-                    <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="members">
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <CommunityMembers selectedUserId={selectedUserId} />
-                    </Suspense>
-                  </TabsContent>
-                  
-                  <TabsContent value="activity">
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AdminDashboard selectedUserId={selectedUserId} />
-                    </Suspense>
-                  </TabsContent>
-                </Tabs>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AdminDashboard selectedUserId={selectedUserId} />
+                </Suspense>
               </div>
             </TabsContent>
           )}
