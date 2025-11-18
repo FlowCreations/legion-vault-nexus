@@ -318,16 +318,22 @@ const Globe: React.FC<GlobeProps> = ({ cities, onCityClick }) => {
     
     map.current.on('mouseup', () => {
       userInteracting = false;
-      spinGlobe();
+      if (spinEnabledRef.current) {
+        spinGlobe();
+      }
     });
     
     map.current.on('touchend', () => {
       userInteracting = false;
-      spinGlobe();
+      if (spinEnabledRef.current) {
+        spinGlobe();
+      }
     });
 
     map.current.on('moveend', () => {
-      spinGlobe();
+      if (spinEnabledRef.current) {
+        spinGlobe();
+      }
     });
 
     spinGlobe();
