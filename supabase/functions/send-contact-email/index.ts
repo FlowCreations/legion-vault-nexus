@@ -69,11 +69,17 @@ const handler = async (req: Request): Promise<Response> => {
     await resend.emails.send({
       from: "Sons of Legion <onboarding@resend.dev>",
       to: [email],
-      subject: "We received your message!",
+      subject: "Thanks for reaching out to Sons of Legion",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #d4af37; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 2px;">
+              SONS OF LEGION
+            </h1>
+          </div>
+          
           <h2 style="color: #333; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">
-            Thank you for contacting us!
+            Thank you for reaching out!
           </h2>
           
           <p style="line-height: 1.6; color: #333;">
