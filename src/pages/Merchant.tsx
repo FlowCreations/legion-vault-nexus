@@ -388,15 +388,15 @@ const Merchant = memo(() => {
 
           {activeTab === "marketing" && (
             <TabsContent value="marketing">
-              <Tabs defaultValue="analytics" className="space-y-6">
+              <Tabs defaultValue="campaigns" className="space-y-6">
                 <TabsList>
-                  <TabsTrigger value="analytics">Analytics & AI</TabsTrigger>
                   <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
                   <TabsTrigger value="funnel">Sales Funnel</TabsTrigger>
                   <TabsTrigger value="hybrid">Hybrid Funnel</TabsTrigger>
                   <TabsTrigger value="email">Email</TabsTrigger>
                   <TabsTrigger value="sms">SMS</TabsTrigger>
                   <TabsTrigger value="social">Social</TabsTrigger>
+                  <TabsTrigger value="analytics">Analytics & AI</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="analytics" className="space-y-6">
@@ -459,24 +459,9 @@ const Merchant = memo(() => {
                   <HeartbeatToggle />
                 </Suspense>
                 
-                <Tabs defaultValue="members" className="space-y-6">
-                  <TabsList>
-                    <TabsTrigger value="members">Community Members</TabsTrigger>
-                    <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="members">
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <CommunityMembers selectedUserId={selectedUserId} />
-                    </Suspense>
-                  </TabsContent>
-                  
-                  <TabsContent value="activity">
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AdminDashboard selectedUserId={selectedUserId} />
-                    </Suspense>
-                  </TabsContent>
-                </Tabs>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CommunityMembers selectedUserId={selectedUserId} />
+                </Suspense>
               </div>
             </TabsContent>
           )}
