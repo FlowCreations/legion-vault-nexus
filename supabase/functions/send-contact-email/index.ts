@@ -30,9 +30,11 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`[CONTACT-EMAIL] Processing contact form from ${firstName} ${lastName} (${email})`);
 
     // Send email to Sons of Legion
+    // NOTE: Using verified email address. To send to sonsoflegionmusic@gmail.com,
+    // verify a domain at resend.com/domains and update the 'from' address
     const emailResponse = await resend.emails.send({
       from: "Sons of Legion Contact Form <onboarding@resend.dev>",
-      to: ["sonsoflegionmusic@gmail.com"],
+      to: ["hello@learnflowmastery.com"], // Change to sonsoflegionmusic@gmail.com after domain verification
       reply_to: email,
       subject: `Contact Form: ${subject}`,
       html: `
