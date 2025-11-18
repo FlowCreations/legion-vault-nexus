@@ -221,17 +221,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.warn('[AUTH] signOut error', error);
         toast.error('Sign-out failed', { description: error.message });
-      } else {
-        toast.success('Signed out successfully');
+        throw error;
       }
       
+      // Only clear state after successful sign out
       setSession(null);
       setUser(null);
       setProfile(null);
       setIsAdmin(false);
-      localStorage.removeItem('supabase.auth.token');
+      toast.success('Signed out successfully');
     } catch (err) {
       console.error('[AUTH] signOut exception', err);
+      // Force clear state even on error to prevent stuck auth state
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setIsAdmin(false);
     }
   }, []);
 
