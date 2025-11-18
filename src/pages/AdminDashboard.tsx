@@ -424,7 +424,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
         </Card>
 
         <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => {
-          setFilterPTP('Hot');
+          setFilterPTP('Go');
           setSortBy('ptp');
         }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -457,7 +457,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
             </CardHeader>
             <CardContent>
               {/* Filters and Sort */}
-              <div className="flex gap-4 mb-6 flex-wrap">
+              <div className="flex gap-4 mb-6 flex-wrap items-center">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Sort by:</span>
                   <select 
@@ -501,6 +501,20 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                     <option value="Go">Go</option>
                   </select>
                 </div>
+
+                {(filterERA !== 'all' || filterPTP !== 'all') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFilterERA('all');
+                      setFilterPTP('all');
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                )}
               </div>
               
               <div className="grid gap-4">
