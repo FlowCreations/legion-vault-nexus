@@ -107,14 +107,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, newSession) => {
-            console.log('[AUTH] onAuthStateChange', event);
+            console.log('[AUTH] State change event:', event);
+            console.log('[AUTH] Session exists:', !!newSession);
+            console.log('[AUTH] User exists:', !!newSession?.user);
+            
             if (!mounted) return;
 
             setSession(newSession);
             setUser(newSession?.user ?? null);
 
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-              if (newSession?.user) await loadProfile(newSession.user);
+              if (newSession?.user) {
+                console.log('[AUTH] Loading profile after event:', event);
+                await loadProfile(newSession.user);
+              }
             } else if (event === 'SIGNED_OUT') {
               setProfile(null);
               setIsAdmin(false);
@@ -142,17 +148,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async (returnTo?: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('[AUTH] Initiating Google OAuth flow');
+      console.log('[AUTH] Redirect URL:', `${window.location.origin}${returnTo || '/'}`);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}${returnTo || '/'}`,
-          queryParams: { prompt: 'select_account' },
+          queryParams: { 
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error('[AUTH] Google OAuth initialization error:', error);
+        throw error;
+      }
+      
+      console.log('[AUTH] Google OAuth data:', data);
     } catch (err: any) {
       console.error('[AUTH] Google sign-in error', err);
-      toast.error('Sign-in failed', { description: err.message });
+      toast.error('Sign-in failed', { description: err.message || 'Failed to initiate Google sign-in' });
       throw err;
     }
   }, []);
