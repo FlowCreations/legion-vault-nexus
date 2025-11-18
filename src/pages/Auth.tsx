@@ -14,8 +14,10 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('returnTo') || '/';
   const navigate = useNavigate();
-  const { ready, user, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { ready, user, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -79,6 +81,24 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    try {
+      setLoading(true);
+      await resetPassword(resetEmail);
+      setShowForgotPassword(false);
+      setResetEmail("");
+    } catch (error) {
+      // Error already handled in AuthProvider
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // If already authenticated, don't show the form (will redirect via useEffect)
   if (ready && user) {
     return (
@@ -130,11 +150,56 @@ export default function Auth() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Sign In
+              <div className="flex items-center justify-between">
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Sign In
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-sm text-muted-foreground hover:text-primary"
+                onClick={() => setShowForgotPassword(true)}
+                disabled={loading}
+              >
+                Forgot your password?
               </Button>
             </form>
+
+            {showForgotPassword && (
+              <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+                <h3 className="text-sm font-semibold mb-3">Reset Password</h3>
+                <form onSubmit={handleForgotPassword} className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={loading} className="flex-1">
+                      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Send Reset Link
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowForgotPassword(false)}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
 
             <div className="relative my-6">
               <Separator />
