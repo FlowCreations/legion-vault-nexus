@@ -454,15 +454,9 @@ const Merchant = memo(() => {
 
           {activeTab === "community" && (
             <TabsContent value="community">
-              <div className="space-y-6">
-                <Suspense fallback={<LoadingSpinner />}>
-                  <HeartbeatToggle />
-                </Suspense>
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <AdminDashboard selectedUserId={selectedUserId} />
-                </Suspense>
-              </div>
+              <Suspense fallback={<LoadingSpinner />}>
+                <AdminDashboard selectedUserId={selectedUserId} />
+              </Suspense>
             </TabsContent>
           )}
 
