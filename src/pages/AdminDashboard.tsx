@@ -368,17 +368,9 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold mb-2">Community Management</h2>
-          <p className="text-muted-foreground">Manage your community members and settings</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <HeartbeatSyncButton />
-          <Badge variant="outline" className="text-sm px-4 py-2">
-            Powered by <span className="font-bold ml-1">JRNY</span>
-          </Badge>
-        </div>
+      <div>
+        <h2 className="text-3xl font-bold mb-2">Community Management</h2>
+        <p className="text-muted-foreground">Manage your community members and settings</p>
       </div>
 
       {/* Stats Overview */}
@@ -442,8 +434,8 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
         <TabsList>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="superfans">Superfan Index</TabsTrigger>
-          <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
+          <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
           <TabsTrigger value="pixels">Tracking</TabsTrigger>
           <TabsTrigger value="legal">Legal</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
