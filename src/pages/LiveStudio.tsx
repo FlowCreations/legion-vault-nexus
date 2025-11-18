@@ -51,6 +51,9 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
+    // Poll for live stream status every 10 seconds
+    const liveStreamInterval = setInterval(checkLiveStream, 10000);
+    
     // Target date: December 23, 2025 8:00 PM EST
     const targetDate = new Date('2025-12-23T20:00:00-05:00');
     
@@ -125,6 +128,7 @@ export default function LiveStudio() {
     
     return () => {
       clearInterval(interval);
+      clearInterval(liveStreamInterval);
       supabase.removeChannel(channel);
     };
   }, []);
