@@ -141,7 +141,7 @@ export default function FreeEP() {
           </div>
 
           {/* Form Box - Same Size as Album */}
-          <div className="w-[450px] h-[450px] bg-card/95 backdrop-blur-sm rounded-lg shadow-2xl p-8 flex flex-col justify-center opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
+          <div className="w-[450px] h-[450px] bg-card/95 backdrop-blur-sm rounded-lg shadow-2xl p-8 flex flex-col justify-start pt-12 opacity-0 animate-[fade-in_1s_ease-out_0.5s_forwards]">
             {success ? (
               <div className="text-center space-y-6">
                 <h1 className="text-2xl font-bold text-balance leading-tight">
