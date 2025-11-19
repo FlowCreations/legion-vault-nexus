@@ -225,13 +225,36 @@ export function ExpandableLiveViewer({
     }
   };
 
+  const handleFullscreen = () => {
+    if (!videoRef.current) return;
+
+    const el = videoRef.current as HTMLVideoElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+      msRequestFullscreen?: () => Promise<void> | void;
+    };
+
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => undefined);
+      } else if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => undefined);
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
+      }
+    } catch (err) {
+      console.warn('[Viewer] Fullscreen error:', err);
+    }
+  };
+  
   // Calculate stream duration
   const streamDuration = streamStartTime 
     ? Math.floor((Date.now() - streamStartTime.getTime()) / 1000)
     : 0;
   const hours = Math.floor(streamDuration / 3600);
   const minutes = Math.floor((streamDuration % 3600) / 60);
-
+  
   // Simple mode rendering - no expand for now
   return (
     <>
