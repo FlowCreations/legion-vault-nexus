@@ -91,6 +91,9 @@ const Merchant = memo(() => {
   const [showChat, setShowChat] = useState(false);
   const [activeTab, setActiveTab] = useState("analytics");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  
+  // Real-time dashboard updates
+  const { stats, isConnected, refreshStats } = useMerchantRealtime();
 
   // Performance tracking - disabled for production performance
   // usePerformanceTracking('Merchant', {
@@ -165,7 +168,10 @@ const Merchant = memo(() => {
   const handleRefreshData = useCallback(async () => {
     setRefreshing(true);
     try {
-      await supabase.functions.invoke('sync-viberate');
+      await Promise.all([
+        supabase.functions.invoke('sync-viberate'),
+        refreshStats()
+      ]);
       toast({
         title: "Data refreshed",
         description: "Your analytics data has been updated",
@@ -180,7 +186,7 @@ const Merchant = memo(() => {
     } finally {
       setRefreshing(false);
     }
-  }, [toast]);
+  }, [toast, refreshStats]);
 
   const showAIChat = showChat;
   const setShowAIChat = setShowChat;
