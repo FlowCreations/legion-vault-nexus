@@ -85,11 +85,11 @@ export function IntelligenceNavigator({ onSelectView, currentView }: Intelligenc
                   "relative w-full h-full rounded-full flex items-center justify-center transition-filter duration-300",
                   isActive && "drop-shadow-[0_0_12px_rgba(255,223,0,0.9)]"
                 )}>
-                <img 
+                  <img 
                     src={button.image} 
                     alt={button.name}
                     className={cn(
-                      "w-[70%] h-[70%] object-contain transition-filter duration-300 self-center",
+                      "w-[70%] h-[70%] object-contain object-center transition-filter duration-300",
                       "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]",
                       isActive && "brightness-110"
                     )}
