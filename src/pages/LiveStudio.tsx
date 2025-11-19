@@ -51,8 +51,8 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
-    // Poll for live stream status every 30 seconds (reduced from 10s to avoid refresh issues)
-    const liveStreamInterval = setInterval(checkLiveStream, 30000);
+    // Poll for live stream status every 60 seconds (increased to avoid refresh issues)
+    const liveStreamInterval = setInterval(checkLiveStream, 60000);
     
     // Target date: December 23, 2025 8:00 PM EST
     const targetDate = new Date('2025-12-23T20:00:00-05:00');
@@ -134,7 +134,7 @@ export default function LiveStudio() {
       clearInterval(liveStreamInterval);
       supabase.removeChannel(channel);
     };
-  }, [liveEventId]); // Add liveEventId to deps to track current event
+  }, []); // Remove liveEventId from deps to prevent refresh on status change
 
   useEffect(() => {
     if (!liveEventId) {
