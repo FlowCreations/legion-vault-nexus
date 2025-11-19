@@ -2,12 +2,14 @@ import { useEffect, useState, lazy, Suspense, memo, useCallback, useMemo } from 
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Activity, MessageSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Activity, MessageSquare, Wifi, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 import { ProgressiveLoader } from "@/components/merchant/ProgressiveLoader";
 import { dedupeRequest, deferNonCritical } from "@/lib/performance";
+import { useMerchantRealtime } from "@/hooks/useMerchantRealtime";
 
 // Lazy load ALL heavy components for maximum performance
 const AIChat = lazy(() => import("@/components/merchant/AIChat").then(m => ({ default: m.AIChat })));
@@ -238,35 +240,61 @@ const Merchant = memo(() => {
           {/* Conditional Tab Rendering - Only render active tab */}
           {activeTab === "analytics" && (
             <TabsContent value="analytics" className="space-y-6">
-              <div className="flex justify-end gap-3">
-                <Suspense fallback={<div className="h-10 w-10"></div>}>
-                  <SeedCoordinatesButton />
-                </Suspense>
-                <Button 
-                  onClick={handleRefreshData} 
-                  disabled={refreshing}
-                  variant="outline"
-                >
-                  {refreshing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                      Syncing Data...
-                    </>
-                  ) : (
-                    <>
-                      <Activity className="mr-2 h-4 w-4" />
-                      Refresh Data
-                    </>
-                  )}
-                </Button>
+              <div className="flex justify-between items-center gap-3">
+                {/* Real-time status indicator */}
+                <div className="flex items-center gap-4">
+                  <Badge variant={isConnected ? "default" : "secondary"} className="gap-2">
+                    {isConnected ? (
+                      <>
+                        <Wifi className="w-3 h-3" />
+                        Live Updates
+                      </>
+                    ) : (
+                      <>
+                        <WifiOff className="w-3 h-3" />
+                        Offline
+                      </>
+                    )}
+                  </Badge>
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-semibold">{stats.totalUsers.toLocaleString()}</span> users
+                    {' • '}
+                    <span className="font-semibold">{stats.activeUsers.toLocaleString()}</span> active
+                    {' • '}
+                    <span className="font-semibold text-green-500">+{stats.newUsersToday}</span> today
+                  </div>
+                </div>
                 
-                <Button 
-                  onClick={() => setShowChat(!showChat)}
-                  className="bg-gradient-gold"
-                >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  {showChat ? "Hide" : "Show"} AI Assistant
-                </Button>
+                <div className="flex gap-3">
+                  <Suspense fallback={<div className="h-10 w-10"></div>}>
+                    <SeedCoordinatesButton />
+                  </Suspense>
+                  <Button 
+                    onClick={handleRefreshData} 
+                    disabled={refreshing}
+                    variant="outline"
+                  >
+                    {refreshing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                        Syncing...
+                      </>
+                    ) : (
+                      <>
+                        <Activity className="mr-2 h-4 w-4" />
+                        Refresh Data
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setShowChat(!showChat)}
+                    className="bg-gradient-gold"
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    {showChat ? "Hide" : "Show"} AI Assistant
+                  </Button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
