@@ -13,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { usePictureInPicture } from '@/hooks/usePictureInPicture';
 import { useLiveStreamStore } from '@/stores/liveStreamStore';
 import { ErrorBoundary } from '@/diagnostics/ErrorBoundary';
+import { supabase } from '@/integrations/supabase/client';
 
 type Props = { 
   eventId: string;
@@ -44,7 +45,9 @@ export function ExpandableLiveViewer({
     videoTrack,
     audioTrack,
     isExpanded,
+    databaseStatus,
     setExpanded,
+    setDatabaseStatus,
     connect: connectStream,
     disconnect: disconnectStream
   } = useLiveStreamStore();
@@ -60,6 +63,7 @@ export function ExpandableLiveViewer({
       hasVideo: !!videoTrack,
       hasAudio: !!audioTrack,
       activeVideoEl: !!activeVideoEl,
+      isExpanded,
       inDOM: activeVideoEl ? document.body.contains(activeVideoEl) : false
     });
     
@@ -75,30 +79,43 @@ export function ExpandableLiveViewer({
       return;
     }
 
-    // Detach and re-attach video track to prevent double-attachment
+    // Detach tracks completely before re-attaching to new container
     if (videoTrack) {
-      console.log('[Viewer] Attaching video track');
+      console.log('[Viewer] Detaching and re-attaching video track');
       videoTrack.detach(); // Cleanup any previous attachment
-      videoTrack.attach(activeVideoEl);
+      // Small delay to ensure detachment completes
+      setTimeout(() => {
+        if (activeVideoEl && document.body.contains(activeVideoEl)) {
+          videoTrack.attach(activeVideoEl);
+        }
+      }, 50);
     }
 
     // Detach and re-attach audio track
     if (audioTrack) {
-      console.log('[Viewer] Attaching audio track');
+      console.log('[Viewer] Detaching and re-attaching audio track');
       audioTrack.detach(); // Cleanup any previous attachment
-      audioTrack.attach(activeVideoEl);
-      
-      // Force audio playback with explicit volume control
-      activeVideoEl.muted = false;
-      activeVideoEl.volume = 1.0;
+      setTimeout(() => {
+        if (activeVideoEl && document.body.contains(activeVideoEl)) {
+          audioTrack.attach(activeVideoEl);
+          
+          // Force audio playback with explicit volume control
+          activeVideoEl.muted = false;
+          activeVideoEl.volume = 1.0;
+        }
+      }, 50);
     }
 
     // Ensure playback starts
-    activeVideoEl.play().catch(err => {
-      console.log('[Viewer] Autoplay prevented:', err.message);
-      setAudioMuted(true);
-    });
-  }, [videoTrack, audioTrack]);
+    setTimeout(() => {
+      if (activeVideoEl && document.body.contains(activeVideoEl)) {
+        activeVideoEl.play().catch(err => {
+          console.log('[Viewer] Autoplay prevented:', err.message);
+          setAudioMuted(true);
+        });
+      }
+    }, 100);
+  }, [videoTrack, audioTrack, isExpanded]);
 
   // Connect to stream on mount
   useEffect(() => {
@@ -107,6 +124,31 @@ export function ExpandableLiveViewer({
       connectStream(eventId);
     }
   }, [eventId, status, connectStream]);
+
+  // Poll database for stream status to detect when stream ends
+  useEffect(() => {
+    if (!eventId) return;
+
+    const checkStreamStatus = async () => {
+      const { data, error } = await supabase
+        .from('livestream_events')
+        .select('status')
+        .eq('id', eventId)
+        .single();
+
+      if (!error && data) {
+        setDatabaseStatus(data.status as 'live' | 'ended');
+      }
+    };
+
+    // Check immediately
+    checkStreamStatus();
+
+    // Then poll every 5 seconds
+    const interval = setInterval(checkStreamStatus, 5000);
+
+    return () => clearInterval(interval);
+  }, [eventId, setDatabaseStatus]);
 
   // Attach tracks when they become available OR when expanded state changes
   useEffect(() => {
@@ -202,10 +244,10 @@ export function ExpandableLiveViewer({
   // Compact mode rendering
   if (!isExpanded) {
     return (
-      <div className="space-y-3">
-        <div className="relative group">
-          {/* Video Container */}
-          {videoElement}
+      <>
+        <div className="space-y-3 relative">
+          <div className="relative group">
+            {/* Video Container */}
 
           {/* Stream Status Overlay */}
           {status !== 'connected' && (
@@ -233,8 +275,8 @@ export function ExpandableLiveViewer({
             </div>
           )}
 
-          {/* Live Badge & Viewer Count - Top Left */}
-          {status === 'connected' && (
+          {/* Live Badge & Viewer Count - Top Left - Only show if connected AND database shows live */}
+          {status === 'connected' && databaseStatus === 'live' && (
             <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
               <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg backdrop-blur-sm">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -261,9 +303,9 @@ export function ExpandableLiveViewer({
             </div>
           )}
 
-          {/* Quick Actions - Bottom Right (only on hover) */}
-          {status === 'connected' && (
-            <div className="absolute bottom-4 right-4 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Quick Actions - Bottom Right (only on hover and when not showing external controls) */}
+          {status === 'connected' && !showExternalControls && (
+            <div className="absolute bottom-4 right-4 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
               {isPiPSupported && (
                 <Button
                   size="sm"
@@ -312,6 +354,7 @@ export function ExpandableLiveViewer({
           />
         </ErrorBoundary>
       </div>
+      </>
     );
   }
 
@@ -401,21 +444,57 @@ export function ExpandableLiveViewer({
               </Button>
             </div>
 
-            {/* Sidebar - Info message that chat/tips are disabled */}
-            <div className="w-full lg:w-96 bg-background border-l border-border flex items-center justify-center">
-              <div className="p-8 text-center space-y-4">
-                <div className="text-muted-foreground">
-                  <p className="text-lg font-semibold mb-2">Expanded View</p>
-                  <p className="text-sm">
-                    Chat and tips are disabled in fullscreen mode.
-                  </p>
-                  <p className="text-sm mt-2">
-                    Exit fullscreen to interact with the stream.
-                  </p>
+            {/* Sidebar - Live Chat & Controls (like YouTube fullscreen) */}
+            <div className="w-full lg:w-96 bg-background border-l border-border flex flex-col">
+              {/* Stream Info Header */}
+              <div className="p-4 border-b border-border space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {status === 'connected' && databaseStatus === 'live' && (
+                      <div className="bg-red-600 text-white px-2 py-1 rounded-full flex items-center gap-1.5 font-semibold text-xs">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                        LIVE
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <span>👁️</span>
+                      <span>{viewerCount} viewers</span>
+                    </div>
+                  </div>
+                  {streamDuration > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span>{viewerCount.toLocaleString()} watching</span>
+              </div>
+
+              {/* Live Chat - Scrollable */}
+              <div className="flex-1 overflow-hidden">
+                <ErrorBoundary>
+                  <LiveChat eventId={eventId} />
+                </ErrorBoundary>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="p-4 border-t border-border space-y-3">
+                {/* Reaction Buttons */}
+                <div className="flex justify-center">
+                  <ErrorBoundary>
+                    <LiveReactions eventId={eventId} />
+                  </ErrorBoundary>
+                </div>
+                
+                {/* Tip & Share Buttons */}
+                <div className="flex gap-2">
+                  <Button onClick={handleTipClick} variant="default" className="flex-1">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Send Tip
+                  </Button>
+                  <Button onClick={handleShare} variant="outline" className="flex-1">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
                 </div>
               </div>
             </div>

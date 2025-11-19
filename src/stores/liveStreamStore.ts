@@ -13,7 +13,9 @@ interface LiveStreamState {
   videoTrack: RemoteVideoTrack | null;
   audioTrack: RemoteAudioTrack | null;
   isExpanded: boolean;
+  databaseStatus: 'live' | 'ended' | null;
   setExpanded: (expanded: boolean) => void;
+  setDatabaseStatus: (status: 'live' | 'ended' | null) => void;
   connect: (eventId: string) => Promise<void>;
   disconnect: () => void;
   setViewerCount: (count: number) => void;
@@ -30,6 +32,7 @@ export const useLiveStreamStore = create<LiveStreamState>((set, get) => ({
   videoTrack: null,
   audioTrack: null,
   isExpanded: typeof window !== 'undefined' ? localStorage.getItem('livestream-expanded') === 'true' : false,
+  databaseStatus: null,
 
   setExpanded: (expanded: boolean) => {
     set({ isExpanded: expanded });
@@ -40,6 +43,17 @@ export const useLiveStreamStore = create<LiveStreamState>((set, get) => ({
 
   setViewerCount: (count: number) => {
     set({ viewerCount: count });
+  },
+
+  setDatabaseStatus: (status: 'live' | 'ended' | null) => {
+    const currentStatus = get().status;
+    set({ databaseStatus: status });
+    
+    // If database shows ended, update local status
+    if (status === 'ended' && currentStatus === 'connected') {
+      console.log('[LiveStreamStore] Database status ended, disconnecting');
+      get().disconnect();
+    }
   },
 
   connect: async (eventId: string) => {
