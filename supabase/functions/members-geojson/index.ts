@@ -84,7 +84,11 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(geojson),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300, s-maxage=300' // Cache for 5 minutes
+        },
         status: 200,
       },
     )

@@ -56,7 +56,6 @@ const VideoManager = lazy(() => import("./VideoManager"));
 const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
 const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
 const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(m => ({ default: m.CommunityMembers })));
-const HeartbeatToggle = lazy(() => import("@/components/merchant/HeartbeatToggle").then(m => ({ default: m.HeartbeatToggle })));
 
 const MostTalkedAbout = lazy(() => import("@/components/merchant/MostTalkedAbout").then(m => ({ default: m.MostTalkedAbout })));
 const DataInsights = lazy(() => import("@/components/merchant/DataInsights").then(m => ({ default: m.DataInsights })));
@@ -285,7 +284,7 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  <ProgressiveLoader priority="high" delay={20}>
+                  <ProgressiveLoader priority="idle" delay={2000}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Geography />
                     </Suspense>
