@@ -927,44 +927,52 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
   };
 
   const stopBroadcast = async () => {
-    console.log('[Broadcaster] Stopping broadcast');
+    console.log('[Broadcaster] 🛑 Stopping broadcast');
+    
+    // Show immediate feedback
+    toast.info('Ending broadcast...');
     
     try {
-      // First disconnect from LiveKit room
+      // Step 1: Update database status FIRST (before disconnecting)
+      console.log('[Broadcaster] Updating database status to "ended"');
+      const { error: updateError } = await supabase
+        .from('livestream_events')
+        .update({ 
+          status: 'ended',
+          stream_end_time: new Date().toISOString()
+        })
+        .eq('id', eventId);
+
+      if (updateError) {
+        console.error('[Broadcaster] ❌ Error updating event status:', updateError);
+        throw new Error('Failed to update stream status');
+      }
+      
+      console.log('[Broadcaster] ✅ Database updated to "ended"');
+      
+      // Step 2: Disconnect from LiveKit room
       if (roomRef.current) {
+        console.log('[Broadcaster] Disconnecting from LiveKit room');
         roomRef.current.disconnect();
         roomRef.current = null;
       }
       
-      // Use full cleanup
+      // Step 3: Clean up local resources
+      console.log('[Broadcaster] Cleaning up resources');
       fullCleanup();
       
-      // Update event status in background with timeout protection
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database update timeout')), 5000)
-      );
+      // Success!
+      toast.success('Broadcast ended successfully', {
+        description: 'Stream has been stopped and viewers notified'
+      });
       
-      const updatePromise = supabase
-        .from('livestream_events')
-        .update({ status: 'ended' })
-        .eq('id', eventId);
-
-      await Promise.race([updatePromise, timeoutPromise])
-        .then(({ error: updateError }) => {
-          if (updateError) {
-            console.error('[Broadcaster] Error updating event status:', updateError);
-          } else {
-            console.log('[Broadcaster] ✅ Event status updated to "ended"');
-          }
-        })
-        .catch(err => {
-          console.error('[Broadcaster] Database update failed:', err);
-        });
+      console.log('[Broadcaster] ✅ Broadcast stopped successfully');
       
-      toast.success('Broadcast ended successfully');
     } catch (e: any) {
-      console.error('[Broadcaster] Error stopping broadcast:', e);
-      toast.error('Error ending broadcast: ' + e.message);
+      console.error('[Broadcaster] ❌ Error stopping broadcast:', e);
+      toast.error('Error ending broadcast', {
+        description: e.message || 'Please try again'
+      });
     }
   };
 

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2, Minimize2 } from 'lucide-react';
+import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2, Minimize2, Users } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
@@ -137,18 +137,25 @@ export function ExpandableLiveViewer({
         .single();
 
       if (!error && data) {
+        console.log('[Viewer] Database status check:', data.status);
         setDatabaseStatus(data.status as 'live' | 'ended');
+        
+        // If database shows ended but we're still connected, disconnect
+        if (data.status === 'ended' && status === 'connected') {
+          console.log('[Viewer] Stream ended in database, disconnecting');
+          disconnectStream();
+        }
       }
     };
 
     // Check immediately
     checkStreamStatus();
 
-    // Then poll every 5 seconds
-    const interval = setInterval(checkStreamStatus, 5000);
+    // Poll every 3 seconds for faster response
+    const interval = setInterval(checkStreamStatus, 3000);
 
     return () => clearInterval(interval);
-  }, [eventId, setDatabaseStatus]);
+  }, [eventId, setDatabaseStatus, status, disconnectStream]);
 
   // Attach tracks when they become available OR when expanded state changes
   useEffect(() => {
@@ -275,7 +282,7 @@ export function ExpandableLiveViewer({
             </div>
           )}
 
-          {/* Live Badge & Viewer Count - Top Left - Only show if connected AND database shows live */}
+          {/* Live Badge & Viewer Count - Top Left - CRITICAL: Only show if BOTH connected AND database is live */}
           {status === 'connected' && databaseStatus === 'live' && (
             <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
               <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg backdrop-blur-sm">
@@ -286,6 +293,13 @@ export function ExpandableLiveViewer({
                 <span className="text-primary">👁️</span>
                 {viewerCount}
               </div>
+            </div>
+          )}
+          
+          {/* Debug: Show status when NOT live */}
+          {(status !== 'connected' || databaseStatus !== 'live') && (
+            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs z-10">
+              Status: {status} | DB: {databaseStatus || 'checking...'}
             </div>
           )}
 
@@ -409,8 +423,8 @@ export function ExpandableLiveViewer({
       <Dialog open={isExpanded} onOpenChange={setExpanded}>
         <DialogContent className="max-w-none w-screen h-screen p-0 gap-0 bg-black border-0">
           <div className="h-full flex flex-col lg:flex-row">
-            {/* Main Video Area */}
-            <div className="flex-1 relative flex items-center justify-center bg-black">
+            {/* Main Video Area - 70% width on large screens */}
+            <div className="flex-1 relative flex items-center justify-center bg-black lg:w-[70%]">
               {/* Permanent Video Element - Rendered via Portal */}
               <div id="video-container-permanent" className="w-full h-full" />
               
@@ -444,55 +458,56 @@ export function ExpandableLiveViewer({
               </Button>
             </div>
 
-            {/* Sidebar - Live Chat & Controls (like YouTube fullscreen) */}
-            <div className="w-full lg:w-96 bg-background border-l border-border flex flex-col">
+            {/* Sidebar - Live Chat & Controls (YouTube-style fullscreen layout) */}
+            <div className="w-full lg:w-[400px] bg-background border-l border-border flex flex-col max-h-screen">
               {/* Stream Info Header */}
-              <div className="p-4 border-b border-border space-y-2">
-                <div className="flex items-center justify-between">
+              <div className="p-4 border-b border-border shrink-0">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     {status === 'connected' && databaseStatus === 'live' && (
-                      <div className="bg-red-600 text-white px-2 py-1 rounded-full flex items-center gap-1.5 font-semibold text-xs">
+                      <div className="bg-red-600 text-white px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-xs">
                         <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                         LIVE
                       </div>
                     )}
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <span>👁️</span>
-                      <span>{viewerCount} viewers</span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">{viewerCount}</span>
                     </div>
                   </div>
                   {streamDuration > 0 && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground font-mono">
                       {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
                     </div>
                   )}
                 </div>
+                <h3 className="font-semibold text-sm">Live Chat</h3>
               </div>
 
-              {/* Live Chat - Scrollable */}
-              <div className="flex-1 overflow-hidden">
+              {/* Live Chat - Scrollable area */}
+              <div className="flex-1 overflow-y-auto min-h-0">
                 <ErrorBoundary>
                   <LiveChat eventId={eventId} />
                 </ErrorBoundary>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="p-4 border-t border-border space-y-3">
+              {/* Bottom Actions - Fixed at bottom */}
+              <div className="p-3 border-t border-border space-y-2 shrink-0 bg-background">
                 {/* Reaction Buttons */}
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-2">
                   <ErrorBoundary>
                     <LiveReactions eventId={eventId} />
                   </ErrorBoundary>
                 </div>
                 
                 {/* Tip & Share Buttons */}
-                <div className="flex gap-2">
-                  <Button onClick={handleTipClick} variant="default" className="flex-1">
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Send Tip
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={handleTipClick} size="sm" variant="default" className="w-full">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Tip
                   </Button>
-                  <Button onClick={handleShare} variant="outline" className="flex-1">
-                    <Share2 className="h-4 w-4 mr-2" />
+                  <Button onClick={handleShare} size="sm" variant="outline" className="w-full">
+                    <Share2 className="h-4 w-4 mr-1" />
                     Share
                   </Button>
                 </div>
