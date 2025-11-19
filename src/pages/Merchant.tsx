@@ -52,7 +52,6 @@ const AbandonedCartSettings = lazy(() => import("@/components/merchant/Abandoned
 const PTPCalculationTrigger = lazy(() => import("@/components/merchant/admin/PTPCalculationTrigger").then(m => ({ default: m.PTPCalculationTrigger })));
 const IntelligenceView = lazy(() => import("@/components/merchant/intelligence/IntelligenceView").then(m => ({ default: m.IntelligenceView })));
 const AbandonedCartAnalytics = lazy(() => import("@/components/merchant/analytics/AbandonedCartAnalytics").then(m => ({ default: m.AbandonedCartAnalytics })));
-const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const VideoManager = lazy(() => import("./VideoManager"));
 const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
 const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
@@ -246,32 +245,7 @@ const Merchant = memo(() => {
           {/* Conditional Tab Rendering - Only render active tab */}
           {activeTab === "analytics" && (
             <TabsContent value="analytics" className="space-y-6">
-              <div className="flex justify-between items-center gap-3">
-                {/* Real-time status indicator */}
-                <div className="flex items-center gap-4">
-                  <Badge variant={isConnected ? "default" : "secondary"} className="gap-2">
-                    {isConnected ? (
-                      <>
-                        <Wifi className="w-3 h-3" />
-                        Live Updates
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="w-3 h-3" />
-                        Offline
-                      </>
-                    )}
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-semibold">{stats.totalUsers.toLocaleString()}</span> users
-                    {' • '}
-                    <span className="font-semibold">{stats.activeUsers.toLocaleString()}</span> active
-                    {' • '}
-                    <span className="font-semibold text-green-500">+{stats.newUsersToday}</span> today
-                  </div>
-                </div>
-                
-                <div className="flex gap-3">
+              <div className="flex justify-end items-center gap-3">
                   <Suspense fallback={<div className="h-10 w-10"></div>}>
                     <SeedCoordinatesButton />
                   </Suspense>
@@ -301,7 +275,6 @@ const Merchant = memo(() => {
                     {showChat ? "Hide" : "Show"} AI Assistant
                   </Button>
                 </div>
-              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className={showChat ? "lg:col-span-2" : "lg:col-span-3"}>
@@ -487,9 +460,33 @@ const Merchant = memo(() => {
           )}
 
           {activeTab === "community" && (
-            <TabsContent value="community">
+            <TabsContent value="community" className="space-y-6">
+              {/* Real-time community stats */}
+              <div className="flex items-center gap-4">
+                <Badge variant={isConnected ? "default" : "secondary"} className="gap-2">
+                  {isConnected ? (
+                    <>
+                      <Wifi className="w-3 h-3" />
+                      Live Updates
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff className="w-3 h-3" />
+                      Offline
+                    </>
+                  )}
+                </Badge>
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-semibold">{stats.totalUsers.toLocaleString()}</span> users
+                  {' • '}
+                  <span className="font-semibold">{stats.activeUsers.toLocaleString()}</span> active
+                  {' • '}
+                  <span className="font-semibold text-green-500">+{stats.newUsersToday}</span> today
+                </div>
+              </div>
+
               <Suspense fallback={<LoadingSpinner />}>
-                <AdminDashboard selectedUserId={selectedUserId} />
+                <CommunityMembers selectedUserId={selectedUserId} />
               </Suspense>
             </TabsContent>
           )}
