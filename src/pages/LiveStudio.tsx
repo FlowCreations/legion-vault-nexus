@@ -384,28 +384,28 @@ export default function LiveStudio() {
               </Badge>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Stream Preview or Live Video */}
-              <div className="relative">
-                <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
-                  {liveEventId && isViewingLive ? (
-                    <ExpandableLiveViewer
-                      eventId={liveEventId}
-                      streamStartTime={streamStartTime}
-                      showExternalControls
-                    />
-                  ) : (
-                    <div className="relative aspect-video">
-                      <img 
-                        src={liveAcousticSession} 
-                        alt="Acoustic Sessions Live"
-                        className="w-full h-full object-cover"
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Stream Preview or Live Video */}
+                <div className="relative">
+                  <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
+                    {liveEventId ? (
+                      <ExpandableLiveViewer
+                        eventId={liveEventId}
+                        streamStartTime={streamStartTime}
+                        showExternalControls
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="relative aspect-video">
+                        <img 
+                          src={liveAcousticSession} 
+                          alt="Acoustic Sessions Live"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
               {/* Event Info */}
               <div className="flex flex-col justify-center">
