@@ -145,11 +145,12 @@ export default function LiveStudio() {
   const checkLiveStream = async () => {
     console.log('[LiveStudio] Checking for live streams...');
     
-    // Query for any events with status='live' (most recent first)
+    // Query for any events with status='live' and no actual_end (most recent first)
     const { data: liveEvents, error } = await supabase
       .from('livestream_events')
-      .select('id, status, title, stream_start_time')
+      .select('id, status, title, stream_start_time, actual_end')
       .eq('status', 'live')
+      .is('actual_end', null)
       .order('stream_start_time', { ascending: false })
       .limit(1);
     
