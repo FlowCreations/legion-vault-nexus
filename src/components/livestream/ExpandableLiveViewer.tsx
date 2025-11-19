@@ -117,13 +117,15 @@ export function ExpandableLiveViewer({
     }, 100);
   }, [videoTrack, audioTrack, isExpanded]);
 
-  // Connect to stream on mount
+  // Connect to stream ONLY if we're not already connected
   useEffect(() => {
+    // Only auto-connect if we're viewing the stream (user clicked "Join Stream")
+    // and we're not already connected/connecting
     if (status === 'idle') {
       console.log('[Viewer] Initiating connection to event:', eventId);
       connectStream(eventId);
     }
-  }, [eventId, status, connectStream]);
+  }, [eventId, connectStream]); // Remove status from deps to avoid reconnect loops
 
   // Poll database for stream status to detect when stream ends
   useEffect(() => {
@@ -255,86 +257,225 @@ export function ExpandableLiveViewer({
   const hours = Math.floor(streamDuration / 3600);
   const minutes = Math.floor((streamDuration % 3600) / 60);
   
-  // Simple mode rendering - no expand for now
-  return (
-    <>
-      <div className="space-y-3 relative">
-        <div className="relative group">
-          {/* Video Player */}
-          <video 
-            ref={videoRef}
-            id="livekit-video"
-            autoPlay 
-            playsInline
-            muted={false}
-            controls
-            className="w-full rounded-2xl border bg-black aspect-video shadow-xl object-contain"
-          />
-
-          {/* Stream Status Overlay */}
-          {status !== 'connected' && (
-            <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-2xl border">
-              <div className="text-center text-white space-y-4">
-                {status === 'connecting' && (
-                  <>
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                    <p className="text-sm">Connecting to stream...</p>
-                  </>
-                )}
-                {status === 'ended' && (
-                  <div className="space-y-2">
-                    <p className="text-xl font-bold">Stream Ended</p>
-                    <p className="text-sm text-gray-300">Thank you for watching!</p>
+  // Expanded view with chat, reactions, and controls
+  const expandedContent = (
+    <div className="flex flex-col h-full bg-background">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
+        {/* Main Video Area */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
+            <video 
+              ref={videoRef}
+              id="livekit-video-expanded"
+              autoPlay 
+              playsInline
+              muted={false}
+              className="w-full h-full object-contain"
+            />
+            
+            {/* Status Overlay */}
+            {status !== 'connected' && (
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                <div className="text-center text-white space-y-4">
+                  {status === 'connecting' && (
+                    <>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                      <p className="text-sm">Connecting...</p>
+                    </>
+                  )}
+                  {status === 'ended' && (
+                    <div className="space-y-2">
+                      <p className="text-xl font-bold">Stream Ended</p>
+                      <p className="text-sm text-gray-300">Thanks for watching!</p>
+                    </div>
+                  )}
+                  {status === 'error' && error && (
+                    <div className="space-y-2 text-red-400">
+                      <p className="text-xl font-bold">Connection Error</p>
+                      <p className="text-sm">{error}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Live Badge & Info Overlays */}
+            {status === 'connected' && databaseStatus === 'live' && (
+              <>
+                <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+                  <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    LIVE
+                  </div>
+                  <div className="bg-black/60 text-white px-3 py-1.5 rounded-full flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
+                    <Users className="h-3 w-3 text-primary" />
+                    {viewerCount}
+                  </div>
+                </div>
+                
+                {streamDuration > 0 && (
+                  <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1.5 rounded-full text-sm shadow-lg backdrop-blur-sm">
+                    {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
                   </div>
                 )}
-                {status === 'error' && error && (
-                  <div className="space-y-2 text-red-400">
-                    <p className="text-xl font-bold">Connection Error</p>
-                    <p className="text-sm">{error}</p>
-                  </div>
-                )}
-              </div>
+              </>
+            )}
+            
+            {/* Controls */}
+            <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 hover:opacity-100 transition-opacity z-20">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleFullscreen}
+                className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+              {isPiPSupported && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={togglePiP}
+                  className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+                >
+                  <PictureInPicture2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          )}
-
-          {/* Live Badge & Viewer Count - Top Left - CRITICAL: Only show if BOTH connected AND database is live */}
-          {status === 'connected' && databaseStatus === 'live' && (
-            <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
-              <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg backdrop-blur-sm">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                LIVE
-              </div>
-              <div className="bg-black/60 text-white px-3 py-1.5 rounded-full flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
-                <span className="text-primary">👁️</span>
-                {viewerCount}
-              </div>
-            </div>
-          )}
+          </div>
           
-          {/* Debug: Show status when NOT live */}
-          {(status !== 'connected' || databaseStatus !== 'live') && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs z-10">
-              Status: {status} | DB: {databaseStatus || 'checking...'}
-            </div>
-          )}
-
-          {/* Duration - Top Right */}
-          {status === 'connected' && streamDuration > 0 && (
-            <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1.5 rounded-full text-sm shadow-lg backdrop-blur-sm">
-              {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
-            </div>
-          )}
-
-          {/* Reactions Overlay - Right Side */}
+          {/* Action Buttons */}
           {status === 'connected' && (
-            <div className="absolute right-4 bottom-20 z-10">
-              <LiveReactions eventId={eventId} />
+            <div className="flex gap-2 mt-4">
+              <Button onClick={handleTipClick} className="flex-1">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Send Tip
+              </Button>
+              <Button onClick={handleShare} variant="outline" className="flex-1">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
             </div>
           )}
+        </div>
+        
+        {/* Chat & Reactions Sidebar (Desktop) / Drawer (Mobile) */}
+        {isMobile ? (
+          <Drawer open={isExpanded} onOpenChange={setExpanded}>
+            <DrawerContent className="h-[80vh]">
+              <div className="flex flex-col h-full p-4 overflow-hidden">
+                <div className="flex-1 mb-4 overflow-hidden">
+                  <ErrorBoundary>
+                    <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
+                  </ErrorBoundary>
+                </div>
+                <div className="flex-shrink-0">
+                  <ErrorBoundary>
+                    <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                  </ErrorBoundary>
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <div className="w-80 flex flex-col gap-4 min-h-0">
+            <div className="flex-1 overflow-hidden">
+              <ErrorBoundary>
+                <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
+              </ErrorBoundary>
+            </div>
+            <div className="flex-shrink-0">
+              <ErrorBoundary>
+                <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+              </ErrorBoundary>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+  
+  // Compact view (default for LiveStudio page)
+  const compactContent = (
+    <div className="space-y-3 relative">
+      <div className="relative group">
+        <video 
+          ref={videoRef}
+          id="livekit-video"
+          autoPlay 
+          playsInline
+          muted={false}
+          controls
+          className="w-full rounded-2xl border bg-black aspect-video shadow-xl object-contain"
+        />
 
-          {/* Quick Actions - PiP only for now */}
-          {status === 'connected' && !showExternalControls && isPiPSupported && (
-            <div className="absolute bottom-4 right-4 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+        {status !== 'connected' && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-2xl border">
+            <div className="text-center text-white space-y-4">
+              {status === 'connecting' && (
+                <>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm">Connecting to stream...</p>
+                </>
+              )}
+              {status === 'ended' && (
+                <div className="space-y-2">
+                  <p className="text-xl font-bold">Stream Ended</p>
+                  <p className="text-sm text-gray-300">Thank you for watching!</p>
+                </div>
+              )}
+              {status === 'error' && error && (
+                <div className="space-y-2 text-red-400">
+                  <p className="text-xl font-bold">Connection Error</p>
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {status === 'connected' && databaseStatus === 'live' && (
+          <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+            <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg backdrop-blur-sm">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              LIVE
+            </div>
+            <div className="bg-black/60 text-white px-3 py-1.5 rounded-full flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
+              <span className="text-primary">👁️</span>
+              {viewerCount}
+            </div>
+          </div>
+        )}
+        
+        {(status !== 'connected' || databaseStatus !== 'live') && (
+          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs z-10">
+            Status: {status} | DB: {databaseStatus || 'checking...'}
+          </div>
+        )}
+
+        {status === 'connected' && streamDuration > 0 && (
+          <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1.5 rounded-full text-sm shadow-lg backdrop-blur-sm">
+            {hours > 0 && `${hours}:`}{String(minutes).padStart(2, '0')}:{String(streamDuration % 60).padStart(2, '0')}
+          </div>
+        )}
+
+        {status === 'connected' && (
+          <div className="absolute right-4 bottom-20 z-10">
+            <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+          </div>
+        )}
+
+        {status === 'connected' && !showExternalControls && (
+          <div className="absolute bottom-4 right-4 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleFullscreen}
+              className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+            {isPiPSupported && (
               <Button
                 size="sm"
                 variant="secondary"
@@ -343,32 +484,42 @@ export function ExpandableLiveViewer({
               >
                 <PictureInPicture2 className="h-4 w-4" />
               </Button>
-            </div>
-          )}
-        </div>
-
-        {/* External Controls */}
-        {showExternalControls && status === 'connected' && (
-          <div className="flex gap-2 justify-center">
-            <Button onClick={handleTipClick} variant="default" className="flex-1">
-              <DollarSign className="h-4 w-4 mr-2" />
-              Send Tip
-            </Button>
-            <Button onClick={handleShare} variant="outline" className="flex-1">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
+            )}
           </div>
         )}
-
-        <ErrorBoundary>
-          <TipDialog 
-            eventId={eventId}
-            open={showTipDialog} 
-            onOpenChange={setShowTipDialog}
-          />
-        </ErrorBoundary>
       </div>
-    </>
+
+      {showExternalControls && status === 'connected' && (
+        <div className="flex gap-2 justify-center">
+          <Button onClick={handleTipClick} variant="default" className="flex-1">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Send Tip
+          </Button>
+          <Button onClick={handleShare} variant="outline" className="flex-1">
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </div>
+      )}
+
+      <ErrorBoundary>
+        <TipDialog 
+          eventId={eventId}
+          open={showTipDialog} 
+          onOpenChange={setShowTipDialog}
+        />
+      </ErrorBoundary>
+    </div>
+  );
+  
+  // Render expanded or compact based on isExpanded state
+  return isExpanded ? (
+    <Dialog open={isExpanded} onOpenChange={setExpanded}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
+        {expandedContent}
+      </DialogContent>
+    </Dialog>
+  ) : (
+    compactContent
   );
 }
