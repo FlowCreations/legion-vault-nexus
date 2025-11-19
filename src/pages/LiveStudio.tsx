@@ -141,20 +141,26 @@ export default function LiveStudio() {
 
   const checkLiveStream = async () => {
     console.log('[LiveStudio] Checking for live streams...');
-    const { data, error } = await supabase
+    
+    // Query for any events with status='live' (most recent first)
+    const { data: liveEvents, error } = await supabase
       .from('livestream_events')
       .select('id, status, title, stream_start_time')
       .eq('status', 'live')
-      .single();
+      .order('stream_start_time', { ascending: false })
+      .limit(1);
     
-    console.log('[LiveStudio] Live stream check result:', { data, error });
+    console.log('[LiveStudio] Live stream check result:', { data: liveEvents, error });
     
-    if (data && !error) {
-      console.log('[LiveStudio] Found live event:', data);
-      setLiveEventId(data.id);
-      setStreamStartTime(data.stream_start_time ? new Date(data.stream_start_time) : undefined);
+    // If we have a live event, set it
+    if (liveEvents && liveEvents.length > 0 && !error) {
+      const liveEvent = liveEvents[0];
+      console.log('[LiveStudio] Found live event:', liveEvent);
+      setLiveEventId(liveEvent.id);
+      setStreamStartTime(liveEvent.stream_start_time ? new Date(liveEvent.stream_start_time) : undefined);
     } else {
-      console.log('[LiveStudio] No live events found or error occurred');
+      // No live events found - clear everything
+      console.log('[LiveStudio] No live events found');
       setLiveEventId(null);
       setStreamStartTime(undefined);
       setIsViewingLive(false);
