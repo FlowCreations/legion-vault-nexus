@@ -14,6 +14,7 @@ import { useMicrophoneMeter } from '@/hooks/useMicrophoneMeter';
 import { LiveViewerList } from './LiveViewerList';
 import { LiveReactionFeed } from './LiveReactionFeed';
 import { LiveChatPreview } from './LiveChatPreview';
+import { toast } from 'sonner';
 
 type Props = { 
   eventId: string;
@@ -928,25 +929,43 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
   const stopBroadcast = async () => {
     console.log('[Broadcaster] Stopping broadcast');
     
-    // Update event status to ended so LiveStudio turns off
-    const { error: updateError } = await supabase
-      .from('livestream_events')
-      .update({ status: 'ended' })
-      .eq('id', eventId);
+    try {
+      // First disconnect from LiveKit room
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+        roomRef.current = null;
+      }
+      
+      // Use full cleanup
+      fullCleanup();
+      
+      // Update event status in background with timeout protection
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database update timeout')), 5000)
+      );
+      
+      const updatePromise = supabase
+        .from('livestream_events')
+        .update({ status: 'ended' })
+        .eq('id', eventId);
 
-    if (updateError) {
-      console.error('[Broadcaster] Error updating event status:', updateError);
-    } else {
-      console.log('[Broadcaster] ✅ Event status updated to "ended"');
+      await Promise.race([updatePromise, timeoutPromise])
+        .then(({ error: updateError }) => {
+          if (updateError) {
+            console.error('[Broadcaster] Error updating event status:', updateError);
+          } else {
+            console.log('[Broadcaster] ✅ Event status updated to "ended"');
+          }
+        })
+        .catch(err => {
+          console.error('[Broadcaster] Database update failed:', err);
+        });
+      
+      toast.success('Broadcast ended successfully');
+    } catch (e: any) {
+      console.error('[Broadcaster] Error stopping broadcast:', e);
+      toast.error('Error ending broadcast: ' + e.message);
     }
-    
-    if (roomRef.current) {
-      roomRef.current.disconnect();
-      roomRef.current = null;
-    }
-    
-    // Use full cleanup when stopping broadcast
-    fullCleanup();
   };
 
   const toggleCamera = async () => {
