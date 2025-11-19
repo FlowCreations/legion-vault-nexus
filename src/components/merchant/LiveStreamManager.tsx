@@ -40,6 +40,25 @@ export const LiveStreamManager = () => {
     loadEvents();
   }, []);
 
+  // Realtime subscription to keep event statuses in sync with the database
+  useEffect(() => {
+    const channel = supabase
+      .channel('livestream-events-manager')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'livestream_events' },
+        (payload) => {
+          console.log('[LiveStreamManager] Realtime update:', payload.eventType, (payload as any).new?.status);
+          loadEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const loadEvents = async () => {
     const { data } = await supabase
       .from('livestream_events')
@@ -171,13 +190,16 @@ export const LiveStreamManager = () => {
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   {event.title} - {new Date(event.scheduled_start).toLocaleDateString()}
-                  <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
-                    event.status === 'live' 
-                      ? 'bg-red-500 text-white' 
-                      : 'bg-primary/20 text-primary border border-primary/30'
-                  }`}>
-                    {event.status}
-                  </span>
+                  {event.status === 'live' && (
+                    <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase bg-red-500 text-white">
+                      LIVE
+                    </span>
+                  )}
+                  {event.status !== 'live' && (
+                    <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-medium bg-primary/20 text-primary border border-primary/30">
+                      {event.status}
+                    </span>
+                  )}
                 </div>
               </SelectItem>
             ))}
