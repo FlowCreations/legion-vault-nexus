@@ -754,16 +754,8 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       room.on(RoomEvent.Disconnected, (reason) => {
         console.log('[Broadcaster] ❌ Disconnected from room:', reason);
         
-        // Only update state if not unmounting
+        // Only update local UI state if not unmounting
         if (!isUnmountingRef.current) {
-          // Update event status back to scheduled when disconnected
-          supabase
-            .from('livestream_events')
-            .update({ status: 'scheduled' })
-            .eq('id', eventId)
-            .then(({ error }) => {
-              if (error) console.error('[Broadcaster] Error updating status on disconnect:', error);
-            });
           setStatus('idle');
           setError('Disconnected from broadcast. Please try reconnecting.');
         }
