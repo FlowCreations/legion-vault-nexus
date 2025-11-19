@@ -232,29 +232,14 @@ export function ExpandableLiveViewer({
   const hours = Math.floor(streamDuration / 3600);
   const minutes = Math.floor((streamDuration % 3600) / 60);
 
-  // Single video element used in both modes
-  const videoElement = (
-    <video 
-      ref={videoRef}
-      id="livekit-video"
-      autoPlay 
-      playsInline
-      muted={false}
-      controls
-      className={isExpanded 
-        ? "w-full h-full object-contain bg-black" 
-        : "w-full rounded-2xl border bg-black aspect-video shadow-xl"
-      }
-    />
-  );
-
   // Compact mode rendering
   if (!isExpanded) {
     return (
       <>
         <div className="space-y-3 relative">
           <div className="relative group">
-            {/* Video Container */}
+            {/* Video Container - Portal Target */}
+            <div id="video-container-compact" className="w-full rounded-2xl border bg-black aspect-video shadow-xl" />
 
           {/* Stream Status Overlay */}
           {status !== 'connected' && (
@@ -527,22 +512,39 @@ export function ExpandableLiveViewer({
       </ErrorBoundary>
 
       {/* Video Element Portal - Single permanent video that never unmounts */}
-      {typeof window !== 'undefined' && ReactDOM.createPortal(
-        <video 
-          ref={videoRef}
-          id="livekit-video-permanent"
-          autoPlay 
-          playsInline
-          muted={false}
-          className="w-full h-full object-contain bg-black"
-        />,
-        // Render into the appropriate container based on expand state and device
-        isExpanded 
-          ? (isMobile 
-              ? document.getElementById('video-container-permanent-mobile') || document.body
-              : document.getElementById('video-container-permanent') || document.body)
-          : videoRef.current?.parentElement || document.body
-      )}
+      {typeof window !== 'undefined' && (() => {
+        let targetContainer: HTMLElement | null = null;
+        
+        if (isExpanded) {
+          targetContainer = isMobile 
+            ? document.getElementById('video-container-permanent-mobile')
+            : document.getElementById('video-container-permanent');
+        } else {
+          targetContainer = document.getElementById('video-container-compact');
+        }
+        
+        // Fallback to body if container not found (should never happen)
+        if (!targetContainer) {
+          console.warn('[Viewer] Target container not found, using body');
+          targetContainer = document.body;
+        }
+        
+        return ReactDOM.createPortal(
+          <video 
+            ref={videoRef}
+            id="livekit-video-permanent"
+            autoPlay 
+            playsInline
+            muted={false}
+            controls
+            className={isExpanded 
+              ? "w-full h-full object-contain bg-black" 
+              : "w-full h-full rounded-2xl object-contain bg-black"
+            }
+          />,
+          targetContainer
+        );
+      })()}
     </>
   );
 }
