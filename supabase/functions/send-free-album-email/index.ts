@@ -31,8 +31,8 @@ const createFreeAlbumEmailHtml = (name: string) => `
           
           <!-- Header with Logo -->
           <tr>
-             <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); padding: 40px 30px; text-align: center;">
-               <img src="https://sonsoflegion.com/logos/sol-logo.png" alt="Sons of Legion Logo" style="width: 350px; height: auto; display: block; margin: 0 auto;" />
+             <td style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); padding: 40px 30px; text-align: center;">
+               <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
              </td>
           </tr>
 

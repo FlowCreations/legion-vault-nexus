@@ -68,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       <!-- Logo -->
       <div style="text-align: center; margin-bottom: 40px;">
-        <img src="https://sonsoflegion.com/sol-logo-email.png" alt="Sons of Legion" style="width: 200px; height: auto;" />
+        <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion" style="width: 200px; height: auto;" />
       </div>
       
       <!-- Main Content Card -->

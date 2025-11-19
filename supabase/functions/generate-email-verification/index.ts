@@ -29,7 +29,7 @@ const createVerificationEmailHtml = (firstName: string, verificationUrl: string)
     
     <!-- Header with Logo -->
     <div style="text-align: center; padding: 40px 20px 20px; background: linear-gradient(135deg, #D4AF37 0%, #F4E5B8 50%, #D4AF37 100%);">
-      <img src="https://b679a0e4-f336-49c3-8284-f5ec6fc30dbb.lovableproject.com/sol-logo-email.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
+      <img src="https://dlwyndcvnunvomgkbkhn.supabase.co/storage/v1/object/public/profile-pictures/sol-logo-new.png" alt="Sons of Legion Logo" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
     </div>
 
     <!-- Main Content -->
