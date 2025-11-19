@@ -51,8 +51,8 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
-    // Poll for live stream status every 10 seconds
-    const liveStreamInterval = setInterval(checkLiveStream, 10000);
+    // Poll for live stream status every 30 seconds (reduced from 10s to avoid refresh issues)
+    const liveStreamInterval = setInterval(checkLiveStream, 30000);
     
     // Target date: December 23, 2025 8:00 PM EST
     const targetDate = new Date('2025-12-23T20:00:00-05:00');
@@ -109,12 +109,15 @@ export default function LiveStudio() {
             });
           } else if (eventData.status === 'ended') {
             console.log('[LiveStudio] Stream ended, clearing live event');
-            setLiveEventId(null);
-            setStreamStartTime(undefined);
-            setIsViewingLive(false);
-            toast.info("Stream has ended", {
-              description: "Thanks for watching!"
-            });
+            // Only clear if it's the currently displayed live event
+            if (liveEventId === eventData.id) {
+              setLiveEventId(null);
+              setStreamStartTime(undefined);
+              setIsViewingLive(false);
+              toast.info("Stream has ended", {
+                description: "Thanks for watching!"
+              });
+            }
           }
         } else if (payload.eventType === 'DELETE') {
           console.log('[LiveStudio] Event deleted, clearing live event ID');
@@ -131,7 +134,7 @@ export default function LiveStudio() {
       clearInterval(liveStreamInterval);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [liveEventId]); // Add liveEventId to deps to track current event
 
   useEffect(() => {
     if (!liveEventId) {

@@ -751,8 +751,24 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
         console.log('[Broadcaster] ✅ Reconnected to room');
       });
 
-      room.on(RoomEvent.Disconnected, (reason) => {
+      room.on(RoomEvent.Disconnected, async (reason) => {
         console.log('[Broadcaster] ❌ Disconnected from room:', reason);
+        
+        // CRITICAL: Mark stream as ended in database when broadcaster disconnects
+        try {
+          const { error: updateError } = await supabase
+            .from('livestream_events')
+            .update({ status: 'ended' })
+            .eq('id', eventId);
+          
+          if (updateError) {
+            console.error('[Broadcaster] Failed to mark stream as ended:', updateError);
+          } else {
+            console.log('[Broadcaster] ✅ Stream marked as ended in database');
+          }
+        } catch (err) {
+          console.error('[Broadcaster] Error updating stream status:', err);
+        }
         
         // Only update local UI state if not unmounting
         if (!isUnmountingRef.current) {
@@ -1001,16 +1017,16 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
     setMusicGain(value[0]);
   };
 
-  // Effect 1: Handle browser close/unload - runs when status/eventId change
+  // Effect 1: Handle browser close/unload - mark stream as ended
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      console.log('[Broadcaster] Browser closing, cleaning up live status');
+    const handleBeforeUnload = async () => {
+      console.log('[Broadcaster] Browser closing, marking stream as ended');
       if (roomRef.current && status === 'live') {
-        // Update event status synchronously before page unload
-        navigator.sendBeacon(
-          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/livestream_events?id=eq.${eventId}`,
-          JSON.stringify({ status: 'scheduled' })
-        );
+        // Use authenticated request instead of sendBeacon
+        await supabase
+          .from('livestream_events')
+          .update({ status: 'ended' })
+          .eq('id', eventId);
       }
     };
 
@@ -1018,9 +1034,8 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      // NO fullCleanup here - just remove the event listener
     };
-  }, [status, eventId]); // Only re-run when status or eventId changes
+  }, [status, eventId]);
 
   // Effect 2: Full cleanup only on component unmount
   useEffect(() => {
