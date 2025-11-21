@@ -51,8 +51,8 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
-    // Poll for live stream status every 60 seconds (increased to avoid refresh issues)
-    const liveStreamInterval = setInterval(checkLiveStream, 60000);
+    // Poll for live stream status more frequently to catch live events
+    const liveStreamInterval = setInterval(checkLiveStream, 10000); // 10 seconds
     
     // Target date: December 23, 2025 8:00 PM EST
     const targetDate = new Date('2025-12-23T20:00:00-05:00');

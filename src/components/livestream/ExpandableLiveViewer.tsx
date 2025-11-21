@@ -261,8 +261,8 @@ export function ExpandableLiveViewer({
   const expandedContent = (
     <div className="flex flex-col h-full bg-background">
       <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
-        {/* Main Video Area */}
-        <div className="flex-1 flex flex-col min-h-0">
+        {/* Main Video Area - Bigger */}
+        <div className="flex-1 lg:flex-[2] flex flex-col min-h-0">
           <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
             <video 
               ref={videoRef}
@@ -302,14 +302,10 @@ export function ExpandableLiveViewer({
             {/* Live Badge & Info Overlays */}
             {status === 'connected' && databaseStatus === 'live' && (
               <>
-                <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+                <div className="absolute top-4 left-4 z-10">
                   <div className="bg-red-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                     LIVE
-                  </div>
-                  <div className="bg-black/60 text-white px-3 py-1.5 rounded-full flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
-                    <Users className="h-3 w-3 text-primary" />
-                    {viewerCount}
                   </div>
                 </div>
                 
@@ -321,26 +317,32 @@ export function ExpandableLiveViewer({
               </>
             )}
             
-            {/* Controls */}
-            <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 hover:opacity-100 transition-opacity z-20">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleFullscreen}
-                className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-              {isPiPSupported && (
+            {/* Player Controls & Reactions at Bottom */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-between items-center px-4 z-20">
+              <ErrorBoundary>
+                <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+              </ErrorBoundary>
+              
+              <div className="flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={togglePiP}
+                  onClick={handleFullscreen}
                   className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
                 >
-                  <PictureInPicture2 className="h-4 w-4" />
+                  <Maximize2 className="h-4 w-4" />
                 </Button>
-              )}
+                {isPiPSupported && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={togglePiP}
+                    className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+                  >
+                    <PictureInPicture2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           
@@ -379,14 +381,17 @@ export function ExpandableLiveViewer({
           </Drawer>
         ) : (
           <div className="w-80 flex flex-col gap-4 min-h-0">
+            {/* Viewer Count - Positioned at top of sidebar */}
+            <div className="bg-black/60 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="font-semibold">{viewerCount}</span>
+              <span className="text-gray-300">watching</span>
+            </div>
+            
+            {/* Live Chat - Takes up remaining space */}
             <div className="flex-1 overflow-hidden">
               <ErrorBoundary>
                 <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
-              </ErrorBoundary>
-            </div>
-            <div className="flex-shrink-0">
-              <ErrorBoundary>
-                <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
               </ErrorBoundary>
             </div>
           </div>
