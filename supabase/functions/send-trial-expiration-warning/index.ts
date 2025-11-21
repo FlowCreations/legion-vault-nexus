@@ -124,7 +124,7 @@ const getEmailContent = (data: TrialEmailRequest): { subject: string; html: stri
                       <table width="100%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td align="center">
-                            <a href="${Deno.env.get('VITE_SUPABASE_URL')}/checkout?plan=${planType.toLowerCase()}" 
+                            <a href="${Deno.env.get('VITE_SUPABASE_URL')}/subscribe" 
                                style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #f7c946 0%, #d4af37 100%); color: #0a0a0a; text-decoration: none; font-size: 18px; font-weight: bold; border-radius: 8px; margin-bottom: 15px;">
                               Continue My ${planType} Membership
                             </a>
@@ -132,7 +132,7 @@ const getEmailContent = (data: TrialEmailRequest): { subject: string; html: stri
                         </tr>
                         <tr>
                           <td align="center">
-                            <a href="${Deno.env.get('VITE_SUPABASE_URL')}/pricing" 
+                            <a href="${Deno.env.get('VITE_SUPABASE_URL')}/subscribe" 
                                style="display: inline-block; padding: 12px 30px; background-color: transparent; color: #f7c946; text-decoration: none; font-size: 14px; border: 2px solid #f7c946; border-radius: 8px;">
                               Explore Other Plans
                             </a>
@@ -259,7 +259,7 @@ const getEmailContent = (data: TrialEmailRequest): { subject: string; html: stri
                       <table width="100%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td align="center">
-                            <a href="${Deno.env.get('VITE_SUPABASE_URL')}/checkout?plan=${planType.toLowerCase()}" 
+                            <a href="${Deno.env.get('VITE_SUPABASE_URL')}/subscribe" 
                                style="display: inline-block; padding: 20px 50px; background: linear-gradient(135deg, #f7c946 0%, #d4af37 100%); color: #0a0a0a; text-decoration: none; font-size: 20px; font-weight: bold; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(247, 201, 70, 0.3);">
                               🔒 Secure My Access Now
                             </a>
