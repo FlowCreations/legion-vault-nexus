@@ -51,8 +51,12 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
-    // Poll for live stream status more frequently to catch live events
-    const liveStreamInterval = setInterval(checkLiveStream, 10000); // 10 seconds
+    // Poll for live stream status more frequently to catch live events - every 5 seconds
+    console.log('[LiveStudio] Setting up live stream polling');
+    const liveStreamInterval = setInterval(() => {
+      console.log('[LiveStudio] Polling for live stream status');
+      checkLiveStream();
+    }, 5000); // 5 seconds for faster updates
     
     // Target date: December 23, 2025 8:00 PM EST
     const targetDate = new Date('2025-12-23T20:00:00-05:00');
@@ -130,6 +134,7 @@ export default function LiveStudio() {
       });
     
     return () => {
+      console.log('[LiveStudio] Cleaning up intervals and subscriptions');
       clearInterval(interval);
       clearInterval(liveStreamInterval);
       supabase.removeChannel(channel);
