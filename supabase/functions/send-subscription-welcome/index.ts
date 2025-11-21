@@ -162,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="color: #cccccc; font-size: 14px; margin: 0 0 16px 0;">
             You can update your payment method, change your plan, or cancel anytime from your account settings.
           </p>
-          <a href="https://sonsoflegion.com/profile" style="color: #f7c946; text-decoration: none; font-weight: bold; font-size: 15px;">
+          <a href="${Deno.env.get('VITE_SUPABASE_URL')}/profile" style="color: #f7c946; text-decoration: none; font-weight: bold; font-size: 15px;">
             Manage Subscription →
           </a>
         </div>

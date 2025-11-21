@@ -135,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="color: #999999; font-size: 14px; margin: 0 0 16px 0;">
             No action needed - your membership will renew automatically.
           </p>
-          <a href="https://sonsoflegion.com/profile" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #f7c946, #d4af37); color: #0a0a0a; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 0 8px 12px 8px;">
+          <a href="${Deno.env.get('VITE_SUPABASE_URL')}/profile" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #f7c946, #d4af37); color: #0a0a0a; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 0 8px 12px 8px;">
             Manage Subscription
           </a>
         </div>
@@ -148,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="color: #cccccc; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
             Need to update your payment information? You can manage your payment method anytime from your account settings.
           </p>
-          <a href="https://sonsoflegion.com/profile" style="color: #f7c946; text-decoration: none; font-weight: bold; font-size: 15px;">
+          <a href="${Deno.env.get('VITE_SUPABASE_URL')}/profile" style="color: #f7c946; text-decoration: none; font-weight: bold; font-size: 15px;">
             Update Payment Method →
           </a>
         </div>
@@ -158,7 +158,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="color: #999999; font-size: 13px; margin: 0 0 8px 0; line-height: 1.6;">
             Don't want to renew? You can cancel anytime before ${renewalDateFormatted} from your subscription settings. You'll keep access until the end of your current billing period.
           </p>
-          <a href="https://sonsoflegion.com/profile" style="color: #f7c946; text-decoration: none; font-size: 13px;">
+          <a href="${Deno.env.get('VITE_SUPABASE_URL')}/profile" style="color: #f7c946; text-decoration: none; font-size: 13px;">
             View Cancellation Options
           </a>
         </div>
