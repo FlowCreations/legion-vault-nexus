@@ -1185,132 +1185,125 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       {/* Preview / Live Video */}
       {status !== 'idle' && (
         <>
-          <div className={`grid gap-6 ${status === 'live' ? 'lg:grid-cols-[2fr,350px]' : ''}`}>
-            {/* Main Video and Controls Column */}
-            <div className="space-y-4">
-              <div className="relative">
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  muted 
-                  playsInline 
-                  className="w-full rounded-lg border bg-black aspect-video" 
-                />
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
-                  <span className={`inline-block h-2 w-2 rounded-full ${
-                    status === 'live' ? 'bg-red-500 animate-pulse' : 
-                    status === 'connecting' ? 'bg-yellow-500' : 
-                    status === 'preview' ? 'bg-blue-500' :
-                    'bg-gray-500'
-                  }`} />
-                  <span className="text-white text-sm font-medium uppercase">{status}</span>
-                </div>
+          {/* Main Video - Full Width When Live */}
+          <div className="space-y-4">
+            <div className="relative">
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                muted 
+                playsInline 
+                className="w-full rounded-lg border bg-black aspect-video" 
+              />
+              <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-full">
+                <span className={`inline-block h-2 w-2 rounded-full ${
+                  status === 'live' ? 'bg-red-500 animate-pulse' : 
+                  status === 'connecting' ? 'bg-yellow-500' : 
+                  status === 'preview' ? 'bg-blue-500' :
+                  'bg-gray-500'
+                }`} />
+                <span className="text-white text-sm font-medium uppercase">{status}</span>
               </div>
+            </div>
 
-              {/* Professional Audio Mixer - only show when audio is ready */}
-              {audioReady && audioContext && sourceNode && (
-                <AudioMixer
-                  key="audio-mixer-singleton"
-                  audioContext={audioContextRef.current || audioContext}
-                  sourceNode={sourceNodeRef.current || sourceNode}
-                  onProcessedStream={handleProcessedStream}
-                  onAudioLevel={handleAudioLevel}
-                  onReady={handleMixerReady}
-                  onProcessedAnalyser={handleProcessedAnalyser}
-                  onRawInputAnalyser={handleRawInputAnalyser}
-                />
-              )}
+            {/* Professional Audio Mixer - only show when audio is ready */}
+            {audioReady && audioContext && sourceNode && (
+              <AudioMixer
+                key="audio-mixer-singleton"
+                audioContext={audioContextRef.current || audioContext}
+                sourceNode={sourceNodeRef.current || sourceNode}
+                onProcessedStream={handleProcessedStream}
+                onAudioLevel={handleAudioLevel}
+                onReady={handleMixerReady}
+                onProcessedAnalyser={handleProcessedAnalyser}
+                onRawInputAnalyser={handleRawInputAnalyser}
+              />
+            )}
 
-          {/* Device Selection During Preview */}
-          {status === 'preview' && (
-            <Card className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">Device Settings</Label>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Camera</Label>
-                  <Select value={selectedCamera} onValueChange={switchCamera}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {cameras.map(cam => (
-                        <SelectItem key={cam.deviceId} value={cam.deviceId}>
-                          {cam.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {/* Device Selection During Preview */}
+            {status === 'preview' && (
+              <Card className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">Device Settings</Label>
                 </div>
                 
-                <div>
-                  <Label className="text-xs">Microphone</Label>
-                  <Select value={selectedMicrophone} onValueChange={switchMicrophone}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {microphones.map(mic => (
-                        <SelectItem key={mic.deviceId} value={mic.deviceId}>
-                          {mic.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs">Camera</Label>
+                    <Select value={selectedCamera} onValueChange={switchCamera}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {cameras.map(cam => (
+                          <SelectItem key={cam.deviceId} value={cam.deviceId}>
+                            {cam.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Microphone</Label>
+                    <Select value={selectedMicrophone} onValueChange={switchMicrophone}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {microphones.map(mic => (
+                          <SelectItem key={mic.deviceId} value={mic.deviceId}>
+                            {mic.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          )}
-
-          <div className="flex gap-2">
-            {status === 'preview' ? (
-              <>
-                <Button onClick={startBroadcast} className="flex-1">
-                  Go Live
-                </Button>
-                <Button onClick={stopPreview} variant="outline">
-                  Stop Preview
-                </Button>
-              </>
-            ) : status === 'live' || status === 'connecting' ? (
-              <>
-                <Button onClick={stopBroadcast} variant="destructive" className="flex-1">
-                  End Broadcast
-                </Button>
-                <Button
-                  onClick={toggleCamera}
-                  variant={isCameraOn ? "default" : "outline"}
-                  size="icon"
-                  title={isCameraOn ? "Turn off camera" : "Turn on camera"}
-                >
-                  {isCameraOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-                </Button>
-                <Button
-                  onClick={toggleMic}
-                  variant={isMicOn ? "default" : "outline"}
-                  size="icon"
-                  title={isMicOn ? "Mute microphone" : "Unmute microphone"}
-                >
-                  {isMicOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                </Button>
-              </>
-            ) : null}
-          </div>
-            </div>
-            
-            {/* Live Viewers - Only shown when live */}
-            {status === 'live' && (
-              <div className="space-y-4">
-                <LiveViewerList eventId={eventId} />
-              </div>
+              </Card>
             )}
+
+            {/* Controls */}
+            <div className="flex gap-2">
+              {status === 'preview' ? (
+                <>
+                  <Button onClick={startBroadcast} className="flex-1">
+                    Go Live
+                  </Button>
+                  <Button onClick={stopPreview} variant="outline">
+                    Stop Preview
+                  </Button>
+                </>
+              ) : status === 'live' || status === 'connecting' ? (
+                <>
+                  <Button onClick={stopBroadcast} variant="destructive" className="flex-1">
+                    End Broadcast
+                  </Button>
+                  <Button
+                    onClick={toggleCamera}
+                    variant={isCameraOn ? "default" : "outline"}
+                    size="icon"
+                    title={isCameraOn ? "Turn off camera" : "Turn on camera"}
+                  >
+                    {isCameraOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    onClick={toggleMic}
+                    variant={isMicOn ? "default" : "outline"}
+                    size="icon"
+                    title={isMicOn ? "Mute microphone" : "Unmute microphone"}
+                  >
+                    {isMicOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                  </Button>
+                </>
+              ) : null}
+            </div>
           </div>
           
-          {/* Live Chat Below Video - Only shown when live */}
+          {/* Live Viewers and Chat Grid - Below Video When Live */}
           {status === 'live' && (
-            <div className="mt-6">
+            <div className="grid lg:grid-cols-2 gap-6 mt-6">
+              <LiveViewerList eventId={eventId} />
               <LiveChatPreview 
                 eventId={eventId} 
                 onViewFullChat={onSwitchToChat}
