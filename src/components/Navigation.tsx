@@ -60,8 +60,16 @@ export const Navigation = () => {
   };
 
   const handleLogout = async () => {
-    await signOut();
-    window.location.href = '/';
+    try {
+      await signOut();
+      // Force a full page reload to clear all state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/';
+    }
   };
 
 
