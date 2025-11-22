@@ -135,18 +135,6 @@ const handler = async (req: Request): Promise<Response> => {
               .cta-container {
                 text-align: center;
               }
-              .community-unlock {
-                background-color: #2a2a2a;
-                border-left: 4px solid #f7c946;
-                padding: 20px;
-                margin: 24px 0;
-                border-radius: 4px;
-              }
-              .community-unlock p {
-                margin: 0;
-                color: #ffffff;
-                font-size: 15px;
-              }
               .footer {
                 margin-top: 40px;
                 padding-top: 30px;
@@ -226,9 +214,6 @@ const handler = async (req: Request): Promise<Response> => {
                   </div>
                 </div>
 
-                <div class="community-unlock">
-                  <p><strong>🔓 Community Access:</strong> After 7 days in the portal, you'll automatically unlock access to the Legion Community Hub — where you can connect with thousands of members from around the world, share your journey, and be part of something bigger.</p>
-                </div>
 
                 <div class="cta-container">
                   <a href="${portalUrl}" class="cta-button">Enter Your Portal →</a>
@@ -252,24 +237,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Welcome email sent successfully:", emailResponse);
 
-    // Schedule community unlock email for 7 days from now
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const scheduledDate = new Date();
-    scheduledDate.setDate(scheduledDate.getDate() + 7);
-
-    await supabaseClient.from("scheduled_emails").insert({
-      user_id: userId,
-      email_type: "community_unlock",
-      scheduled_for: scheduledDate.toISOString(),
-      email_data: {
-        email,
-        firstName: displayName,
-      },
-    });
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
