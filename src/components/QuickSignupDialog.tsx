@@ -60,27 +60,10 @@ export function QuickSignupDialog({ open, onOpenChange, onSignupSuccess }: Quick
       }
 
       if (data.user) {
-        // Wait for the session to be fully established
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (sessionData.session) {
-          toast.success("Account created! Redirecting to checkout...");
-          onOpenChange(false);
-          onSignupSuccess();
-        } else {
-          // Session not ready, wait a bit and try again
-          setTimeout(async () => {
-            const { data: retrySession } = await supabase.auth.getSession();
-            if (retrySession.session) {
-              toast.success("Account created! Redirecting to checkout...");
-              onOpenChange(false);
-              onSignupSuccess();
-            } else {
-              toast.error("Session setup failed. Please try logging in.");
-              setLoading(false);
-            }
-          }, 1000);
-        }
+        toast.success("Account created! Please check your email to verify your account before signing in.");
+        onOpenChange(false);
+        setEmail("");
+        setPassword("");
       }
     } catch (error: any) {
       console.error("[QuickSignup] Error:", error);
