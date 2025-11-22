@@ -260,26 +260,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      console.log('[AUTH] Starting sign out...');
+      
+      // Clear state immediately to prevent UI delays
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setIsAdmin(false);
+      
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.warn('[AUTH] signOut error', error);
-        toast.error('Sign-out failed', { description: error.message });
-        throw error;
       }
       
-      // Only clear state after successful sign out
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      setIsAdmin(false);
+      console.log('[AUTH] Successfully signed out');
       toast.success('Signed out successfully');
     } catch (err) {
       console.error('[AUTH] signOut exception', err);
-      // Force clear state even on error to prevent stuck auth state
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      setIsAdmin(false);
+      // State already cleared above
     }
   }, []);
 
