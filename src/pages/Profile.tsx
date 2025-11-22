@@ -62,7 +62,11 @@ export default function Profile() {
 
   useEffect(() => {
     checkUser();
-    loadSubscriptionData();
+    
+    // Load subscription data in background without blocking
+    setTimeout(() => {
+      loadSubscriptionData();
+    }, 100);
     
     // Check if returning from successful subscription
     const params = new URLSearchParams(window.location.search);
@@ -90,21 +94,27 @@ export default function Profile() {
   };
 
   const loadProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-    if (data) {
-      setDisplayName(data.display_name || "");
-      setLocation(data.location || "");
-      setBio(data.bio || "");
-      setRealName(data.real_name || "");
-      setBirthdate(data.birthdate || "");
-      setGender(data.gender || "");
-      setAvatarUrl(data.avatar_url || "");
-      setProfilePicturePreview(data.avatar_url || "");
+      if (error) throw error;
+
+      if (data) {
+        setDisplayName(data.display_name || "");
+        setLocation(data.location || "");
+        setBio(data.bio || "");
+        setRealName(data.real_name || "");
+        setBirthdate(data.birthdate || "");
+        setGender(data.gender || "");
+        setAvatarUrl(data.avatar_url || "");
+        setProfilePicturePreview(data.avatar_url || "");
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
     }
   };
 
@@ -323,7 +333,7 @@ export default function Profile() {
       
       if (error) {
         console.error('Subscription check error:', error);
-        throw error;
+        return; // Don't throw, just log and continue
       }
       
       console.log('Subscription data received:', data);
@@ -335,11 +345,7 @@ export default function Profile() {
       }
     } catch (error) {
       console.error('Error loading subscription:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load subscription data",
-        variant: "destructive",
-      });
+      // Don't show error toast on page load, only log
     } finally {
       setLoadingSubscription(false);
     }
