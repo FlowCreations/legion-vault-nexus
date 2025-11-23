@@ -51,12 +51,12 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
-    // Poll for live stream status more frequently to catch live events - every 5 seconds
+    // Poll for live stream status - more frequently when viewing live
     console.log('[LiveStudio] Setting up live stream polling');
     const liveStreamInterval = setInterval(() => {
       console.log('[LiveStudio] Polling for live stream status');
       checkLiveStream();
-    }, 5000); // 5 seconds for faster updates
+    }, isViewingLive ? 10000 : 5000); // Check every 10s when viewing, 5s otherwise
     
     // Target date: December 23, 2025 8:00 PM EST
     const targetDate = new Date('2025-12-23T20:00:00-05:00');
@@ -115,12 +115,12 @@ export default function LiveStudio() {
               description: "Click 'Join Stream' to watch now!"
             });
           } else if (eventData.status === 'ended') {
-            console.log('[LiveStudio] Stream ended, clearing live event');
+            console.log('[LiveStudio] 🔴 Stream has ENDED. Event ID:', eventData.id);
             // Only clear if it's the currently displayed live event
             if (liveEventId === eventData.id) {
               setLiveEventId(null);
               setStreamStartTime(undefined);
-              setIsViewingLive(false);
+              setIsViewingLive(false); // Stop viewing when stream ends
               toast.info("Stream has ended", {
                 description: "Thanks for watching!"
               });

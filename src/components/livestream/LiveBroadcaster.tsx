@@ -771,7 +771,10 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
         try {
           const { error: updateError } = await supabase
             .from('livestream_events')
-            .update({ status: 'ended' })
+            .update({ 
+              status: 'ended',
+              actual_end: new Date().toISOString()
+            })
             .eq('id', eventId);
           
           if (updateError) {
@@ -959,7 +962,8 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       const { error: updateError } = await supabase
         .from('livestream_events')
         .update({ 
-          status: 'ended'
+          status: 'ended',
+          actual_end: new Date().toISOString()
         })
         .eq('id', eventId);
 
