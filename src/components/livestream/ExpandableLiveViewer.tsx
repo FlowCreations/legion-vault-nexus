@@ -257,13 +257,13 @@ export function ExpandableLiveViewer({
   const hours = Math.floor(streamDuration / 3600);
   const minutes = Math.floor((streamDuration % 3600) / 60);
   
-  // Expanded view with chat, reactions, and controls
+  // Expanded view with YouTube-style chat layout
   const expandedContent = (
     <div className="flex flex-col h-full bg-background">
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
-        {/* Main Video Area - Bigger */}
-        <div className="flex-1 lg:flex-[2] flex flex-col min-h-0">
-          <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-0 overflow-hidden">
+        {/* Main Video Area */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="relative flex-1 bg-black overflow-hidden">
             <video 
               ref={videoRef}
               id="livekit-video-expanded"
@@ -317,75 +317,40 @@ export function ExpandableLiveViewer({
               </>
             )}
             
-            {/* Player Controls & Reactions at Bottom */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-between items-center px-4 z-20">
-              <ErrorBoundary>
-                <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
-              </ErrorBoundary>
-              
-              <div className="flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
+            {/* Player Controls at Bottom */}
+            <div className="absolute bottom-4 right-4 flex gap-2 z-20 opacity-0 hover:opacity-100 transition-opacity">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleFullscreen}
+                className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+              {isPiPSupported && (
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={handleFullscreen}
+                  onClick={togglePiP}
                   className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
                 >
-                  <Maximize2 className="h-4 w-4" />
+                  <PictureInPicture2 className="h-4 w-4" />
                 </Button>
-                {isPiPSupported && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={togglePiP}
-                    className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
-                  >
-                    <PictureInPicture2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
-          
-          {/* Action Buttons */}
-          {status === 'connected' && (
-            <div className="flex gap-2 mt-4">
-              <Button onClick={handleTipClick} className="flex-1">
-                <DollarSign className="h-4 w-4 mr-2" />
-                Send Tip
-              </Button>
-              <Button onClick={handleShare} variant="outline" className="flex-1">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-            </div>
-          )}
         </div>
         
-        {/* Chat & Reactions Sidebar (Desktop) / Drawer (Mobile) */}
-        {isMobile ? (
-          <Drawer open={isExpanded} onOpenChange={setExpanded}>
-            <DrawerContent className="h-[80vh]">
-              <div className="flex flex-col h-full p-4 overflow-hidden">
-                <div className="flex-1 mb-4 overflow-hidden">
-                  <ErrorBoundary>
-                    <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
-                  </ErrorBoundary>
-                </div>
-                <div className="flex-shrink-0">
-                  <ErrorBoundary>
-                    <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
-                  </ErrorBoundary>
-                </div>
+        {/* YouTube-Style Chat Sidebar - Always visible on desktop */}
+        {!isMobile && (
+          <div className="w-80 lg:w-96 flex flex-col bg-muted/30 border-l border-border">
+            {/* Viewer Count Header */}
+            <div className="flex-shrink-0 bg-background/80 backdrop-blur-sm px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-primary" />
+                <span className="font-semibold">{viewerCount}</span>
+                <span className="text-muted-foreground">watching now</span>
               </div>
-            </DrawerContent>
-          </Drawer>
-        ) : (
-          <div className="w-80 flex flex-col gap-4 min-h-0">
-            {/* Viewer Count - Positioned at top of sidebar */}
-            <div className="bg-black/60 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-lg backdrop-blur-sm">
-              <Users className="h-4 w-4 text-primary" />
-              <span className="font-semibold">{viewerCount}</span>
-              <span className="text-gray-300">watching</span>
             </div>
             
             {/* Live Chat - Takes up remaining space */}
@@ -394,7 +359,65 @@ export function ExpandableLiveViewer({
                 <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
               </ErrorBoundary>
             </div>
+            
+            {/* Action Buttons + Reactions */}
+            {status === 'connected' && (
+              <div className="flex-shrink-0 p-4 space-y-3 bg-background/80 backdrop-blur-sm border-t border-border">
+                {/* Reactions */}
+                <div className="flex justify-center">
+                  <ErrorBoundary>
+                    <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                  </ErrorBoundary>
+                </div>
+                
+                {/* Tip & Share Buttons */}
+                <div className="flex gap-2">
+                  <Button onClick={handleTipClick} className="flex-1">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Send Tip
+                  </Button>
+                  <Button onClick={handleShare} variant="outline" className="flex-1">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
+        )}
+        
+        {/* Mobile Drawer for Chat */}
+        {isMobile && (
+          <Drawer open={isExpanded} onOpenChange={setExpanded}>
+            <DrawerContent className="h-[80vh]">
+              <div className="flex flex-col h-full p-4 overflow-hidden">
+                <div className="flex-1 mb-4 overflow-hidden">
+                  <ErrorBoundary>
+                    <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
+                  </ErrorBoundary>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-center">
+                    <ErrorBoundary>
+                      <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                    </ErrorBoundary>
+                  </div>
+                  {status === 'connected' && (
+                    <div className="flex gap-2">
+                      <Button onClick={handleTipClick} className="flex-1">
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Send Tip
+                      </Button>
+                      <Button onClick={handleShare} variant="outline" className="flex-1">
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
         )}
       </div>
     </div>
@@ -496,11 +519,11 @@ export function ExpandableLiveViewer({
 
       {showExternalControls && status === 'connected' && (
         <div className="flex gap-2 justify-center">
-          <Button onClick={handleTipClick} variant="default" className="flex-1">
+          <Button onClick={handleTipClick} variant="default" className="flex-1 rounded-button">
             <DollarSign className="h-4 w-4 mr-2" />
             Send Tip
           </Button>
-          <Button onClick={handleShare} variant="outline" className="flex-1">
+          <Button onClick={handleShare} variant="outline" className="flex-1 rounded-button">
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>
