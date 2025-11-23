@@ -101,13 +101,16 @@ export default function LiveStudio() {
       }, (payload) => {
         console.log('[LiveStudio] Realtime event received:', payload);
         
-        // Check if the event is live
+        // Check if the event is INSERT or UPDATE
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const eventData = payload.new as any;
+          console.log('[LiveStudio] Event data:', eventData);
+          
           if (eventData.status === 'live') {
-            console.log('[LiveStudio] Stream is now LIVE! Event ID:', eventData.id);
+            console.log('[LiveStudio] 🔴 Stream is now LIVE! Event ID:', eventData.id);
             setLiveEventId(eventData.id);
             setStreamStartTime(eventData.stream_start_time ? new Date(eventData.stream_start_time) : undefined);
+            setIsViewingLive(false); // Reset viewing state so button appears
             toast.success("🔴 Stream is now LIVE!", {
               description: "Click 'Join Stream' to watch now!"
             });
@@ -127,6 +130,7 @@ export default function LiveStudio() {
           console.log('[LiveStudio] Event deleted, clearing live event ID');
           setLiveEventId(null);
           setStreamStartTime(undefined);
+          setIsViewingLive(false);
         }
       })
       .subscribe((status) => {
