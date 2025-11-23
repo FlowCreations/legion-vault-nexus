@@ -79,31 +79,19 @@ export function ExpandableLiveViewer({
       return;
     }
 
-    // Detach tracks completely before re-attaching to new container
+    // Attach tracks to the active video element without detaching to avoid flicker or unintended disconnects
     if (videoTrack) {
-      console.log('[Viewer] Detaching and re-attaching video track');
-      videoTrack.detach(); // Cleanup any previous attachment
-      // Small delay to ensure detachment completes
-      setTimeout(() => {
-        if (activeVideoEl && document.body.contains(activeVideoEl)) {
-          videoTrack.attach(activeVideoEl);
-        }
-      }, 50);
+      console.log('[Viewer] Attaching video track');
+      videoTrack.attach(activeVideoEl);
     }
 
-    // Detach and re-attach audio track
     if (audioTrack) {
-      console.log('[Viewer] Detaching and re-attaching audio track');
-      audioTrack.detach(); // Cleanup any previous attachment
-      setTimeout(() => {
-        if (activeVideoEl && document.body.contains(activeVideoEl)) {
-          audioTrack.attach(activeVideoEl);
-          
-          // Force audio playback with explicit volume control
-          activeVideoEl.muted = false;
-          activeVideoEl.volume = 1.0;
-        }
-      }, 50);
+      console.log('[Viewer] Attaching audio track');
+      audioTrack.attach(activeVideoEl);
+
+      // Force audio playback with explicit volume control
+      activeVideoEl.muted = false;
+      activeVideoEl.volume = 1.0;
     }
 
     // Ensure playback starts
@@ -361,28 +349,26 @@ export function ExpandableLiveViewer({
             </div>
             
             {/* Action Buttons + Reactions */}
-            {status === 'connected' && (
-              <div className="flex-shrink-0 p-4 space-y-3 bg-background/80 backdrop-blur-sm border-t border-border">
-                {/* Reactions */}
-                <div className="flex justify-center">
-                  <ErrorBoundary>
-                    <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
-                  </ErrorBoundary>
-                </div>
-                
-                {/* Tip & Share Buttons */}
-                <div className="flex gap-2">
-                  <Button onClick={handleTipClick} className="flex-1">
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Send Tip
-                  </Button>
-                  <Button onClick={handleShare} variant="outline" className="flex-1">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
-                  </Button>
-                </div>
+            <div className="flex-shrink-0 p-4 space-y-3 bg-background/80 backdrop-blur-sm border-t border-border">
+              {/* Reactions */}
+              <div className="flex justify-center">
+                <ErrorBoundary>
+                  <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                </ErrorBoundary>
               </div>
-            )}
+              
+              {/* Tip & Share Buttons */}
+              <div className="flex gap-2">
+                <Button onClick={handleTipClick} className="flex-1">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Send Tip
+                </Button>
+                <Button onClick={handleShare} variant="outline" className="flex-1">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </div>
           </div>
         )}
         
@@ -396,13 +382,12 @@ export function ExpandableLiveViewer({
                     <LiveChat eventId={eventId} onTipRequest={handleTipClick} />
                   </ErrorBoundary>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex justify-center">
-                    <ErrorBoundary>
-                      <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
-                    </ErrorBoundary>
-                  </div>
-                  {status === 'connected' && (
+                  <div className="space-y-3">
+                    <div className="flex justify-center">
+                      <ErrorBoundary>
+                        <LiveReactions eventId={eventId} streamStartTime={streamStartTime} />
+                      </ErrorBoundary>
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={handleTipClick} className="flex-1">
                         <DollarSign className="h-4 w-4 mr-2" />
@@ -413,8 +398,7 @@ export function ExpandableLiveViewer({
                         Share
                       </Button>
                     </div>
-                  )}
-                </div>
+                  </div>
               </div>
             </DrawerContent>
           </Drawer>
