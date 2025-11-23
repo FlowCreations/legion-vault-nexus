@@ -693,15 +693,28 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       }
 
       // Update the event status to live
-      const { error: updateError } = await supabase
+      console.log('[Broadcaster] Updating event to LIVE status:', eventId);
+      const { data: updateData, error: updateError } = await supabase
         .from('livestream_events')
-        .update({ status: 'live' })
-        .eq('id', eventId);
+        .update({ 
+          status: 'live',
+          stream_start_time: new Date().toISOString(),
+          actual_end: null  // Clear any previous end time
+        })
+        .eq('id', eventId)
+        .select();
 
       if (updateError) {
         console.error('[Broadcaster] Error updating event status:', updateError);
-        throw new Error('Failed to set stream as live');
+        throw new Error('Failed to set stream as live: ' + updateError.message);
       }
+
+      if (!updateData || updateData.length === 0) {
+        console.error('[Broadcaster] No event found with ID:', eventId);
+        throw new Error('Event not found. Please create or select an event first.');
+      }
+
+      console.log('[Broadcaster] ✅ Event status updated to LIVE:', updateData);
 
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
         body: { 
