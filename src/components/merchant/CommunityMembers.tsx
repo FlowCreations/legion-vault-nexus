@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -213,7 +212,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Community Members
+                Member Directory
               </CardTitle>
               <CardDescription>
                 Showing {members.length > 0 ? startItem : 0}-{endItem} of {totalCount} members
@@ -247,80 +246,119 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
             </Select>
           </div>
 
-          {/* Members Table - Optimized with React.memo */}
-          <div className="border rounded-lg max-h-[600px] overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-background z-10">
-                <TableRow>
-                  <TableHead className="w-[300px]">Member</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead>ERA</TableHead>
-                  <TableHead>PTP</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Total Spend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No members found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  members.map((member) => (
-                    <TableRow 
-                      key={member.id} 
-                      data-user-id={member.user_id}
-                      className={`cursor-pointer hover:bg-primary/5 transition-colors ${member.user_id === selectedUserId ? 'bg-primary/20' : ''}`}
-                      onClick={() => setSelectedMember(member)}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={member.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {member.display_name?.charAt(0).toUpperCase() || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="max-w-[200px]">
-                            <p className="font-medium truncate">{member.display_name || "Anonymous"}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {member.email || member.full_name}
-                            </p>
-                          </div>
+          {/* Member Directory Cards */}
+          <div className="space-y-3">
+            {members.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                No members found
+              </div>
+            ) : (
+              members.map((member) => (
+                <div
+                  key={member.id}
+                  data-user-id={member.user_id}
+                  className={`border rounded-lg p-4 hover:bg-accent/50 transition-colors ${
+                    member.user_id === selectedUserId ? 'bg-primary/10 border-primary' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Avatar */}
+                    <Avatar className="w-12 h-12 border-2 border-border">
+                      <AvatarImage src={member.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {member.display_name?.charAt(0).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Member Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg truncate">{member.display_name || "Anonymous"}</h3>
+                          <p className="text-sm text-muted-foreground truncate">{member.email}</p>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">{member.location || "—"}</span>
-                      </TableCell>
-                      <TableCell>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 flex-shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedMember(member)}
+                          >
+                            View Profile
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedMember(member)}
+                          >
+                            View Pattern
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Badges Row */}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
                         {getTierBadge(member.membership_tier || member.tier)}
-                      </TableCell>
-                      <TableCell>
-                        {getERABadge(member.era_label)}
-                      </TableCell>
-                      <TableCell>
-                        {getPTPBadge(member.ptp_status, member.ptp_current)}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(member.last_active_at)}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(member.created_at), { addSuffix: true })}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        ${member.total_spend?.toFixed(2) || "0.00"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                        {member.era_label && (
+                          <Badge className={`${
+                            member.era_label.toLowerCase() === 'engaged' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                            member.era_label.toLowerCase() === 'loyal' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                            member.era_label.toLowerCase() === 'invest' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          }`}>
+                            ERA {member.era_current || 0} • {member.era_label}
+                          </Badge>
+                        )}
+                        {member.ptp_status && (
+                          <Badge className={`${
+                            member.ptp_status.toLowerCase() === 'hot' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            member.ptp_status.toLowerCase() === 'warm' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          }`}>
+                            PTP {member.ptp_current || 0}
+                          </Badge>
+                        )}
+                        {member.is_super_fan && (
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                            ⭐ Super Fan
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Details Row */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Location</p>
+                          <p className="font-medium truncate">{member.location || "Unknown"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Watch Time</p>
+                          <p className="font-medium">{Math.floor((member.watch_time || 0) / 60)}h</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Total Spend</p>
+                          <p className="font-medium">${member.total_spend?.toFixed(2) || "0.00"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Joined</p>
+                          <p className="font-medium">
+                            {formatDistanceToNow(new Date(member.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Bio/Notes if available */}
+                      {member.bio && (
+                        <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
+                          {member.bio}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Pagination Controls */}
