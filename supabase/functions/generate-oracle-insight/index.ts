@@ -37,8 +37,8 @@ Deno.serve(async (req) => {
     const { data: events } = await supabase
       .from('user_events')
       .select('*')
-      .gte('timestamp', last30Days.toISOString())
-      .order('timestamp', { ascending: false })
+      .gte('created_at', last30Days.toISOString())
+      .order('created_at', { ascending: false })
       .limit(1000);
 
     // Get purchases with user metadata
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     // Get user profiles with location and behavior
     const { data: profiles } = await supabase
       .from('user_profiles')
-      .select('location, total_spend, total_watch_time, total_listen_time, engagement_count')
+      .select('location, total_spend, watch_time, listen_time, community_engagement_score')
       .limit(200);
 
     // Analyze correlations between behavior and revenue
@@ -96,8 +96,8 @@ Deno.serve(async (req) => {
     const avgPurchaseValue = totalRevenue / (purchases?.length || 1);
 
     // Behavioral correlations
-    const avgListenTime = (profiles?.reduce((sum, p) => sum + (p.total_listen_time || 0), 0) || 0) / (profiles?.length || 1);
-    const avgWatchTime = (profiles?.reduce((sum, p) => sum + (p.total_watch_time || 0), 0) || 0) / (profiles?.length || 1);
+    const avgListenTime = (profiles?.reduce((sum, p) => sum + (p.listen_time || 0), 0) || 0) / (profiles?.length || 1);
+    const avgWatchTime = (profiles?.reduce((sum, p) => sum + (p.watch_time || 0), 0) || 0) / (profiles?.length || 1);
 
     // Prepare data for predictive AI analysis
     const dataContext = `
@@ -116,7 +116,7 @@ BEHAVIORAL PATTERNS:
 
 CORRELATION SIGNALS:
 - High-engagement fans (>10hr listen) in database: ${Object.values(listenTimeByUser || {}).filter((v: any) => v > 10).length}
-- Video completions in last week: ${events?.filter(e => e.event_type === 'video_complete' && new Date(e.timestamp) > last7Days).length}
+- Video completions in last week: ${events?.filter(e => e.event_type === 'video_complete' && new Date(e.created_at) > last7Days).length}
     `.trim();
 
     // Call Lovable AI for strategic insight
