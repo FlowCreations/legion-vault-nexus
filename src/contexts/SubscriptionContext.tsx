@@ -125,7 +125,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!ready) return;
     
     checkSubscription();
-  }, [ready, user]);
+  }, [ready, user?.id]); // Only re-run when user ID changes, not object reference
 
   const hasAccess = (feature: string): boolean => {
     // Admins have access to everything
