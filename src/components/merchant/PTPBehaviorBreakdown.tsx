@@ -44,9 +44,14 @@ export const PTPBehaviorBreakdown = ({ userId, showDetailed = true }: PTPBreakdo
         query.eq('member_id', userId);
       }
 
-      const { data: scoreData, error: scoreError } = await query.single();
+      const { data: scoreData, error: scoreError } = await query.maybeSingle();
 
       if (scoreError) throw scoreError;
+      if (!scoreData) {
+        setptpData(null);
+        setLoading(false);
+        return;
+      }
 
       setptpData(scoreData);
 
