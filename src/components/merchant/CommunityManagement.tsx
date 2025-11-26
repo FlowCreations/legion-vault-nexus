@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, DollarSign, TrendingUp, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CommunityMembers } from "./CommunityMembers";
+import { SuperfanIndex } from "./SuperfanIndex";
+import { AIAnalytics } from "./AIAnalytics";
+import { PTPCalculationTrigger } from "./admin/PTPCalculationTrigger";
+
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
 interface CommunityStats {
   totalMembers: number;
@@ -291,15 +300,15 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
         </TabsList>
 
         <TabsContent value="members">
-          <CommunityMembers selectedUserId={selectedUserId} />
+          <Suspense fallback={<LoadingSpinner />}>
+            <CommunityMembers selectedUserId={selectedUserId} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="superfan">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">Superfan Index coming soon...</p>
-            </CardContent>
-          </Card>
+          <Suspense fallback={<LoadingSpinner />}>
+            <SuperfanIndex />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="tiers">
@@ -311,19 +320,15 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
         </TabsContent>
 
         <TabsContent value="ai">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">AI Analytics coming soon...</p>
-            </CardContent>
-          </Card>
+          <Suspense fallback={<LoadingSpinner />}>
+            <AIAnalytics />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="tracking">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">Tracking coming soon...</p>
-            </CardContent>
-          </Card>
+          <Suspense fallback={<LoadingSpinner />}>
+            <PTPCalculationTrigger />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="legal">
