@@ -55,7 +55,7 @@ const AbandonedCartAnalytics = lazy(() => import("@/components/merchant/analytic
 const VideoManager = lazy(() => import("./VideoManager"));
 const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
 const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
-const AdminDashboardPage = lazy(() => import("./AdminDashboard"));
+const CommunityManagement = lazy(() => import("@/components/merchant/CommunityManagement").then(m => ({ default: m.CommunityManagement })));
 
 const MostTalkedAbout = lazy(() => import("@/components/merchant/MostTalkedAbout").then(m => ({ default: m.MostTalkedAbout })));
 const DataInsights = lazy(() => import("@/components/merchant/DataInsights").then(m => ({ default: m.DataInsights })));
@@ -461,7 +461,7 @@ const Merchant = memo(() => {
           {activeTab === "community" && (
             <TabsContent value="community" className="space-y-6">
               <Suspense fallback={<LoadingSpinner />}>
-                <AdminDashboardPage selectedUserId={selectedUserId} />
+                <CommunityManagement selectedUserId={selectedUserId} />
               </Suspense>
             </TabsContent>
           )}
