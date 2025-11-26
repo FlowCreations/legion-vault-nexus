@@ -55,7 +55,7 @@ const AbandonedCartAnalytics = lazy(() => import("@/components/merchant/analytic
 const VideoManager = lazy(() => import("./VideoManager"));
 const SeedCoordinatesButton = lazy(() => import("@/components/merchant/SeedCoordinatesButton").then(m => ({ default: m.SeedCoordinatesButton })));
 const TourManager = lazy(() => import("@/components/merchant/TourManager").then(m => ({ default: m.TourManager })));
-const CommunityMembers = lazy(() => import("@/components/merchant/CommunityMembers").then(m => ({ default: m.CommunityMembers })));
+const CommunityManagement = lazy(() => import("@/components/merchant/CommunityManagement").then(m => ({ default: m.CommunityManagement })));
 
 const MostTalkedAbout = lazy(() => import("@/components/merchant/MostTalkedAbout").then(m => ({ default: m.MostTalkedAbout })));
 const DataInsights = lazy(() => import("@/components/merchant/DataInsights").then(m => ({ default: m.DataInsights })));
@@ -460,32 +460,8 @@ const Merchant = memo(() => {
 
           {activeTab === "community" && (
             <TabsContent value="community" className="space-y-6">
-              {/* Real-time community stats */}
-              <div className="flex items-center gap-4">
-                <Badge variant={isConnected ? "default" : "secondary"} className="gap-2">
-                  {isConnected ? (
-                    <>
-                      <Wifi className="w-3 h-3" />
-                      Live Updates
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="w-3 h-3" />
-                      Offline
-                    </>
-                  )}
-                </Badge>
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-semibold">{stats.totalUsers.toLocaleString()}</span> users
-                  {' • '}
-                  <span className="font-semibold">{stats.activeUsers.toLocaleString()}</span> active
-                  {' • '}
-                  <span className="font-semibold text-green-500">+{stats.newUsersToday}</span> today
-                </div>
-              </div>
-
               <Suspense fallback={<LoadingSpinner />}>
-                <CommunityMembers selectedUserId={selectedUserId} />
+                <CommunityManagement selectedUserId={selectedUserId} />
               </Suspense>
             </TabsContent>
           )}
