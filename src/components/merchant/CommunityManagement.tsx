@@ -9,6 +9,7 @@ import { CommunityMembers } from "./CommunityMembers";
 import { SuperfanIndex } from "./SuperfanIndex";
 import { AIAnalytics } from "./AIAnalytics";
 import { PTPCalculationTrigger } from "./admin/PTPCalculationTrigger";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center p-8">
@@ -297,6 +298,7 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
           <TabsTrigger value="ai">AI Analytics</TabsTrigger>
           <TabsTrigger value="tracking">Tracking</TabsTrigger>
           <TabsTrigger value="legal">Legal</TabsTrigger>
+          <TabsTrigger value="admin">Admin</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members">
@@ -337,6 +339,12 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
               <p className="text-muted-foreground">Legal documents coming soon...</p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="admin">
+          <Suspense fallback={<LoadingSpinner />}>
+            <AdminDashboard selectedUserId={selectedUserId} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
