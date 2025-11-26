@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
     const { data: events } = await supabase
       .from('user_events')
       .select('*')
-      .gte('timestamp', last30Days.toISOString())
-      .order('timestamp', { ascending: false })
+      .gte('created_at', last30Days.toISOString())
+      .order('created_at', { ascending: false })
       .limit(500);
 
     // Get personality profiles for emotional understanding
@@ -50,8 +50,8 @@ Deno.serve(async (req) => {
     // Get user profiles with engagement patterns
     const { data: profiles } = await supabase
       .from('user_profiles')
-      .select('era_score, total_watch_time, total_listen_time, engagement_count')
-      .not('era_score', 'is', null)
+      .select('era_current, watch_time, listen_time, community_engagement_score')
+      .not('era_current', 'is', null)
       .limit(200);
 
     // Analyze emotional and behavioral patterns
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
     // Timing patterns (when people engage)
     const eventsByHour = events?.reduce((acc: any, e) => {
-      const hour = new Date(e.timestamp).getHours();
+      const hour = new Date(e.created_at).getHours();
       acc[hour] = (acc[hour] || 0) + 1;
       return acc;
     }, {});
@@ -84,8 +84,8 @@ Deno.serve(async (req) => {
       .slice(0, 3)
       .map(([hour]) => hour);
 
-    const avgEngagement = (profiles?.reduce((sum, p) => sum + (p.engagement_count || 0), 0) || 0) / (profiles?.length || 1);
-    const avgListenTime = (profiles?.reduce((sum, p) => sum + (p.total_listen_time || 0), 0) || 0) / (profiles?.length || 1);
+    const avgEngagement = (profiles?.reduce((sum, p) => sum + (p.community_engagement_score || 0), 0) || 0) / (profiles?.length || 1);
+    const avgListenTime = (profiles?.reduce((sum, p) => sum + (p.listen_time || 0), 0) || 0) / (profiles?.length || 1);
 
     // Prepare behavioral context for AI to find hidden truth
     const behavioralContext = `
