@@ -325,23 +325,42 @@ export default function CommunityHub() {
   };
 
   const loadDirectoryProfiles = async () => {
-    // Load real user profiles with pagination
-    const { data: realProfiles } = await supabase
-      .from("user_profiles")
-      .select("user_id, display_name, avatar_url, location, bio, tier")
-      .limit(50);
+    try {
+      console.log('Loading directory profiles...');
+      // Load real user profiles with pagination
+      const { data: realProfiles, error } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name, avatar_url, location, bio, tier")
+        .not('user_id', 'is', null)
+        .limit(50);
 
-    // Convert real profiles to directory format
-    const formattedRealProfiles = (realProfiles || []).map(profile => ({
-      id: profile.user_id,
-      name: profile.display_name,
-      avatar: profile.avatar_url || "",
-      tier: profile.tier || "Free Member",
-      location: profile.location || "",
-      bio: profile.bio || ""
-    }));
+      console.log('Directory profiles loaded:', { count: realProfiles?.length, error });
 
-    setAllProfiles(formattedRealProfiles);
+      if (error) {
+        console.error('Error loading directory profiles:', error);
+        toast({
+          title: "Error loading directory",
+          description: "Unable to load member directory",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Convert real profiles to directory format
+      const formattedRealProfiles = (realProfiles || []).map(profile => ({
+        id: profile.user_id,
+        name: profile.display_name,
+        avatar: profile.avatar_url || "",
+        tier: profile.tier || "Free Member",
+        location: profile.location || "",
+        bio: profile.bio || ""
+      }));
+
+      console.log('Formatted profiles:', formattedRealProfiles.length);
+      setAllProfiles(formattedRealProfiles);
+    } catch (error) {
+      console.error('Exception in loadDirectoryProfiles:', error);
+    }
   };
 
   const clearOldPosts = async () => {
@@ -1088,40 +1107,57 @@ export default function CommunityHub() {
           {activeTab === "directory" && (
             <div className="space-y-6">
               <h2 className="font-serif text-2xl font-bold">Community Directory</h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                {filteredProfiles.map((profile) => (
-                  <div key={profile.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={profile.avatar || undefined} />
-                        <AvatarFallback>{profile.name?.[0] || '?'}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">{profile.name || 'Unknown'}</h3>
-                          {profile.tier && <Badge className={getTierColor(profile.tier)}>{profile.tier}</Badge>}
+              
+              {/* Search Input */}
+              <Input
+                placeholder="Search members by name, location, or tier..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-md"
+              />
+              
+              {filteredProfiles.length > 0 ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {filteredProfiles.map((profile) => (
+                    <div key={profile.id} className="bg-card rounded-2xl p-6 border hover:border-primary/30 transition-all">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="h-16 w-16">
+                          <AvatarImage src={profile.avatar || undefined} />
+                          <AvatarFallback>{profile.name?.[0] || '?'}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold">{profile.name || 'Unknown'}</h3>
+                            {profile.tier && <Badge className={getTierColor(profile.tier)}>{profile.tier}</Badge>}
+                          </div>
+                          {profile.location && <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>}
+                          {profile.bio && <p className="text-sm mb-4">{profile.bio}</p>}
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => {
+                              setDirectMessageRecipient({
+                                id: profile.id,
+                                name: profile.name || 'Unknown',
+                                avatar: profile.avatar || undefined
+                              });
+                              setShowDirectMessage(true);
+                            }}
+                          >
+                            Message
+                          </Button>
                         </div>
-                        {profile.location && <p className="text-sm text-muted-foreground mb-3">{profile.location}</p>}
-                        {profile.bio && <p className="text-sm mb-4">{profile.bio}</p>}
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => {
-                            setDirectMessageRecipient({
-                              id: profile.id,
-                              name: profile.name || 'Unknown',
-                              avatar: profile.avatar || undefined
-                            });
-                            setShowDirectMessage(true);
-                          }}
-                        >
-                          Message
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'No members found matching your search.' : 'No members found in the directory.'}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
