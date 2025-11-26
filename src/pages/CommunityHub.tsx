@@ -327,12 +327,10 @@ export default function CommunityHub() {
   const loadDirectoryProfiles = async () => {
     try {
       console.log('Loading directory profiles...');
-      // Load real user profiles with pagination
+      // Load all user profiles including those without user_id for demos
       const { data: realProfiles, error } = await supabase
         .from("user_profiles")
-        .select("user_id, display_name, avatar_url, location, bio, tier")
-        .not('user_id', 'is', null)
-        .limit(50);
+        .select("id, user_id, display_name, avatar_url, location, bio, tier, membership_tier");
 
       console.log('Directory profiles loaded:', { count: realProfiles?.length, error });
 
@@ -346,12 +344,12 @@ export default function CommunityHub() {
         return;
       }
 
-      // Convert real profiles to directory format
+      // Convert real profiles to directory format, using id if user_id is null
       const formattedRealProfiles = (realProfiles || []).map(profile => ({
-        id: profile.user_id,
+        id: profile.user_id || profile.id,
         name: profile.display_name,
         avatar: profile.avatar_url || "",
-        tier: profile.tier || "Free Member",
+        tier: profile.tier || profile.membership_tier || "Free Member",
         location: profile.location || "",
         bio: profile.bio || ""
       }));
