@@ -460,27 +460,35 @@ const Merchant = memo(() => {
 
           {activeTab === "community" && (
             <TabsContent value="community" className="space-y-6">
-              {/* Real-time community stats */}
-              <div className="flex items-center gap-4">
-                <Badge variant={isConnected ? "default" : "secondary"} className="gap-2">
-                  {isConnected ? (
-                    <>
-                      <Wifi className="w-3 h-3" />
-                      Live Updates
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="w-3 h-3" />
-                      Offline
-                    </>
-                  )}
-                </Badge>
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-semibold">{stats.totalUsers.toLocaleString()}</span> users
-                  {' • '}
-                  <span className="font-semibold">{stats.activeUsers.toLocaleString()}</span> active
-                  {' • '}
-                  <span className="font-semibold text-green-500">+{stats.newUsersToday}</span> today
+              {/* Real-time community stats and actions */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <Badge variant={isConnected ? "default" : "secondary"} className="gap-2">
+                    {isConnected ? (
+                      <>
+                        <Wifi className="w-3 h-3" />
+                        Live Updates
+                      </>
+                    ) : (
+                      <>
+                        <WifiOff className="w-3 h-3" />
+                        Offline
+                      </>
+                    )}
+                  </Badge>
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-semibold">{stats.totalUsers.toLocaleString()}</span> users
+                    {' • '}
+                    <span className="font-semibold">{stats.activeUsers.toLocaleString()}</span> active
+                    {' • '}
+                    <span className="font-semibold text-green-500">+{stats.newUsersToday}</span> today
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Suspense fallback={<div className="h-10 w-10"></div>}>
+                    <PTPCalculationTrigger />
+                  </Suspense>
                 </div>
               </div>
 
