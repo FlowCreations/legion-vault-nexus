@@ -34,8 +34,7 @@ export function SuperfanIndex() {
         .from('user_profiles')
         .select('id, display_name, avatar_url, tier, membership_tier, ptp_current, ptp_status, era_current, era_label, total_spend, watch_time, listen_time')
         .not('ptp_current', 'is', null)
-        .order('ptp_current', { ascending: false })
-        .limit(50);
+        .order('ptp_current', { ascending: false });
 
       if (error) throw error;
       setMembers(data || []);
