@@ -5,11 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Users, Loader2, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar } from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { PTPBehaviorBreakdown } from "./PTPBehaviorBreakdown";
 
 interface CommunityMember {
   id: string;
@@ -26,6 +29,16 @@ interface CommunityMember {
   created_at: string;
   last_active_at: string | null;
   total_spend: number;
+  era_current: number | null;
+  ptp_current: number | null;
+  era_label: string | null;
+  ptp_status: string | null;
+  watch_time: number | null;
+  listen_time: number | null;
+  livestream_engagement_score: number | null;
+  login_streak: number | null;
+  inactive_days: number | null;
+  is_super_fan: boolean | null;
 }
 
 interface CommunityMembersProps {
@@ -40,6 +53,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   const [tierFilter, setTierFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
   const { toast } = useToast();
   
   const ITEMS_PER_PAGE = 50;
@@ -133,6 +147,37 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
     );
   };
 
+  const getPTPBadge = (ptpStatus: string | null, ptpScore: number | null) => {
+    const colors: Record<string, string> = {
+      'green': 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+      'yellow': 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+      'red': 'bg-red-500/20 text-red-400 border border-red-500/30',
+    };
+    
+    const status = ptpStatus?.toLowerCase() || 'red';
+    return (
+      <Badge className={colors[status] || colors.red}>
+        {ptpScore !== null ? `${ptpScore}` : 'N/A'}
+      </Badge>
+    );
+  };
+
+  const getERABadge = (eraLabel: string | null) => {
+    const colors: Record<string, string> = {
+      'discover': 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+      'engage': 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+      'invest': 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+      'loyal': 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+    };
+    
+    const label = eraLabel?.toLowerCase() || 'discover';
+    return (
+      <Badge className={colors[label] || colors.discover}>
+        {eraLabel || 'Discover'}
+      </Badge>
+    );
+  };
+
   const getStatusBadge = (lastActive: string | null) => {
     if (!lastActive) return <Badge variant="outline">Never Active</Badge>;
     
@@ -210,6 +255,8 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                   <TableHead className="w-[300px]">Member</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Tier</TableHead>
+                  <TableHead>ERA</TableHead>
+                  <TableHead>PTP</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Total Spend</TableHead>
@@ -218,7 +265,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
               <TableBody>
                 {members.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No members found
                     </TableCell>
                   </TableRow>
@@ -227,7 +274,8 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                     <TableRow 
                       key={member.id} 
                       data-user-id={member.user_id}
-                      className={member.user_id === selectedUserId ? 'bg-primary/20' : ''}
+                      className={`cursor-pointer hover:bg-primary/5 transition-colors ${member.user_id === selectedUserId ? 'bg-primary/20' : ''}`}
+                      onClick={() => setSelectedMember(member)}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -250,6 +298,12 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                       </TableCell>
                       <TableCell>
                         {getTierBadge(member.membership_tier || member.tier)}
+                      </TableCell>
+                      <TableCell>
+                        {getERABadge(member.era_label)}
+                      </TableCell>
+                      <TableCell>
+                        {getPTPBadge(member.ptp_status, member.ptp_current)}
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(member.last_active_at)}
@@ -299,6 +353,160 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
           )}
         </CardContent>
       </Card>
+
+      <Sheet open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          {selectedMember && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 border-2 border-primary/20">
+                    <AvatarImage src={selectedMember.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                      {selectedMember.display_name?.charAt(0) || selectedMember.email?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-bold text-xl">{selectedMember.display_name || 'Anonymous'}</div>
+                    <div className="text-sm text-muted-foreground">{selectedMember.email}</div>
+                  </div>
+                </SheetTitle>
+              </SheetHeader>
+
+              <Tabs defaultValue="overview" className="mt-6">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="behavior">PTP Behavior</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">ERA Score</p>
+                            <p className="text-2xl font-bold">{selectedMember.era_current || 0}</p>
+                          </div>
+                          {getERABadge(selectedMember.era_label)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">PTP Score</p>
+                            <p className="text-2xl font-bold">{selectedMember.ptp_current || 0}</p>
+                          </div>
+                          {getPTPBadge(selectedMember.ptp_status, selectedMember.ptp_current)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Member Details */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Member Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Tier</span>
+                        {getTierBadge(selectedMember.membership_tier || selectedMember.tier)}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Location</span>
+                        <span>{selectedMember.location || 'Unknown'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Super Fan</span>
+                        <Badge variant={selectedMember.is_super_fan ? "default" : "secondary"}>
+                          {selectedMember.is_super_fan ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total Spend</span>
+                        <span className="font-semibold">${selectedMember.total_spend?.toFixed(2) || '0.00'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Engagement Stats */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Engagement Metrics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Watch Time</p>
+                          <p className="font-semibold">{Math.floor((selectedMember.watch_time || 0) / 60)} hours</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Listen Time</p>
+                          <p className="font-semibold">{Math.floor((selectedMember.listen_time || 0) / 60)} hours</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Heart className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Livestream Engagement</p>
+                          <p className="font-semibold">{selectedMember.livestream_engagement_score || 0} points</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Login Streak</p>
+                          <p className="font-semibold">{selectedMember.login_streak || 0} days</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Inactive Days</p>
+                          <p className="font-semibold">{selectedMember.inactive_days || 0} days</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Activity Timeline */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Activity Timeline</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Joined</span>
+                        <span>{format(new Date(selectedMember.created_at), 'MMM d, yyyy')}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Last Active</span>
+                        <span>{selectedMember.last_active_at ? format(new Date(selectedMember.last_active_at), 'MMM d, yyyy h:mm a') : 'Never'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status</span>
+                        {getStatusBadge(selectedMember.last_active_at)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="behavior" className="mt-6">
+                  <PTPBehaviorBreakdown userId={selectedMember.user_id || ''} showDetailed={true} />
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
