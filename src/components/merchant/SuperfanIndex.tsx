@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -47,27 +46,53 @@ export function SuperfanIndex() {
     }
   };
 
-  const getTierColor = (tier: string | null) => {
+  const getTierBadge = (tier: string | null) => {
     const tierName = tier?.toLowerCase() || 'free';
-    if (tierName.includes('legionnaire')) return 'bg-yellow-500 text-black border-yellow-600';
-    if (tierName.includes('outlaw')) return 'bg-orange-500 text-white border-orange-600';
-    if (tierName.includes('rebel')) return 'bg-blue-500 text-white border-blue-600';
-    return 'bg-muted text-muted-foreground border-muted-foreground/20';
+    let badgeClass = 'px-4 py-1.5 text-sm font-semibold rounded-full';
+    let tierDisplay = tier || 'FREE';
+    
+    if (tierName.includes('elite') || tierName.includes('legionnaire')) {
+      badgeClass += ' bg-yellow-600/90 text-black';
+      tierDisplay = 'Legion Elite';
+    } else if (tierName.includes('vip')) {
+      badgeClass += ' bg-amber-700/90 text-white';
+      tierDisplay = 'Legion VIP';
+    } else if (tierName.includes('member') || tierName.includes('outlaw')) {
+      badgeClass += ' bg-amber-600/80 text-white';
+      tierDisplay = 'Legion Member';
+    } else if (tierName.includes('rebel')) {
+      badgeClass += ' bg-blue-500/80 text-white';
+      tierDisplay = 'Rebels';
+    } else {
+      badgeClass += ' bg-muted text-muted-foreground';
+      tierDisplay = 'Free';
+    }
+    
+    return <Badge className={badgeClass}>{tierDisplay}</Badge>;
   };
 
-  const getPTPColor = (ptp: number | null) => {
-    if (!ptp) return 'bg-gray-500/20 text-gray-400';
-    if (ptp >= 70) return 'bg-green-500/20 text-green-400 border border-green-500/30';
-    if (ptp >= 40) return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
-    return 'bg-red-500/20 text-red-400 border border-red-500/30';
+  const getERABadge = (eraLabel: string | null, eraScore: number | null) => {
+    const label = eraLabel?.toLowerCase() || 'discover';
+    let badgeClass = 'px-4 py-1.5 text-sm font-semibold rounded-full';
+    
+    if (label.includes('invest')) {
+      badgeClass += ' bg-purple-600/90 text-white';
+    } else if (label.includes('engage')) {
+      badgeClass += ' bg-blue-600/90 text-white';
+    } else if (label.includes('loyal')) {
+      badgeClass += ' bg-emerald-600/90 text-white';
+    } else {
+      badgeClass += ' bg-amber-600/90 text-white';
+    }
+    
+    return <Badge className={badgeClass}>ERA • {eraLabel || 'Discover'}</Badge>;
   };
 
-  const getERAColor = (label: string | null) => {
-    const eraLabel = label?.toLowerCase() || 'discover';
-    if (eraLabel === 'loyal') return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-    if (eraLabel === 'invest') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
-    if (eraLabel === 'engage') return 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
-    return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+  const getPTPIndicator = (ptp: number | null) => {
+    if (!ptp) return <div className="w-4 h-4 rounded-full bg-gray-500" />;
+    if (ptp >= 70) return <div className="w-4 h-4 rounded-full bg-green-500" />;
+    if (ptp >= 40) return <div className="w-4 h-4 rounded-full bg-yellow-500" />;
+    return <div className="w-4 h-4 rounded-full bg-red-500" />;
   };
 
   if (loading) {
@@ -111,53 +136,43 @@ export function SuperfanIndex() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {members.map((member, index) => (
             <div 
               key={member.id} 
-              className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+              className="flex items-center justify-between p-4 rounded-lg bg-card border hover:bg-accent/30 transition-colors"
             >
-              <div className="flex items-center gap-4 flex-1">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
+              <div className="flex items-center gap-6 flex-1">
+                {/* Rank Number */}
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-600/20 text-amber-400 font-bold text-lg flex-shrink-0">
                   {index + 1}
                 </div>
-                
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.display_name}`} />
-                  <AvatarFallback>{member.display_name?.[0] || "U"}</AvatarFallback>
-                </Avatar>
 
-                <div className="flex-1">
-                  <h3 className="font-semibold">{member.display_name}</h3>
-                  <div className="flex gap-2 mt-1">
-                    <Badge className={`${getTierColor(member.tier || member.membership_tier)} text-xs`}>
-                      {member.tier || member.membership_tier || 'FREE'}
-                    </Badge>
-                    {member.era_label && (
-                      <Badge className={`${getERAColor(member.era_label)} text-xs`}>
-                        ERA • {member.era_label}
-                      </Badge>
-                    )}
+                {/* Member Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg mb-2">{member.display_name}</h3>
+                  <div className="flex gap-2">
+                    {getTierBadge(member.tier || member.membership_tier)}
+                    {getERABadge(member.era_label, member.era_current)}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-6">
+              {/* Stats */}
+              <div className="flex items-center gap-12 flex-shrink-0">
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">PTP Score</p>
-                  <Badge className={`${getPTPColor(member.ptp_current)} text-lg font-bold`}>
-                    {member.ptp_current || 0}
-                  </Badge>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total Spend</p>
-                  <p className="font-bold">${(member.total_spend || 0).toFixed(2)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Engagement</p>
-                  <p className="font-bold">
+                  <p className="text-sm text-muted-foreground mb-1">Watch Time</p>
+                  <p className="font-semibold text-lg">
                     {Math.floor(((member.watch_time || 0) + (member.listen_time || 0)) / 60)}h
                   </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground mb-1">Total Spend</p>
+                  <p className="font-semibold text-lg">${(member.total_spend || 0).toFixed(2)}</p>
+                </div>
+                <div className="text-right flex flex-col items-end gap-1">
+                  <p className="text-sm text-muted-foreground">PTP</p>
+                  {getPTPIndicator(member.ptp_current)}
                 </div>
               </div>
             </div>
