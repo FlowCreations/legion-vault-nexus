@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Member {
   id: string;
@@ -78,11 +80,35 @@ export function SuperfanIndex() {
     );
   }
 
+  const seedDemoData = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('seed-demo-data');
+      if (error) throw error;
+      toast.success("Demo data seeded successfully! Refreshing...");
+      setTimeout(() => {
+        loadSuperfans();
+      }, 1000);
+    } catch (error) {
+      console.error('Error seeding data:', error);
+      toast.error("Failed to seed demo data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Behavior Heatmap</CardTitle>
-        <CardDescription>Purchase readiness ranked by PTP score</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Behavior Heatmap</CardTitle>
+            <CardDescription>Purchase readiness ranked by PTP score</CardDescription>
+          </div>
+          <Button onClick={seedDemoData} variant="outline" disabled={loading}>
+            Seed Demo Data
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
