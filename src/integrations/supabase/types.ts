@@ -2878,6 +2878,274 @@ export type Database = {
           },
         ]
       }
+      jrny_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          jrny_id: string
+          page_url: string | null
+          session_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          jrny_id: string
+          page_url?: string | null
+          session_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          jrny_id?: string
+          page_url?: string | null
+          session_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jrny_events_jrny_id_fkey"
+            columns: ["jrny_id"]
+            isOneToOne: false
+            referencedRelation: "jrny_visitors"
+            referencedColumns: ["jrny_id"]
+          },
+          {
+            foreignKeyName: "jrny_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jrny_fingerprint_map: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          fingerprint_hash: string
+          id: string
+          jrny_id: string
+          last_matched_at: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          fingerprint_hash: string
+          id?: string
+          jrny_id: string
+          last_matched_at?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          fingerprint_hash?: string
+          id?: string
+          jrny_id?: string
+          last_matched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jrny_fingerprint_map_jrny_id_fkey"
+            columns: ["jrny_id"]
+            isOneToOne: false
+            referencedRelation: "jrny_visitors"
+            referencedColumns: ["jrny_id"]
+          },
+        ]
+      }
+      jrny_portal_visits: {
+        Row: {
+          add_to_cart: boolean | null
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          jrny_id: string
+          landing_page: string | null
+          merch_views: number | null
+          music_plays: number | null
+          page_views: number | null
+          pages_viewed: string[] | null
+          purchase_made: boolean | null
+          referrer_url: string | null
+          scroll_depth_max: number | null
+          session_id: string
+          started_at: string | null
+          tenant_id: string | null
+          time_on_site_seconds: number | null
+          video_watches: number | null
+        }
+        Insert: {
+          add_to_cart?: boolean | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          jrny_id: string
+          landing_page?: string | null
+          merch_views?: number | null
+          music_plays?: number | null
+          page_views?: number | null
+          pages_viewed?: string[] | null
+          purchase_made?: boolean | null
+          referrer_url?: string | null
+          scroll_depth_max?: number | null
+          session_id: string
+          started_at?: string | null
+          tenant_id?: string | null
+          time_on_site_seconds?: number | null
+          video_watches?: number | null
+        }
+        Update: {
+          add_to_cart?: boolean | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          jrny_id?: string
+          landing_page?: string | null
+          merch_views?: number | null
+          music_plays?: number | null
+          page_views?: number | null
+          pages_viewed?: string[] | null
+          purchase_made?: boolean | null
+          referrer_url?: string | null
+          scroll_depth_max?: number | null
+          session_id?: string
+          started_at?: string | null
+          tenant_id?: string | null
+          time_on_site_seconds?: number | null
+          video_watches?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jrny_portal_visits_jrny_id_fkey"
+            columns: ["jrny_id"]
+            isOneToOne: false
+            referencedRelation: "jrny_visitors"
+            referencedColumns: ["jrny_id"]
+          },
+          {
+            foreignKeyName: "jrny_portal_visits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jrny_visitors: {
+        Row: {
+          browser: string | null
+          converted_user_id: string | null
+          created_at: string | null
+          device_fingerprint: string | null
+          device_type: string | null
+          email: string | null
+          engagement_score: number | null
+          first_landing_page: string | null
+          first_referrer: string | null
+          first_seen_at: string | null
+          first_tenant_id: string | null
+          heat_level: string | null
+          id: string
+          identity_revealed_at: string | null
+          jrny_id: string
+          language: string | null
+          last_seen_at: string | null
+          os: string | null
+          portals_visited: string[] | null
+          screen_resolution: string | null
+          timezone: string | null
+          total_page_views: number | null
+          total_sessions: number | null
+          total_time_seconds: number | null
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          browser?: string | null
+          converted_user_id?: string | null
+          created_at?: string | null
+          device_fingerprint?: string | null
+          device_type?: string | null
+          email?: string | null
+          engagement_score?: number | null
+          first_landing_page?: string | null
+          first_referrer?: string | null
+          first_seen_at?: string | null
+          first_tenant_id?: string | null
+          heat_level?: string | null
+          id?: string
+          identity_revealed_at?: string | null
+          jrny_id: string
+          language?: string | null
+          last_seen_at?: string | null
+          os?: string | null
+          portals_visited?: string[] | null
+          screen_resolution?: string | null
+          timezone?: string | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          total_time_seconds?: number | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          browser?: string | null
+          converted_user_id?: string | null
+          created_at?: string | null
+          device_fingerprint?: string | null
+          device_type?: string | null
+          email?: string | null
+          engagement_score?: number | null
+          first_landing_page?: string | null
+          first_referrer?: string | null
+          first_seen_at?: string | null
+          first_tenant_id?: string | null
+          heat_level?: string | null
+          id?: string
+          identity_revealed_at?: string | null
+          jrny_id?: string
+          language?: string | null
+          last_seen_at?: string | null
+          os?: string | null
+          portals_visited?: string[] | null
+          screen_resolution?: string | null
+          timezone?: string | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          total_time_seconds?: number | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jrny_visitors_first_tenant_id_fkey"
+            columns: ["first_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_documents: {
         Row: {
           content: string
@@ -6018,6 +6286,13 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      calculate_jrny_engagement: {
+        Args: { p_jrny_id: string }
+        Returns: {
+          heat: string
+          score: number
+        }[]
+      }
       compute_community_analytics: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
       has_role: {
@@ -6039,6 +6314,10 @@ export type Database = {
       is_tenant_admin: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
+      }
+      link_jrny_visitor_to_user: {
+        Args: { p_email?: string; p_jrny_id: string; p_user_id: string }
+        Returns: undefined
       }
       recalculate_all_livestream_engagement: { Args: never; Returns: undefined }
       set_tenant_context: { Args: { _tenant_id: string }; Returns: undefined }

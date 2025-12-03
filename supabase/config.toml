@@ -167,3 +167,15 @@ verify_jwt = false
 
 [functions.generate-adaptive-sequence]
 verify_jwt = false
+
+[functions.jrny-identify]
+verify_jwt = false
+
+[functions.jrny-track-event]
+verify_jwt = false
+
+[functions.jrny-reveal-identity]
+verify_jwt = false
+
+[functions.jrny-link-user]
+verify_jwt = false
