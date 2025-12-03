@@ -277,7 +277,7 @@ export const JRNYIdentityDashboard = () => {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Visitor List */}
-        <Card className="lg:col-span-1 bg-card/50 border-border/50">
+        <Card className={`bg-card/50 border-border/50 ${selectedVisitor ? 'lg:col-span-1' : 'lg:col-span-3'}`}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Visitors</CardTitle>
@@ -372,15 +372,13 @@ export const JRNYIdentityDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Visitor Detail */}
+        {/* Visitor Detail - Only show when a visitor is selected */}
+        {selectedVisitor && (
         <Card className="lg:col-span-2 bg-card/50 border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg">
-              {selectedVisitor ? 'Visitor Journey' : 'Select a Visitor'}
-            </CardTitle>
+            <CardTitle className="text-lg">Visitor Journey</CardTitle>
           </CardHeader>
           <CardContent>
-            {selectedVisitor ? (
               <Tabs defaultValue="overview">
                 <TabsList className="mb-4">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -482,14 +480,9 @@ export const JRNYIdentityDashboard = () => {
                   </div>
                 </TabsContent>
               </Tabs>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <MousePointer className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Select a visitor from the list to view their journey</p>
-              </div>
-            )}
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
