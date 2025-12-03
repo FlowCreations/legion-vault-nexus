@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 import { 
   Users, 
   Eye, 
@@ -58,6 +60,7 @@ const HEAT_COLORS: Record<string, { bg: string; text: string; icon: React.ReactN
 };
 
 export const JRNYIdentityDashboard = () => {
+  const { user } = useAuth();
   const [visitors, setVisitors] = useState<JRNYVisitor[]>([]);
   const [selectedVisitor, setSelectedVisitor] = useState<JRNYVisitor | null>(null);
   const [visitorEvents, setVisitorEvents] = useState<JRNYEvent[]>([]);
@@ -74,25 +77,32 @@ export const JRNYIdentityDashboard = () => {
   });
 
   useEffect(() => {
-    fetchVisitors();
+    console.log('[JRNY Dashboard] Auth state:', { userId: user?.id, email: user?.email });
     
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel('jrny_visitors_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'jrny_visitors' },
-        () => fetchVisitors()
-      )
-      .subscribe();
+    if (user) {
+      fetchVisitors();
+      
+      // Subscribe to realtime updates
+      const channel = supabase
+        .channel('jrny_visitors_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'jrny_visitors' },
+          () => fetchVisitors()
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   const fetchVisitors = async () => {
     setLoading(true);
+    console.log('[JRNY Dashboard] Fetching visitors...');
     try {
       const { data, error } = await supabase
         .from('jrny_visitors')
@@ -100,7 +110,13 @@ export const JRNYIdentityDashboard = () => {
         .order('last_seen_at', { ascending: false })
         .limit(500);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[JRNY Dashboard] Query error:', error);
+        toast.error(`Failed to load visitors: ${error.message}`);
+        return;
+      }
+
+      console.log('[JRNY Dashboard] Fetched visitors:', data?.length || 0);
 
       // Type assertion since we know the shape
       const typedData = (data || []) as unknown as JRNYVisitor[];
@@ -116,12 +132,28 @@ export const JRNYIdentityDashboard = () => {
         superfan: typedData.filter(v => v.heat_level === 'superfan').length,
       };
       setStats(newStats);
-    } catch (error) {
-      console.error('Error fetching visitors:', error);
+      
+      if (typedData.length === 0) {
+        console.log('[JRNY Dashboard] No visitors found - RLS may be blocking or no data exists');
+      }
+    } catch (error: any) {
+      console.error('[JRNY Dashboard] Error fetching visitors:', error);
+      toast.error('Failed to load visitors');
     } finally {
       setLoading(false);
     }
   };
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <Card className="bg-card/50 border-border/50">
+        <CardContent className="p-8 text-center">
+          <p className="text-muted-foreground">Please log in as a merchant to view visitor data.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const fetchVisitorEvents = async (jrnyId: string) => {
     try {
@@ -288,41 +320,53 @@ export const JRNYIdentityDashboard = () => {
           <CardContent>
             <ScrollArea className="h-[500px]">
               <div className="space-y-2">
-                {filteredVisitors.map(visitor => (
-                  <div
-                    key={visitor.id}
-                    onClick={() => handleSelectVisitor(visitor)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedVisitor?.id === visitor.id
-                        ? 'bg-primary/20 border border-primary/50'
-                        : 'bg-background/50 hover:bg-background/80 border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm truncate max-w-[150px]">
-                        {visitor.email || visitor.jrny_id.substring(0, 8) + '...'}
-                      </span>
-                      <HeatBadge level={visitor.heat_level} />
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3 w-3" />
-                        {visitor.total_page_views}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3" />
-                        {visitor.engagement_score}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
-                        {visitor.portals_visited?.length || 0}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(visitor.last_seen_at), { addSuffix: true })}
-                    </div>
+                {loading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading visitors...
                   </div>
-                ))}
+                ) : filteredVisitors.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {visitors.length === 0 
+                      ? 'No visitors tracked yet. Browse the site to generate data.'
+                      : 'No visitors match your filters.'}
+                  </div>
+                ) : (
+                  filteredVisitors.map(visitor => (
+                    <div
+                      key={visitor.id}
+                      onClick={() => handleSelectVisitor(visitor)}
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedVisitor?.id === visitor.id
+                          ? 'bg-primary/20 border border-primary/50'
+                          : 'bg-background/50 hover:bg-background/80 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm truncate max-w-[150px]">
+                          {visitor.email || visitor.jrny_id.substring(0, 8) + '...'}
+                        </span>
+                        <HeatBadge level={visitor.heat_level} />
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          {visitor.total_page_views}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
+                          {visitor.engagement_score}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Globe className="h-3 w-3" />
+                          {visitor.portals_visited?.length || 0}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(visitor.last_seen_at), { addSuffix: true })}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </ScrollArea>
           </CardContent>
