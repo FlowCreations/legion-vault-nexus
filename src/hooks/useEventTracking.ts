@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import * as MetaPixel from '@/lib/metaPixel';
 import { useAuth } from '@/hooks/useAuth';
+import { getJRNYId, getJRNYSessionId } from '@/providers/JRNYProvider';
 
 const SESSION_KEY = 'sol_session_id';
 
@@ -45,33 +46,48 @@ export const useEventTracking = () => {
   
   const trackEvent = async (eventType: string, eventData?: any) => {
     try {
-      // Only track events for authenticated users
-      if (!user) {
-        console.log('Skipping event tracking - user not authenticated:', eventType);
-        return;
-      }
-      
       const sessionId = getSessionId();
       const { data: { session } } = await supabase.auth.getSession();
       
       // Detect emotional metadata based on event patterns
       const emotionalContext = detectEmotionalContext(eventType, eventData);
       
-      // Track in our backend via edge function
-      await supabase.functions.invoke('track-event', {
-        body: {
-          eventType,
-          eventData: {
-            ...eventData,
-            emotional_context: emotionalContext,
+      // Track in legacy events table for authenticated users
+      if (user) {
+        await supabase.functions.invoke('track-event', {
+          body: {
+            eventType,
+            eventData: {
+              ...eventData,
+              emotional_context: emotionalContext,
+            },
+            pageUrl: window.location.pathname,
+            sessionId,
           },
-          pageUrl: window.location.pathname,
-          sessionId,
-        },
-        headers: session?.access_token ? {
-          Authorization: `Bearer ${session.access_token}`
-        } : undefined
-      });
+          headers: session?.access_token ? {
+            Authorization: `Bearer ${session.access_token}`
+          } : undefined
+        });
+      }
+
+      // ALWAYS track to JRNY for all visitors (anonymous + authenticated)
+      const jrnyId = getJRNYId();
+      const jrnySessionId = getJRNYSessionId();
+      if (jrnyId) {
+        await supabase.functions.invoke('jrny-track-event', {
+          body: {
+            jrny_id: jrnyId,
+            session_id: jrnySessionId,
+            event_type: eventType,
+            event_data: {
+              ...eventData,
+              emotional_context: emotionalContext,
+            },
+            page_url: window.location.href,
+            tenant_slug: 'sol',
+          },
+        });
+      }
 
       // Track to Meta Pixel if configured
       trackToMetaPixel(eventType, eventData);

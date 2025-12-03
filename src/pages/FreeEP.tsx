@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { usePurchases } from "@/hooks/usePurchases";
+import { useJRNY } from "@/providers/JRNYProvider";
 
 export default function FreeEP() {
   const [name, setName] = useState("");
@@ -18,12 +19,19 @@ export default function FreeEP() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { purchaseAlbum } = usePurchases();
+  const { revealIdentity } = useJRNY();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Reveal JRNY identity with email before signup
+      await revealIdentity(email, { 
+        firstName: name, 
+        phone, 
+        source: 'free_ep_signup' 
+      });
       // Create account with email verification
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,

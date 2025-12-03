@@ -4,11 +4,13 @@ import FunnelLayout from './FunnelLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFunnelTracking } from '@/hooks/useFunnelTracking';
+import { useJRNY } from '@/providers/JRNYProvider';
 import { toast } from 'sonner';
 
 export default function Step1LeadCapture() {
   const navigate = useNavigate();
   const { pageData, trackConversion } = useFunnelTracking(1);
+  const { revealIdentity } = useJRNY();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,6 +19,9 @@ export default function Step1LeadCapture() {
     setLoading(true);
 
     try {
+      // Reveal JRNY identity with email
+      await revealIdentity(email, { source: 'funnel_step1' });
+      
       // Track lead conversion
       await trackConversion('lead', 0);
       

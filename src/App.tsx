@@ -16,7 +16,7 @@ import { ErrorBoundary } from "./diagnostics/ErrorBoundary";
 import { HealthOverlay } from "./components/diagnostics/HealthOverlay";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ScrollToTop } from "./components/ScrollToTop";
-
+import { JRNYProvider } from "./providers/JRNYProvider";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -127,6 +127,7 @@ const App = () => {
 
   return (
     <ErrorBoundary>
+      <JRNYProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -193,6 +194,7 @@ const App = () => {
           <HealthOverlay showDiagnostics={showDiagnostics} />
         </BrowserRouter>
       </TooltipProvider>
+      </JRNYProvider>
     </ErrorBoundary>
   );
 };
