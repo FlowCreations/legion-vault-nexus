@@ -8,6 +8,7 @@ import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { useJRNY } from "@/providers/JRNYProvider";
 import { toast as sonnerToast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -20,6 +21,7 @@ const TIER_PRICE_IDS: Record<string, string> = {
 
 export default function Subscribe() {
   const { trackEvent } = useEventTracking();
+  const { revealIdentity } = useJRNY();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -115,6 +117,9 @@ export default function Subscribe() {
 
     setSigningUp(true);
     try {
+      // Reveal JRNY identity before signup
+      await revealIdentity(email, { source: 'subscription_signup' });
+      
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
