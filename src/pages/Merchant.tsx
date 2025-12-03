@@ -59,6 +59,7 @@ const AdminDashboardPage = lazy(() => import("./AdminDashboard"));
 
 const MostTalkedAbout = lazy(() => import("@/components/merchant/MostTalkedAbout").then(m => ({ default: m.MostTalkedAbout })));
 const DataInsights = lazy(() => import("@/components/merchant/DataInsights").then(m => ({ default: m.DataInsights })));
+const JRNYIdentityDashboard = lazy(() => import("@/components/admin/JRNYIdentityDashboard").then(m => ({ default: m.JRNYIdentityDashboard })));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -238,6 +239,12 @@ const Merchant = memo(() => {
               className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
             >
               Intelligence
+            </TabsTrigger>
+            <TabsTrigger 
+              value="jrny-identity"
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black data-[state=active]:shadow-none font-semibold py-3 px-4 rounded-md m-0.5 data-[state=active]:border-0 flex items-center justify-center"
+            >
+              JRNY Identity
             </TabsTrigger>
           </TabsList>
 
@@ -494,6 +501,14 @@ const Merchant = memo(() => {
             <TabsContent value="livestream">
               <Suspense fallback={<LoadingSpinner />}>
                 <LiveStreamManager />
+              </Suspense>
+            </TabsContent>
+          )}
+
+          {activeTab === "jrny-identity" && (
+            <TabsContent value="jrny-identity">
+              <Suspense fallback={<LoadingSpinner />}>
+                <JRNYIdentityDashboard />
               </Suspense>
             </TabsContent>
           )}
