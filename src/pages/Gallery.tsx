@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductCustomizer } from "@/components/ProductCustomizer";
 import { useCartStore } from "@/stores/cartStore";
 import { ShopifyProduct } from "@/lib/shopify";
+import { useJRNY } from "@/providers/JRNYProvider";
 import show1 from "@/assets/shows/show-1.jpg";
 import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
@@ -40,6 +41,7 @@ interface Product {
 
 export default function Gallery() {
   const navigate = useNavigate();
+  const { trackEvent: trackJRNY } = useJRNY();
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -152,6 +154,13 @@ export default function Gallery() {
   const handleAddPhotoToCart = (item: GalleryItem, e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // JRNY tracking for add to cart
+    trackJRNY('add_to_cart', {
+      product_id: item.id,
+      title: item.title,
+      price: parseFloat(item.price.replace('$', '')),
+      category: 'photo'
+    });
     // Create a Shopify-compatible product structure for the photo
     const mockShopifyProduct: ShopifyProduct = {
       node: {
@@ -206,6 +215,15 @@ export default function Gallery() {
   };
 
   const handleQuickViewAddToCart = (product: Product, selectedSize: string | null) => {
+    // JRNY tracking for add to cart
+    trackJRNY('add_to_cart', {
+      product_id: product.id,
+      title: product.title,
+      category: product.category,
+      price: product.base_price,
+      size: selectedSize
+    });
+    
     // Create a Shopify-compatible product structure
     const mockShopifyProduct: ShopifyProduct = {
       node: {

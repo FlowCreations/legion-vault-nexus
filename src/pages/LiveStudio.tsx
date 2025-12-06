@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import liveAcousticSession from "@/assets/live-acoustic-session.png";
 import { useCartStore } from "@/stores/cartStore";
 import { ShopifyProduct } from "@/lib/shopify";
+import { useJRNY } from "@/providers/JRNYProvider";
 import { ExpandableLiveViewer } from "@/components/livestream/ExpandableLiveViewer";
 import { StreamCountdown } from "@/components/livestream/StreamCountdown";
 import { StreamIntro } from "@/components/livestream/StreamIntro";
@@ -18,6 +19,7 @@ import { SubscribePrompt } from "@/components/SubscribePrompt";
 
 export default function LiveStudio() {
   const navigate = useNavigate();
+  const { trackEvent: trackJRNY } = useJRNY();
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [showAlbumDialog, setShowAlbumDialog] = useState(false);
@@ -313,6 +315,14 @@ export default function LiveStudio() {
   };
 
   const handleAddToCart = () => {
+    // JRNY tracking for add to cart
+    trackJRNY('add_to_cart', {
+      product_id: 'world-tour-finale',
+      title: 'Virtual World Tour Finale Ticket',
+      price: 19.99,
+      category: 'ticket'
+    });
+    
     // Create a Shopify-compatible product for the tour finale ticket
     const mockShopifyProduct: ShopifyProduct = {
       node: {
