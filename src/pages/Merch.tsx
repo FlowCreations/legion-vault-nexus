@@ -8,6 +8,7 @@ import { ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
 import spinningRecord from "@/assets/spinning-record.mp4";
 import apparelVideo from "@/assets/apparel-video.mp4";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { useJRNY } from "@/providers/JRNYProvider";
 import {
   Carousel,
   CarouselContent,
@@ -54,6 +55,7 @@ interface Product {
 
 export default function Merch() {
   const { trackEvent } = useEventTracking();
+  const { trackEvent: trackJRNY } = useJRNY();
   const { t } = useTranslation();
   const { showSurvey, handleSurveyClose } = useSurveyTrigger('merch');
   const [activeCategory, setActiveCategory] = useState("apparel");
@@ -183,6 +185,13 @@ export default function Merch() {
       category: product.category,
       price: product.base_price
     });
+    // JRNY tracking for engagement scoring (15 points!)
+    trackJRNY('add_to_cart', {
+      product_id: product.id,
+      title: product.title,
+      category: product.category,
+      price: product.base_price
+    });
 
     // For products with variants, open customizer
     if (product.variants && product.variants.length > 0) {
@@ -251,6 +260,14 @@ export default function Merch() {
     trackEvent('add_to_cart', {
       id: product.id,
       name: product.title,
+      category: product.category,
+      price: product.base_price,
+      size: selectedSize
+    });
+    // JRNY tracking for engagement scoring
+    trackJRNY('add_to_cart', {
+      product_id: product.id,
+      title: product.title,
       category: product.category,
       price: product.base_price,
       size: selectedSize
@@ -544,6 +561,13 @@ export default function Merch() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setQuickViewProduct(product);
+                          // JRNY tracking for merch views (5 points!)
+                          trackJRNY('merch_view', {
+                            product_id: product.id,
+                            title: product.title,
+                            category: product.category,
+                            price: product.base_price
+                          });
                         }}
                       >
                         <Eye className="h-4 w-4 mr-2" />

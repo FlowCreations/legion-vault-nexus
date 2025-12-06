@@ -4,6 +4,7 @@ import { Play, Pause, X, ChevronDown, Volume2, VolumeX, SkipBack, SkipForward, M
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { useJRNY } from "@/providers/JRNYProvider";
 import { VideoComments } from "@/components/video/VideoComments";
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ export function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { trackEvent } = useEventTracking();
+  const { trackEvent: trackJRNY } = useJRNY();
   const watchStartTime = useRef<number>(0);
   const progressMilestones = useRef<Set<number>>(new Set());
 
@@ -112,6 +114,13 @@ export function VideoPlayer({
       kickIdleTimer();
       watchStartTime.current = Date.now();
       trackEvent('video_view', { video_id: videoId, title, category });
+      // JRNY tracking for engagement scoring
+      trackJRNY('video_watch', { 
+        video_id: videoId, 
+        title, 
+        category,
+        started_at: new Date().toISOString()
+      });
     }
   }, [isOpen]);
 

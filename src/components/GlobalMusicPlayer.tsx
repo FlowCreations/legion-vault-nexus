@@ -3,6 +3,7 @@ import { MusicPlayer } from "./MusicPlayer";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { toast } from "@/hooks/use-toast";
 import { useEventTracking } from "@/hooks/useEventTracking";
+import { useJRNY } from "@/providers/JRNYProvider";
 import { incrementSongListenCount } from "@/hooks/useSurveyTrigger";
 import { useMilestoneProgress } from "@/hooks/useMilestoneProgress";
 import { MilestoneModal } from "./MilestoneModal";
@@ -11,6 +12,7 @@ export function GlobalMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { currentTrack, isPlaying, setIsPlaying, playNext, isMinimized } = useMusicPlayer();
   const { trackEvent } = useEventTracking();
+  const { trackEvent: trackJRNY } = useJRNY();
   const { newMilestone, clearMilestone } = useMilestoneProgress();
   const listenStartTime = useRef<number>(0);
   const progressMilestones = useRef<Set<number>>(new Set());
@@ -58,12 +60,19 @@ export function GlobalMusicPlayer() {
           console.log('Playback started successfully');
           setIsPlaying(true);
           
-          // Track music start
+          // Track music start - both systems
           listenStartTime.current = Date.now();
           trackEvent('music_play', {
             track_id: currentTrack?.id,
             title: currentTrack?.title,
             artist: currentTrack?.artist
+          });
+          // JRNY tracking for engagement scoring
+          trackJRNY('music_play', {
+            track_id: currentTrack?.id,
+            title: currentTrack?.title,
+            artist: currentTrack?.artist,
+            album: currentTrack?.album
           });
         })
         .catch(err => {
