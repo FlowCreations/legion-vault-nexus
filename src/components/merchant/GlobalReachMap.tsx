@@ -90,6 +90,7 @@ export default function GlobalReachMap({
   const [members, setMembers] = useState<Member[]>(membersProp);
   const [hasFitOnce, setHasFitOnce] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [hoveredMember, setHoveredMember] = useState<Member | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
@@ -315,7 +316,7 @@ export default function GlobalReachMap({
 
           map.addSource("members", {
             type: "geojson",
-            data: { type: "FeatureCollection", features: [] },
+            data: featureCollection.features.length > 0 ? featureCollection : { type: "FeatureCollection", features: [] },
             cluster: false, // Disable clustering to show individual members
           });
 
@@ -417,6 +418,9 @@ export default function GlobalReachMap({
 
           // Start globe rotation
           spinGlobe();
+          
+          // Mark map as ready to trigger data update
+          setMapReady(true);
         });
 
         const handleResize = () => map.resize();
@@ -472,7 +476,7 @@ export default function GlobalReachMap({
         setHasFitOnce(true);
       }
     }
-  }, [featureCollection, members, autoFit, padding, hasFitOnce]);
+  }, [featureCollection, members, autoFit, padding, hasFitOnce, mapReady]);
 
   const handleRetry = () => {
     setError(null);
