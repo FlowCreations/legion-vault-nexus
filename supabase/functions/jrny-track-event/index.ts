@@ -62,6 +62,32 @@ serve(async (req) => {
       tenantId = tenant?.id;
     }
 
+    // Ensure visitor exists before inserting event (handles orphaned jrny_ids)
+    const { data: existingVisitor } = await supabase
+      .from('jrny_visitors')
+      .select('jrny_id')
+      .eq('jrny_id', jrny_id)
+      .single();
+
+    if (!existingVisitor) {
+      console.log('[JRNY-TRACK] Visitor not found, creating:', jrny_id);
+      const { error: visitorError } = await supabase
+        .from('jrny_visitors')
+        .insert({
+          jrny_id,
+          first_seen_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          total_page_views: 0,
+          engagement_score: 0,
+          heat_level: 'cold',
+        });
+      
+      if (visitorError) {
+        console.error('[JRNY-TRACK] Visitor create error:', visitorError);
+        // Continue anyway - don't block event tracking
+      }
+    }
+
     // Insert event
     const { error: eventError } = await supabase
       .from('jrny_events')
@@ -76,7 +102,11 @@ serve(async (req) => {
 
     if (eventError) {
       console.error('[JRNY-TRACK] Event insert error:', eventError);
-      throw eventError;
+      // Don't throw - return graceful error to not break client
+      return new Response(
+        JSON.stringify({ success: false, error: 'Event tracking failed', details: eventError.message }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Update visitor stats based on event type
