@@ -60,7 +60,7 @@ export const AffiliateTab = () => {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [selectedLinkTypes, setSelectedLinkTypes] = useState<LinkType[]>(['portal', 'music', 'merch']);
 
-  const baseUrl = window.location.origin;
+  const baseUrl = 'https://sol-portal.com';
 
   useEffect(() => {
     loadAffiliateData();
