@@ -59,6 +59,7 @@ export const AffiliateTab = () => {
   const [registering, setRegistering] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [selectedLinkTypes, setSelectedLinkTypes] = useState<LinkType[]>(['portal', 'music', 'merch']);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const baseUrl = 'https://sol-portal.com';
 
@@ -69,7 +70,13 @@ export const AffiliateTab = () => {
   const loadAffiliateData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+      
+      setIsAuthenticated(true);
 
       // Load affiliate data
       const { data: affiliateData } = await supabase
@@ -159,6 +166,21 @@ export const AffiliateTab = () => {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  // Not authenticated state
+  if (isAuthenticated === false) {
+    return (
+      <Card className="border-primary/20">
+        <CardContent className="py-12 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <Share2 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Sign In Required</h3>
+          <p className="text-muted-foreground mb-4">Please sign in to access the affiliate program</p>
+        </CardContent>
+      </Card>
     );
   }
 
