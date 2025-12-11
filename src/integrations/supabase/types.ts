@@ -370,6 +370,109 @@ export type Database = {
           },
         ]
       }
+      affiliate_referral_clicks: {
+        Row: {
+          affiliate_id: string
+          converted: boolean
+          converted_at: string | null
+          created_at: string
+          id: string
+          landing_page: string | null
+          link_type: string
+          referrer_url: string | null
+          source_platform: string | null
+          user_agent: string | null
+          visitor_jrny_id: string | null
+          visitor_session_id: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          converted?: boolean
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          landing_page?: string | null
+          link_type: string
+          referrer_url?: string | null
+          source_platform?: string | null
+          user_agent?: string | null
+          visitor_jrny_id?: string | null
+          visitor_session_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          converted?: boolean
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          landing_page?: string | null
+          link_type?: string
+          referrer_url?: string | null
+          source_platform?: string | null
+          user_agent?: string | null
+          visitor_jrny_id?: string | null
+          visitor_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_referral_clicks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "fan_affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_rewards: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          discount_code: string
+          discount_percentage: number
+          expires_at: string
+          id: string
+          reward_type: string
+          shopify_price_rule_id: string | null
+          trigger_type: string
+          used: boolean
+          used_at: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          discount_code: string
+          discount_percentage: number
+          expires_at: string
+          id?: string
+          reward_type?: string
+          shopify_price_rule_id?: string | null
+          trigger_type: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          discount_code?: string
+          discount_percentage?: number
+          expires_at?: string
+          id?: string
+          reward_type?: string
+          shopify_price_rule_id?: string | null
+          trigger_type?: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_rewards_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "fan_affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliates: {
         Row: {
           analytics: Json | null
@@ -2628,6 +2731,54 @@ export type Database = {
           ts?: string
           type?: Database["public"]["Enums"]["event_type"]
           value?: number | null
+        }
+        Relationships: []
+      }
+      fan_affiliates: {
+        Row: {
+          affiliate_code: string
+          created_at: string
+          digital_purchases: number
+          discount_codes_earned: number
+          id: string
+          merch_purchases: number
+          portal_signups: number
+          shopify_discount_code: string | null
+          shopify_price_rule_id: string | null
+          status: string
+          total_clicks: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affiliate_code: string
+          created_at?: string
+          digital_purchases?: number
+          discount_codes_earned?: number
+          id?: string
+          merch_purchases?: number
+          portal_signups?: number
+          shopify_discount_code?: string | null
+          shopify_price_rule_id?: string | null
+          status?: string
+          total_clicks?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affiliate_code?: string
+          created_at?: string
+          digital_purchases?: number
+          discount_codes_earned?: number
+          id?: string
+          merch_purchases?: number
+          portal_signups?: number
+          shopify_discount_code?: string | null
+          shopify_price_rule_id?: string | null
+          status?: string
+          total_clicks?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -6295,6 +6446,10 @@ export type Database = {
       }
       compute_community_analytics: { Args: never; Returns: undefined }
       current_tenant_id: { Args: never; Returns: string }
+      generate_affiliate_code: {
+        Args: { display_name: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

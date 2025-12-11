@@ -179,3 +179,12 @@ verify_jwt = false
 
 [functions.jrny-link-user]
 verify_jwt = false
+
+[functions.affiliate-register]
+verify_jwt = true
+
+[functions.affiliate-track-click]
+verify_jwt = false
+
+[functions.affiliate-attribute-conversion]
+verify_jwt = false
