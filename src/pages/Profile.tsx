@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw, Calendar as CalendarIcon, Trash2, AlertTriangle } from "lucide-react";
+import { Loader2, User, ShoppingBag, Shield, LogOut, CreditCard, ExternalLink, RefreshCw, Calendar as CalendarIcon, Trash2, AlertTriangle, Share2 } from "lucide-react";
 import { PurchaseHistory } from "@/components/profile/PurchaseHistory";
+import { AffiliateTab } from "@/components/profile/AffiliateTab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -424,7 +425,7 @@ export default function Profile() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               Profile
@@ -441,11 +442,19 @@ export default function Profile() {
               <ShoppingBag className="w-4 h-4" />
               Orders
             </TabsTrigger>
+            <TabsTrigger value="affiliate" className="gap-2">
+              <Share2 className="w-4 h-4" />
+              Affiliate
+            </TabsTrigger>
             <TabsTrigger value="security" className="gap-2">
               <Shield className="w-4 h-4" />
               Security
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="affiliate">
+            <AffiliateTab />
+          </TabsContent>
 
           <TabsContent value="profile">
             <Card>
