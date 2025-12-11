@@ -7,7 +7,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { 
   MessageCircle, Bell, Search, Image, Link as LinkIcon, 
-  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X, MapPin, Clock, Loader2
+  Video, AtSign, Eye, ThumbsUp, Heart, Send, Mail, Calendar, ArrowLeft, ShoppingCart, Upload, X, MapPin, Clock, Loader2, Share2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,7 @@ import { OnlineMembersSidebar } from "@/components/community/OnlineMembersSideba
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
 import { generateICSFile, downloadICSFile } from "@/utils/calendarHelper";
+import { AffiliateTab } from "@/components/profile/AffiliateTab";
 
 interface Post {
   id: string;
@@ -1010,6 +1011,15 @@ export default function CommunityHub() {
             >
               Directory
             </Button>
+
+            <Button
+              variant={activeTab === "affiliates" ? "default" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => setActiveTab("affiliates")}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Affiliates
+            </Button>
           </nav>
         </aside>
 
@@ -1161,6 +1171,14 @@ export default function CommunityHub() {
 
           {/* Cameos View */}
           {activeTab === "cameos" && <CameoBookingTab />}
+
+          {/* Affiliates View */}
+          {activeTab === "affiliates" && (
+            <div className="space-y-6">
+              <h2 className="font-serif text-2xl font-bold mb-6">Affiliate Program</h2>
+              <AffiliateTab />
+            </div>
+          )}
 
           {/* Events View */}
           {activeTab === "events" && (

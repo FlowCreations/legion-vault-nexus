@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { 
   Copy, 
@@ -43,12 +44,21 @@ interface AffiliateReward {
   created_at: string;
 }
 
+type LinkType = 'portal' | 'music' | 'merch';
+
+const LINK_OPTIONS: { id: LinkType; label: string; icon: typeof Users; reward: string; description: string }[] = [
+  { id: 'portal', label: 'Portal Signups', icon: Users, reward: '10%', description: 'Earn 10% off when friends subscribe' },
+  { id: 'music', label: 'Digital Downloads', icon: Music, reward: '15%', description: 'Earn 15% off when friends buy music' },
+  { id: 'merch', label: 'Physical Merch', icon: ShoppingBag, reward: '15%', description: 'Earn 15% off when friends buy merch' },
+];
+
 export const AffiliateTab = () => {
   const [affiliate, setAffiliate] = useState<AffiliateData | null>(null);
   const [rewards, setRewards] = useState<AffiliateReward[]>([]);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [selectedLinkTypes, setSelectedLinkTypes] = useState<LinkType[]>(['portal', 'music', 'merch']);
 
   const baseUrl = window.location.origin;
 
@@ -90,9 +100,16 @@ export const AffiliateTab = () => {
   };
 
   const handleRegister = async () => {
+    if (selectedLinkTypes.length === 0) {
+      toast.error('Please select at least one link type');
+      return;
+    }
+
     setRegistering(true);
     try {
-      const { data, error } = await supabase.functions.invoke('affiliate-register');
+      const { data, error } = await supabase.functions.invoke('affiliate-register', {
+        body: { linkTypes: selectedLinkTypes }
+      });
       
       if (error) throw error;
       
@@ -129,6 +146,14 @@ export const AffiliateTab = () => {
     }
   };
 
+  const toggleLinkType = (type: LinkType) => {
+    setSelectedLinkTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -137,7 +162,7 @@ export const AffiliateTab = () => {
     );
   }
 
-  // Not enrolled state
+  // Not enrolled state - with link type selection
   if (!affiliate) {
     return (
       <div className="space-y-6">
@@ -152,27 +177,43 @@ export const AffiliateTab = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="flex flex-col items-center rounded-lg border border-border/50 bg-card/50 p-4 text-center">
-                <Users className="mb-2 h-6 w-6 text-green-500" />
-                <p className="text-lg font-semibold text-green-500">10% off</p>
-                <p className="text-sm text-muted-foreground">when a friend signs up</p>
-              </div>
-              <div className="flex flex-col items-center rounded-lg border border-border/50 bg-card/50 p-4 text-center">
-                <ShoppingBag className="mb-2 h-6 w-6 text-blue-500" />
-                <p className="text-lg font-semibold text-blue-500">15% off</p>
-                <p className="text-sm text-muted-foreground">when they purchase</p>
-              </div>
-              <div className="flex flex-col items-center rounded-lg border border-border/50 bg-card/50 p-4 text-center">
-                <Gift className="mb-2 h-6 w-6 text-purple-500" />
-                <p className="text-lg font-semibold text-purple-500">25% off</p>
-                <p className="text-sm text-muted-foreground">when they subscribe</p>
+            <div>
+              <p className="mb-4 text-center text-sm font-medium text-muted-foreground">
+                Select which link types you want to share:
+              </p>
+              <div className="space-y-3">
+                {LINK_OPTIONS.map((option) => (
+                  <div
+                    key={option.id}
+                    className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
+                      selectedLinkTypes.includes(option.id)
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border/50 hover:border-border'
+                    }`}
+                    onClick={() => toggleLinkType(option.id)}
+                  >
+                    <Checkbox
+                      checked={selectedLinkTypes.includes(option.id)}
+                      onCheckedChange={() => toggleLinkType(option.id)}
+                    />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <option.icon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{option.label}</p>
+                      <p className="text-sm text-muted-foreground">{option.description}</p>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0">
+                      {option.reward} off
+                    </Badge>
+                  </div>
+                ))}
               </div>
             </div>
 
             <Button 
               onClick={handleRegister} 
-              disabled={registering}
+              disabled={registering || selectedLinkTypes.length === 0}
               className="w-full"
               size="lg"
             >
