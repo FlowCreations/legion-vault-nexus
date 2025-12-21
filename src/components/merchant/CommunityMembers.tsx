@@ -6,12 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, Loader2, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar } from "lucide-react";
+import { Search, Users, Loader2, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar, Trophy } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PTPBehaviorBreakdown } from "./PTPBehaviorBreakdown";
+
+interface MilestoneData {
+  current_badge: string | null;
+  total_minutes: number;
+}
 
 interface CommunityMember {
   id: string;
@@ -38,6 +43,7 @@ interface CommunityMember {
   login_streak: number | null;
   inactive_days: number | null;
   is_super_fan: boolean | null;
+  milestone?: MilestoneData;
 }
 
 interface CommunityMembersProps {
@@ -46,10 +52,12 @@ interface CommunityMembersProps {
 
 export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [milestoneMap, setMilestoneMap] = useState<Map<string, MilestoneData>>(new Map());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
+  const [milestoneFilter, setMilestoneFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
@@ -68,7 +76,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
 
   useEffect(() => {
     loadMembers();
-  }, [currentPage, debouncedSearch, tierFilter]);
+  }, [currentPage, debouncedSearch, tierFilter, milestoneFilter]);
 
   // Scroll to selected user if provided
   useEffect(() => {
@@ -91,6 +99,20 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
     try {
       setLoading(true);
       
+      // Load milestone data first
+      const { data: milestoneData } = await supabase
+        .from('milestone_progress')
+        .select('user_id, current_badge, total_minutes');
+
+      const milestones = new Map<string, MilestoneData>();
+      milestoneData?.forEach(m => {
+        milestones.set(m.user_id, {
+          current_badge: m.current_badge,
+          total_minutes: m.total_minutes || 0,
+        });
+      });
+      setMilestoneMap(milestones);
+
       // Build query with filters and pagination
       let query = supabase
         .from('user_profiles')
@@ -120,8 +142,22 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
 
       if (error) throw error;
 
-      setMembers(data || []);
-      setTotalCount(count || 0);
+      // Enrich members with milestone data
+      let enrichedMembers = (data || []).map(member => ({
+        ...member,
+        milestone: member.user_id ? milestones.get(member.user_id) : undefined,
+      }));
+
+      // Apply milestone filter client-side (since it's from a different table)
+      if (milestoneFilter !== "all") {
+        const userIdsWithBadge = Array.from(milestones.entries())
+          .filter(([_, m]) => m.current_badge === milestoneFilter)
+          .map(([userId, _]) => userId);
+        enrichedMembers = enrichedMembers.filter(m => m.user_id && userIdsWithBadge.includes(m.user_id));
+      }
+
+      setMembers(enrichedMembers);
+      setTotalCount(milestoneFilter !== "all" ? enrichedMembers.length : (count || 0));
     } catch (error) {
       console.error('Error loading members:', error);
       toast({ title: "Error loading members", variant: "destructive" });
@@ -142,6 +178,26 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
     return (
       <Badge className={`${colors[tierName] || colors.FREE} font-semibold`}>
         {tierName}
+      </Badge>
+    );
+  };
+
+  const getMilestoneBadge = (milestone: MilestoneData | undefined) => {
+    if (!milestone || !milestone.current_badge) return null;
+    
+    const badgeConfig: Record<string, { icon: string; label: string; className: string }> = {
+      silver_star: { icon: "⭐", label: "Silver Star", className: "bg-slate-400/20 text-slate-300 border border-slate-400/30" },
+      gold_star: { icon: "🌟", label: "Gold Star", className: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" },
+      dunbar_champion: { icon: "🏅", label: "Champion", className: "bg-amber-600/20 text-amber-400 border border-amber-600/30" },
+    };
+
+    const config = badgeConfig[milestone.current_badge];
+    if (!config) return null;
+
+    const hours = Math.round(milestone.total_minutes / 60);
+    return (
+      <Badge className={config.className}>
+        {config.icon} {config.label} • {hours}h
       </Badge>
     );
   };
@@ -244,6 +300,17 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                 <SelectItem value="FREE">Free</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={milestoneFilter} onValueChange={setMilestoneFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filter by milestone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Milestones</SelectItem>
+                <SelectItem value="silver_star">⭐ Silver Star</SelectItem>
+                <SelectItem value="gold_star">🌟 Gold Star</SelectItem>
+                <SelectItem value="dunbar_champion">🏅 Dunbar Champion</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Member Directory Cards */}
@@ -300,6 +367,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                       {/* Badges Row */}
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         {getTierBadge(member.membership_tier || member.tier)}
+                        {getMilestoneBadge(member.milestone)}
                         {member.era_label && (
                           <Badge className={`${
                             member.era_label.toLowerCase() === 'engaged' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :

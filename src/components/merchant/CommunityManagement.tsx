@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, DollarSign, TrendingUp, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Sparkles, Loader2, RefreshCw, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CommunityMembers } from "./CommunityMembers";
 import { SuperfanIndex } from "./SuperfanIndex";
 import { AIAnalytics } from "./AIAnalytics";
 import { PTPCalculationTrigger } from "./admin/PTPCalculationTrigger";
+import { MilestoneTracker } from "./MilestoneTracker";
 import AdminDashboard from "@/pages/AdminDashboard";
 
 const LoadingSpinner = () => (
@@ -293,6 +294,10 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
       <Tabs defaultValue="members" className="space-y-6">
         <TabsList className="bg-card border border-border">
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="milestones" className="flex items-center gap-1">
+            <Trophy className="w-3 h-3" />
+            Milestones
+          </TabsTrigger>
           <TabsTrigger value="superfan">Superfan Index</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
           <TabsTrigger value="ai">AI Analytics</TabsTrigger>
@@ -304,6 +309,12 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
         <TabsContent value="members">
           <Suspense fallback={<LoadingSpinner />}>
             <CommunityMembers selectedUserId={selectedUserId} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="milestones">
+          <Suspense fallback={<LoadingSpinner />}>
+            <MilestoneTracker />
           </Suspense>
         </TabsContent>
 
