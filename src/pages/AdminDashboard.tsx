@@ -23,7 +23,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clock, ShoppingBag, BarChart, X } from "lucide-react";
+import { Users, DollarSign, Video, FileText, TrendingUp, Eye, Award, MapPin, Clock, ShoppingBag, BarChart, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
@@ -34,6 +34,11 @@ import { PatternDialog } from "@/components/merchant/PatternDialog";
 import { getTierColor } from "@/lib/tierColors";
 import { Switch } from "@/components/ui/switch";
 import { HeartbeatSyncButton } from "@/components/merchant/HeartbeatSyncButton";
+import { JourneyStageCard } from "@/components/merchant/JourneyStageCard";
+import { FanJourneyTimeline } from "@/components/merchant/FanJourneyTimeline";
+import { ContentEngagementPanel } from "@/components/merchant/ContentEngagementPanel";
+import { CommerceJourneyPanel } from "@/components/merchant/CommerceJourneyPanel";
+import { JourneyFunnelVisualization } from "@/components/merchant/JourneyFunnelVisualization";
 
 interface Member {
   id: string;
@@ -434,6 +439,10 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       <Tabs defaultValue="members" className="space-y-6">
         <TabsList>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="journey" className="flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            Fan Journey
+          </TabsTrigger>
           <TabsTrigger value="superfans">Superfan Index</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
           <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
@@ -531,6 +540,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                             {member.ptp_current !== undefined && member.ptp_status && (
                               <PTPChip ptp={member.ptp_current} status={member.ptp_status} />
                             )}
+                            <JourneyStageCard userId={member.user_id} compact />
                           </div>
                           <div className="flex gap-6 text-sm">
                             <div className="text-center">
@@ -620,6 +630,32 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="journey" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-xl font-bold">Fan Journey Analytics</h3>
+              <p className="text-muted-foreground">Track fan progression from awareness to advocacy</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const { data, error } = await supabase.functions.invoke('seed-journey-milestones');
+                if (error) {
+                  toast.error("Error seeding journey data");
+                } else {
+                  toast.success("Journey milestones seeded! Refreshing...");
+                  setTimeout(() => window.location.reload(), 1000);
+                }
+              }}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Seed Demo Milestones
+            </Button>
+          </div>
+          
+          <JourneyFunnelVisualization />
         </TabsContent>
 
         <TabsContent value="superfans" className="space-y-4">
@@ -993,91 +1029,112 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
               </DrawerHeader>
               
               <div className="p-6 overflow-y-auto">
-                <div className="space-y-6">
-              {selectedMember.bio && (
-                <div>
-                  <h3 className="text-sm font-bold text-foreground/70 mb-2">BIO</h3>
-                  <p className="text-foreground">{selectedMember.bio}</p>
-                </div>
-              )}
+                <Tabs defaultValue="overview" className="space-y-4">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="journey">Journey</TabsTrigger>
+                    <TabsTrigger value="content">Content</TabsTrigger>
+                    <TabsTrigger value="commerce">Commerce</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="overview" className="space-y-6">
+                    {selectedMember.bio && (
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground/70 mb-2">BIO</h3>
+                        <p className="text-foreground">{selectedMember.bio}</p>
+                      </div>
+                    )}
 
-              {selectedMember.location && (
-                <div>
-                  <h3 className="text-sm font-bold text-foreground/70 mb-2">LOCATION</h3>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{selectedMember.location}</span>
-                  </div>
-                </div>
-              )}
+                    {selectedMember.location && (
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground/70 mb-2">LOCATION</h3>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{selectedMember.location}</span>
+                        </div>
+                      </div>
+                    )}
 
-              {(selectedMember.birthdate || selectedMember.gender) && (
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedMember.birthdate && (() => {
-                    const today = new Date();
-                    const birth = new Date(selectedMember.birthdate);
-                    let age = today.getFullYear() - birth.getFullYear();
-                    const monthDiff = today.getMonth() - birth.getMonth();
-                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                      age--;
-                    }
-                    return (
+                    {(selectedMember.birthdate || selectedMember.gender) && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {selectedMember.birthdate && (() => {
+                          const today = new Date();
+                          const birth = new Date(selectedMember.birthdate);
+                          let age = today.getFullYear() - birth.getFullYear();
+                          const monthDiff = today.getMonth() - birth.getMonth();
+                          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                            age--;
+                          }
+                          return (
+                            <div className="p-4 bg-muted/50 rounded-lg">
+                              <h3 className="text-xs font-bold text-foreground/70 mb-2">AGE</h3>
+                              <p className="text-2xl font-bold">{age} years</p>
+                            </div>
+                          );
+                        })()}
+                        {selectedMember.gender && (
+                          <div className="p-4 bg-muted/50 rounded-lg">
+                            <h3 className="text-xs font-bold text-foreground/70 mb-2">GENDER</h3>
+                            <p className="text-2xl font-bold capitalize">{selectedMember.gender}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-muted/50 rounded-lg">
-                        <h3 className="text-xs font-bold text-foreground/70 mb-2">AGE</h3>
-                        <p className="text-2xl font-bold">{age} years</p>
+                        <h3 className="text-xs font-bold text-foreground/70 mb-2">TOTAL SPEND</h3>
+                        <p className="text-2xl font-bold">${selectedMember.total_spend?.toFixed(2) || "0.00"}</p>
                       </div>
-                    );
-                  })()}
-                  {selectedMember.gender && (
-                    <div className="p-4 bg-muted/50 rounded-lg">
-                      <h3 className="text-xs font-bold text-foreground/70 mb-2">GENDER</h3>
-                      <p className="text-2xl font-bold capitalize">{selectedMember.gender}</p>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h3 className="text-xs font-bold text-foreground/70 mb-2">MRR</h3>
+                        <p className="text-2xl font-bold">${selectedMember.mrr?.toFixed(2) || "0.00"}</p>
+                      </div>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h3 className="text-xs font-bold text-foreground/70 mb-2">WATCH TIME</h3>
+                        <p className="text-2xl font-bold">{Math.floor((selectedMember.watch_time || 0) / 60)}h</p>
+                      </div>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h3 className="text-xs font-bold text-foreground/70 mb-2">LISTEN TIME</h3>
+                        <p className="text-2xl font-bold">{Math.floor((selectedMember.listen_time || 0) / 60)}h</p>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <h3 className="text-xs font-bold text-foreground/70 mb-2">TOTAL SPEND</h3>
-                  <p className="text-2xl font-bold">${selectedMember.total_spend?.toFixed(2) || "0.00"}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <h3 className="text-xs font-bold text-foreground/70 mb-2">MRR</h3>
-                  <p className="text-2xl font-bold">${selectedMember.mrr?.toFixed(2) || "0.00"}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <h3 className="text-xs font-bold text-foreground/70 mb-2">WATCH TIME</h3>
-                  <p className="text-2xl font-bold">{Math.floor((selectedMember.watch_time || 0) / 60)}h</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <h3 className="text-xs font-bold text-foreground/70 mb-2">LISTEN TIME</h3>
-                  <p className="text-2xl font-bold">{Math.floor((selectedMember.listen_time || 0) / 60)}h</p>
-                </div>
-              </div>
-
-              {selectedMember.intro_answers && (
-                <div>
-                  <h3 className="text-sm font-bold text-foreground/70 mb-3">INTRO ANSWERS</h3>
-                  <div className="space-y-2">
-                    {Object.entries(selectedMember.intro_answers).map(([key, value]) => (
-                      <div key={key} className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-xs font-bold text-foreground/70 mb-1">{key}</p>
-                        <p className="text-foreground">{value as string}</p>
+                    {selectedMember.intro_answers && (
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground/70 mb-3">INTRO ANSWERS</h3>
+                        <div className="space-y-2">
+                          {Object.entries(selectedMember.intro_answers).map(([key, value]) => (
+                            <div key={key} className="p-3 bg-muted/50 rounded-lg">
+                              <p className="text-xs font-bold text-foreground/70 mb-1">{key}</p>
+                              <p className="text-foreground">{value as string}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    )}
 
-                  <div className="flex items-center gap-4 text-sm text-foreground/70 pt-4 border-t">
-                    <span>Last login: {selectedMember.last_login
-                      ? formatDistanceToNow(new Date(selectedMember.last_login), { addSuffix: true })
-                      : "Never"}</span>
-                    <span>•</span>
-                    <span>Joined: {new Date(selectedMember.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
+                    <div className="flex items-center gap-4 text-sm text-foreground/70 pt-4 border-t">
+                      <span>Last login: {selectedMember.last_login
+                        ? formatDistanceToNow(new Date(selectedMember.last_login), { addSuffix: true })
+                        : "Never"}</span>
+                      <span>•</span>
+                      <span>Joined: {new Date(selectedMember.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="journey">
+                    <FanJourneyTimeline userId={selectedMember.user_id} />
+                  </TabsContent>
+                  
+                  <TabsContent value="content">
+                    <ContentEngagementPanel userId={selectedMember.user_id} />
+                  </TabsContent>
+                  
+                  <TabsContent value="commerce">
+                    <CommerceJourneyPanel userId={selectedMember.user_id} />
+                  </TabsContent>
+                </Tabs>
               </div>
             </>
           )}
