@@ -1,4 +1,4 @@
-import { MapPin, Calendar, ShoppingBag, Menu } from "lucide-react";
+import { MapPin, Calendar, ShoppingBag, Menu, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import show2 from "@/assets/shows/show-2.jpg";
 import show3 from "@/assets/shows/show-3.jpg";
 import heroImage from "@/assets/shows-hero.png";
 import { format } from "date-fns";
+import { TicketCheckoutModal } from "@/components/tickets/TicketCheckoutModal";
 
 interface TourShow {
   id: string;
@@ -26,6 +27,8 @@ export default function Shows() {
   const navigate = useNavigate();
   const [shows, setShows] = useState<TourShow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedShow, setSelectedShow] = useState<TourShow | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => {
     loadShows();
@@ -182,7 +185,22 @@ export default function Shows() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {/* Portal Buy Button */}
+                          <Button 
+                            variant="outline"
+                            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground font-medium gap-2"
+                            disabled={show.status === "sold_out"}
+                            onClick={() => {
+                              setSelectedShow(show);
+                              setCheckoutOpen(true);
+                            }}
+                          >
+                            <Zap className="w-4 h-4" />
+                            Buy via Portal
+                          </Button>
+                          
+                          {/* External Ticket Link */}
                           {show.ticket_link ? (
                             <Button 
                               className="bg-white text-black hover:bg-white/90 font-medium"
@@ -220,6 +238,18 @@ export default function Shows() {
           )}
         </div>
       </section>
+
+      {/* Ticket Checkout Modal */}
+      <TicketCheckoutModal
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        show={selectedShow ? {
+          id: selectedShow.id,
+          venue: selectedShow.venue,
+          date: selectedShow.date,
+          city: `${selectedShow.city}${selectedShow.state ? `, ${selectedShow.state}` : ''}`,
+        } : null}
+      />
     </div>
   );
 }

@@ -5512,6 +5512,169 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_merch_bundles: {
+        Row: {
+          available_sizes: Json | null
+          bundle_price: number
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          items: Json
+          name: string
+          original_price: number
+          savings_percentage: number | null
+        }
+        Insert: {
+          available_sizes?: Json | null
+          bundle_price: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          items?: Json
+          name: string
+          original_price: number
+          savings_percentage?: number | null
+        }
+        Update: {
+          available_sizes?: Json | null
+          bundle_price?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          items?: Json
+          name?: string
+          original_price?: number
+          savings_percentage?: number | null
+        }
+        Relationships: []
+      }
+      ticket_orders: {
+        Row: {
+          bundles: Json | null
+          confirmation_sent_at: string | null
+          created_at: string | null
+          customer_email: string
+          customer_name: string | null
+          id: string
+          order_number: string
+          payment_intent_id: string | null
+          portal_convenience_fee: number | null
+          show_id: string | null
+          status: string | null
+          stripe_session_id: string | null
+          subtotal: number
+          ticketmaster_fees: number | null
+          tickets: Json
+          total: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bundles?: Json | null
+          confirmation_sent_at?: string | null
+          created_at?: string | null
+          customer_email: string
+          customer_name?: string | null
+          id?: string
+          order_number: string
+          payment_intent_id?: string | null
+          portal_convenience_fee?: number | null
+          show_id?: string | null
+          status?: string | null
+          stripe_session_id?: string | null
+          subtotal?: number
+          ticketmaster_fees?: number | null
+          tickets?: Json
+          total?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bundles?: Json | null
+          confirmation_sent_at?: string | null
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string | null
+          id?: string
+          order_number?: string
+          payment_intent_id?: string | null
+          portal_convenience_fee?: number | null
+          show_id?: string | null
+          status?: string | null
+          stripe_session_id?: string | null
+          subtotal?: number
+          ticketmaster_fees?: number | null
+          tickets?: Json
+          total?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_orders_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "tour_shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_types: {
+        Row: {
+          available_quantity: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          max_per_order: number | null
+          name: string
+          perks: Json | null
+          price: number
+          show_id: string | null
+          tier_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_quantity?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          max_per_order?: number | null
+          name: string
+          perks?: Json | null
+          price: number
+          show_id?: string | null
+          tier_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_quantity?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          max_per_order?: number | null
+          name?: string
+          perks?: Json | null
+          price?: number
+          show_id?: string | null
+          tier_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_types_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "tour_shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_shows: {
         Row: {
           city: string
@@ -6218,6 +6381,53 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "user_profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      venue_sections: {
+        Row: {
+          available: number | null
+          capacity: number | null
+          created_at: string | null
+          id: string
+          price_modifier: number | null
+          row_end: number | null
+          row_start: number | null
+          section_name: string
+          section_type: string | null
+          show_id: string | null
+        }
+        Insert: {
+          available?: number | null
+          capacity?: number | null
+          created_at?: string | null
+          id?: string
+          price_modifier?: number | null
+          row_end?: number | null
+          row_start?: number | null
+          section_name: string
+          section_type?: string | null
+          show_id?: string | null
+        }
+        Update: {
+          available?: number | null
+          capacity?: number | null
+          created_at?: string | null
+          id?: string
+          price_modifier?: number | null
+          row_end?: number | null
+          row_start?: number | null
+          section_name?: string
+          section_type?: string | null
+          show_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_sections_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "tour_shows"
+            referencedColumns: ["id"]
           },
         ]
       }
