@@ -411,9 +411,11 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
         </TabsContent>
 
         <TabsContent value="admin">
-          <Suspense fallback={<LoadingSpinner />}>
-            <AdminDashboard selectedUserId={selectedUserId} />
-          </Suspense>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-muted-foreground">Admin settings managed in main dashboard...</p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
