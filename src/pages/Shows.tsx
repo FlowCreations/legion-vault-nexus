@@ -1,4 +1,4 @@
-import { MapPin, Calendar, ShoppingBag, Menu, Zap } from "lucide-react";
+import { MapPin, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -189,34 +189,28 @@ export default function Shows() {
                           {/* Portal Buy Button */}
                           <Button 
                             variant="outline"
-                            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground font-medium gap-2"
+                            className="w-32 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-medium"
                             disabled={show.status === "sold_out"}
                             onClick={() => {
                               setSelectedShow(show);
                               setCheckoutOpen(true);
                             }}
                           >
-                            <Zap className="w-4 h-4" />
                             Buy via Portal
                           </Button>
                           
                           {/* External Ticket Link */}
-                          {show.ticket_link ? (
-                            <Button 
-                              className="bg-white text-black hover:bg-white/90 font-medium"
-                              disabled={show.status === "sold_out"}
-                              onClick={() => window.open(show.ticket_link!, "_blank")}
-                            >
-                              {show.status === "sold_out" ? "Sold Out" : "Get Tickets"}
-                            </Button>
-                          ) : (
-                            <Button 
-                              className="bg-white text-black hover:bg-white/90 font-medium"
-                              disabled
-                            >
-                              Coming Soon
-                            </Button>
-                          )}
+                          <Button 
+                            className="w-32 bg-white text-black hover:bg-white/90 font-medium"
+                            disabled={show.status === "sold_out" || !show.ticket_link}
+                            onClick={() => show.ticket_link && window.open(show.ticket_link, "_blank")}
+                          >
+                            {show.status === "sold_out" 
+                              ? "Sold Out" 
+                              : show.ticket_link 
+                              ? "Get Tickets" 
+                              : "Coming Soon"}
+                          </Button>
                         </div>
                       </div>
                     </div>
