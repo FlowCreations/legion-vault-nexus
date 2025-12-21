@@ -12,6 +12,8 @@ export interface SectionSelection {
   sectionId: string;
   sectionName: string;
   priceModifier: number;
+  row?: string;
+  seatNumbers?: string[];
 }
 
 export interface BundleSelection {
