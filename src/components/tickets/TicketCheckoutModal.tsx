@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useTicketCartStore } from "@/stores/ticketCartStore";
 import { TicketTypeSelection } from "./TicketTypeSelection";
@@ -98,6 +99,9 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
               <span className="sr-only">Order Confirmed</span>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Purchase tickets for {show.venue}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="mt-4">

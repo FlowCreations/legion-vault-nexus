@@ -4,12 +4,12 @@ import { ReactNode } from 'react';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000, // 10 minutes - aggressive caching
-      gcTime: 30 * 60 * 1000, // 30 minutes
+      staleTime: 2 * 60 * 1000, // 2 minutes - balance between freshness and performance
+      gcTime: 10 * 60 * 1000, // 10 minutes
       retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount: false, // Don't refetch on mount if data exists
-      refetchOnReconnect: false,
+      refetchOnMount: 'always', // Always check if data needs refresh on mount
+      refetchOnReconnect: true, // Refetch when reconnecting
     },
   },
 });
