@@ -6,13 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, Loader2, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar, Trophy } from "lucide-react";
+import { Search, Users, Loader2, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar, Trophy, Route, ShoppingCart, Share2 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PTPBehaviorBreakdown } from "./PTPBehaviorBreakdown";
-
+import { JourneyStageCard } from "./JourneyStageCard";
+import { FanJourneyTimeline } from "./FanJourneyTimeline";
+import { ContentEngagementPanel } from "./ContentEngagementPanel";
+import { CommerceJourneyPanel } from "./CommerceJourneyPanel";
 interface MilestoneData {
   current_badge: string | null;
   total_minutes: number;
@@ -368,6 +371,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         {getTierBadge(member.membership_tier || member.tier)}
                         {getMilestoneBadge(member.milestone)}
+                        {member.user_id && <JourneyStageCard userId={member.user_id} compact />}
                         {member.era_label && (
                           <Badge className={`${
                             member.era_label.toLowerCase() === 'engaged' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
@@ -480,9 +484,11 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
               </SheetHeader>
 
               <Tabs defaultValue="overview" className="mt-6">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="behavior">PTP Behavior</TabsTrigger>
+                  <TabsTrigger value="journey">Journey</TabsTrigger>
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="commerce">Commerce</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-6">
@@ -605,8 +611,16 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="behavior" className="mt-6">
-                  <PTPBehaviorBreakdown userId={selectedMember.user_id || ''} showDetailed={true} />
+                <TabsContent value="journey" className="mt-6">
+                  <FanJourneyTimeline userId={selectedMember.user_id || ''} />
+                </TabsContent>
+
+                <TabsContent value="content" className="mt-6">
+                  <ContentEngagementPanel userId={selectedMember.user_id || ''} />
+                </TabsContent>
+
+                <TabsContent value="commerce" className="mt-6">
+                  <CommerceJourneyPanel userId={selectedMember.user_id || ''} />
                 </TabsContent>
               </Tabs>
             </>
