@@ -44,6 +44,46 @@ const getSessionId = () => {
 export const useEventTracking = () => {
   const { user } = useAuth();
   
+  // Record a journey milestone for the current user
+  const recordMilestone = async (milestoneKey: string, metadata?: any) => {
+    if (!user) return;
+    
+    try {
+      await supabase.rpc('record_journey_milestone', {
+        p_user_id: user.id,
+        p_milestone_key: milestoneKey,
+        p_metadata: metadata || {}
+      });
+    } catch (error) {
+      console.error('Failed to record milestone:', milestoneKey, error);
+    }
+  };
+
+  // Map event types to journey milestones
+  const getMilestoneForEvent = (eventType: string, eventData?: any): string | null => {
+    const milestoneMap: Record<string, string> = {
+      'page_view': 'first_portal_visit',
+      'video_view': 'first_video_start',
+      'video_complete': 'first_video_complete',
+      'stream_song': 'first_song_start',
+      'play_music': 'first_song_start',
+      'song_complete': 'first_song_finish',
+      'track_finish': 'first_song_finish',
+      'replay': 'first_replay',
+      'save_content': 'first_save',
+      'download': 'first_download',
+      'merch_view': 'first_store_visit',
+      'product_view': 'first_store_visit',
+      'add_to_cart': 'first_add_to_cart',
+      'purchase': 'first_purchase',
+      'email_signup': 'email_verified',
+      'user_registration': 'email_verified',
+      'signup': 'email_verified',
+      'share': 'first_referral',
+    };
+    return milestoneMap[eventType] || null;
+  };
+
   const trackEvent = async (eventType: string, eventData?: any) => {
     try {
       const sessionId = getSessionId();
@@ -51,6 +91,12 @@ export const useEventTracking = () => {
       
       // Detect emotional metadata based on event patterns
       const emotionalContext = detectEmotionalContext(eventType, eventData);
+      
+      // Record journey milestone if applicable
+      const milestone = getMilestoneForEvent(eventType, eventData);
+      if (milestone && user) {
+        recordMilestone(milestone, { eventType, ...eventData });
+      }
       
       // Track in legacy events table for authenticated users
       if (user) {
