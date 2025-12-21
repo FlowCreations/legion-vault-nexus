@@ -188,3 +188,6 @@ verify_jwt = false
 
 [functions.affiliate-attribute-conversion]
 verify_jwt = false
+
+[functions.seed-journey-milestones]
+verify_jwt = true

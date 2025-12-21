@@ -96,8 +96,26 @@ export function JourneyStageCard({ userId, compact = false }: JourneyStageCardPr
     return { currentStage: highestStage, hasDropOff, hasDeepening };
   }, [milestoneKeys]);
 
-  if (loading || milestoneKeys.length === 0) {
+  if (loading) {
     return null;
+  }
+
+  // Show "New" badge for users without any milestones
+  if (milestoneKeys.length === 0) {
+    if (compact) {
+      return (
+        <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30 gap-1">
+          🆕 New
+        </Badge>
+      );
+    }
+    return (
+      <div className="flex items-center gap-2">
+        <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30 gap-1">
+          🆕 New Fan
+        </Badge>
+      </div>
+    );
   }
 
   const config = STAGE_CONFIG[currentStage];

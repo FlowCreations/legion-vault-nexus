@@ -44,6 +44,7 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
   });
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [seedingMilestones, setSeedingMilestones] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
 
@@ -159,6 +160,34 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
       });
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const handleSeedMilestones = async () => {
+    try {
+      setSeedingMilestones(true);
+      toast({
+        title: "Seeding journey milestones...",
+        description: "Creating milestone data for existing users",
+      });
+
+      const { data, error } = await supabase.functions.invoke('seed-journey-milestones');
+
+      if (error) throw error;
+
+      toast({
+        title: "Journey milestones seeded!",
+        description: `Created ${data.milestonesCreated || 0} milestones for ${data.usersProcessed || 0} users`,
+      });
+    } catch (error: any) {
+      console.error('Error seeding milestones:', error);
+      toast({
+        title: "Error seeding milestones",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSeedingMilestones(false);
     }
   };
 
@@ -291,13 +320,13 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="members" className="space-y-6">
+      <Tabs defaultValue="milestones" className="space-y-6">
         <TabsList className="bg-card border border-border">
-          <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="milestones" className="flex items-center gap-1">
             <Trophy className="w-3 h-3" />
-            Milestones
+            Fan Journey
           </TabsTrigger>
+          <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="superfan">Superfan Index</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
           <TabsTrigger value="ai">AI Analytics</TabsTrigger>
@@ -306,15 +335,44 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
           <TabsTrigger value="admin">Admin</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="milestones">
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Fan Journey Milestones</p>
+                    <p className="text-sm text-muted-foreground">Track how fans progress through awareness → engagement → conversion → advocacy</p>
+                  </div>
+                  <Button
+                    onClick={handleSeedMilestones}
+                    disabled={seedingMilestones}
+                    variant="outline"
+                  >
+                    {seedingMilestones ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Seeding...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Seed Demo Milestones
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            <Suspense fallback={<LoadingSpinner />}>
+              <MilestoneTracker />
+            </Suspense>
+          </div>
+        </TabsContent>
+
         <TabsContent value="members">
           <Suspense fallback={<LoadingSpinner />}>
             <CommunityMembers selectedUserId={selectedUserId} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="milestones">
-          <Suspense fallback={<LoadingSpinner />}>
-            <MilestoneTracker />
           </Suspense>
         </TabsContent>
 
