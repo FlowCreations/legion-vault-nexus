@@ -40,74 +40,53 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Check admin status
-      const { data: adminRoleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Run ALL checks in parallel for faster loading
+      const [rolesResult, subResult] = await Promise.all([
+        // Single query for all roles
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['merchant', 'admin']),
+        
+        // Subscription check with shorter 2s timeout
+        Promise.race([
+          supabase.functions.invoke('check-subscription'),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('timeout')), 2000)
+          )
+        ]).catch(() => ({ data: null, error: 'timeout' }))
+      ]);
 
-      const adminStatus = !!adminRoleData;
+      // Process roles
+      const roles = rolesResult.data?.map(r => r.role) || [];
+      const adminStatus = roles.includes('admin');
+      const merchantStatus = roles.includes('merchant') || adminStatus;
+      
       setIsAdmin(adminStatus);
-      console.log('Admin status for user:', user.email, '=', adminStatus);
-
-      // Check merchant status (merchant or admin)
-      const { data: merchantRoleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .in('role', ['merchant', 'admin']);
-
-      const merchantStatus = merchantRoleData && merchantRoleData.length > 0;
       setIsMerchant(merchantStatus);
 
-      // Check subscription via edge function with timeout
-      const checkSubPromise = supabase.functions.invoke('check-subscription');
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Subscription check timeout')), 5000)
-      );
-      
-      try {
-        const { data: subData, error } = await Promise.race([
-          checkSubPromise,
-          timeoutPromise
-        ]) as { data: any; error: any };
-        
-        if (error) {
-          console.error('Error checking subscription:', error);
-          setIsSubscribed(false);
-          setTier(TIERS.FREE);
-          return;
-        }
-
-        if (subData?.subscribed && subData?.subscription?.plan_name) {
-          setIsSubscribed(true);
-          // Map Stripe plan name to tier
-          const planName = subData.subscription.plan_name;
-          if (planName.includes('Legionnaires')) {
-            setTier(TIERS.LEGIONNAIRES);
-          } else if (planName.includes('Outlaws')) {
-            setTier(TIERS.OUTLAWS);
-          } else if (planName.includes('Rebels')) {
-            setTier(TIERS.REBELS);
-          } else {
-            setTier(TIERS.FREE);
-          }
-        } else {
-          setIsSubscribed(false);
-          setTier(TIERS.FREE);
-        }
-      } catch (timeoutError) {
-        console.error('Subscription check timed out:', timeoutError);
-        // Allow access for admins even if subscription check fails
-        if (adminStatus) {
-          setIsSubscribed(true);
+      // Process subscription
+      const subData = (subResult as any)?.data;
+      if (subData?.subscribed && subData?.subscription?.plan_name) {
+        setIsSubscribed(true);
+        const planName = subData.subscription.plan_name;
+        if (planName.includes('Legionnaires')) {
           setTier(TIERS.LEGIONNAIRES);
+        } else if (planName.includes('Outlaws')) {
+          setTier(TIERS.OUTLAWS);
+        } else if (planName.includes('Rebels')) {
+          setTier(TIERS.REBELS);
         } else {
-          setIsSubscribed(false);
           setTier(TIERS.FREE);
         }
+      } else if (adminStatus) {
+        // Admins get full access even without subscription
+        setIsSubscribed(true);
+        setTier(TIERS.LEGIONNAIRES);
+      } else {
+        setIsSubscribed(false);
+        setTier(TIERS.FREE);
       }
     } catch (error) {
       console.error('Error in checkSubscription:', error);
