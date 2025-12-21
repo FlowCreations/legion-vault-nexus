@@ -2782,6 +2782,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_journey_milestones: {
+        Row: {
+          achieved_at: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          milestone_key: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          milestone_key: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          milestone_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           created_at: string | null
@@ -6685,6 +6712,10 @@ export type Database = {
         Returns: undefined
       }
       recalculate_all_livestream_engagement: { Args: never; Returns: undefined }
+      record_journey_milestone: {
+        Args: { p_metadata?: Json; p_milestone_key: string; p_user_id: string }
+        Returns: boolean
+      }
       set_tenant_context: { Args: { _tenant_id: string }; Returns: undefined }
       track_affiliate_content_click: {
         Args: {
