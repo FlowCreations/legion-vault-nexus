@@ -42,11 +42,13 @@ export function useProgressiveLoad({ priority, delay = 0 }: ProgressiveLoadOptio
         break;
       
       case 'idle':
-        // Load only when browser is truly idle
+        // Load with a max timeout to prevent pages appearing stuck
+        // Use shorter timeout (500ms max) to ensure content loads reliably
+        const maxDelay = Math.min(delay || 200, 500);
         if ('requestIdleCallback' in window) {
-          idleCallbackId = requestIdleCallback(load, { timeout: delay || 200 });
+          idleCallbackId = requestIdleCallback(load, { timeout: maxDelay });
         } else {
-          timeoutId = setTimeout(load, delay || 200);
+          timeoutId = setTimeout(load, maxDelay);
         }
         break;
     }

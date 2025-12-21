@@ -298,7 +298,7 @@ const Merchant = memo(() => {
                     </Suspense>
                   </ProgressiveLoader>
                   
-                  <ProgressiveLoader priority="idle" delay={2000}>
+                  <ProgressiveLoader priority="low" delay={300}>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Geography />
                     </Suspense>
