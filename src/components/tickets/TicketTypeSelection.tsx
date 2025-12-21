@@ -18,9 +18,11 @@ interface TicketType {
 interface TicketTypeSelectionProps {
   showId: string;
   onNext: () => void;
+  onBack?: () => void;
 }
 
-export function TicketTypeSelection({ showId, onNext }: TicketTypeSelectionProps) {
+export function TicketTypeSelection({ showId, onNext, onBack }: TicketTypeSelectionProps) {
+  const { section } = useTicketCartStore();
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -198,7 +200,9 @@ export function TicketTypeSelection({ showId, onNext }: TicketTypeSelectionProps
                 </div>
 
                 <div className="text-right">
-                  <p className="text-2xl font-bold mb-3">${ticket.price}</p>
+                  <p className="text-2xl font-bold mb-3">
+                    ${section ? Math.round(ticket.price * section.priceModifier) : ticket.price}
+                  </p>
                   
                   <div className="flex items-center gap-2 bg-background/50 rounded-lg p-1">
                     <Button
@@ -232,13 +236,20 @@ export function TicketTypeSelection({ showId, onNext }: TicketTypeSelectionProps
         })}
       </div>
 
-      <Button
-        className="w-full bg-primary hover:bg-primary/90 h-12"
-        disabled={totalSelected === 0}
-        onClick={handleContinue}
-      >
-        Continue with {totalSelected} ticket{totalSelected !== 1 ? 's' : ''}
-      </Button>
+      <div className="flex gap-3">
+        {onBack && (
+          <Button variant="outline" onClick={onBack} className="flex-1">
+            Back
+          </Button>
+        )}
+        <Button
+          className="flex-1 bg-primary hover:bg-primary/90 h-12"
+          disabled={totalSelected === 0}
+          onClick={handleContinue}
+        >
+          Continue with {totalSelected} ticket{totalSelected !== 1 ? 's' : ''}
+        </Button>
+      </div>
     </div>
   );
 }

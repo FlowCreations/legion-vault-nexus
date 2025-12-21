@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, Package, ShoppingBag } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useTicketCartStore } from "@/stores/ticketCartStore";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -141,14 +140,22 @@ export function MerchBundleUpsell({ onNext, onBack }: MerchBundleUpsellProps) {
     );
   }
 
+  const { tickets } = useTicketCartStore();
+  const totalTickets = tickets.reduce((sum, t) => sum + t.quantity, 0);
+
   return (
     <div className="space-y-6">
+      {/* Friendly contextual header */}
       <div className="text-center mb-6">
-        <h3 className="text-xl font-bold mb-2">Exclusive Show Bundles</h3>
-        <p className="text-muted-foreground text-sm">Add merch to your order and save</p>
+        <h3 className="text-xl font-bold mb-2">Before you checkout...</h3>
+        <p className="text-muted-foreground text-sm">
+          You're getting {totalTickets} ticket{totalTickets !== 1 ? 's' : ''}. 
+          Want to add some exclusive merch?
+        </p>
       </div>
 
-      <div className="space-y-4">
+      {/* Simplified bundle cards */}
+      <div className="space-y-3">
         {merchBundles.map((bundle) => {
           const isSelected = !!selectedBundles[bundle.id];
           const currentSize = selectedBundles[bundle.id] || bundle.available_sizes[1] || bundle.available_sizes[0];
@@ -156,94 +163,52 @@ export function MerchBundleUpsell({ onNext, onBack }: MerchBundleUpsellProps) {
           return (
             <div
               key={bundle.id}
-              className={`rounded-xl border-2 p-5 transition-all duration-300 ${
+              className={`rounded-lg border p-4 transition-all duration-200 ${
                 isSelected
-                  ? 'border-primary bg-primary/5 ring-2 ring-primary ring-offset-2 ring-offset-background'
+                  ? 'border-primary bg-primary/5'
                   : 'border-border bg-card hover:border-primary/30'
               }`}
             >
-              <div className="flex items-start gap-4">
-                {/* Bundle Icon */}
-                <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                  isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                }`}>
-                  <Package className="w-8 h-8" />
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold truncate">{bundle.name}</h4>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      Save ${bundle.original_price - bundle.bundle_price}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {bundle.items.slice(0, 2).join(', ')}
+                    {bundle.items.length > 2 && ` +${bundle.items.length - 2} more`}
+                  </p>
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-bold text-lg">{bundle.name}</h4>
-                      {bundle.description && (
-                        <p className="text-sm text-muted-foreground">{bundle.description}</p>
-                      )}
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground line-through">
-                          ${bundle.original_price}
-                        </span>
-                        <span className="text-xl font-bold text-primary">
-                          ${bundle.bundle_price}
-                        </span>
-                      </div>
-                      {bundle.savings_percentage && (
-                        <Badge className="bg-green-600 text-white">
-                          Save {bundle.savings_percentage}%
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Items included */}
-                  <ul className="grid grid-cols-2 gap-1 mb-4">
-                    {bundle.items.map((item, i) => (
-                      <li key={i} className="text-xs text-muted-foreground flex items-center gap-2">
-                        <Check className="w-3 h-3 text-primary" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Size selection & add button */}
-                  <div className="flex items-center gap-3">
-                    {bundle.available_sizes.length > 1 && bundle.available_sizes[0] !== 'One Size' && (
-                      <Select
-                        value={currentSize}
-                        onValueChange={(size) => handleSizeChange(bundle.id, size)}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue placeholder="Size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {bundle.available_sizes.map((size) => (
-                            <SelectItem key={size} value={size}>
-                              {size}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    
-                    <Button
-                      variant={isSelected ? "secondary" : "default"}
-                      className="flex-1"
-                      onClick={() => toggleBundle(bundle, currentSize)}
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  {/* Size selector - compact */}
+                  {bundle.available_sizes.length > 1 && bundle.available_sizes[0] !== 'One Size' && (
+                    <select
+                      value={currentSize}
+                      onChange={(e) => handleSizeChange(bundle.id, e.target.value)}
+                      className="text-xs bg-background border border-border rounded px-2 py-1"
                     >
-                      {isSelected ? (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          Added
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag className="w-4 h-4 mr-2" />
-                          Add to Order
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                      {bundle.available_sizes.map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  )}
+                  
+                  <span className="font-bold text-lg">${bundle.bundle_price}</span>
+                  
+                  <button
+                    onClick={() => toggleBundle(bundle, currentSize)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      isSelected 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted hover:bg-primary/20'
+                    }`}
+                  >
+                    {isSelected ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </div>
@@ -259,7 +224,7 @@ export function MerchBundleUpsell({ onNext, onBack }: MerchBundleUpsellProps) {
           className="flex-1 bg-primary hover:bg-primary/90"
           onClick={onNext}
         >
-          {Object.keys(selectedBundles).length > 0 ? 'Continue with Bundles' : 'Skip & Continue'}
+          {Object.keys(selectedBundles).length > 0 ? 'Review Order' : 'No Thanks, Continue'}
         </Button>
       </div>
     </div>

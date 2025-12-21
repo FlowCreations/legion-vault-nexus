@@ -119,17 +119,15 @@ export function SeatSelection({ showId, onNext, onBack }: SeatSelectionProps) {
                     <div>
                       <p className="font-semibold">{sec.section_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {isSoldOut ? 'Sold Out' : `${sec.available} available`}
+                        {isSoldOut 
+                          ? 'Sold Out' 
+                          : sec.available < 20 
+                          ? 'Almost Gone' 
+                          : sec.available < 50 
+                          ? 'Limited Availability' 
+                          : 'Available'}
                       </p>
                     </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    {sec.price_modifier !== 1 && (
-                      <Badge variant={sec.price_modifier > 1 ? "default" : "secondary"} className="text-xs">
-                        {sec.price_modifier > 1 ? `+${Math.round((sec.price_modifier - 1) * 100)}%` : `${Math.round((1 - sec.price_modifier) * 100)}% off`}
-                      </Badge>
-                    )}
                   </div>
                 </div>
               </button>
@@ -154,18 +152,13 @@ export function SeatSelection({ showId, onNext, onBack }: SeatSelectionProps) {
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={onBack} className="flex-1">
-          Back
-        </Button>
-        <Button
-          className="flex-1 bg-primary hover:bg-primary/90"
-          disabled={!section}
-          onClick={onNext}
-        >
-          Continue
-        </Button>
-      </div>
+      <Button
+        className="w-full bg-primary hover:bg-primary/90 h-12"
+        disabled={!section}
+        onClick={onNext}
+      >
+        Continue to Tickets
+      </Button>
     </div>
   );
 }

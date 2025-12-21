@@ -25,8 +25,8 @@ interface TicketCheckoutModalProps {
 }
 
 const STEP_LABELS = [
-  "Tickets",
   "Section",
+  "Tickets",
   "Bundles",
   "Review",
   "Confirmed"
@@ -106,14 +106,15 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
 
         <div className="mt-4">
           {currentStep === 1 && (
-            <TicketTypeSelection
+            <SeatSelection
               showId={show.id}
               onNext={nextStep}
+              onBack={() => {}}
             />
           )}
           
           {currentStep === 2 && (
-            <SeatSelection
+            <TicketTypeSelection
               showId={show.id}
               onNext={nextStep}
               onBack={prevStep}
