@@ -17,48 +17,50 @@ interface VenueMapProps {
   onSelectSection: (section: VenueSection) => void;
 }
 
-// Arena section configuration
+// Arena section configuration - semicircle layout with stage at top
 const ARENA_SECTIONS = {
-  // VIP Floor sections (closest to stage)
+  // VIP Floor sections (inside the floor area, between 100-level and stage)
   vip: [
-    { id: 'vip-7', label: 'VIP 7', x: 140, y: 120 },
-    { id: 'vip-8', label: 'VIP 8', x: 200, y: 120 },
-    { id: 'vip-24', label: 'VIP 24', x: 260, y: 120 },
+    { id: 'vip-1', label: 'VIP 1', x: 145, y: 175 },
+    { id: 'vip-2', label: 'VIP 2', x: 200, y: 165 },
+    { id: 'vip-3', label: 'VIP 3', x: 255, y: 175 },
   ],
-  // Lower bowl (100-level)
+  // Lower bowl (100-level) - semicircle from 10° to 170°
   lower: [
-    { id: 'sec-101', label: '101', angle: 180, radius: 140 },
-    { id: 'sec-102', label: '102', angle: 165, radius: 140 },
-    { id: 'sec-103', label: '103', angle: 150, radius: 140 },
-    { id: 'sec-104', label: '104', angle: 135, radius: 140 },
-    { id: 'sec-105', label: '105', angle: 120, radius: 140 },
-    { id: 'sec-106', label: '106', angle: 105, radius: 140 },
-    { id: 'sec-107', label: '107', angle: 90, radius: 140 },
-    { id: 'sec-108', label: '108', angle: 75, radius: 140 },
-    { id: 'sec-109', label: '109', angle: 60, radius: 140 },
-    { id: 'sec-110', label: '110', angle: 45, radius: 140 },
-    { id: 'sec-111', label: '111', angle: 30, radius: 140 },
-    { id: 'sec-112', label: '112', angle: 15, radius: 140 },
-    { id: 'sec-113', label: '113', angle: 0, radius: 140 },
+    { id: 'sec-101', label: '101', angle: 170, radius: 120 },
+    { id: 'sec-102', label: '102', angle: 157, radius: 120 },
+    { id: 'sec-103', label: '103', angle: 144, radius: 120 },
+    { id: 'sec-104', label: '104', angle: 131, radius: 120 },
+    { id: 'sec-105', label: '105', angle: 118, radius: 120 },
+    { id: 'sec-106', label: '106', angle: 105, radius: 120 },
+    { id: 'sec-107', label: '107', angle: 92, radius: 120 },
+    { id: 'sec-108', label: '108', angle: 79, radius: 120 },
+    { id: 'sec-109', label: '109', angle: 66, radius: 120 },
+    { id: 'sec-110', label: '110', angle: 53, radius: 120 },
+    { id: 'sec-111', label: '111', angle: 40, radius: 120 },
+    { id: 'sec-112', label: '112', angle: 27, radius: 120 },
+    { id: 'sec-113', label: '113', angle: 14, radius: 120 },
   ],
-  // Upper bowl (200-level)
+  // Upper bowl (200-level) - semicircle from 5° to 175°
   upper: [
-    { id: 'sec-201', label: '201', angle: 180, radius: 185 },
-    { id: 'sec-202', label: '202', angle: 168, radius: 185 },
-    { id: 'sec-203', label: '203', angle: 156, radius: 185 },
-    { id: 'sec-204', label: '204', angle: 144, radius: 185 },
-    { id: 'sec-205', label: '205', angle: 132, radius: 185 },
-    { id: 'sec-206', label: '206', angle: 120, radius: 185 },
-    { id: 'sec-207', label: '207', angle: 108, radius: 185 },
-    { id: 'sec-208', label: '208', angle: 96, radius: 185 },
-    { id: 'sec-209', label: '209', angle: 84, radius: 185 },
-    { id: 'sec-210', label: '210', angle: 72, radius: 185 },
-    { id: 'sec-211', label: '211', angle: 60, radius: 185 },
-    { id: 'sec-212', label: '212', angle: 48, radius: 185 },
-    { id: 'sec-213', label: '213', angle: 36, radius: 185 },
-    { id: 'sec-214', label: '214', angle: 24, radius: 185 },
-    { id: 'sec-215', label: '215', angle: 12, radius: 185 },
-    { id: 'sec-216', label: '216', angle: 0, radius: 185 },
+    { id: 'sec-201', label: '201', angle: 175, radius: 165 },
+    { id: 'sec-202', label: '202', angle: 165, radius: 165 },
+    { id: 'sec-203', label: '203', angle: 155, radius: 165 },
+    { id: 'sec-204', label: '204', angle: 145, radius: 165 },
+    { id: 'sec-205', label: '205', angle: 135, radius: 165 },
+    { id: 'sec-206', label: '206', angle: 125, radius: 165 },
+    { id: 'sec-207', label: '207', angle: 115, radius: 165 },
+    { id: 'sec-208', label: '208', angle: 105, radius: 165 },
+    { id: 'sec-209', label: '209', angle: 95, radius: 165 },
+    { id: 'sec-210', label: '210', angle: 85, radius: 165 },
+    { id: 'sec-211', label: '211', angle: 75, radius: 165 },
+    { id: 'sec-212', label: '212', angle: 65, radius: 165 },
+    { id: 'sec-213', label: '213', angle: 55, radius: 165 },
+    { id: 'sec-214', label: '214', angle: 45, radius: 165 },
+    { id: 'sec-215', label: '215', angle: 35, radius: 165 },
+    { id: 'sec-216', label: '216', angle: 25, radius: 165 },
+    { id: 'sec-217', label: '217', angle: 15, radius: 165 },
+    { id: 'sec-218', label: '218', angle: 5, radius: 165 },
   ],
 };
 
@@ -158,19 +160,19 @@ const VenueMap = memo(function VenueMap({ sections, selectedSectionId, onSelectS
       const rad = (angle: number) => (angle * Math.PI) / 180;
       const startOuter = {
         x: centerX + outerRadius * Math.cos(rad(startAngle)),
-        y: centerY - outerRadius * Math.sin(rad(startAngle)) + 20,
+        y: centerY - outerRadius * Math.sin(rad(startAngle)),
       };
       const endOuter = {
         x: centerX + outerRadius * Math.cos(rad(endAngle)),
-        y: centerY - outerRadius * Math.sin(rad(endAngle)) + 20,
+        y: centerY - outerRadius * Math.sin(rad(endAngle)),
       };
       const startInner = {
         x: centerX + innerRadius * Math.cos(rad(startAngle)),
-        y: centerY - innerRadius * Math.sin(rad(startAngle)) + 20,
+        y: centerY - innerRadius * Math.sin(rad(startAngle)),
       };
       const endInner = {
         x: centerX + innerRadius * Math.cos(rad(endAngle)),
-        y: centerY - innerRadius * Math.sin(rad(endAngle)) + 20,
+        y: centerY - innerRadius * Math.sin(rad(endAngle)),
       };
       const largeArc = endAngle - startAngle > 180 ? 1 : 0;
       return `M ${startOuter.x} ${startOuter.y} A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${endOuter.x} ${endOuter.y} L ${endInner.x} ${endInner.y} A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${startInner.x} ${startInner.y} Z`;
@@ -178,33 +180,35 @@ const VenueMap = memo(function VenueMap({ sections, selectedSectionId, onSelectS
 
     const paths: Record<string, { path: string; labelX: number; labelY: number }> = {};
     
-    // Lower sections
+    // Lower sections (100-level) - inner ring
     ARENA_SECTIONS.lower.forEach(config => {
-      const startAngle = config.angle - 7;
-      const endAngle = config.angle + 7;
-      const innerRadius = 95;
-      const outerRadius = 130;
+      const angleSpan = 6.5;
+      const startAngle = config.angle - angleSpan;
+      const endAngle = config.angle + angleSpan;
+      const innerRadius = 75;
+      const outerRadius = 115;
       const midRadius = (innerRadius + outerRadius) / 2;
       const rad = (config.angle * Math.PI) / 180;
       paths[config.id] = {
         path: createArcSection(startAngle, endAngle, innerRadius, outerRadius),
         labelX: centerX + midRadius * Math.cos(rad),
-        labelY: centerY - midRadius * Math.sin(rad) + 20,
+        labelY: centerY - midRadius * Math.sin(rad),
       };
     });
     
-    // Upper sections
+    // Upper sections (200-level) - outer ring
     ARENA_SECTIONS.upper.forEach(config => {
-      const startAngle = config.angle - 5.5;
-      const endAngle = config.angle + 5.5;
-      const innerRadius = 145;
-      const outerRadius = 180;
+      const angleSpan = 5;
+      const startAngle = config.angle - angleSpan;
+      const endAngle = config.angle + angleSpan;
+      const innerRadius = 120;
+      const outerRadius = 165;
       const midRadius = (innerRadius + outerRadius) / 2;
       const rad = (config.angle * Math.PI) / 180;
       paths[config.id] = {
         path: createArcSection(startAngle, endAngle, innerRadius, outerRadius),
         labelX: centerX + midRadius * Math.cos(rad),
-        labelY: centerY - midRadius * Math.sin(rad) + 20,
+        labelY: centerY - midRadius * Math.sin(rad),
       };
     });
     
@@ -369,13 +373,10 @@ const VenueMap = memo(function VenueMap({ sections, selectedSectionId, onSelectS
         {/* Background */}
         <rect x="0" y="0" width="400" height="400" className="fill-background" />
         
-        {/* Arena outer ring */}
-        <ellipse
-          cx={centerX}
-          cy={centerY + 20}
-          rx={190}
-          ry={180}
-          className="fill-muted/30 stroke-border"
+        {/* Arena outer ring - semicircle background */}
+        <path
+          d={`M ${centerX - 175} ${centerY} A 175 175 0 0 1 ${centerX + 175} ${centerY} L ${centerX + 175} ${centerY + 10} L ${centerX - 175} ${centerY + 10} Z`}
+          className="fill-muted/20 stroke-border"
           strokeWidth={1}
         />
 
@@ -385,39 +386,40 @@ const VenueMap = memo(function VenueMap({ sections, selectedSectionId, onSelectS
         {/* Lower Level Sections (100s) */}
         {ARENA_SECTIONS.lower.map((config, index) => renderLowerSection(config, index))}
 
-        {/* Floor/Court Area */}
-        <ellipse
-          cx={centerX}
-          cy={centerY + 20}
-          rx={85}
-          ry={75}
-          className="fill-muted/20 stroke-border"
+        {/* Floor/Court Area - semicircle */}
+        <path
+          d={`M ${centerX - 65} ${centerY} A 65 65 0 0 1 ${centerX + 65} ${centerY} L ${centerX + 65} ${centerY + 5} L ${centerX - 65} ${centerY + 5} Z`}
+          className="fill-muted/10 stroke-border"
           strokeWidth={1}
         />
 
-        {/* Stage */}
-        <path
-          d={`M ${centerX - 60} 60 Q ${centerX} 40 ${centerX + 60} 60 L ${centerX + 50} 85 Q ${centerX} 70 ${centerX - 50} 85 Z`}
+        {/* Stage - at bottom center, facing the audience */}
+        <rect
+          x={centerX - 70}
+          y={centerY + 15}
+          width={140}
+          height={35}
+          rx={4}
           className="fill-primary/30 stroke-primary"
           strokeWidth={2}
         />
         <text 
           x={centerX} 
-          y={68} 
-          className="fill-primary text-[10px] font-bold" 
+          y={centerY + 37} 
+          className="fill-primary text-[11px] font-bold" 
           textAnchor="middle"
         >
           STAGE
         </text>
 
-        {/* VIP Floor Sections */}
+        {/* VIP Floor Sections - inside the floor area */}
         {ARENA_SECTIONS.vip.map(config => renderVIPSection(config))}
 
         {/* Floor Label */}
         <text
           x={centerX}
-          y={centerY + 50}
-          className="fill-muted-foreground text-[10px] font-medium"
+          y={centerY - 35}
+          className="fill-muted-foreground text-[9px] font-medium"
           textAnchor="middle"
         >
           FLOOR
