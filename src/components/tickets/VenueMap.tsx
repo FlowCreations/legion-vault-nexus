@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Plus, Minus, Home, ChevronDown, ChevronUp } from "lucide-react";
 
-interface VenueSection {
+export interface VenueSection {
   id: string;
   section_name: string;
   section_type: string;
@@ -16,298 +17,459 @@ interface VenueMapProps {
   onSelectSection: (section: VenueSection) => void;
 }
 
+// Arena section configuration
+const ARENA_SECTIONS = {
+  // VIP Floor sections (closest to stage)
+  vip: [
+    { id: 'vip-7', label: 'VIP 7', x: 140, y: 120 },
+    { id: 'vip-8', label: 'VIP 8', x: 200, y: 120 },
+    { id: 'vip-24', label: 'VIP 24', x: 260, y: 120 },
+  ],
+  // Lower bowl (100-level)
+  lower: [
+    { id: 'sec-101', label: '101', angle: 180, radius: 140 },
+    { id: 'sec-102', label: '102', angle: 165, radius: 140 },
+    { id: 'sec-103', label: '103', angle: 150, radius: 140 },
+    { id: 'sec-104', label: '104', angle: 135, radius: 140 },
+    { id: 'sec-105', label: '105', angle: 120, radius: 140 },
+    { id: 'sec-106', label: '106', angle: 105, radius: 140 },
+    { id: 'sec-107', label: '107', angle: 90, radius: 140 },
+    { id: 'sec-108', label: '108', angle: 75, radius: 140 },
+    { id: 'sec-109', label: '109', angle: 60, radius: 140 },
+    { id: 'sec-110', label: '110', angle: 45, radius: 140 },
+    { id: 'sec-111', label: '111', angle: 30, radius: 140 },
+    { id: 'sec-112', label: '112', angle: 15, radius: 140 },
+    { id: 'sec-113', label: '113', angle: 0, radius: 140 },
+  ],
+  // Upper bowl (200-level)
+  upper: [
+    { id: 'sec-201', label: '201', angle: 180, radius: 185 },
+    { id: 'sec-202', label: '202', angle: 168, radius: 185 },
+    { id: 'sec-203', label: '203', angle: 156, radius: 185 },
+    { id: 'sec-204', label: '204', angle: 144, radius: 185 },
+    { id: 'sec-205', label: '205', angle: 132, radius: 185 },
+    { id: 'sec-206', label: '206', angle: 120, radius: 185 },
+    { id: 'sec-207', label: '207', angle: 108, radius: 185 },
+    { id: 'sec-208', label: '208', angle: 96, radius: 185 },
+    { id: 'sec-209', label: '209', angle: 84, radius: 185 },
+    { id: 'sec-210', label: '210', angle: 72, radius: 185 },
+    { id: 'sec-211', label: '211', angle: 60, radius: 185 },
+    { id: 'sec-212', label: '212', angle: 48, radius: 185 },
+    { id: 'sec-213', label: '213', angle: 36, radius: 185 },
+    { id: 'sec-214', label: '214', angle: 24, radius: 185 },
+    { id: 'sec-215', label: '215', angle: 12, radius: 185 },
+    { id: 'sec-216', label: '216', angle: 0, radius: 185 },
+  ],
+};
+
 export function VenueMap({ sections, selectedSectionId, onSelectSection }: VenueMapProps) {
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [legendOpen, setLegendOpen] = useState(true);
 
-  const getSectionColor = (section: VenueSection, isHovered: boolean, isSelected: boolean) => {
-    const ratio = section.available / section.capacity;
-    
-    if (section.available === 0) return "fill-muted stroke-border";
-    
-    if (isSelected) return "fill-primary stroke-primary";
-    if (isHovered) return "fill-primary/70 stroke-primary";
-    
-    if (ratio < 0.1) return "fill-destructive/60 stroke-destructive";
-    if (ratio < 0.3) return "fill-yellow-500/60 stroke-yellow-600";
-    return "fill-emerald-500/60 stroke-emerald-600";
+  const centerX = 200;
+  const centerY = 200;
+
+  // Get section data by ID
+  const getSectionData = (sectionId: string): VenueSection | null => {
+    // Map arena section IDs to actual section data
+    const section = sections.find(s => s.id === sectionId);
+    if (section) return section;
+
+    // Fallback mapping for demo sections
+    if (sectionId.startsWith('vip-')) {
+      return sections.find(s => s.section_type === 'pit' || s.id === 'floor') || null;
+    }
+    if (sectionId.startsWith('sec-1')) {
+      const num = parseInt(sectionId.split('-')[1]);
+      if (num <= 103) return sections.find(s => s.id === 'front') || null;
+      if (num <= 108) return sections.find(s => s.id === 'center') || null;
+      return sections.find(s => s.id === 'rear') || null;
+    }
+    if (sectionId.startsWith('sec-2')) {
+      return sections.find(s => s.id === 'balcony') || null;
+    }
+    return null;
   };
 
-  const getSectionByType = (type: string) => sections.filter(s => s.section_type === type || s.id === type);
-
-  // Find sections by their demo IDs
-  const floorSection = sections.find(s => s.id === 'floor' || s.section_type === 'pit');
-  const frontSection = sections.find(s => s.id === 'front');
-  const centerSection = sections.find(s => s.id === 'center');
-  const rearSection = sections.find(s => s.id === 'rear');
-  const balconySection = sections.find(s => s.id === 'balcony');
-
-  const renderSection = (section: VenueSection | undefined, path: string, textX: number, textY: number) => {
-    if (!section) return null;
+  const getSectionColor = (sectionId: string) => {
+    const section = getSectionData(sectionId);
+    if (!section) return { fill: 'hsl(var(--muted))', stroke: 'hsl(var(--border))' };
     
-    const isHovered = hoveredSection === section.id;
-    const isSelected = selectedSectionId === section.id;
-    const isSoldOut = section.available === 0;
+    const ratio = section.available / section.capacity;
+    const isHovered = hoveredSection === sectionId;
+    const isSelected = selectedSectionId === sectionId || selectedSectionId === section.id;
+    
+    if (section.available === 0) {
+      return { fill: 'hsl(var(--muted))', stroke: 'hsl(var(--border))' };
+    }
+    
+    if (isSelected) {
+      return { fill: 'hsl(var(--primary))', stroke: 'hsl(var(--primary))' };
+    }
+    
+    if (isHovered) {
+      return { fill: 'hsl(var(--primary) / 0.7)', stroke: 'hsl(var(--primary))' };
+    }
+    
+    // Ticketmaster-style blue gradient based on price
+    const priceModifier = section.price_modifier;
+    if (priceModifier >= 1.4) {
+      return { fill: '#1e40af', stroke: '#1e3a8a' }; // Premium - dark blue
+    }
+    if (priceModifier >= 1.2) {
+      return { fill: '#2563eb', stroke: '#1d4ed8' }; // High - medium blue
+    }
+    if (priceModifier >= 1.0) {
+      return { fill: '#3b82f6', stroke: '#2563eb' }; // Standard - blue
+    }
+    if (priceModifier >= 0.8) {
+      return { fill: '#60a5fa', stroke: '#3b82f6' }; // Value - light blue
+    }
+    return { fill: '#93c5fd', stroke: '#60a5fa' }; // Economy - lightest blue
+  };
 
+  const handleSectionClick = (sectionId: string) => {
+    const section = getSectionData(sectionId);
+    if (section && section.available > 0) {
+      onSelectSection(section);
+    }
+  };
+
+  const handleSectionHover = (sectionId: string | null) => {
+    if (sectionId) {
+      const section = getSectionData(sectionId);
+      if (section && section.available > 0) {
+        setHoveredSection(sectionId);
+      }
+    } else {
+      setHoveredSection(null);
+    }
+  };
+
+  // Convert polar coordinates to cartesian
+  const polarToCartesian = (angle: number, radius: number) => {
+    const rad = (angle * Math.PI) / 180;
+    return {
+      x: centerX + radius * Math.cos(rad),
+      y: centerY - radius * Math.sin(rad) + 20, // Offset for stage at top
+    };
+  };
+
+  // Create arc path for a section
+  const createArcSection = (
+    startAngle: number,
+    endAngle: number,
+    innerRadius: number,
+    outerRadius: number
+  ) => {
+    const startOuter = polarToCartesian(startAngle, outerRadius);
+    const endOuter = polarToCartesian(endAngle, outerRadius);
+    const startInner = polarToCartesian(startAngle, innerRadius);
+    const endInner = polarToCartesian(endAngle, innerRadius);
+    
+    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+    
+    return `
+      M ${startOuter.x} ${startOuter.y}
+      A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${endOuter.x} ${endOuter.y}
+      L ${endInner.x} ${endInner.y}
+      A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${startInner.x} ${startInner.y}
+      Z
+    `;
+  };
+
+  const renderLowerSection = (config: { id: string; label: string; angle: number; radius: number }, index: number) => {
+    const sectionData = getSectionData(config.id);
+    const colors = getSectionColor(config.id);
+    const isSoldOut = !sectionData || sectionData.available === 0;
+    const isHovered = hoveredSection === config.id;
+    const isSelected = selectedSectionId === config.id || (sectionData && selectedSectionId === sectionData.id);
+    
+    // Calculate section arc (each section spans about 14 degrees for lower)
+    const startAngle = config.angle - 7;
+    const endAngle = config.angle + 7;
+    const innerRadius = 95;
+    const outerRadius = 130;
+    
+    const path = createArcSection(startAngle, endAngle, innerRadius, outerRadius);
+    const labelPos = polarToCartesian(config.angle, (innerRadius + outerRadius) / 2);
+    
     return (
       <g
+        key={config.id}
         className={cn(
-          "transition-all duration-200 cursor-pointer",
+          "transition-all duration-150 cursor-pointer",
           isSoldOut && "opacity-40 cursor-not-allowed"
         )}
-        onMouseEnter={() => !isSoldOut && setHoveredSection(section.id)}
-        onMouseLeave={() => setHoveredSection(null)}
-        onClick={() => !isSoldOut && onSelectSection(section)}
+        onMouseEnter={() => handleSectionHover(config.id)}
+        onMouseLeave={() => handleSectionHover(null)}
+        onClick={() => handleSectionClick(config.id)}
       >
         <path
           d={path}
-          className={cn(
-            "transition-all duration-200 stroke-2",
-            getSectionColor(section, isHovered, isSelected),
-            isSelected && "stroke-[3]"
-          )}
+          fill={colors.fill}
+          stroke={colors.stroke}
+          strokeWidth={isSelected ? 2 : 1}
+          className="transition-all duration-150"
         />
         <text
-          x={textX}
-          y={textY}
-          className="fill-foreground text-[10px] font-medium pointer-events-none"
+          x={labelPos.x}
+          y={labelPos.y}
+          className="fill-white text-[8px] font-bold pointer-events-none"
           textAnchor="middle"
           dominantBaseline="middle"
         >
-          {section.section_name.split(' ')[0]}
+          {config.label}
         </text>
-        {isHovered && !isSoldOut && (
-          <text
-            x={textX}
-            y={textY + 12}
-            className="fill-muted-foreground text-[8px] pointer-events-none"
-            textAnchor="middle"
-            dominantBaseline="middle"
-          >
-            {section.available} left
-          </text>
+      </g>
+    );
+  };
+
+  const renderUpperSection = (config: { id: string; label: string; angle: number; radius: number }, index: number) => {
+    const sectionData = getSectionData(config.id);
+    const colors = getSectionColor(config.id);
+    const isSoldOut = !sectionData || sectionData.available === 0;
+    const isSelected = selectedSectionId === config.id || (sectionData && selectedSectionId === sectionData.id);
+    
+    // Calculate section arc (each section spans about 11 degrees for upper)
+    const startAngle = config.angle - 5.5;
+    const endAngle = config.angle + 5.5;
+    const innerRadius = 145;
+    const outerRadius = 180;
+    
+    const path = createArcSection(startAngle, endAngle, innerRadius, outerRadius);
+    const labelPos = polarToCartesian(config.angle, (innerRadius + outerRadius) / 2);
+    
+    return (
+      <g
+        key={config.id}
+        className={cn(
+          "transition-all duration-150 cursor-pointer",
+          isSoldOut && "opacity-40 cursor-not-allowed"
         )}
+        onMouseEnter={() => handleSectionHover(config.id)}
+        onMouseLeave={() => handleSectionHover(null)}
+        onClick={() => handleSectionClick(config.id)}
+      >
+        <path
+          d={path}
+          fill={colors.fill}
+          stroke={colors.stroke}
+          strokeWidth={isSelected ? 2 : 1}
+          className="transition-all duration-150"
+        />
+        <text
+          x={labelPos.x}
+          y={labelPos.y}
+          className="fill-white text-[7px] font-bold pointer-events-none"
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          {config.label}
+        </text>
+      </g>
+    );
+  };
+
+  const renderVIPSection = (config: { id: string; label: string; x: number; y: number }) => {
+    const sectionData = getSectionData(config.id);
+    const colors = getSectionColor(config.id);
+    const isSoldOut = !sectionData || sectionData.available === 0;
+    const isSelected = selectedSectionId === config.id || (sectionData && selectedSectionId === sectionData.id);
+    
+    return (
+      <g
+        key={config.id}
+        className={cn(
+          "transition-all duration-150 cursor-pointer",
+          isSoldOut && "opacity-40 cursor-not-allowed"
+        )}
+        onMouseEnter={() => handleSectionHover(config.id)}
+        onMouseLeave={() => handleSectionHover(null)}
+        onClick={() => handleSectionClick(config.id)}
+      >
+        <rect
+          x={config.x - 25}
+          y={config.y - 12}
+          width={50}
+          height={24}
+          rx={4}
+          fill={colors.fill}
+          stroke={colors.stroke}
+          strokeWidth={isSelected ? 2 : 1}
+          className="transition-all duration-150"
+        />
+        <text
+          x={config.x}
+          y={config.y}
+          className="fill-white text-[8px] font-bold pointer-events-none"
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          {config.label}
+        </text>
       </g>
     );
   };
 
   return (
     <div className="relative w-full aspect-[4/3] bg-card rounded-xl border border-border overflow-hidden">
+      {/* Zoom Controls */}
+      <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
+        <button
+          onClick={() => setZoom(Math.min(2, zoom + 0.25))}
+          className="w-8 h-8 bg-background/90 backdrop-blur-sm border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
+          className="w-8 h-8 bg-background/90 backdrop-blur-sm border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setZoom(1)}
+          className="w-8 h-8 bg-background/90 backdrop-blur-sm border border-border rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+        >
+          <Home className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* SVG Arena Map */}
       <svg
-        viewBox="0 0 400 300"
-        className="w-full h-full"
+        viewBox="0 0 400 400"
+        className="w-full h-full transition-transform duration-300"
+        style={{ transform: `scale(${zoom})` }}
         preserveAspectRatio="xMidYMid meet"
       >
         {/* Background */}
-        <rect x="0" y="0" width="400" height="300" className="fill-background" />
+        <rect x="0" y="0" width="400" height="400" className="fill-background" />
         
+        {/* Arena outer ring */}
+        <ellipse
+          cx={centerX}
+          cy={centerY + 20}
+          rx={190}
+          ry={180}
+          className="fill-muted/30 stroke-border"
+          strokeWidth={1}
+        />
+
+        {/* Upper Level Sections (200s) */}
+        {ARENA_SECTIONS.upper.map((config, index) => renderUpperSection(config, index))}
+
+        {/* Lower Level Sections (100s) */}
+        {ARENA_SECTIONS.lower.map((config, index) => renderLowerSection(config, index))}
+
+        {/* Floor/Court Area */}
+        <ellipse
+          cx={centerX}
+          cy={centerY + 20}
+          rx={85}
+          ry={75}
+          className="fill-muted/20 stroke-border"
+          strokeWidth={1}
+        />
+
         {/* Stage */}
         <path
-          d="M 100 30 Q 200 10 300 30 L 280 50 Q 200 35 120 50 Z"
-          className="fill-primary/20 stroke-primary stroke-2"
+          d={`M ${centerX - 60} 60 Q ${centerX} 40 ${centerX + 60} 60 L ${centerX + 50} 85 Q ${centerX} 70 ${centerX - 50} 85 Z`}
+          className="fill-primary/30 stroke-primary"
+          strokeWidth={2}
         />
-        <text x="200" y="35" className="fill-primary text-xs font-bold" textAnchor="middle">
+        <text 
+          x={centerX} 
+          y={68} 
+          className="fill-primary text-[10px] font-bold" 
+          textAnchor="middle"
+        >
           STAGE
         </text>
 
-        {/* Floor / Pit Section */}
-        {renderSection(
-          floorSection,
-          "M 130 60 L 270 60 L 280 110 L 120 110 Z",
-          200, 85
-        )}
+        {/* VIP Floor Sections */}
+        {ARENA_SECTIONS.vip.map(config => renderVIPSection(config))}
 
-        {/* Front Orchestra - Left */}
-        {renderSection(
-          frontSection,
-          "M 50 70 L 115 60 L 115 110 L 40 120 Z",
-          77, 90
-        )}
+        {/* Floor Label */}
+        <text
+          x={centerX}
+          y={centerY + 50}
+          className="fill-muted-foreground text-[10px] font-medium"
+          textAnchor="middle"
+        >
+          FLOOR
+        </text>
 
-        {/* Front Orchestra - Right */}
-        {sections.find(s => s.id === 'front') && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              frontSection?.available === 0 && "opacity-40 cursor-not-allowed"
-            )}
-            onMouseEnter={() => frontSection && frontSection.available > 0 && setHoveredSection(frontSection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => frontSection && frontSection.available > 0 && onSelectSection(frontSection)}
-          >
-            <path
-              d="M 285 60 L 350 70 L 360 120 L 285 110 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                frontSection && getSectionColor(frontSection, hoveredSection === frontSection.id, selectedSectionId === frontSection.id)
-              )}
+        {/* Hovered Section Tooltip */}
+        {hoveredSection && (
+          <g>
+            <rect
+              x={centerX - 50}
+              y={10}
+              width={100}
+              height={24}
+              rx={4}
+              className="fill-foreground"
             />
-            <text x="322" y="90" className="fill-foreground text-[10px] font-medium pointer-events-none" textAnchor="middle">
-              Front
+            <text
+              x={centerX}
+              y={22}
+              className="fill-background text-[9px] font-medium"
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {hoveredSection.replace('sec-', 'Section ').replace('vip-', 'VIP ')}
             </text>
-          </g>
-        )}
-
-        {/* Center Orchestra */}
-        {renderSection(
-          centerSection,
-          "M 115 115 L 285 115 L 295 170 L 105 170 Z",
-          200, 142
-        )}
-
-        {/* Center Orchestra - Left Wing */}
-        {centerSection && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              centerSection.available === 0 && "opacity-40 cursor-not-allowed"
+            {getSectionData(hoveredSection) && (
+              <text
+                x={centerX}
+                y={30}
+                className="fill-background/70 text-[7px]"
+                textAnchor="middle"
+                dominantBaseline="middle"
+              >
+                ${Math.round(75 * (getSectionData(hoveredSection)?.price_modifier || 1))} · {getSectionData(hoveredSection)?.available} left
+              </text>
             )}
-            onMouseEnter={() => centerSection.available > 0 && setHoveredSection(centerSection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => centerSection.available > 0 && onSelectSection(centerSection)}
-          >
-            <path
-              d="M 35 125 L 110 115 L 100 170 L 25 165 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                getSectionColor(centerSection, hoveredSection === centerSection.id, selectedSectionId === centerSection.id)
-              )}
-            />
-          </g>
-        )}
-
-        {/* Center Orchestra - Right Wing */}
-        {centerSection && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              centerSection.available === 0 && "opacity-40 cursor-not-allowed"
-            )}
-            onMouseEnter={() => centerSection.available > 0 && setHoveredSection(centerSection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => centerSection.available > 0 && onSelectSection(centerSection)}
-          >
-            <path
-              d="M 290 115 L 365 125 L 375 165 L 300 170 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                getSectionColor(centerSection, hoveredSection === centerSection.id, selectedSectionId === centerSection.id)
-              )}
-            />
-          </g>
-        )}
-
-        {/* Rear Orchestra */}
-        {renderSection(
-          rearSection,
-          "M 100 175 L 300 175 L 310 220 L 90 220 Z",
-          200, 197
-        )}
-
-        {/* Rear - Left */}
-        {rearSection && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              rearSection.available === 0 && "opacity-40 cursor-not-allowed"
-            )}
-            onMouseEnter={() => rearSection.available > 0 && setHoveredSection(rearSection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => rearSection.available > 0 && onSelectSection(rearSection)}
-          >
-            <path
-              d="M 20 170 L 95 170 L 85 220 L 15 215 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                getSectionColor(rearSection, hoveredSection === rearSection.id, selectedSectionId === rearSection.id)
-              )}
-            />
-          </g>
-        )}
-
-        {/* Rear - Right */}
-        {rearSection && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              rearSection.available === 0 && "opacity-40 cursor-not-allowed"
-            )}
-            onMouseEnter={() => rearSection.available > 0 && setHoveredSection(rearSection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => rearSection.available > 0 && onSelectSection(rearSection)}
-          >
-            <path
-              d="M 305 170 L 380 170 L 385 215 L 315 220 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                getSectionColor(rearSection, hoveredSection === rearSection.id, selectedSectionId === rearSection.id)
-              )}
-            />
-          </g>
-        )}
-
-        {/* Balcony */}
-        {renderSection(
-          balconySection,
-          "M 60 235 L 340 235 L 355 275 L 45 275 Z",
-          200, 255
-        )}
-
-        {/* Balcony - Left */}
-        {balconySection && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              balconySection.available === 0 && "opacity-40 cursor-not-allowed"
-            )}
-            onMouseEnter={() => balconySection.available > 0 && setHoveredSection(balconySection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => balconySection.available > 0 && onSelectSection(balconySection)}
-          >
-            <path
-              d="M 10 225 L 55 225 L 40 275 L 5 270 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                getSectionColor(balconySection, hoveredSection === balconySection.id, selectedSectionId === balconySection.id)
-              )}
-            />
-          </g>
-        )}
-
-        {/* Balcony - Right */}
-        {balconySection && (
-          <g
-            className={cn(
-              "transition-all duration-200 cursor-pointer",
-              balconySection.available === 0 && "opacity-40 cursor-not-allowed"
-            )}
-            onMouseEnter={() => balconySection.available > 0 && setHoveredSection(balconySection.id)}
-            onMouseLeave={() => setHoveredSection(null)}
-            onClick={() => balconySection.available > 0 && onSelectSection(balconySection)}
-          >
-            <path
-              d="M 345 225 L 390 225 L 395 270 L 360 275 Z"
-              className={cn(
-                "transition-all duration-200 stroke-2",
-                getSectionColor(balconySection, hoveredSection === balconySection.id, selectedSectionId === balconySection.id)
-              )}
-            />
           </g>
         )}
       </svg>
 
-      {/* Legend */}
-      <div className="absolute bottom-3 left-3 flex items-center gap-4 bg-background/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-border">
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="w-3 h-3 rounded-sm bg-emerald-500/60 border border-emerald-600" />
-          <span className="text-muted-foreground">Available</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="w-3 h-3 rounded-sm bg-yellow-500/60 border border-yellow-600" />
-          <span className="text-muted-foreground">Limited</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="w-3 h-3 rounded-sm bg-destructive/60 border border-destructive" />
-          <span className="text-muted-foreground">Few Left</span>
+      {/* Collapsible Legend */}
+      <div className="absolute bottom-3 left-3 z-10">
+        <div className="bg-background/90 backdrop-blur-sm border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setLegendOpen(!legendOpen)}
+            className="w-full px-3 py-2 flex items-center justify-between text-xs font-medium hover:bg-muted/50 transition-colors"
+          >
+            <span>Legend</span>
+            {legendOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+          </button>
+          {legendOpen && (
+            <div className="px-3 pb-2 space-y-1.5 border-t border-border pt-2">
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#1e40af' }} />
+                <span className="text-muted-foreground">Premium</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#2563eb' }} />
+                <span className="text-muted-foreground">VIP</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#3b82f6' }} />
+                <span className="text-muted-foreground">Standard</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#60a5fa' }} />
+                <span className="text-muted-foreground">Value</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#93c5fd' }} />
+                <span className="text-muted-foreground">Economy</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
