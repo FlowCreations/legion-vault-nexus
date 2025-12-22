@@ -184,11 +184,11 @@ export function SeatSelection({ showId, onNext, onBack }: SeatSelectionProps) {
       </div>
 
       {/* Main Content - Map or List with Detail Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         {/* Map/List View */}
         <div className={cn(
           "transition-all duration-300",
-          selectedSection ? "lg:col-span-3" : "lg:col-span-5"
+          selectedSection ? "md:col-span-3" : "md:col-span-5"
         )}>
           {viewMode === 'map' ? (
             <VenueMap
@@ -313,7 +313,7 @@ export function SeatSelection({ showId, onNext, onBack }: SeatSelectionProps) {
 
         {/* Section Detail Panel */}
         {selectedSection && (
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <SectionDetailPanel
               section={selectedSection}
               basePrice={basePrice}

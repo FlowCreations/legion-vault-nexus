@@ -52,19 +52,19 @@ export function SectionDetailPanel({
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden animate-in slide-in-from-right-5 duration-300">
+    <div className="bg-card border border-border rounded-xl overflow-hidden animate-in slide-in-from-right-5 duration-300 min-w-[320px]">
       {/* Section Header - Ticketmaster style */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-bold text-lg">{formatSectionName()}</h3>
-            <p className="text-sm text-muted-foreground">
+      <div className="p-5 border-b border-border">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="font-bold text-xl">{formatSectionName()}</h3>
+            <p className="text-sm text-muted-foreground mt-1">
               Row {rowInfo.row} • Seats {rowInfo.seats}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors text-xl leading-none p-1"
+            className="text-muted-foreground hover:text-foreground transition-colors text-2xl leading-none p-1 flex-shrink-0"
           >
             ×
           </button>
@@ -85,7 +85,7 @@ export function SectionDetailPanel({
       </div>
 
       {/* Ticket Details */}
-      <div className="p-4 space-y-4">
+      <div className="p-5 space-y-5">
         {/* Verified Badge */}
         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
           <ShieldCheck className="w-4 h-4" />
@@ -140,7 +140,7 @@ export function SectionDetailPanel({
       </div>
 
       {/* Continue Button */}
-      <div className="p-4 pt-0">
+      <div className="p-5 pt-0">
         <Button
           className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
           onClick={onContinue}
