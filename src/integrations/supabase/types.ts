@@ -5709,6 +5709,7 @@ export type Database = {
           created_at: string | null
           date: string
           id: string
+          seating_type: string | null
           special_guests: string | null
           state: string | null
           status: string | null
@@ -5730,6 +5731,7 @@ export type Database = {
           created_at?: string | null
           date: string
           id?: string
+          seating_type?: string | null
           special_guests?: string | null
           state?: string | null
           status?: string | null
@@ -5751,6 +5753,7 @@ export type Database = {
           created_at?: string | null
           date?: string
           id?: string
+          seating_type?: string | null
           special_guests?: string | null
           state?: string | null
           status?: string | null

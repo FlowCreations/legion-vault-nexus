@@ -45,6 +45,7 @@ interface TourShow {
   venue_image_url?: string | null;
   venue_address?: string | null;
   ticketmaster_venue_id?: string | null;
+  seating_type?: string | null;
 }
 
 interface TicketmasterVenue {
@@ -83,6 +84,7 @@ export function TourManager() {
     venue_image_url: "",
     venue_address: "",
     ticketmaster_venue_id: "",
+    seating_type: "general_admission",
   });
 
   useEffect(() => {
@@ -199,6 +201,7 @@ export function TourManager() {
             venue_image_url: formData.venue_image_url || null,
             venue_address: formData.venue_address || null,
             ticketmaster_venue_id: formData.ticketmaster_venue_id || null,
+            seating_type: formData.seating_type,
           })
           .eq("id", editingShow.id);
 
@@ -223,6 +226,7 @@ export function TourManager() {
             venue_image_url: formData.venue_image_url || null,
             venue_address: formData.venue_address || null,
             ticketmaster_venue_id: formData.ticketmaster_venue_id || null,
+            seating_type: formData.seating_type,
           },
         ]);
 
@@ -251,6 +255,7 @@ export function TourManager() {
         venue_image_url: "",
         venue_address: "",
         ticketmaster_venue_id: "",
+        seating_type: "general_admission",
       });
       setShowVenueResults(false);
       setVenueSearchResults([]);
@@ -279,6 +284,7 @@ export function TourManager() {
       venue_image_url: show.venue_image_url || "",
       venue_address: show.venue_address || "",
       ticketmaster_venue_id: show.ticketmaster_venue_id || "",
+      seating_type: show.seating_type || "general_admission",
     });
     setShowVenueResults(false);
     setVenueSearchResults([]);
@@ -344,6 +350,7 @@ export function TourManager() {
                     venue_image_url: "",
                     venue_address: "",
                     ticketmaster_venue_id: "",
+                    seating_type: "general_admission",
                   });
                   setShowVenueResults(false);
                   setVenueSearchResults([]);
@@ -520,23 +527,42 @@ export function TourManager() {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="on_sale">On Sale</SelectItem>
-                        <SelectItem value="low_tickets">Low Tickets</SelectItem>
-                        <SelectItem value="sold_out">Sold Out</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, status: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="on_sale">On Sale</SelectItem>
+                          <SelectItem value="low_tickets">Low Tickets</SelectItem>
+                          <SelectItem value="sold_out">Sold Out</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="seating_type">Seating Type</Label>
+                      <Select
+                        value={formData.seating_type}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, seating_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general_admission">General Admission</SelectItem>
+                          <SelectItem value="reserved">Reserved Seating</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div>
