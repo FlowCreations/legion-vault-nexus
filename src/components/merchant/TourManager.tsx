@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useVenueDetails } from "@/hooks/useVenueDetails";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Calendar, MapPin, Download, Pencil } from "lucide-react";
+import { Plus, Trash2, MapPin, Download, Pencil, Search, Loader2, ExternalLink, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 
 interface TourShow {
@@ -41,14 +42,35 @@ interface TourShow {
   ticket_link: string | null;
   status: string;
   special_guests: string | null;
+  venue_image_url?: string | null;
+  venue_address?: string | null;
+  ticketmaster_venue_id?: string | null;
+}
+
+interface TicketmasterVenue {
+  id: string;
+  name: string;
+  url: string;
+  imageUrl: string | null;
+  address: string;
+  city: string;
+  state: string;
+  latitude: number | null;
+  longitude: number | null;
+  seatmapUrl: string | null;
+  generalInfo: Record<string, unknown>;
 }
 
 export function TourManager() {
   const { toast } = useToast();
+  const { searchVenues, selectVenue } = useVenueDetails(null);
   const [shows, setShows] = useState<TourShow[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingShow, setEditingShow] = useState<TourShow | null>(null);
+  const [venueSearchResults, setVenueSearchResults] = useState<TicketmasterVenue[]>([]);
+  const [venueSearchLoading, setVenueSearchLoading] = useState(false);
+  const [showVenueResults, setShowVenueResults] = useState(false);
   const [formData, setFormData] = useState({
     date: "",
     city: "",
@@ -58,6 +80,9 @@ export function TourManager() {
     ticket_link: "",
     status: "on_sale",
     special_guests: "",
+    venue_image_url: "",
+    venue_address: "",
+    ticketmaster_venue_id: "",
   });
 
   useEffect(() => {
@@ -95,15 +120,62 @@ export function TourManager() {
         description: "Tour dates imported from schedule",
       });
       loadShows();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVenueLookup = async () => {
+    if (!formData.venue || !formData.city) {
+      toast({
+        title: "Missing Info",
+        description: "Enter venue name and city first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVenueSearchLoading(true);
+    setShowVenueResults(true);
+    try {
+      const results = await searchVenues(formData.venue, formData.city, formData.state);
+      setVenueSearchResults(results);
+      if (results.length === 0) {
+        toast({
+          title: "No Results",
+          description: "No venues found on Ticketmaster. Try a different search.",
+        });
+      }
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Search failed',
+        variant: "destructive",
+      });
+    } finally {
+      setVenueSearchLoading(false);
+    }
+  };
+
+  const handleSelectTicketmasterVenue = (venue: TicketmasterVenue) => {
+    setFormData({
+      ...formData,
+      venue: venue.name,
+      venue_image_url: venue.imageUrl || "",
+      venue_address: venue.address,
+      ticketmaster_venue_id: venue.id,
+    });
+    setShowVenueResults(false);
+    toast({
+      title: "Venue Selected",
+      description: `${venue.name} info loaded from Ticketmaster`,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,6 +196,9 @@ export function TourManager() {
             ticket_link: formData.ticket_link || null,
             status: formData.status,
             special_guests: formData.special_guests || null,
+            venue_image_url: formData.venue_image_url || null,
+            venue_address: formData.venue_address || null,
+            ticketmaster_venue_id: formData.ticketmaster_venue_id || null,
           })
           .eq("id", editingShow.id);
 
@@ -145,6 +220,9 @@ export function TourManager() {
             ticket_link: formData.ticket_link || null,
             status: formData.status,
             special_guests: formData.special_guests || null,
+            venue_image_url: formData.venue_image_url || null,
+            venue_address: formData.venue_address || null,
+            ticketmaster_venue_id: formData.ticketmaster_venue_id || null,
           },
         ]);
 
@@ -170,7 +248,12 @@ export function TourManager() {
         ticket_link: "",
         status: "on_sale",
         special_guests: "",
+        venue_image_url: "",
+        venue_address: "",
+        ticketmaster_venue_id: "",
       });
+      setShowVenueResults(false);
+      setVenueSearchResults([]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -193,7 +276,12 @@ export function TourManager() {
       ticket_link: show.ticket_link || "",
       status: show.status,
       special_guests: show.special_guests || "",
+      venue_image_url: show.venue_image_url || "",
+      venue_address: show.venue_address || "",
+      ticketmaster_venue_id: show.ticketmaster_venue_id || "",
     });
+    setShowVenueResults(false);
+    setVenueSearchResults([]);
     setIsDialogOpen(true);
   };
 
@@ -253,7 +341,12 @@ export function TourManager() {
                     ticket_link: "",
                     status: "on_sale",
                     special_guests: "",
+                    venue_image_url: "",
+                    venue_address: "",
+                    ticketmaster_venue_id: "",
                   });
+                  setShowVenueResults(false);
+                  setVenueSearchResults([]);
                 }}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Show
@@ -282,16 +375,103 @@ export function TourManager() {
                     </div>
                     <div>
                       <Label htmlFor="venue">Venue *</Label>
-                      <Input
-                        id="venue"
-                        value={formData.venue}
-                        onChange={(e) =>
-                          setFormData({ ...formData, venue: e.target.value })
-                        }
-                        required
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="venue"
+                          value={formData.venue}
+                          onChange={(e) =>
+                            setFormData({ ...formData, venue: e.target.value })
+                          }
+                          placeholder="Enter venue name"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={handleVenueLookup}
+                          disabled={venueSearchLoading}
+                          title="Lookup venue on Ticketmaster"
+                        >
+                          {venueSearchLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Search className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Venue Search Results */}
+                  {showVenueResults && (
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <div className="bg-muted/50 px-3 py-2 text-sm font-medium flex items-center justify-between">
+                        <span>Ticketmaster Venues</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowVenueResults(false)}
+                        >
+                          Close
+                        </Button>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto divide-y divide-border">
+                        {venueSearchLoading ? (
+                          <div className="p-4 text-center text-muted-foreground">
+                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                            Searching...
+                          </div>
+                        ) : venueSearchResults.length === 0 ? (
+                          <div className="p-4 text-center text-muted-foreground text-sm">
+                            No venues found. Try a different search.
+                          </div>
+                        ) : (
+                          venueSearchResults.map((v) => (
+                            <button
+                              key={v.id}
+                              type="button"
+                              className="w-full p-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
+                              onClick={() => handleSelectTicketmasterVenue(v)}
+                            >
+                              {v.imageUrl ? (
+                                <img
+                                  src={v.imageUrl}
+                                  alt={v.name}
+                                  className="w-12 h-12 rounded object-cover"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                                  <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{v.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{v.address}</p>
+                              </div>
+                              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Venue Preview (when selected from TM) */}
+                  {formData.venue_image_url && (
+                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                      <img
+                        src={formData.venue_image_url}
+                        alt={formData.venue}
+                        className="w-16 h-12 rounded object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{formData.venue}</p>
+                        <p className="text-xs text-muted-foreground truncate">{formData.venue_address}</p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>

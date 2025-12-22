@@ -5713,8 +5713,16 @@ export type Database = {
           state: string | null
           status: string | null
           ticket_link: string | null
+          ticketmaster_venue_id: string | null
           updated_at: string | null
           venue: string
+          venue_address: string | null
+          venue_image_url: string | null
+          venue_info: Json | null
+          venue_lat: number | null
+          venue_lng: number | null
+          venue_seatmap_url: string | null
+          venue_url: string | null
         }
         Insert: {
           city: string
@@ -5726,8 +5734,16 @@ export type Database = {
           state?: string | null
           status?: string | null
           ticket_link?: string | null
+          ticketmaster_venue_id?: string | null
           updated_at?: string | null
           venue: string
+          venue_address?: string | null
+          venue_image_url?: string | null
+          venue_info?: Json | null
+          venue_lat?: number | null
+          venue_lng?: number | null
+          venue_seatmap_url?: string | null
+          venue_url?: string | null
         }
         Update: {
           city?: string
@@ -5739,8 +5755,16 @@ export type Database = {
           state?: string | null
           status?: string | null
           ticket_link?: string | null
+          ticketmaster_venue_id?: string | null
           updated_at?: string | null
           venue?: string
+          venue_address?: string | null
+          venue_image_url?: string | null
+          venue_info?: Json | null
+          venue_lat?: number | null
+          venue_lng?: number | null
+          venue_seatmap_url?: string | null
+          venue_url?: string | null
         }
         Relationships: []
       }
