@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { cn } from "@/lib/utils";
 import { Plus, Minus, Home, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -62,7 +62,7 @@ const ARENA_SECTIONS = {
   ],
 };
 
-export function VenueMap({ sections, selectedSectionId, onSelectSection }: VenueMapProps) {
+const VenueMap = memo(function VenueMap({ sections, selectedSectionId, onSelectSection }: VenueMapProps) {
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [legendOpen, setLegendOpen] = useState(true);
@@ -147,37 +147,69 @@ export function VenueMap({ sections, selectedSectionId, onSelectSection }: Venue
     }
   };
 
-  // Convert polar coordinates to cartesian
-  const polarToCartesian = (angle: number, radius: number) => {
-    const rad = (angle * Math.PI) / 180;
-    return {
-      x: centerX + radius * Math.cos(rad),
-      y: centerY - radius * Math.sin(rad) + 20, // Offset for stage at top
+  // Pre-compute all arc paths once - these never change
+  const precomputedPaths = useMemo(() => {
+    const createArcSection = (
+      startAngle: number,
+      endAngle: number,
+      innerRadius: number,
+      outerRadius: number
+    ) => {
+      const rad = (angle: number) => (angle * Math.PI) / 180;
+      const startOuter = {
+        x: centerX + outerRadius * Math.cos(rad(startAngle)),
+        y: centerY - outerRadius * Math.sin(rad(startAngle)) + 20,
+      };
+      const endOuter = {
+        x: centerX + outerRadius * Math.cos(rad(endAngle)),
+        y: centerY - outerRadius * Math.sin(rad(endAngle)) + 20,
+      };
+      const startInner = {
+        x: centerX + innerRadius * Math.cos(rad(startAngle)),
+        y: centerY - innerRadius * Math.sin(rad(startAngle)) + 20,
+      };
+      const endInner = {
+        x: centerX + innerRadius * Math.cos(rad(endAngle)),
+        y: centerY - innerRadius * Math.sin(rad(endAngle)) + 20,
+      };
+      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+      return `M ${startOuter.x} ${startOuter.y} A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${endOuter.x} ${endOuter.y} L ${endInner.x} ${endInner.y} A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${startInner.x} ${startInner.y} Z`;
     };
-  };
 
-  // Create arc path for a section
-  const createArcSection = (
-    startAngle: number,
-    endAngle: number,
-    innerRadius: number,
-    outerRadius: number
-  ) => {
-    const startOuter = polarToCartesian(startAngle, outerRadius);
-    const endOuter = polarToCartesian(endAngle, outerRadius);
-    const startInner = polarToCartesian(startAngle, innerRadius);
-    const endInner = polarToCartesian(endAngle, innerRadius);
+    const paths: Record<string, { path: string; labelX: number; labelY: number }> = {};
     
-    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+    // Lower sections
+    ARENA_SECTIONS.lower.forEach(config => {
+      const startAngle = config.angle - 7;
+      const endAngle = config.angle + 7;
+      const innerRadius = 95;
+      const outerRadius = 130;
+      const midRadius = (innerRadius + outerRadius) / 2;
+      const rad = (config.angle * Math.PI) / 180;
+      paths[config.id] = {
+        path: createArcSection(startAngle, endAngle, innerRadius, outerRadius),
+        labelX: centerX + midRadius * Math.cos(rad),
+        labelY: centerY - midRadius * Math.sin(rad) + 20,
+      };
+    });
     
-    return `
-      M ${startOuter.x} ${startOuter.y}
-      A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${endOuter.x} ${endOuter.y}
-      L ${endInner.x} ${endInner.y}
-      A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${startInner.x} ${startInner.y}
-      Z
-    `;
-  };
+    // Upper sections
+    ARENA_SECTIONS.upper.forEach(config => {
+      const startAngle = config.angle - 5.5;
+      const endAngle = config.angle + 5.5;
+      const innerRadius = 145;
+      const outerRadius = 180;
+      const midRadius = (innerRadius + outerRadius) / 2;
+      const rad = (config.angle * Math.PI) / 180;
+      paths[config.id] = {
+        path: createArcSection(startAngle, endAngle, innerRadius, outerRadius),
+        labelX: centerX + midRadius * Math.cos(rad),
+        labelY: centerY - midRadius * Math.sin(rad) + 20,
+      };
+    });
+    
+    return paths;
+  }, [centerX, centerY]);
 
   const renderLowerSection = (config: { id: string; label: string; angle: number; radius: number }, index: number) => {
     const sectionData = getSectionData(config.id);
@@ -186,14 +218,9 @@ export function VenueMap({ sections, selectedSectionId, onSelectSection }: Venue
     const isHovered = hoveredSection === config.id;
     const isSelected = selectedSectionId === config.id || (sectionData && selectedSectionId === sectionData.id);
     
-    // Calculate section arc (each section spans about 14 degrees for lower)
-    const startAngle = config.angle - 7;
-    const endAngle = config.angle + 7;
-    const innerRadius = 95;
-    const outerRadius = 130;
-    
-    const path = createArcSection(startAngle, endAngle, innerRadius, outerRadius);
-    const labelPos = polarToCartesian(config.angle, (innerRadius + outerRadius) / 2);
+    // Use precomputed path
+    const computed = precomputedPaths[config.id];
+    if (!computed) return null;
     
     return (
       <g
@@ -207,15 +234,15 @@ export function VenueMap({ sections, selectedSectionId, onSelectSection }: Venue
         onClick={() => handleSectionClick(config.id)}
       >
         <path
-          d={path}
+          d={computed.path}
           fill={colors.fill}
           stroke={colors.stroke}
           strokeWidth={isSelected ? 2 : 1}
           className="transition-all duration-150"
         />
         <text
-          x={labelPos.x}
-          y={labelPos.y}
+          x={computed.labelX}
+          y={computed.labelY}
           className="fill-white text-[8px] font-bold pointer-events-none"
           textAnchor="middle"
           dominantBaseline="middle"
@@ -232,14 +259,9 @@ export function VenueMap({ sections, selectedSectionId, onSelectSection }: Venue
     const isSoldOut = !sectionData || sectionData.available === 0;
     const isSelected = selectedSectionId === config.id || (sectionData && selectedSectionId === sectionData.id);
     
-    // Calculate section arc (each section spans about 11 degrees for upper)
-    const startAngle = config.angle - 5.5;
-    const endAngle = config.angle + 5.5;
-    const innerRadius = 145;
-    const outerRadius = 180;
-    
-    const path = createArcSection(startAngle, endAngle, innerRadius, outerRadius);
-    const labelPos = polarToCartesian(config.angle, (innerRadius + outerRadius) / 2);
+    // Use precomputed path
+    const computed = precomputedPaths[config.id];
+    if (!computed) return null;
     
     return (
       <g
@@ -253,15 +275,15 @@ export function VenueMap({ sections, selectedSectionId, onSelectSection }: Venue
         onClick={() => handleSectionClick(config.id)}
       >
         <path
-          d={path}
+          d={computed.path}
           fill={colors.fill}
           stroke={colors.stroke}
           strokeWidth={isSelected ? 2 : 1}
           className="transition-all duration-150"
         />
         <text
-          x={labelPos.x}
-          y={labelPos.y}
+          x={computed.labelX}
+          y={computed.labelY}
           className="fill-white text-[7px] font-bold pointer-events-none"
           textAnchor="middle"
           dominantBaseline="middle"
@@ -474,4 +496,8 @@ export function VenueMap({ sections, selectedSectionId, onSelectSection }: Venue
       </div>
     </div>
   );
-}
+});
+
+VenueMap.displayName = 'VenueMap';
+
+export { VenueMap };
