@@ -1,4 +1,4 @@
-import { MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,9 @@ interface TourShow {
   ticket_link: string | null;
   status: string;
   special_guests: string | null;
+  venue_image_url?: string | null;
+  venue_address?: string | null;
+  venue_url?: string | null;
 }
 
 export default function Shows() {
@@ -144,7 +147,18 @@ export default function Shows() {
                       key={show.id}
                       className="bg-card hover:bg-card-hover border border-border hover:border-primary/30 rounded-lg p-6 transition-all duration-300 cursor-pointer group"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        {/* Venue Image Thumbnail */}
+                        {show.venue_image_url && (
+                          <div className="hidden sm:block w-24 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            <img 
+                              src={show.venue_image_url} 
+                              alt={show.venue}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center gap-3 mb-2">
                             <h3 className="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors">
@@ -166,16 +180,41 @@ export default function Shows() {
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <MapPin className="w-4 h-4" />
-                              <span>
-                                {show.city}
-                                {show.state && `, ${show.state}`}
-                                {show.country !== "USA" && `, ${show.country}`}
-                              </span>
+                              {show.venue_address ? (
+                                <a 
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(show.venue_address)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:text-primary hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {show.city}
+                                  {show.state && `, ${show.state}`}
+                                </a>
+                              ) : (
+                                <span>
+                                  {show.city}
+                                  {show.state && `, ${show.state}`}
+                                  {show.country !== "USA" && `, ${show.country}`}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4" />
                               <span>{month} {day}, {format(showDate, "yyyy")}</span>
                             </div>
+                            {show.venue_url && (
+                              <a
+                                href={show.venue_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                View Venue
+                              </a>
+                            )}
                           </div>
 
                           {show.special_guests && (
@@ -185,7 +224,7 @@ export default function Shows() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 sm:ml-auto">
                           {/* Portal Buy Button */}
                           <Button 
                             variant="outline"

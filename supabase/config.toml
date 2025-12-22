@@ -1,5 +1,8 @@
 project_id = "dlwyndcvnunvomgkbkhn"
 
+[functions.get-ticketmaster-venue]
+verify_jwt = false
+
 [functions.clear-community-posts]
 verify_jwt = false
 
