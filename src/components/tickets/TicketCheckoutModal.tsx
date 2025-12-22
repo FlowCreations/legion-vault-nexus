@@ -21,25 +21,35 @@ interface TicketCheckoutModalProps {
     venue: string;
     date: string;
     city: string;
+    seatingType: 'reserved' | 'general_admission';
   } | null;
 }
 
-const STEP_LABELS = [
-  "Section",
-  "Tickets",
-  "Bundles",
-  "Review",
-  "Confirmed"
-];
+// Step labels vary based on seating type
+const RESERVED_STEP_LABELS = ["Section", "Tickets", "Bundles", "Review", "Confirmed"];
+const GA_STEP_LABELS = ["Tickets", "Bundles", "Review", "Confirmed"];
 
 export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckoutModalProps) {
-  const { currentStep, setShow, nextStep, prevStep, resetCart } = useTicketCartStore();
+  const { currentStep, setShow, nextStep, prevStep, resetCart, setStep } = useTicketCartStore();
+  
+  const isGeneralAdmission = show?.seatingType === 'general_admission';
+  // For GA venues: skip step 1 (seat selection), start at step 2
+  const adjustedStep = isGeneralAdmission ? currentStep + 1 : currentStep;
+  const totalSteps = isGeneralAdmission ? 3 : 4;
 
   useEffect(() => {
     if (show && open) {
       setShow(show.id, show.venue, show.date, show.city);
+      // For GA venues, auto-set section to general admission
+      if (isGeneralAdmission) {
+        useTicketCartStore.getState().setSection({
+          sectionId: 'ga',
+          sectionName: 'General Admission',
+          priceModifier: 1,
+        });
+      }
     }
-  }, [show, open, setShow]);
+  }, [show, open, setShow, isGeneralAdmission]);
 
   const handleClose = () => {
     resetCart();
@@ -48,12 +58,16 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
 
   if (!show) return null;
 
+  const stepLabels = isGeneralAdmission ? GA_STEP_LABELS : RESERVED_STEP_LABELS;
+  const displayStepsCount = isGeneralAdmission ? 3 : 4;
+  const { orderConfirmed } = useTicketCartStore();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl md:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
           <DialogTitle className="text-center">
-            {currentStep < 5 ? (
+            {!orderConfirmed ? (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground font-normal">
                   {show.venue}
@@ -61,10 +75,12 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
                 
                 {/* Step Indicator */}
                 <div className="flex items-center justify-center gap-2">
-                  {STEP_LABELS.slice(0, 4).map((label, idx) => {
+                  {stepLabels.slice(0, displayStepsCount).map((label, idx) => {
                     const stepNum = idx + 1;
-                    const isActive = currentStep === stepNum;
-                    const isComplete = currentStep > stepNum;
+                    // For GA, currentStep 1 = Tickets (first step), for Reserved currentStep 1 = Section
+                    const effectiveCurrentStep = isGeneralAdmission ? currentStep : currentStep;
+                    const isActive = effectiveCurrentStep === stepNum;
+                    const isComplete = effectiveCurrentStep > stepNum;
                     
                     return (
                       <div key={label} className="flex items-center gap-2">
@@ -79,7 +95,7 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
                         >
                           {stepNum}
                         </div>
-                        {idx < 3 && (
+                        {idx < displayStepsCount - 1 && (
                           <div
                             className={`w-8 h-0.5 ${
                               isComplete ? 'bg-primary' : 'bg-muted'
@@ -92,7 +108,7 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
                 </div>
                 
                 <p className="text-xs text-muted-foreground">
-                  Step {currentStep} of 4: {STEP_LABELS[currentStep - 1]}
+                  Step {currentStep} of {displayStepsCount}: {stepLabels[currentStep - 1]}
                 </p>
               </div>
             ) : (
@@ -105,7 +121,8 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
         </DialogHeader>
 
         <div className="mt-4">
-          {currentStep === 1 && (
+          {/* For Reserved: Step 1 is SeatSelection, For GA: skip this */}
+          {!orderConfirmed && !isGeneralAdmission && currentStep === 1 && (
             <SeatSelection
               showId={show.id}
               onNext={nextStep}
@@ -113,29 +130,33 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
             />
           )}
           
-          {currentStep === 2 && (
+          {/* For Reserved: Step 2, For GA: Step 1 */}
+          {!orderConfirmed && (isGeneralAdmission ? currentStep === 1 : currentStep === 2) && (
             <TicketTypeSelection
               showId={show.id}
               onNext={nextStep}
-              onBack={prevStep}
+              onBack={isGeneralAdmission ? () => {} : prevStep}
             />
           )}
           
-          {currentStep === 3 && (
+          {/* For Reserved: Step 3, For GA: Step 2 */}
+          {!orderConfirmed && (isGeneralAdmission ? currentStep === 2 : currentStep === 3) && (
             <MerchBundleUpsell
               onNext={nextStep}
               onBack={prevStep}
             />
           )}
           
-          {currentStep === 4 && (
+          {/* For Reserved: Step 4, For GA: Step 3 */}
+          {!orderConfirmed && (isGeneralAdmission ? currentStep === 3 : currentStep === 4) && (
             <CartReview
               onNext={nextStep}
               onBack={prevStep}
             />
           )}
           
-          {currentStep === 5 && (
+          {/* Confirmation - shown when orderConfirmed is true */}
+          {orderConfirmed && (
             <TicketConfirmation
               onClose={handleClose}
             />

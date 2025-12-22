@@ -24,6 +24,7 @@ interface TourShow {
   venue_image_url?: string | null;
   venue_address?: string | null;
   venue_url?: string | null;
+  seating_type?: string | null;
 }
 
 export default function Shows() {
@@ -281,6 +282,7 @@ export default function Shows() {
           venue: selectedShow.venue,
           date: selectedShow.date,
           city: `${selectedShow.city}${selectedShow.state ? `, ${selectedShow.state}` : ''}`,
+          seatingType: (selectedShow.seating_type === 'reserved' ? 'reserved' : 'general_admission') as 'reserved' | 'general_admission',
         } : null}
       />
     </div>
