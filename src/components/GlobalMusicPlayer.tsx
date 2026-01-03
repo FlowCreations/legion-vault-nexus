@@ -217,7 +217,7 @@ export function GlobalMusicPlayer() {
 
   return (
     <>
-      <audio ref={audioRef} preload="metadata" crossOrigin="anonymous" />
+      <audio ref={audioRef} preload="metadata" />
       <MusicPlayer audioRef={audioRef} />
       {newMilestone && (
         <MilestoneModal milestone={newMilestone} onClose={clearMilestone} />
