@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2, Minimize2, Users } from 'lucide-react';
+import { Maximize2, DollarSign, Share2, Volume2, X, PictureInPicture2, Minimize2, Users, MessageCircle } from 'lucide-react';
 import { LiveChat } from './LiveChat';
 import { TipDialog } from './TipDialog';
 import { LiveReactions } from './LiveReactions';
@@ -33,7 +33,10 @@ export function ExpandableLiveViewer({
   const isMobile = useIsMobile();
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [audioMuted, setAudioMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showChatInFullscreen, setShowChatInFullscreen] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   
   // Global stream state
   const { 
@@ -115,10 +118,41 @@ export function ExpandableLiveViewer({
     }
   }, [eventId, connectStream]); // Remove status from deps to avoid reconnect loops
 
-  // Poll database for stream status to detect when stream ends
+  // Subscribe to realtime database changes for immediate sync
   useEffect(() => {
     if (!eventId) return;
 
+    console.log('[Viewer] Setting up realtime subscription for event:', eventId);
+
+    const channel = supabase
+      .channel(`livestream-viewer-${eventId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'livestream_events',
+        filter: `id=eq.${eventId}`
+      }, (payload) => {
+        console.log('[Viewer] Realtime update received:', payload);
+        const newStatus = payload.new?.status as 'live' | 'ended' | null;
+        
+        if (newStatus) {
+          setDatabaseStatus(newStatus);
+          
+          // Immediately disconnect if stream ended
+          if (newStatus === 'ended' && status === 'connected') {
+            console.log('[Viewer] Stream ended via realtime, disconnecting immediately');
+            toast.info("Stream has ended", {
+              description: "Thanks for watching!"
+            });
+            disconnectStream();
+          }
+        }
+      })
+      .subscribe((subscribeStatus) => {
+        console.log('[Viewer] Realtime subscription status:', subscribeStatus);
+      });
+
+    // Also poll as backup every 3 seconds
     const checkStreamStatus = async () => {
       const { data, error } = await supabase
         .from('livestream_events')
@@ -127,24 +161,24 @@ export function ExpandableLiveViewer({
         .single();
 
       if (!error && data) {
-        console.log('[Viewer] Database status check:', data.status);
+        console.log('[Viewer] Polling status check:', data.status);
         setDatabaseStatus(data.status as 'live' | 'ended');
         
-        // If database shows ended but we're still connected, disconnect
         if (data.status === 'ended' && status === 'connected') {
-          console.log('[Viewer] Stream ended in database, disconnecting');
+          console.log('[Viewer] Stream ended (polling), disconnecting');
           disconnectStream();
         }
       }
     };
 
-    // Check immediately
     checkStreamStatus();
-
-    // Poll every 3 seconds for faster response
     const interval = setInterval(checkStreamStatus, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('[Viewer] Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [eventId, setDatabaseStatus, status, disconnectStream]);
 
   // Attach tracks when they become available OR when expanded state changes
@@ -216,9 +250,10 @@ export function ExpandableLiveViewer({
   };
 
   const handleFullscreen = () => {
-    if (!videoRef.current) return;
+    const container = fullscreenContainerRef.current;
+    if (!container) return;
 
-    const el = videoRef.current as HTMLVideoElement & {
+    const el = container as HTMLDivElement & {
       webkitRequestFullscreen?: () => Promise<void> | void;
       msRequestFullscreen?: () => Promise<void> | void;
     };
@@ -226,17 +261,36 @@ export function ExpandableLiveViewer({
     try {
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => undefined);
+        setIsFullscreen(false);
       } else if (el.requestFullscreen) {
         el.requestFullscreen().catch(() => undefined);
+        setIsFullscreen(true);
       } else if (el.webkitRequestFullscreen) {
         el.webkitRequestFullscreen();
+        setIsFullscreen(true);
       } else if (el.msRequestFullscreen) {
         el.msRequestFullscreen();
+        setIsFullscreen(true);
       }
     } catch (err) {
       console.warn('[Viewer] Fullscreen error:', err);
     }
   };
+
+  // Listen for fullscreen changes (e.g., user presses Escape)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
   
   // Calculate stream duration
   const streamDuration = streamStartTime 
@@ -247,10 +301,10 @@ export function ExpandableLiveViewer({
   
   // Expanded view with YouTube-style chat layout
   const expandedContent = (
-    <div className="flex flex-col h-full bg-background">
+    <div ref={fullscreenContainerRef} className={`flex flex-col h-full bg-background ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       <div className="flex-1 flex flex-col lg:flex-row gap-0 overflow-hidden">
         {/* Main Video Area */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className={`flex-1 flex flex-col min-h-0 ${isFullscreen && !showChatInFullscreen ? 'w-full' : ''}`}>
           <div className="relative flex-1 bg-black overflow-hidden">
             <video 
               ref={videoRef}
@@ -305,15 +359,28 @@ export function ExpandableLiveViewer({
               </>
             )}
             
-            {/* Player Controls at Bottom */}
-            <div className="absolute bottom-4 right-4 flex gap-2 z-20 opacity-0 hover:opacity-100 transition-opacity">
+            {/* Player Controls at Bottom - Always visible in fullscreen */}
+            <div className={`absolute bottom-4 right-4 flex gap-2 z-20 transition-opacity ${isFullscreen ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`}>
+              {/* Chat Toggle Button - Only show in fullscreen */}
+              {isFullscreen && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setShowChatInFullscreen(!showChatInFullscreen)}
+                  className={`bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm ${showChatInFullscreen ? 'ring-2 ring-primary' : ''}`}
+                  title={showChatInFullscreen ? 'Hide Chat' : 'Show Chat'}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={handleFullscreen}
                 className="bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm"
+                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               >
-                <Maximize2 className="h-4 w-4" />
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </Button>
               {isPiPSupported && (
                 <Button
@@ -329,15 +396,27 @@ export function ExpandableLiveViewer({
           </div>
         </div>
         
-        {/* YouTube-Style Chat Sidebar - Always visible on desktop */}
-        {!isMobile && (
-          <div className="w-80 lg:w-96 flex flex-col bg-muted/30 border-l border-border">
+        {/* YouTube-Style Chat Sidebar - Visible on desktop, respects fullscreen toggle */}
+        {!isMobile && (!isFullscreen || showChatInFullscreen) && (
+          <div className={`w-80 lg:w-96 flex flex-col bg-muted/30 border-l border-border ${isFullscreen ? 'bg-background/95' : ''}`}>
             {/* Viewer Count Header */}
             <div className="flex-shrink-0 bg-background/80 backdrop-blur-sm px-4 py-3 border-b border-border">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-primary" />
-                <span className="font-semibold">{viewerCount}</span>
-                <span className="text-muted-foreground">watching now</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="font-semibold">{viewerCount}</span>
+                  <span className="text-muted-foreground">watching now</span>
+                </div>
+                {isFullscreen && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowChatInFullscreen(false)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
             
