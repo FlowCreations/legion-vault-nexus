@@ -12,6 +12,7 @@ const ALLOWED_EVENT_TYPES = [
   'music_play',
   'music_listen',
   'music_pause',
+  'music_skip',
   'album_view',
   'purchase_started',
   'purchase_completed',
@@ -34,6 +35,8 @@ const ALLOWED_EVENT_TYPES = [
   'share',
   'rsvp_livestream',
   'attend_livestream',
+  'livestream_join',
+  'livestream_reaction',
   'cart_abandon',
   'checkout_view',
   'product_hover',
@@ -45,7 +48,8 @@ const ALLOWED_EVENT_TYPES = [
   'merch_detail_view',
   'ticket_click',
   'bio_view',
-  'poll_participate'
+  'poll_participate',
+  'return_visit'
 ];
 
 const MAX_EVENT_DATA_SIZE = 10000; // 10KB max for event data
