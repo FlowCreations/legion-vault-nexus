@@ -76,6 +76,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [filterERA, setFilterERA] = useState<string>('all');
   const [filterPTP, setFilterPTP] = useState<string>('all');
+  const [filterTier, setFilterTier] = useState<string>('all');
   const [selectedPattern, setSelectedPattern] = useState<{ member: any; pattern: any } | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [cameoFlagEnabled, setCameoFlagEnabled] = useState(false);
@@ -354,6 +355,11 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       filtered = filtered.filter(m => m.ptp_status === filterPTP);
     }
     
+    // Filter by Tier
+    if (filterTier !== 'all') {
+      filtered = filtered.filter(m => m.tier?.toLowerCase() === filterTier.toLowerCase());
+    }
+    
     // Sort
     filtered.sort((a, b) => {
       if (sortBy === 'era') return (b.era_current || 0) - (a.era_current || 0);
@@ -502,14 +508,30 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                     <option value="Go">Go</option>
                   </select>
                 </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Tier:</span>
+                  <select 
+                    value={filterTier}
+                    onChange={(e) => setFilterTier(e.target.value)}
+                    className="px-3 py-1 border rounded-md bg-background text-sm"
+                  >
+                    <option value="all">All</option>
+                    <option value="free">Free</option>
+                    <option value="rebels">Rebels</option>
+                    <option value="outlaws">Outlaws</option>
+                    <option value="legionnaires">Legionnaires</option>
+                  </select>
+                </div>
 
-                {(filterERA !== 'all' || filterPTP !== 'all') && (
+                {(filterERA !== 'all' || filterPTP !== 'all' || filterTier !== 'all') && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setFilterERA('all');
                       setFilterPTP('all');
+                      setFilterTier('all');
                     }}
                   >
                     <X className="w-4 h-4 mr-2" />
