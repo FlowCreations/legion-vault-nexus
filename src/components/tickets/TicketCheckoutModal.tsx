@@ -30,7 +30,7 @@ const RESERVED_STEP_LABELS = ["Section", "Tickets", "Bundles", "Review", "Confir
 const GA_STEP_LABELS = ["Tickets", "Bundles", "Review", "Confirmed"];
 
 export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckoutModalProps) {
-  const { currentStep, setShow, nextStep, prevStep, resetCart, setStep } = useTicketCartStore();
+  const { currentStep, setShow, nextStep, prevStep, resetCart, setStep, orderConfirmed } = useTicketCartStore();
   
   const isGeneralAdmission = show?.seatingType === 'general_admission';
   // For GA venues: skip step 1 (seat selection), start at step 2
@@ -60,7 +60,7 @@ export function TicketCheckoutModal({ open, onOpenChange, show }: TicketCheckout
 
   const stepLabels = isGeneralAdmission ? GA_STEP_LABELS : RESERVED_STEP_LABELS;
   const displayStepsCount = isGeneralAdmission ? 3 : 4;
-  const { orderConfirmed } = useTicketCartStore();
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
