@@ -16,10 +16,11 @@ import { ExpandableLiveViewer } from "@/components/livestream/ExpandableLiveView
 import { StreamCountdown } from "@/components/livestream/StreamCountdown";
 import { StreamIntro } from "@/components/livestream/StreamIntro";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
-
 export default function LiveStudio() {
   const navigate = useNavigate();
-  const { trackEvent: trackJRNY } = useJRNY();
+  const {
+    trackEvent: trackJRNY
+  } = useJRNY();
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [showAlbumDialog, setShowAlbumDialog] = useState(false);
@@ -47,15 +48,16 @@ export default function LiveStudio() {
   const [streamStartTime, setStreamStartTime] = useState<Date | undefined>(undefined);
   const [isViewingLive, setIsViewingLive] = useState(false);
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
-  
-
   useEffect(() => {
     checkAuth();
     checkLiveStream();
-    
+
     // Call cleanup on page load to end any stale streams
     console.log('[LiveStudio] Calling cleanup-stale-streams on page load');
-    supabase.functions.invoke('cleanup-stale-streams').then(({ data, error }) => {
+    supabase.functions.invoke('cleanup-stale-streams').then(({
+      data,
+      error
+    }) => {
       if (error) {
         console.error('[LiveStudio] Cleanup error:', error);
       } else {
@@ -65,27 +67,24 @@ export default function LiveStudio() {
         }
       }
     });
-    
+
     // Poll for live stream status - more frequently when viewing live
     console.log('[LiveStudio] Setting up live stream polling');
     const liveStreamInterval = setInterval(() => {
       console.log('[LiveStudio] Polling for live stream status');
       checkLiveStream();
     }, isViewingLive ? 10000 : 5000); // Check every 10s when viewing, 5s otherwise
-    
+
     // Target date: January 30, 2026 8:00 PM EST
     const targetDate = new Date('2026-01-30T20:00:00-05:00');
-    
     const updateCountdown = () => {
       const now = new Date();
       const difference = targetDate.getTime() - now.getTime();
-      
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        
+        const hours = Math.floor(difference % (1000 * 60 * 60 * 24) / (1000 * 60 * 60));
+        const minutes = Math.floor(difference % (1000 * 60 * 60) / (1000 * 60));
+        const seconds = Math.floor(difference % (1000 * 60) / 1000);
         setCountdown({
           days: String(days).padStart(2, '0'),
           hours: String(hours).padStart(2, '0'),
@@ -101,57 +100,52 @@ export default function LiveStudio() {
         });
       }
     };
-    
+
     // Update immediately and then every second
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
-    
+
     // Subscribe to real-time livestream events
-    const channel = supabase
-      .channel('livestream-events')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'livestream_events'
-      }, (payload) => {
-        console.log('[LiveStudio] Realtime event received:', payload);
-        
-        // Check if the event is INSERT or UPDATE
-        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          const eventData = payload.new as any;
-          console.log('[LiveStudio] Event data:', eventData);
-          
-          if (eventData.status === 'live') {
-            console.log('[LiveStudio] 🔴 Stream is now LIVE! Event ID:', eventData.id);
-            setLiveEventId(eventData.id);
-            setStreamStartTime(eventData.stream_start_time ? new Date(eventData.stream_start_time) : undefined);
-            setIsViewingLive(false); // Reset viewing state so button appears
-            toast.success("🔴 Stream is now LIVE!", {
-              description: "Click 'Join Stream' to watch now!"
+    const channel = supabase.channel('livestream-events').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'livestream_events'
+    }, payload => {
+      console.log('[LiveStudio] Realtime event received:', payload);
+
+      // Check if the event is INSERT or UPDATE
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        const eventData = payload.new as any;
+        console.log('[LiveStudio] Event data:', eventData);
+        if (eventData.status === 'live') {
+          console.log('[LiveStudio] 🔴 Stream is now LIVE! Event ID:', eventData.id);
+          setLiveEventId(eventData.id);
+          setStreamStartTime(eventData.stream_start_time ? new Date(eventData.stream_start_time) : undefined);
+          setIsViewingLive(false); // Reset viewing state so button appears
+          toast.success("🔴 Stream is now LIVE!", {
+            description: "Click 'Join Stream' to watch now!"
+          });
+        } else if (eventData.status === 'ended') {
+          console.log('[LiveStudio] 🔴 Stream has ENDED. Event ID:', eventData.id);
+          // Only clear if it's the currently displayed live event
+          if (liveEventId === eventData.id) {
+            setLiveEventId(null);
+            setStreamStartTime(undefined);
+            setIsViewingLive(false); // Stop viewing when stream ends
+            toast.info("Stream has ended", {
+              description: "Thanks for watching!"
             });
-          } else if (eventData.status === 'ended') {
-            console.log('[LiveStudio] 🔴 Stream has ENDED. Event ID:', eventData.id);
-            // Only clear if it's the currently displayed live event
-            if (liveEventId === eventData.id) {
-              setLiveEventId(null);
-              setStreamStartTime(undefined);
-              setIsViewingLive(false); // Stop viewing when stream ends
-              toast.info("Stream has ended", {
-                description: "Thanks for watching!"
-              });
-            }
           }
-        } else if (payload.eventType === 'DELETE') {
-          console.log('[LiveStudio] Event deleted, clearing live event ID');
-          setLiveEventId(null);
-          setStreamStartTime(undefined);
-          setIsViewingLive(false);
         }
-      })
-      .subscribe((status) => {
-        console.log('[LiveStudio] Realtime subscription status:', status);
-      });
-    
+      } else if (payload.eventType === 'DELETE') {
+        console.log('[LiveStudio] Event deleted, clearing live event ID');
+        setLiveEventId(null);
+        setStreamStartTime(undefined);
+        setIsViewingLive(false);
+      }
+    }).subscribe(status => {
+      console.log('[LiveStudio] Realtime subscription status:', status);
+    });
     return () => {
       console.log('[LiveStudio] Cleaning up intervals and subscriptions');
       clearInterval(interval);
@@ -165,37 +159,37 @@ export default function LiveStudio() {
       setIsViewingLive(false);
     }
   }, [liveEventId]);
-
   const checkLiveStream = async () => {
     console.log('[LiveStudio] Checking for live streams...');
-    
+
     // Calculate 2 minutes ago for heartbeat check
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    
+
     // Query for any events with status='live' and no actual_end (most recent first)
     // Also check that heartbeat is recent (within last 2 minutes) if it exists
-    const { data: liveEvents, error } = await supabase
-      .from('livestream_events')
-      .select('id, status, title, stream_start_time, actual_end, last_heartbeat')
-      .eq('status', 'live')
-      .is('actual_end', null)
-      .order('stream_start_time', { ascending: false })
-      .limit(1);
-    
-    console.log('[LiveStudio] Live stream check result:', { data: liveEvents, error });
-    
+    const {
+      data: liveEvents,
+      error
+    } = await supabase.from('livestream_events').select('id, status, title, stream_start_time, actual_end, last_heartbeat').eq('status', 'live').is('actual_end', null).order('stream_start_time', {
+      ascending: false
+    }).limit(1);
+    console.log('[LiveStudio] Live stream check result:', {
+      data: liveEvents,
+      error
+    });
+
     // If we have a live event, verify heartbeat is fresh
     if (liveEvents && liveEvents.length > 0 && !error) {
       const liveEvent = liveEvents[0];
-      
+
       // Check if heartbeat is stale (older than 2 minutes)
-      const isHeartbeatStale = liveEvent.last_heartbeat && 
-        new Date(liveEvent.last_heartbeat) < new Date(twoMinutesAgo);
-      
+      const isHeartbeatStale = liveEvent.last_heartbeat && new Date(liveEvent.last_heartbeat) < new Date(twoMinutesAgo);
       if (isHeartbeatStale) {
         console.log('[LiveStudio] ⚠️ Stream heartbeat is stale, treating as offline:', liveEvent);
         // Trigger cleanup for this stale stream
-        supabase.functions.invoke('cleanup-stale-streams').then(({ data }) => {
+        supabase.functions.invoke('cleanup-stale-streams').then(({
+          data
+        }) => {
           console.log('[LiveStudio] Triggered cleanup for stale stream:', data);
         });
         setLiveEventId(null);
@@ -213,47 +207,43 @@ export default function LiveStudio() {
       setIsViewingLive(false);
     }
   };
-
-
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: {
+        session
+      }
+    } = await supabase.auth.getSession();
     setIsAuthenticated(!!session);
   };
-
   const handleGetAccess = () => {
     setShowEmailDialog(true);
   };
-
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.name || !formData.country) {
       toast.error("Please fill in all required fields");
       return;
     }
-
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_events')
-        .insert({
-          session_id: crypto.randomUUID(),
-          event_type: 'live_studio_signup',
-          event_data: {
-            name: formData.name,
-            email: formData.email,
-            country: formData.country,
-            zipCode: formData.zipCode,
-            phone: formData.phone,
-            event_name: 'Acoustic Sessions Live'
-          }
-        });
-
+      const {
+        error
+      } = await supabase.from('user_events').insert({
+        session_id: crypto.randomUUID(),
+        event_type: 'live_studio_signup',
+        event_data: {
+          name: formData.name,
+          email: formData.email,
+          country: formData.country,
+          zipCode: formData.zipCode,
+          phone: formData.phone,
+          event_name: 'Acoustic Sessions Live'
+        }
+      });
       if (error) throw error;
-
       toast.success("Access granted!", {
         description: "We'll send you the stream link before it starts."
       });
-      
       setShowEmailDialog(false);
       setFormData({
         name: "",
@@ -269,18 +259,17 @@ export default function LiveStudio() {
       setIsLoading(false);
     }
   };
-
   const handleSetReminder = () => {
     setShowReminderDialog(true);
   };
-
   const handleReminderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reminderEmail) return;
-
     setIsReminderLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('send-calendar-invite', {
+      const {
+        error
+      } = await supabase.functions.invoke('send-calendar-invite', {
         body: {
           email: reminderEmail,
           eventDetails: {
@@ -292,13 +281,10 @@ export default function LiveStudio() {
           }
         }
       });
-
       if (error) throw error;
-
       toast.success("Calendar invite sent!", {
         description: "Check your email for the calendar invite."
       });
-
       setShowReminderDialog(false);
       setReminderEmail("");
     } catch (error) {
@@ -308,34 +294,28 @@ export default function LiveStudio() {
       setIsReminderLoading(false);
     }
   };
-
   const handleAlbumRegistration = () => {
     setShowAlbumDialog(true);
   };
-
   const handleAlbumSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!albumEmail) return;
-
     setIsAlbumLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_events')
-        .insert({
-          session_id: crypto.randomUUID(),
-          event_type: 'album_listening_party_signup',
-          event_data: {
-            email: albumEmail,
-            event_name: 'Album Listening Party'
-          }
-        });
-
+      const {
+        error
+      } = await supabase.from('user_events').insert({
+        session_id: crypto.randomUUID(),
+        event_type: 'album_listening_party_signup',
+        event_data: {
+          email: albumEmail,
+          event_name: 'Album Listening Party'
+        }
+      });
       if (error) throw error;
-
       toast.success("Registered successfully!", {
         description: "We'll send you the event details before it starts."
       });
-      
       setShowAlbumDialog(false);
       setAlbumEmail("");
     } catch (error) {
@@ -345,7 +325,6 @@ export default function LiveStudio() {
       setIsAlbumLoading(false);
     }
   };
-
   const handleAddToCart = () => {
     // JRNY tracking for add to cart
     trackJRNY('add_to_cart', {
@@ -354,7 +333,7 @@ export default function LiveStudio() {
       price: 19.99,
       category: 'ticket'
     });
-    
+
     // Create a Shopify-compatible product for the tour finale ticket
     const mockShopifyProduct: ShopifyProduct = {
       node: {
@@ -393,9 +372,7 @@ export default function LiveStudio() {
         options: []
       }
     };
-    
     const variant = mockShopifyProduct.node.variants.edges[0].node;
-    
     addItem({
       product: mockShopifyProduct,
       variantId: variant.id,
@@ -404,12 +381,9 @@ export default function LiveStudio() {
       quantity: 1,
       selectedOptions: variant.selectedOptions
     });
-    
     toast.success("Ticket added to cart!");
   };
-
-  return (
-    <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
+  return <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
@@ -430,9 +404,7 @@ export default function LiveStudio() {
             <div className="flex items-center space-x-3 mb-6">
               <div className="relative">
                 <div className={`w-4 h-4 rounded-full ${liveEventId ? 'bg-red-500 animate-pulse' : 'bg-muted-foreground'}`} />
-                {liveEventId && (
-                  <div className="absolute inset-0 w-4 h-4 bg-red-500 rounded-full animate-ping" />
-                )}
+                {liveEventId && <div className="absolute inset-0 w-4 h-4 bg-red-500 rounded-full animate-ping" />}
               </div>
               <Badge className={liveEventId ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-muted/20 text-muted-foreground border-muted/30"}>
                 {liveEventId ? 'LIVE NOW' : 'Next Live Event'}
@@ -443,22 +415,10 @@ export default function LiveStudio() {
                 {/* Stream Preview or Live Video */}
                 <div className="relative">
                   <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500">
-                    {liveEventId ? (
-                      <ExpandableLiveViewer
-                        eventId={liveEventId}
-                        streamStartTime={streamStartTime}
-                        showExternalControls
-                      />
-                    ) : (
-                      <div className="relative aspect-video">
-                        <img 
-                          src={liveAcousticSession} 
-                          alt="Acoustic Sessions Live"
-                          className="w-full h-full object-cover"
-                        />
+                    {liveEventId ? <ExpandableLiveViewer eventId={liveEventId} streamStartTime={streamStartTime} showExternalControls /> : <div className="relative aspect-video">
+                        <img src={liveAcousticSession} alt="Acoustic Sessions Live" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </div>
 
@@ -469,37 +429,28 @@ export default function LiveStudio() {
                 </h2>
                 
                 <p className="text-muted-foreground mb-6 text-lg">
-                  {liveEventId 
-                    ? 'Watch the live performance!' 
-                    : 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.'}
+                  {liveEventId ? 'Watch the live performance!' : 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.'}
                 </p>
 
                 {/* Join Stream Button - Only show when live and not viewing */}
-                {liveEventId && !isViewingLive && (
-                  <Button
-                    size="lg"
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        setShowSubscribePrompt(true);
-                        return;
-                      }
-                      setIsViewingLive(true);
-                    }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-6 text-xl font-bold mb-6 shadow-xl"
-                  >
+                {liveEventId && !isViewingLive && <Button size="lg" onClick={() => {
+                if (!isAuthenticated) {
+                  setShowSubscribePrompt(true);
+                  return;
+                }
+                setIsViewingLive(true);
+              }} className="bg-red-600 hover:bg-red-700 text-white px-6 py-6 text-xl font-bold mb-6 shadow-xl">
                     <div className="flex items-center gap-3">
                       <span className="inline-block h-3 w-3 rounded-full bg-white animate-pulse" />
                       SOL IS LIVE NOW - JOIN STREAM
                     </div>
-                  </Button>
-                )}
+                  </Button>}
 
-                {!liveEventId && (
-                  <>
+                {!liveEventId && <>
                     <div className="space-y-3 mb-8">
                       <div className="flex items-center space-x-3 text-sm">
                         <Calendar className="w-5 h-5 text-primary" />
-                        <span>Tuesday, December 23, 2025</span>
+                        <span>​Friday, January 30th, 2026      </span>
                       </div>
                       <div className="flex items-center space-x-3 text-sm">
                         <Clock className="w-5 h-5 text-primary" />
@@ -515,43 +466,36 @@ export default function LiveStudio() {
                     <div className="bg-card rounded-xl p-4 mb-6 border border-border">
                       <p className="text-sm text-muted-foreground mb-2">Starting in:</p>
                       <div className="grid grid-cols-4 gap-2 text-center">
-                        {[
-                          { value: countdown.days, label: "Days" },
-                          { value: countdown.hours, label: "Hours" },
-                          { value: countdown.minutes, label: "Mins" },
-                          { value: countdown.seconds, label: "Secs" },
-                        ].map((item) => (
-                          <div key={item.label}>
+                        {[{
+                      value: countdown.days,
+                      label: "Days"
+                    }, {
+                      value: countdown.hours,
+                      label: "Hours"
+                    }, {
+                      value: countdown.minutes,
+                      label: "Mins"
+                    }, {
+                      value: countdown.seconds,
+                      label: "Secs"
+                    }].map(item => <div key={item.label}>
                             <div className="font-serif text-3xl font-bold text-primary">{item.value}</div>
                             <div className="text-xs text-muted-foreground">{item.label}</div>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      {!isAuthenticated && (
-                        <Button 
-                          size="lg" 
-                          className="bg-gradient-gold hover:shadow-glow transition-all"
-                          onClick={handleGetAccess}
-                        >
+                      {!isAuthenticated && <Button size="lg" className="bg-gradient-gold hover:shadow-glow transition-all" onClick={handleGetAccess}>
                           <Ticket className="w-5 h-5 mr-2" />
                           Get Free Access
-                        </Button>
-                      )}
-                      <Button 
-                        size="lg" 
-                        variant="outline" 
-                        className="border-primary/30 hover:border-primary"
-                        onClick={handleSetReminder}
-                      >
+                        </Button>}
+                      <Button size="lg" variant="outline" className="border-primary/30 hover:border-primary" onClick={handleSetReminder}>
                         <Download className="w-5 h-5 mr-2" />
                         Set Reminder
                       </Button>
                     </div>
-                  </>
-                )}
+                  </>}
               </div>
             </div>
           </div>
@@ -563,11 +507,7 @@ export default function LiveStudio() {
           <p className="text-muted-foreground mb-6">
             Missed a live show? Premium and VIP members can watch recordings of all past events.
           </p>
-          <Button 
-            variant="outline" 
-            className="border-primary/30 hover:border-primary"
-            onClick={() => navigate('/videos')}
-          >
+          <Button variant="outline" className="border-primary/30 hover:border-primary" onClick={() => navigate('/videos')}>
             Browse Archive
           </Button>
         </div>
@@ -587,76 +527,49 @@ export default function LiveStudio() {
           <form onSubmit={handleEmailSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Your name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
+              <Input id="name" type="text" placeholder="Your name" value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
+              <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={e => setFormData({
+              ...formData,
+              email: e.target.value
+            })} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="country">Country *</Label>
-              <Input
-                id="country"
-                type="text"
-                placeholder="United States"
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                required
-              />
+              <Input id="country" type="text" placeholder="United States" value={formData.country} onChange={e => setFormData({
+              ...formData,
+              country: e.target.value
+            })} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="zipCode">Zip Code (Optional)</Label>
-              <Input
-                id="zipCode"
-                type="text"
-                placeholder="12345"
-                value={formData.zipCode}
-                onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-              />
+              <Input id="zipCode" type="text" placeholder="12345" value={formData.zipCode} onChange={e => setFormData({
+              ...formData,
+              zipCode: e.target.value
+            })} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone (Optional)</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 (555) 000-0000"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
+              <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" value={formData.phone} onChange={e => setFormData({
+              ...formData,
+              phone: e.target.value
+            })} />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="lg"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                "Registering..."
-              ) : (
-                <>
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? "Registering..." : <>
                   <Mail className="w-4 h-4 mr-2" />
                   Get Access Link
-                </>
-              )}
+                </>}
             </Button>
           </form>
         </DialogContent>
@@ -675,29 +588,13 @@ export default function LiveStudio() {
           <form onSubmit={handleReminderSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reminderEmail">Email Address</Label>
-              <Input
-                id="reminderEmail"
-                type="email"
-                placeholder="your@email.com"
-                value={reminderEmail}
-                onChange={(e) => setReminderEmail(e.target.value)}
-                required
-              />
+              <Input id="reminderEmail" type="email" placeholder="your@email.com" value={reminderEmail} onChange={e => setReminderEmail(e.target.value)} required />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="lg"
-              disabled={isReminderLoading}
-            >
-              {isReminderLoading ? (
-                "Sending..."
-              ) : (
-                <>
+            <Button type="submit" className="w-full" size="lg" disabled={isReminderLoading}>
+              {isReminderLoading ? "Sending..." : <>
                   <Mail className="w-4 h-4 mr-2" />
                   Send Calendar Invite
-                </>
-              )}
+                </>}
             </Button>
           </form>
         </DialogContent>
@@ -716,41 +613,19 @@ export default function LiveStudio() {
           <form onSubmit={handleAlbumSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="albumEmail">Email Address</Label>
-              <Input
-                id="albumEmail"
-                type="email"
-                placeholder="your@email.com"
-                value={albumEmail}
-                onChange={(e) => setAlbumEmail(e.target.value)}
-                required
-              />
+              <Input id="albumEmail" type="email" placeholder="your@email.com" value={albumEmail} onChange={e => setAlbumEmail(e.target.value)} required />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="lg"
-              disabled={isAlbumLoading}
-            >
-              {isAlbumLoading ? (
-                "Registering..."
-              ) : (
-                <>
+            <Button type="submit" className="w-full" size="lg" disabled={isAlbumLoading}>
+              {isAlbumLoading ? "Registering..." : <>
                   <Mail className="w-4 h-4 mr-2" />
                   Register Free
-                </>
-              )}
+                </>}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
       {/* Subscribe Prompt */}
-      <SubscribePrompt
-        open={showSubscribePrompt}
-        onOpenChange={setShowSubscribePrompt}
-        title="Subscribe to Watch Live"
-        description="Get unlimited access to all live streams with a 7-day free trial."
-      />
-    </div>
-  );
+      <SubscribePrompt open={showSubscribePrompt} onOpenChange={setShowSubscribePrompt} title="Subscribe to Watch Live" description="Get unlimited access to all live streams with a 7-day free trial." />
+    </div>;
 }
