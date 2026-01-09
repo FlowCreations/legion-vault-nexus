@@ -49,6 +49,7 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
   const processedAudioAnalyserRef = useRef<AnalyserNode | null>(null);
   const sharedAudioContextRef = useRef<AudioContext | null>(null);
   const isUnmountingRef = useRef(false); // Guard against state updates during unmount
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null); // Heartbeat interval for stream health
   
   // Stable refs to prevent re-initialization during re-renders
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -692,13 +693,14 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
         throw new Error('Another broadcaster is already live. Please wait for them to finish.');
       }
 
-      // Update the event status to live
+      // Update the event status to live with initial heartbeat
       console.log('[Broadcaster] Updating event to LIVE status:', eventId);
       const { data: updateData, error: updateError } = await supabase
         .from('livestream_events')
         .update({ 
           status: 'live',
           stream_start_time: new Date().toISOString(),
+          last_heartbeat: new Date().toISOString(),
           actual_end: null  // Clear any previous end time
         })
         .eq('id', eventId)
@@ -715,6 +717,26 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
       }
 
       console.log('[Broadcaster] ✅ Event status updated to LIVE:', updateData);
+      
+      // Start heartbeat interval - ping every 30 seconds
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      heartbeatIntervalRef.current = setInterval(async () => {
+        try {
+          console.log('[Broadcaster] 💓 Sending heartbeat for event:', eventId);
+          const { error } = await supabase.functions.invoke('stream-heartbeat', {
+            body: { eventId }
+          });
+          if (error) {
+            console.error('[Broadcaster] ❌ Heartbeat failed:', error);
+          } else {
+            console.log('[Broadcaster] ✅ Heartbeat sent successfully');
+          }
+        } catch (err) {
+          console.error('[Broadcaster] ❌ Heartbeat error:', err);
+        }
+      }, 30000); // 30 seconds
 
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('livekit-token', {
         body: { 
@@ -956,6 +978,13 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
     // Show immediate feedback
     toast.info('Ending broadcast...');
     
+    // Clear heartbeat interval
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+      console.log('[Broadcaster] 💓 Heartbeat interval cleared');
+    }
+    
     try {
       // Step 1: Update database status FIRST (before disconnecting)
       console.log('[Broadcaster] Updating database status to "ended"');
@@ -963,7 +992,8 @@ export function LiveBroadcaster({ eventId, isVisible = true, onSwitchToChat }: P
         .from('livestream_events')
         .update({ 
           status: 'ended',
-          actual_end: new Date().toISOString()
+          actual_end: new Date().toISOString(),
+          last_heartbeat: null // Clear heartbeat
         })
         .eq('id', eventId);
 
