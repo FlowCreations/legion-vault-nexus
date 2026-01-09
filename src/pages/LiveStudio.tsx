@@ -53,6 +53,19 @@ export default function LiveStudio() {
     checkAuth();
     checkLiveStream();
     
+    // Call cleanup on page load to end any stale streams
+    console.log('[LiveStudio] Calling cleanup-stale-streams on page load');
+    supabase.functions.invoke('cleanup-stale-streams').then(({ data, error }) => {
+      if (error) {
+        console.error('[LiveStudio] Cleanup error:', error);
+      } else {
+        console.log('[LiveStudio] Cleanup result:', data);
+        if (data?.cleanedUp > 0) {
+          checkLiveStream(); // Re-check after cleanup
+        }
+      }
+    });
+    
     // Poll for live stream status - more frequently when viewing live
     console.log('[LiveStudio] Setting up live stream polling');
     const liveStreamInterval = setInterval(() => {
@@ -156,10 +169,14 @@ export default function LiveStudio() {
   const checkLiveStream = async () => {
     console.log('[LiveStudio] Checking for live streams...');
     
+    // Calculate 2 minutes ago for heartbeat check
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    
     // Query for any events with status='live' and no actual_end (most recent first)
+    // Also check that heartbeat is recent (within last 2 minutes) if it exists
     const { data: liveEvents, error } = await supabase
       .from('livestream_events')
-      .select('id, status, title, stream_start_time, actual_end')
+      .select('id, status, title, stream_start_time, actual_end, last_heartbeat')
       .eq('status', 'live')
       .is('actual_end', null)
       .order('stream_start_time', { ascending: false })
@@ -167,12 +184,27 @@ export default function LiveStudio() {
     
     console.log('[LiveStudio] Live stream check result:', { data: liveEvents, error });
     
-    // If we have a live event, set it
+    // If we have a live event, verify heartbeat is fresh
     if (liveEvents && liveEvents.length > 0 && !error) {
       const liveEvent = liveEvents[0];
-      console.log('[LiveStudio] Found live event:', liveEvent);
-      setLiveEventId(liveEvent.id);
-      setStreamStartTime(liveEvent.stream_start_time ? new Date(liveEvent.stream_start_time) : undefined);
+      
+      // Check if heartbeat is stale (older than 2 minutes)
+      const isHeartbeatStale = liveEvent.last_heartbeat && 
+        new Date(liveEvent.last_heartbeat) < new Date(twoMinutesAgo);
+      
+      if (isHeartbeatStale) {
+        console.log('[LiveStudio] ⚠️ Stream heartbeat is stale, treating as offline:', liveEvent);
+        // Trigger cleanup for this stale stream
+        supabase.functions.invoke('cleanup-stale-streams').then(({ data }) => {
+          console.log('[LiveStudio] Triggered cleanup for stale stream:', data);
+        });
+        setLiveEventId(null);
+        setStreamStartTime(undefined);
+      } else {
+        console.log('[LiveStudio] Found live event:', liveEvent);
+        setLiveEventId(liveEvent.id);
+        setStreamStartTime(liveEvent.stream_start_time ? new Date(liveEvent.stream_start_time) : undefined);
+      }
     } else {
       // No live events found - clear everything
       console.log('[LiveStudio] No live events found');

@@ -17,23 +17,43 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find all live events older than 2 hours
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // Find all live events with stale heartbeat (no heartbeat in last 2 minutes)
+    // OR events with no heartbeat that haven't been updated in 5 minutes
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     
-    const { data: staleEvents, error: fetchError } = await supabase
+    // First, find events with stale heartbeat
+    const { data: staleHeartbeatEvents, error: heartbeatFetchError } = await supabase
       .from('livestream_events')
-      .select('id, title, created_at')
+      .select('id, title, last_heartbeat, updated_at')
       .eq('status', 'live')
-      .lt('created_at', twoHoursAgo);
+      .not('last_heartbeat', 'is', null)
+      .lt('last_heartbeat', twoMinutesAgo);
 
-    if (fetchError) {
-      console.error('[CLEANUP-STALE-STREAMS] Error fetching stale events:', fetchError);
-      throw fetchError;
+    if (heartbeatFetchError) {
+      console.error('[CLEANUP-STALE-STREAMS] Error fetching stale heartbeat events:', heartbeatFetchError);
+      throw heartbeatFetchError;
     }
 
-    console.log(`[CLEANUP-STALE-STREAMS] Found ${staleEvents?.length || 0} stale events`);
+    // Then, find events with no heartbeat that are stale based on updated_at
+    const { data: noHeartbeatEvents, error: noHeartbeatFetchError } = await supabase
+      .from('livestream_events')
+      .select('id, title, last_heartbeat, updated_at')
+      .eq('status', 'live')
+      .is('last_heartbeat', null)
+      .lt('updated_at', fiveMinutesAgo);
 
-    if (staleEvents && staleEvents.length > 0) {
+    if (noHeartbeatFetchError) {
+      console.error('[CLEANUP-STALE-STREAMS] Error fetching no-heartbeat events:', noHeartbeatFetchError);
+      throw noHeartbeatFetchError;
+    }
+
+    const staleEvents = [...(staleHeartbeatEvents || []), ...(noHeartbeatEvents || [])];
+    console.log(`[CLEANUP-STALE-STREAMS] Found ${staleEvents.length} stale events`);
+
+    if (staleEvents.length > 0) {
+      const staleIds = staleEvents.map(e => e.id);
+      
       // Update all stale events to 'ended'
       const { error: updateError } = await supabase
         .from('livestream_events')
@@ -41,8 +61,7 @@ Deno.serve(async (req) => {
           status: 'ended',
           updated_at: new Date().toISOString()
         })
-        .eq('status', 'live')
-        .lt('created_at', twoHoursAgo);
+        .in('id', staleIds);
 
       if (updateError) {
         console.error('[CLEANUP-STALE-STREAMS] Error updating stale events:', updateError);
@@ -50,14 +69,14 @@ Deno.serve(async (req) => {
       }
 
       console.log(`[CLEANUP-STALE-STREAMS] Successfully ended ${staleEvents.length} stale events:`, 
-        staleEvents.map(e => ({ id: e.id, title: e.title, created_at: e.created_at }))
+        staleEvents.map(e => ({ id: e.id, title: e.title, last_heartbeat: e.last_heartbeat }))
       );
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        cleanedUp: staleEvents?.length || 0,
+        cleanedUp: staleEvents.length,
         events: staleEvents 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

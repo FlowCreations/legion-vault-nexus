@@ -3410,6 +3410,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          last_heartbeat: string | null
           recording_url: string | null
           scheduled_end: string | null
           scheduled_start: string
@@ -3429,6 +3430,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_heartbeat?: string | null
           recording_url?: string | null
           scheduled_end?: string | null
           scheduled_start: string
@@ -3448,6 +3450,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_heartbeat?: string | null
           recording_url?: string | null
           scheduled_end?: string | null
           scheduled_start?: string
