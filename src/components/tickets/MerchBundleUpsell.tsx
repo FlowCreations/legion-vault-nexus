@@ -33,7 +33,7 @@ export function MerchBundleUpsell({ onNext, onBack }: MerchBundleUpsellProps) {
   const [selectedBundles, setSelectedBundles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   
-  const { addBundle, removeBundle, bundles } = useTicketCartStore();
+  const { addBundle, removeBundle, bundles, tickets } = useTicketCartStore();
 
   useEffect(() => {
     loadBundles();
@@ -140,7 +140,7 @@ export function MerchBundleUpsell({ onNext, onBack }: MerchBundleUpsellProps) {
     );
   }
 
-  const { tickets } = useTicketCartStore();
+  
   const totalTickets = tickets.reduce((sum, t) => sum + t.quantity, 0);
 
   return (
