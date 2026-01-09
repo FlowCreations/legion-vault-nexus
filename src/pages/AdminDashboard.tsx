@@ -705,7 +705,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                             <h3 className="font-semibold">{member.display_name}</h3>
                             <div className="flex gap-2 mt-1">
                               <Badge className={`${getTierColor(member.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
-                                {member.tier}
+                                {member.tier || 'Free'}
                               </Badge>
                               {member.era_current && member.era_label && (
                                 <ERABadge era={member.era_current} label={member.era_label} />
