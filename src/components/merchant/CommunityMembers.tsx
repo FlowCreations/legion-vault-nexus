@@ -612,15 +612,15 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                 </TabsContent>
 
                 <TabsContent value="journey" className="mt-6">
-                  <FanJourneyTimeline userId={selectedMember.user_id || ''} />
+                  <FanJourneyTimeline userId={selectedMember.user_id || selectedMember.id} />
                 </TabsContent>
 
                 <TabsContent value="content" className="mt-6">
-                  <ContentEngagementPanel userId={selectedMember.user_id || ''} />
+                  <ContentEngagementPanel userId={selectedMember.user_id || selectedMember.id} />
                 </TabsContent>
 
                 <TabsContent value="commerce" className="mt-6">
-                  <CommerceJourneyPanel userId={selectedMember.user_id || ''} />
+                  <CommerceJourneyPanel userId={selectedMember.user_id || selectedMember.id} />
                 </TabsContent>
               </Tabs>
             </>
