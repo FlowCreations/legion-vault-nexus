@@ -1146,15 +1146,15 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                   </TabsContent>
                   
                   <TabsContent value="journey">
-                    <FanJourneyTimeline userId={selectedMember.user_id} />
+                    <FanJourneyTimeline userId={selectedMember.user_id || selectedMember.id} />
                   </TabsContent>
                   
                   <TabsContent value="content">
-                    <ContentEngagementPanel userId={selectedMember.user_id} />
+                    <ContentEngagementPanel userId={selectedMember.user_id || selectedMember.id} />
                   </TabsContent>
                   
                   <TabsContent value="commerce">
-                    <CommerceJourneyPanel userId={selectedMember.user_id} />
+                    <CommerceJourneyPanel userId={selectedMember.user_id || selectedMember.id} />
                   </TabsContent>
                 </Tabs>
               </div>

@@ -44,6 +44,13 @@ const STAGE_COLORS: Record<string, string> = {
   advocacy: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
 };
 
+// Validate UUID format to prevent database errors
+const isValidUUID = (str: string) => {
+  if (!str) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 export function FanJourneyTimeline({ userId }: FanJourneyTimelineProps) {
   const [milestones, setMilestones] = useState<JourneyMilestone[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +60,10 @@ export function FanJourneyTimeline({ userId }: FanJourneyTimelineProps) {
   }, [userId]);
 
   const loadMilestones = async () => {
-    if (!userId) return;
+    if (!userId || !isValidUUID(userId)) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);

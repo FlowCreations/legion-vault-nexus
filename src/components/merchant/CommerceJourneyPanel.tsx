@@ -26,6 +26,13 @@ interface CartAbandonment {
   status: string;
 }
 
+// Validate UUID format to prevent database errors
+const isValidUUID = (str: string) => {
+  if (!str) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 export function CommerceJourneyPanel({ userId }: CommerceJourneyPanelProps) {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [abandonedCarts, setAbandonedCarts] = useState<CartAbandonment[]>([]);
@@ -43,7 +50,10 @@ export function CommerceJourneyPanel({ userId }: CommerceJourneyPanelProps) {
   }, [userId]);
 
   const loadCommerceData = async () => {
-    if (!userId) return;
+    if (!userId || !isValidUUID(userId)) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
