@@ -23,6 +23,13 @@ interface ContentEngagement {
   last_engaged_at: string;
 }
 
+// Validate UUID format to prevent database errors
+const isValidUUID = (str: string) => {
+  if (!str) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 export function ContentEngagementPanel({ userId }: ContentEngagementPanelProps) {
   const [engagements, setEngagements] = useState<ContentEngagement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +47,10 @@ export function ContentEngagementPanel({ userId }: ContentEngagementPanelProps) 
   }, [userId]);
 
   const loadEngagements = async () => {
-    if (!userId) return;
+    if (!userId || !isValidUUID(userId)) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
