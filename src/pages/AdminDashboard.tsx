@@ -80,6 +80,10 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   const [selectedPattern, setSelectedPattern] = useState<{ member: any; pattern: any } | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [cameoFlagEnabled, setCameoFlagEnabled] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const PAGE_SIZE = 50;
   const { toast: toastHook } = useToast();
   const navigate = useNavigate();
 
@@ -166,11 +170,24 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
 
   useEffect(() => {
     loadMembers();
-    loadTierCounts();
-    loadPixels();
-    loadLegalDocs();
-    loadFeatureFlags();
+    // Defer non-critical loads for better initial performance
+    const loadDeferred = () => {
+      loadTierCounts();
+      loadPixels();
+      loadLegalDocs();
+      loadFeatureFlags();
+    };
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadDeferred);
+    } else {
+      setTimeout(loadDeferred, 100);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reload members when page changes
+  useEffect(() => {
+    loadMembers();
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // If a user was selected from the globe, show their profile
@@ -183,65 +200,55 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   }, [selectedUserId, members]);
 
   const loadMembers = useCallback(async () => {
-    // Fetch real user profiles with ERA/PTP scores
-    const { data, error } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setLoadingMembers(true);
+    try {
+      // Get total count first for pagination
+      const { count } = await supabase
+        .from("user_profiles")
+        .select("*", { count: 'exact', head: true });
+      
+      const total = count || 0;
+      setTotalPages(Math.ceil(total / PAGE_SIZE));
+      
+      // Fetch paginated user profiles with ERA/PTP scores
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-    if (error) {
-      console.error('Error loading members:', error);
-      setMembers(mockMembers as Member[]); // Fallback to mock data
-      return;
-    }
-
-    const realMembers = data || [];
-    
-    // Use REAL data - no more random demo scores for real users
-    const realMembersWithScores = realMembers.map(member => {
-      // If they have real ERA/PTP scores, use them
-      if (member.era_current && member.ptp_current && member.era_label && member.ptp_status) {
-        return member;
+      if (error) {
+        console.error('Error loading members:', error);
+        setMembers([]);
+        return;
       }
+
+      const realMembers = data || [];
       
-      // If no scores yet, set defaults indicating they need to engage more
-      return {
-        ...member,
-        era_current: 1, // Start at Discover
-        ptp_current: 0, // Cold lead
-        era_label: 'Discover',
-        ptp_status: 'Stop',
-        watch_time: member.watch_time || 0,
-        listen_time: member.listen_time || 0
-      };
-    });
-    
-    // Keep mock members for demo purposes
-    const mockWithScores = mockMembers.map(member => {
-      const era = Math.floor(Math.random() * 10) + 1;
-      const ptp = Math.floor(Math.random() * 100);
+      // Use REAL data - no more random demo scores for real users
+      const realMembersWithScores = realMembers.map(member => {
+        // If they have real ERA/PTP scores, use them
+        if (member.era_current && member.ptp_current && member.era_label && member.ptp_status) {
+          return member;
+        }
+        
+        // If no scores yet, set defaults indicating they need to engage more
+        return {
+          ...member,
+          era_current: 1, // Start at Discover
+          ptp_current: 0, // Cold lead
+          era_label: 'Discover',
+          ptp_status: 'Stop',
+          watch_time: member.watch_time || 0,
+          listen_time: member.listen_time || 0
+        };
+      });
       
-      let eraLabel = 'Discover';
-      if (era > 3 && era <= 6) eraLabel = 'Engage';
-      else if (era > 6 && era <= 8) eraLabel = 'Invest';
-      else if (era > 8) eraLabel = 'Loyal';
-      
-      let ptpStatus = 'Stop';
-      if (ptp >= 40 && ptp < 70) ptpStatus = 'Wait';
-      else if (ptp >= 70) ptpStatus = 'Go';
-      
-      return {
-        ...member,
-        era_current: era,
-        ptp_current: ptp,
-        era_label: eraLabel,
-        ptp_status: ptpStatus
-      };
-    });
-    
-    // Combine real members with demo members
-    setMembers([...realMembersWithScores, ...mockWithScores] as Member[]);
-  }, []);
+      setMembers(realMembersWithScores as Member[]);
+    } finally {
+      setLoadingMembers(false);
+    }
+  }, [page]);
 
   const loadTierCounts = useCallback(async () => {
     const { data } = await supabase
@@ -540,116 +547,150 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                 )}
               </div>
               
-              <div className="grid gap-4">
-                {filteredMembers.map((member) => (
-                  <div key={member.id} className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.display_name}`} />
-                        <AvatarFallback>{member.display_name?.[0] || "U"}</AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-lg">{member.display_name || "Unknown"}</h3>
-                            <Badge className={`${getTierColor(member.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
-                              {member.tier || "N/A"}
-                            </Badge>
-                            {member.era_current && member.era_label && (
-                              <ERABadge era={member.era_current} label={member.era_label} />
-                            )}
-                            {member.ptp_current !== undefined && member.ptp_status && (
-                              <PTPChip ptp={member.ptp_current} status={member.ptp_status} />
-                            )}
-                            <JourneyStageCard userId={member.user_id} compact />
-                          </div>
-                          <div className="flex gap-6 text-sm">
-                            <div className="text-center">
-                              <p className="text-foreground/70 font-medium">Total Spend</p>
-                              <p className="font-bold text-foreground">${member.total_spend?.toFixed(2) || "0.00"}</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-foreground/70 font-medium">MRR</p>
-                              <p className="font-bold text-foreground">${member.mrr?.toFixed(2) || "0.00"}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {member.bio && (
-                          <p className="text-sm text-foreground/80 font-medium">{member.bio}</p>
-                        )}
+              {loadingMembers ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-3 text-muted-foreground">Loading members...</span>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {filteredMembers.map((member) => (
+                    <div key={member.id} className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.display_name}`} />
+                          <AvatarFallback>{member.display_name?.[0] || "U"}</AvatarFallback>
+                        </Avatar>
                         
-                        <div className="flex items-center gap-4 text-sm text-foreground/70 font-medium">
-                          {member.location && (
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-lg">{member.display_name || "Unknown"}</h3>
+                              <Badge className={`${getTierColor(member.tier)} px-4 py-1.5 text-sm h-8 min-w-[120px] flex items-center justify-center`}>
+                                {member.tier || "N/A"}
+                              </Badge>
+                              {member.era_current && member.era_label && (
+                                <ERABadge era={member.era_current} label={member.era_label} />
+                              )}
+                              {member.ptp_current !== undefined && member.ptp_status && (
+                                <PTPChip ptp={member.ptp_current} status={member.ptp_status} />
+                              )}
+                              <JourneyStageCard userId={member.user_id} compact />
+                            </div>
+                            <div className="flex gap-6 text-sm">
+                              <div className="text-center">
+                                <p className="text-foreground/70 font-medium">Total Spend</p>
+                                <p className="font-bold text-foreground">${member.total_spend?.toFixed(2) || "0.00"}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-foreground/70 font-medium">MRR</p>
+                                <p className="font-bold text-foreground">${member.mrr?.toFixed(2) || "0.00"}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {member.bio && (
+                            <p className="text-sm text-foreground/80 font-medium">{member.bio}</p>
+                          )}
+                          
+                          <div className="flex items-center gap-4 text-sm text-foreground/70 font-medium">
+                            {member.location && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {member.location}
+                              </div>
+                            )}
                             <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {member.location}
+                              <Clock className="h-3 w-3" />
+                              Watch: {Math.floor((member.watch_time || 0) / 60)}h
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Listen: {Math.floor((member.listen_time || 0) / 60)}h
+                            </div>
+                          </div>
+
+                          {member.intro_answers && (
+                            <div className="mt-2 p-3 bg-muted/50 rounded-md">
+                              <h4 className="text-xs font-bold text-foreground/70 mb-2">INTRO</h4>
+                              <div className="grid gap-1 text-sm">
+                                {Object.entries(member.intro_answers).map(([key, value]) => (
+                                  <div key={key} className="flex gap-2">
+                                    <span className="text-foreground/70 font-medium min-w-[100px]">{key}:</span>
+                                    <span className="font-semibold text-foreground">{value as string}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Watch: {Math.floor((member.watch_time || 0) / 60)}h
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Listen: {Math.floor((member.listen_time || 0) / 60)}h
-                          </div>
-                        </div>
 
-                        {member.intro_answers && (
-                          <div className="mt-2 p-3 bg-muted/50 rounded-md">
-                            <h4 className="text-xs font-bold text-foreground/70 mb-2">INTRO</h4>
-                            <div className="grid gap-1 text-sm">
-                              {Object.entries(member.intro_answers).map(([key, value]) => (
-                                <div key={key} className="flex gap-2">
-                                  <span className="text-foreground/70 font-medium min-w-[100px]">{key}:</span>
-                                  <span className="font-semibold text-foreground">{value as string}</span>
-                                </div>
-                              ))}
+                          <div className="flex items-center justify-between gap-2 text-xs text-foreground/70 font-medium pt-2">
+                            <div className="flex items-center gap-2">
+                              <span>Last login: {member.last_login
+                                ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
+                                : "Never"}</span>
+                              <span>•</span>
+                              <span>Joined: {new Date(member.created_at).toLocaleDateString()}</span>
                             </div>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between gap-2 text-xs text-foreground/70 font-medium pt-2">
-                          <div className="flex items-center gap-2">
-                            <span>Last login: {member.last_login
-                              ? formatDistanceToNow(new Date(member.last_login), { addSuffix: true })
-                              : "Never"}</span>
-                            <span>•</span>
-                            <span>Joined: {new Date(member.created_at).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedMember(member)}
-                            >
-                              View Profile
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                const patternIndex = (member as any).patternIndex || Math.floor(Math.random() * patterns.length);
-                                setSelectedPattern({ member, pattern: patterns[patternIndex] });
-                              }}
-                            >
-                              View Pattern
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedMember(member)}
+                              >
+                                View Profile
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  const patternIndex = (member as any).patternIndex || Math.floor(Math.random() * patterns.length);
+                                  setSelectedPattern({ member, pattern: patterns[patternIndex] });
+                                }}
+                              >
+                                View Pattern
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  ))}
+                  
+                  {filteredMembers.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No members found matching filters
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages} ({members.length} members loaded)
                   </div>
-                ))}
-                
-                {filteredMembers.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No members found matching filters
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1 || loadingMembers}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages || loadingMembers}
+                    >
+                      Next
+                    </Button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1166,342 +1207,3 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   );
 }
 
-// Mock members matching the directory profiles
-const mockMembers: Member[] = [
-  {
-    id: "1",
-    user_id: "1",
-    display_name: "Sarah Johnson",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-    bio: "Country music fanatic from Nashville. Been following SOL since day one!",
-    location: "Nashville, TN",
-    tier: "Legion Elite",
-    total_spend: 450.00,
-    mrr: 29.99,
-    watch_time: 14400,
-    listen_time: 28800,
-    products_purchased: ["Hoodie", "Vinyl", "Poster"],
-    intro_answers: {
-      "Favorite Album": "Outlaw Sessions",
-      "How did you discover SOL": "Live show in Nashville",
-      "Favorite Song": "Wild Horse"
-    },
-    last_login: new Date(Date.now() - 7200000).toISOString(),
-    created_at: new Date(Date.now() - 180 * 86400000).toISOString(),
-    birthdate: "1992-05-15",
-    gender: "female",
-    patternIndex: 4,
-  } as any,
-  {
-    id: "2",
-    user_id: "2",
-    display_name: "Mike Chen",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
-    bio: "Love the energy and authenticity. Can't wait for the next tour!",
-    location: "Austin, TX",
-    tier: "Legion Member",
-    total_spend: 125.50,
-    mrr: 9.99,
-    watch_time: 7200,
-    listen_time: 18000,
-    products_purchased: ["T-Shirt", "Album"],
-    intro_answers: {
-      "Favorite Album": "Acoustic Sessions",
-      "How did you discover SOL": "Spotify recommendation",
-      "Favorite Song": "Carolina"
-    },
-    last_login: new Date(Date.now() - 86400000).toISOString(),
-    created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
-    birthdate: "1988-11-22",
-    gender: "male",
-    patternIndex: 9,
-  } as any,
-  {
-    id: "3",
-    user_id: "3",
-    display_name: "Emily Rodriguez",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily",
-    bio: "The raw emotion in every song speaks to my soul. SOL forever!",
-    location: "Los Angeles, CA",
-    tier: "Legion Elite",
-    total_spend: 680.25,
-    mrr: 49.99,
-    watch_time: 21600,
-    listen_time: 36000,
-    products_purchased: ["VIP Ticket", "Hoodie", "Hat"],
-    intro_answers: {
-      "Favorite Album": "Power Sessions",
-      "How did you discover SOL": "Friend recommendation",
-      "Favorite Song": "Power"
-    },
-    last_login: new Date(Date.now() - 1800000).toISOString(),
-    created_at: new Date(Date.now() - 365 * 86400000).toISOString(),
-    birthdate: "1995-03-08",
-    gender: "female",
-    patternIndex: 6,
-  } as any,
-  {
-    id: "4",
-    user_id: "4",
-    display_name: "David Kim",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=david",
-    bio: "Been to 5 shows so far. The acoustic sessions are unmatched!",
-    location: "Chicago, IL",
-    tier: "Legion Member",
-    total_spend: 200.00,
-    mrr: 14.99,
-    watch_time: 10800,
-    listen_time: 21600,
-    products_purchased: ["Album", "Poster"],
-    intro_answers: {
-      "Favorite Album": "Stripped Down",
-      "How did you discover SOL": "YouTube",
-      "Favorite Song": "Angels"
-    },
-    last_login: new Date(Date.now() - 18000000).toISOString(),
-    created_at: new Date(Date.now() - 120 * 86400000).toISOString(),
-    patternIndex: 2,
-  } as any,
-  {
-    id: "5",
-    user_id: "5",
-    display_name: "Jessica Martinez",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jessica",
-    bio: "The storytelling is incredible. Every lyric hits different.",
-    location: "New York, NY",
-    tier: "Legion VIP",
-    total_spend: 890.00,
-    mrr: 99.99,
-    watch_time: 28800,
-    listen_time: 43200,
-    products_purchased: ["VIP Pass", "Vinyl", "Hoodie", "Tour Merch"],
-    intro_answers: {
-      "Favorite Album": "Walking on the Edge",
-      "How did you discover SOL": "Concert",
-      "Favorite Song": "Strange"
-    },
-    last_login: new Date(Date.now() - 3600000).toISOString(),
-    created_at: new Date(Date.now() - 450 * 86400000).toISOString(),
-    patternIndex: 1,
-  } as any,
-  {
-    id: "6",
-    user_id: "6",
-    display_name: "Robert Taylor",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=robert",
-    bio: "From Texas with love. SOL represents everything country should be.",
-    location: "Dallas, TX",
-    tier: "Free Member",
-    total_spend: 45.00,
-    mrr: 0.00,
-    watch_time: 3600,
-    listen_time: 7200,
-    products_purchased: ["Sticker"],
-    intro_answers: {
-      "Favorite Album": "Outlaw Sessions",
-      "How did you discover SOL": "Radio",
-      "Favorite Song": "Wild Horse"
-    },
-    last_login: new Date(Date.now() - 172800000).toISOString(),
-    created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-    patternIndex: 8,
-  } as any,
-  {
-    id: "7",
-    user_id: "7",
-    display_name: "Amanda White",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=amanda",
-    bio: "VIP member since the beginning. Worth every penny!",
-    location: "Nashville, TN",
-    tier: "Legion VIP",
-    total_spend: 1250.00,
-    mrr: 99.99,
-    watch_time: 36000,
-    listen_time: 50400,
-    products_purchased: ["VIP Pass", "All Merch", "Signed Items"],
-    intro_answers: {
-      "Favorite Album": "Power Sessions",
-      "How did you discover SOL": "Local show",
-      "Favorite Song": "Air Tonight"
-    },
-    last_login: new Date(Date.now() - 43200000).toISOString(),
-    created_at: new Date(Date.now() - 600 * 86400000).toISOString(),
-    patternIndex: 5,
-  } as any,
-  {
-    id: "8",
-    user_id: "8",
-    display_name: "Chris Anderson",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=chris",
-    bio: "The Legion is like family. Best community I've ever been part of.",
-    location: "Phoenix, AZ",
-    tier: "Legion Elite",
-    total_spend: 550.00,
-    mrr: 49.99,
-    watch_time: 18000,
-    listen_time: 32400,
-    products_purchased: ["Hoodie", "Album", "Hat"],
-    intro_answers: {
-      "Favorite Album": "Acoustic Sessions",
-      "How did you discover SOL": "Festival",
-      "Favorite Song": "Carolina"
-    },
-    last_login: new Date(Date.now() - 14400000).toISOString(),
-    created_at: new Date(Date.now() - 200 * 86400000).toISOString(),
-    patternIndex: 3,
-  } as any,
-  {
-    id: "9",
-    user_id: "9",
-    display_name: "Jordan Blake",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=jordan",
-    bio: "Music is my therapy. SOL gets it. Every song hits home.",
-    location: "Denver, CO",
-    tier: "Legion Member",
-    total_spend: 175.00,
-    mrr: 14.99,
-    watch_time: 9000,
-    listen_time: 16200,
-    products_purchased: ["Album", "T-Shirt"],
-    intro_answers: {
-      "Favorite Album": "Acoustic Sessions",
-      "How did you discover SOL": "Instagram",
-      "Favorite Song": "Runnin"
-    },
-    last_login: new Date(Date.now() - 28800000).toISOString(),
-    created_at: new Date(Date.now() - 75 * 86400000).toISOString(),
-    patternIndex: 10,
-  } as any,
-  {
-    id: "10",
-    user_id: "10",
-    display_name: "Taylor Morgan",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=taylor",
-    bio: "Following the journey from the start. Can't wait to see where it goes!",
-    location: "Seattle, WA",
-    tier: "Legion Elite",
-    total_spend: 620.00,
-    mrr: 49.99,
-    watch_time: 19800,
-    listen_time: 34200,
-    products_purchased: ["VIP Ticket", "Hoodie", "Vinyl"],
-    intro_answers: {
-      "Favorite Album": "Power Sessions",
-      "How did you discover SOL": "Friend",
-      "Favorite Song": "Power"
-    },
-    last_login: new Date(Date.now() - 10800000).toISOString(),
-    created_at: new Date(Date.now() - 250 * 86400000).toISOString(),
-    patternIndex: 6,
-  } as any,
-  {
-    id: "11",
-    user_id: "11",
-    display_name: "Alex Rivera",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex",
-    bio: "Real country music. Real stories. Real fans. That's what we're about.",
-    location: "Miami, FL",
-    tier: "Legion Member",
-    total_spend: 95.00,
-    mrr: 9.99,
-    watch_time: 5400,
-    listen_time: 10800,
-    products_purchased: ["T-Shirt"],
-    intro_answers: {
-      "Favorite Album": "Stripped Down",
-      "How did you discover SOL": "TikTok",
-      "Favorite Song": "Angels"
-    },
-    last_login: new Date(Date.now() - 259200000).toISOString(),
-    created_at: new Date(Date.now() - 45 * 86400000).toISOString(),
-    patternIndex: 4,
-  } as any,
-  {
-    id: "12",
-    user_id: "12",
-    display_name: "Morgan Hayes",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=morgan",
-    bio: "Been collecting all the merch. The quality is amazing!",
-    location: "Portland, OR",
-    tier: "Legion VIP",
-    total_spend: 1050.00,
-    mrr: 99.99,
-    watch_time: 32400,
-    listen_time: 46800,
-    products_purchased: ["All Albums", "Hoodie", "Hat", "Poster"],
-    intro_answers: {
-      "Favorite Album": "Walking on the Edge",
-      "How did you discover SOL": "Concert",
-      "Favorite Song": "Strange"
-    },
-    last_login: new Date(Date.now() - 21600000).toISOString(),
-    created_at: new Date(Date.now() - 400 * 86400000).toISOString(),
-    patternIndex: 7,
-  } as any,
-  {
-    id: "13",
-    user_id: "13",
-    display_name: "Casey Jordan",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=casey",
-    bio: "Just discovered SOL and already obsessed. Where has this been all my life?",
-    location: "Boston, MA",
-    tier: "Free Member",
-    total_spend: 25.00,
-    mrr: 0.00,
-    watch_time: 1800,
-    listen_time: 3600,
-    products_purchased: [],
-    intro_answers: {
-      "Favorite Album": "Outlaw Sessions",
-      "How did you discover SOL": "YouTube",
-      "Favorite Song": "Wild Horse"
-    },
-    last_login: new Date(Date.now() - 345600000).toISOString(),
-    created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
-    patternIndex: 0,
-  } as any,
-  {
-    id: "14",
-    user_id: "14",
-    display_name: "Riley Thompson",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=riley",
-    bio: "The acoustic versions are pure magic. Can't stop listening.",
-    location: "San Diego, CA",
-    tier: "Legion Elite",
-    total_spend: 480.00,
-    mrr: 29.99,
-    watch_time: 16200,
-    listen_time: 27000,
-    products_purchased: ["Vinyl", "Hoodie"],
-    intro_answers: {
-      "Favorite Album": "Acoustic Sessions",
-      "How did you discover SOL": "Radio",
-      "Favorite Song": "Carolina"
-    },
-    last_login: new Date(Date.now() - 36000000).toISOString(),
-    created_at: new Date(Date.now() - 160 * 86400000).toISOString(),
-    patternIndex: 1,
-  } as any,
-  {
-    id: "15",
-    user_id: "15",
-    display_name: "Sam Cooper",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=sam",
-    bio: "Supporting real artists making real music. Keep it coming!",
-    location: "Atlanta, GA",
-    tier: "Legion Member",
-    total_spend: 210.00,
-    mrr: 14.99,
-    watch_time: 11400,
-    listen_time: 19800,
-    products_purchased: ["Album", "Hat", "Poster"],
-    intro_answers: {
-      "Favorite Album": "Power Sessions",
-      "How did you discover SOL": "Friend recommendation",
-      "Favorite Song": "Air Tonight"
-    },
-    last_login: new Date(Date.now() - 57600000).toISOString(),
-    created_at: new Date(Date.now() - 110 * 86400000).toISOString(),
-    patternIndex: 2,
-  } as any,
-];
