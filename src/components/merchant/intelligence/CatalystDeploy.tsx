@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Zap, Loader2, Rocket, Users, Mail, TrendingUp } from "lucide-react";
+import { Zap, Loader2, Rocket, Users, Mail, TrendingUp, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,9 +17,50 @@ interface DeploymentSummary {
   nextScheduledRun: string;
 }
 
+const CACHE_KEY = 'catalyst_deploy_cache';
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+interface CachedSummary {
+  summary: DeploymentSummary;
+  timestamp: number;
+}
+
+const getCachedSummary = (): DeploymentSummary | null => {
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const parsed: CachedSummary = JSON.parse(cached);
+    if (Date.now() - parsed.timestamp > CACHE_DURATION) {
+      sessionStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return parsed.summary;
+  } catch {
+    return null;
+  }
+};
+
+const setCachedSummary = (summary: DeploymentSummary) => {
+  try {
+    const cacheData: CachedSummary = { summary, timestamp: Date.now() };
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export const CatalystDeploy = () => {
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<DeploymentSummary | null>(null);
+
+  // Load cached summary on mount
+  useEffect(() => {
+    const cached = getCachedSummary();
+    if (cached) {
+      setSummary(cached);
+    }
+  }, []);
 
   const deployCatalyst = async () => {
     setLoading(true);
@@ -29,10 +70,16 @@ export const CatalystDeploy = () => {
       if (error) throw error;
       
       setSummary(data.summary);
+      setCachedSummary(data.summary);
       toast.success(`🚀 Catalyst deployed! ${data.summary.deploymentsScheduled} campaigns scheduled`);
     } catch (error: any) {
       console.error('Error deploying catalyst:', error);
-      toast.error(error.message || "Failed to deploy catalyst");
+      // Keep existing summary on error
+      if (!summary) {
+        toast.error(error.message || "Failed to deploy catalyst");
+      } else {
+        toast.error("Failed to redeploy - showing last deployment");
+      }
     } finally {
       setLoading(false);
     }
@@ -67,7 +114,7 @@ export const CatalystDeploy = () => {
           </div>
         )}
         
-        {summary && (
+        {summary && !loading && (
           <div className="space-y-6">
             {/* Segmentation Overview */}
             <div className="grid grid-cols-3 gap-4">
@@ -119,7 +166,7 @@ export const CatalystDeploy = () => {
               </div>
             </div>
 
-            <p className="text-xs text-white/60 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               AI-powered campaigns deployed based on Oracle predictions and Epiphany insights
             </p>
             
@@ -128,6 +175,7 @@ export const CatalystDeploy = () => {
               variant="outline"
               className="w-full"
             >
+              <RefreshCw className="mr-2 h-4 w-4" />
               Deploy Again
             </Button>
           </div>
