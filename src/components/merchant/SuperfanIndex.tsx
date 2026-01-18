@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,12 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Clock, Heart, TrendingUp, Calendar } from "lucide-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
-import { MemberCard } from "./MemberCard";
+import { FanJourneyTimeline } from "./FanJourneyTimeline";
+import { ContentEngagementPanel } from "./ContentEngagementPanel";
+import { CommerceJourneyPanel } from "./CommerceJourneyPanel";
 
 interface Member {
   id: string;
+  user_id: string | null;
   display_name: string;
+  email: string | null;
   avatar_url: string | null;
   tier: string | null;
   membership_tier: string | null;
@@ -23,13 +30,20 @@ interface Member {
   total_spend: number;
   watch_time: number | null;
   listen_time: number | null;
+  location: string | null;
+  is_super_fan: boolean | null;
+  livestream_engagement_score: number | null;
+  login_streak: number | null;
+  inactive_days: number | null;
+  created_at: string;
+  last_active_at: string | null;
 }
 
 // Fetch superfans sorted by PTP score
 async function fetchSuperfans() {
   const { data, error } = await supabase
     .from('user_profiles')
-    .select('id, display_name, avatar_url, tier, membership_tier, ptp_current, ptp_status, era_current, era_label, total_spend, watch_time, listen_time')
+    .select('id, user_id, display_name, email, avatar_url, tier, membership_tier, ptp_current, ptp_status, era_current, era_label, total_spend, watch_time, listen_time, location, is_super_fan, livestream_engagement_score, login_streak, inactive_days, created_at, last_active_at')
     .order('ptp_current', { ascending: false, nullsFirst: false })
     .limit(100);
 
@@ -39,7 +53,6 @@ async function fetchSuperfans() {
 
 export function SuperfanIndex() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const navigate = useNavigate();
 
   const { data: members = [], isLoading, refetch } = useQuery({
     queryKey: ['superfans-index'],
@@ -190,28 +203,167 @@ export function SuperfanIndex() {
 
       {/* Member Profile Sheet */}
       <Sheet open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto pt-12">
-          <SheetHeader className="mb-4">
-            <SheetTitle>Member Profile</SheetTitle>
-          </SheetHeader>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           {selectedMember && (
-            <MemberCard 
-              member={{
-                name: selectedMember.display_name,
-                avatar_url: selectedMember.avatar_url,
-                tier: selectedMember.tier || selectedMember.membership_tier,
-                total_spend: selectedMember.total_spend,
-                watch_time_seconds: (selectedMember.watch_time || 0) * 60,
-                listen_time_seconds: (selectedMember.listen_time || 0) * 60,
-                era_score: selectedMember.era_current,
-                ptp_status: selectedMember.ptp_status,
-                user_id: selectedMember.id
-              }}
-              onClose={() => setSelectedMember(null)}
-              onViewProfile={() => {
-                navigate(`/merchant/community/${selectedMember.id}`);
-              }}
-            />
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 border-2 border-primary/20">
+                    <AvatarImage src={selectedMember.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                      {selectedMember.display_name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-bold text-xl">{selectedMember.display_name || 'Anonymous'}</div>
+                    <div className="text-sm text-muted-foreground">{selectedMember.email}</div>
+                  </div>
+                </SheetTitle>
+              </SheetHeader>
+
+              <Tabs defaultValue="overview" className="mt-6">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="journey">Journey</TabsTrigger>
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="commerce">Commerce</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">ERA Score</p>
+                            <p className="text-2xl font-bold">{selectedMember.era_current || 0}</p>
+                          </div>
+                          {getERABadge(selectedMember.era_label, selectedMember.era_current)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">PTP Score</p>
+                            <p className="text-2xl font-bold">{selectedMember.ptp_current || 0}</p>
+                          </div>
+                          <Badge className={`${
+                            selectedMember.ptp_status?.toLowerCase() === 'hot' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            selectedMember.ptp_status?.toLowerCase() === 'warm' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          }`}>
+                            {selectedMember.ptp_status || 'Cold'}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Member Details */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Member Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Tier</span>
+                        {getTierBadge(selectedMember.membership_tier || selectedMember.tier)}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Location</span>
+                        <span>{selectedMember.location || 'Unknown'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Super Fan</span>
+                        <Badge variant={selectedMember.is_super_fan ? "default" : "secondary"}>
+                          {selectedMember.is_super_fan ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total Spend</span>
+                        <span className="font-semibold">${selectedMember.total_spend?.toFixed(2) || '0.00'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Engagement Stats */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Engagement Metrics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Watch Time</p>
+                          <p className="font-semibold">{Math.floor((selectedMember.watch_time || 0) / 60)} hours</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Listen Time</p>
+                          <p className="font-semibold">{Math.floor((selectedMember.listen_time || 0) / 60)} hours</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Heart className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Livestream Engagement</p>
+                          <p className="font-semibold">{selectedMember.livestream_engagement_score || 0} points</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Login Streak</p>
+                          <p className="font-semibold">{selectedMember.login_streak || 0} days</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">Inactive Days</p>
+                          <p className="font-semibold">{selectedMember.inactive_days || 0} days</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Activity Timeline */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Activity Timeline</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Joined</span>
+                        <span>{format(new Date(selectedMember.created_at), 'MMM d, yyyy')}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Last Active</span>
+                        <span>{selectedMember.last_active_at ? format(new Date(selectedMember.last_active_at), 'MMM d, yyyy h:mm a') : 'Never'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="journey" className="mt-6">
+                  <FanJourneyTimeline userId={selectedMember.user_id || selectedMember.id} />
+                </TabsContent>
+
+                <TabsContent value="content" className="mt-6">
+                  <ContentEngagementPanel userId={selectedMember.user_id || selectedMember.id} />
+                </TabsContent>
+
+                <TabsContent value="commerce" className="mt-6">
+                  <CommerceJourneyPanel userId={selectedMember.user_id || selectedMember.id} />
+                </TabsContent>
+              </Tabs>
+            </>
           )}
         </SheetContent>
       </Sheet>
