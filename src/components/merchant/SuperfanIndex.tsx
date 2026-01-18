@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { MemberCard } from "./MemberCard";
 
@@ -24,32 +25,27 @@ interface Member {
   listen_time: number | null;
 }
 
+// Fetch superfans sorted by PTP score
+async function fetchSuperfans() {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('id, display_name, avatar_url, tier, membership_tier, ptp_current, ptp_status, era_current, era_label, total_spend, watch_time, listen_time')
+    .order('ptp_current', { ascending: false, nullsFirst: false })
+    .limit(100);
+
+  if (error) throw error;
+  return data || [];
+}
+
 export function SuperfanIndex() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadSuperfans();
-  }, []);
-
-  const loadSuperfans = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('id, display_name, avatar_url, tier, membership_tier, ptp_current, ptp_status, era_current, era_label, total_spend, watch_time, listen_time')
-        .not('ptp_current', 'is', null)
-        .order('ptp_current', { ascending: false });
-
-      if (error) throw error;
-      setMembers(data || []);
-    } catch (error) {
-      console.error('Error loading superfans:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: members = [], isLoading, refetch } = useQuery({
+    queryKey: ['superfans-index'],
+    queryFn: fetchSuperfans,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
 
   const getTierBadge = (tier: string | null) => {
     const tierName = tier?.toLowerCase() || 'free';
@@ -97,30 +93,33 @@ export function SuperfanIndex() {
     return <div className="w-4 h-4 rounded-full bg-red-500" />;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CardHeader>
+          <CardTitle>Behavior Heatmap</CardTitle>
+          <CardDescription>Purchase readiness ranked by PTP score</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          ))}
         </CardContent>
       </Card>
     );
   }
 
   const seedDemoData = async () => {
-    setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('seed-demo-data');
       if (error) throw error;
       toast.success("Demo data seeded successfully! Refreshing...");
       setTimeout(() => {
-        loadSuperfans();
+        refetch();
       }, 1000);
     } catch (error) {
       console.error('Error seeding data:', error);
       toast.error("Failed to seed demo data");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -132,7 +131,7 @@ export function SuperfanIndex() {
             <CardTitle>Behavior Heatmap</CardTitle>
             <CardDescription>Purchase readiness ranked by PTP score</CardDescription>
           </div>
-          <Button onClick={seedDemoData} variant="outline" disabled={loading}>
+          <Button onClick={seedDemoData} variant="outline" disabled={isLoading}>
             Seed Demo Data
           </Button>
         </div>
