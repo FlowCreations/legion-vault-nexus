@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,8 @@ import { FanJourneyTimeline } from "@/components/merchant/FanJourneyTimeline";
 import { ContentEngagementPanel } from "@/components/merchant/ContentEngagementPanel";
 import { CommerceJourneyPanel } from "@/components/merchant/CommerceJourneyPanel";
 import { JourneyFunnelVisualization } from "@/components/merchant/JourneyFunnelVisualization";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCommunityMembers } from "@/hooks/useCommunityMembers";
 
 interface Member {
   id: string;
@@ -69,7 +71,6 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) {
-  const [members, setMembers] = useState<Member[]>([]);
   const [tierCounts, setTierCounts] = useState<Record<string, number>>({});
   const [pixels, setPixels] = useState([]);
   const [legalDocs, setLegalDocs] = useState([]);
@@ -81,11 +82,40 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [cameoFlagEnabled, setCameoFlagEnabled] = useState(false);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loadingMembers, setLoadingMembers] = useState(false);
   const PAGE_SIZE = 50;
   const { toast: toastHook } = useToast();
   const navigate = useNavigate();
+
+  // Use optimized React Query hook for member data
+  const {
+    members: rawMembers,
+    totalPages,
+    isLoading: loadingMembers,
+    isFetching
+  } = useCommunityMembers({
+    page,
+    search: '',
+    tierFilter: filterTier === 'all' ? 'all' : filterTier,
+    pageSize: PAGE_SIZE
+  });
+
+  // Transform members to match expected Member interface with default scores
+  const members = useMemo(() => {
+    return rawMembers.map(member => {
+      if (member.era_current && member.ptp_current && member.era_label && member.ptp_status) {
+        return member as unknown as Member;
+      }
+      return {
+        ...member,
+        era_current: 1,
+        ptp_current: 0,
+        era_label: 'Discover',
+        ptp_status: 'Stop',
+        watch_time: member.watch_time || 0,
+        listen_time: member.listen_time || 0
+      } as unknown as Member;
+    });
+  }, [rawMembers]);
 
   const patterns = [
     {
@@ -169,7 +199,6 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
 
 
   useEffect(() => {
-    loadMembers();
     // Defer non-critical loads for better initial performance
     const loadDeferred = () => {
       loadTierCounts();
@@ -184,11 +213,6 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reload members when page changes
-  useEffect(() => {
-    loadMembers();
-  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
     // If a user was selected from the globe, show their profile
     if (selectedUserId && members.length > 0) {
@@ -198,57 +222,6 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       }
     }
   }, [selectedUserId, members]);
-
-  const loadMembers = useCallback(async () => {
-    setLoadingMembers(true);
-    try {
-      // Get total count first for pagination
-      const { count } = await supabase
-        .from("user_profiles")
-        .select("*", { count: 'exact', head: true });
-      
-      const total = count || 0;
-      setTotalPages(Math.ceil(total / PAGE_SIZE));
-      
-      // Fetch paginated user profiles with ERA/PTP scores
-      const { data, error } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-      if (error) {
-        console.error('Error loading members:', error);
-        setMembers([]);
-        return;
-      }
-
-      const realMembers = data || [];
-      
-      // Use REAL data - no more random demo scores for real users
-      const realMembersWithScores = realMembers.map(member => {
-        // If they have real ERA/PTP scores, use them
-        if (member.era_current && member.ptp_current && member.era_label && member.ptp_status) {
-          return member;
-        }
-        
-        // If no scores yet, set defaults indicating they need to engage more
-        return {
-          ...member,
-          era_current: 1, // Start at Discover
-          ptp_current: 0, // Cold lead
-          era_label: 'Discover',
-          ptp_status: 'Stop',
-          watch_time: member.watch_time || 0,
-          listen_time: member.listen_time || 0
-        };
-      });
-      
-      setMembers(realMembersWithScores as Member[]);
-    } finally {
-      setLoadingMembers(false);
-    }
-  }, [page]);
 
   const loadTierCounts = useCallback(async () => {
     const { data } = await supabase

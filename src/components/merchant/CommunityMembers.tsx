@@ -1,69 +1,32 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, Loader2, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar, Trophy, Route, ShoppingCart, Share2 } from "lucide-react";
+import { Search, Users, ChevronLeft, ChevronRight, Clock, Heart, TrendingUp, Calendar, Trophy, Route, ShoppingCart, Share2 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { PTPBehaviorBreakdown } from "./PTPBehaviorBreakdown";
 import { FanJourneyTimeline } from "./FanJourneyTimeline";
 import { ContentEngagementPanel } from "./ContentEngagementPanel";
 import { CommerceJourneyPanel } from "./CommerceJourneyPanel";
-interface MilestoneData {
-  current_badge: string | null;
-  total_minutes: number;
-}
-
-interface CommunityMember {
-  id: string;
-  user_id: string | null;
-  heartbeat_member_id: string | null;
-  display_name: string;
-  email: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
-  bio: string | null;
-  location: string | null;
-  tier: string | null;
-  membership_tier: string | null;
-  created_at: string;
-  last_active_at: string | null;
-  total_spend: number;
-  era_current: number | null;
-  ptp_current: number | null;
-  era_label: string | null;
-  ptp_status: string | null;
-  watch_time: number | null;
-  listen_time: number | null;
-  livestream_engagement_score: number | null;
-  login_streak: number | null;
-  inactive_days: number | null;
-  is_super_fan: boolean | null;
-  milestone?: MilestoneData;
-}
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCommunityMembers, CommunityMember, MilestoneData } from "@/hooks/useCommunityMembers";
 
 interface CommunityMembersProps {
   selectedUserId?: string | null;
 }
 
 export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
-  const [members, setMembers] = useState<CommunityMember[]>([]);
-  const [milestoneMap, setMilestoneMap] = useState<Map<string, MilestoneData>>(new Map());
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
   const [milestoneFilter, setMilestoneFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
-  const { toast } = useToast();
   
   const ITEMS_PER_PAGE = 50;
 
@@ -76,9 +39,20 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    loadMembers();
-  }, [currentPage, debouncedSearch, tierFilter, milestoneFilter]);
+  // Use optimized React Query hook
+  const {
+    members,
+    totalCount,
+    totalPages,
+    isLoading,
+    isFetching
+  } = useCommunityMembers({
+    page: currentPage,
+    search: debouncedSearch,
+    tierFilter,
+    milestoneFilter,
+    pageSize: ITEMS_PER_PAGE
+  });
 
   // Scroll to selected user if provided
   useEffect(() => {
@@ -93,80 +67,8 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   }, [selectedUserId, members]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalCount);
-
-  const loadMembers = async () => {
-    try {
-      setLoading(true);
-      
-      // Load milestone data first
-      const { data: milestoneData } = await supabase
-        .from('milestone_progress')
-        .select('user_id, current_badge, total_minutes');
-
-      const milestones = new Map<string, MilestoneData>();
-      milestoneData?.forEach(m => {
-        milestones.set(m.user_id, {
-          current_badge: m.current_badge,
-          total_minutes: m.total_minutes || 0,
-        });
-      });
-      setMilestoneMap(milestones);
-
-      // Build query with filters and pagination
-      let query = supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact' });
-
-      // Apply search filter
-      if (debouncedSearch) {
-        query = query.or(
-          `display_name.ilike.%${debouncedSearch}%,location.ilike.%${debouncedSearch}%`
-        );
-      }
-
-      // Apply tier filter
-      if (tierFilter !== "all") {
-        query = query.or(
-          `membership_tier.ilike.%${tierFilter}%,tier.ilike.%${tierFilter}%`
-        );
-      }
-
-      // Apply pagination
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
-      
-      const { data, error, count } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-
-      // Enrich members with milestone data
-      let enrichedMembers = (data || []).map(member => ({
-        ...member,
-        milestone: member.user_id ? milestones.get(member.user_id) : undefined,
-      }));
-
-      // Apply milestone filter client-side (since it's from a different table)
-      if (milestoneFilter !== "all") {
-        const userIdsWithBadge = Array.from(milestones.entries())
-          .filter(([_, m]) => m.current_badge === milestoneFilter)
-          .map(([userId, _]) => userId);
-        enrichedMembers = enrichedMembers.filter(m => m.user_id && userIdsWithBadge.includes(m.user_id));
-      }
-
-      setMembers(enrichedMembers);
-      setTotalCount(milestoneFilter !== "all" ? enrichedMembers.length : (count || 0));
-    } catch (error) {
-      console.error('Error loading members:', error);
-      toast({ title: "Error loading members", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getTierBadge = (tier: string | null) => {
     const tierName = tier || "Free";
@@ -252,11 +154,33 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
     }
   };
 
-  if (loading) {
+  // Skeleton loading state
+  if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Member Directory
+          </CardTitle>
+          <CardDescription>Loading members...</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="border rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
@@ -437,7 +361,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || loading}
+                  disabled={currentPage === 1 || isFetching}
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Previous
@@ -446,7 +370,7 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || loading}
+                  disabled={currentPage === totalPages || isFetching}
                 >
                   Next
                   <ChevronRight className="w-4 h-4 ml-1" />
