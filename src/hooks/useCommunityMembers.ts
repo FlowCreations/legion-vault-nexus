@@ -59,6 +59,34 @@ async function fetchMilestones() {
   return map;
 }
 
+// Only fetch columns we actually use in the UI
+const MEMBER_COLUMNS = `
+  id,
+  user_id,
+  heartbeat_member_id,
+  display_name,
+  email,
+  full_name,
+  avatar_url,
+  bio,
+  location,
+  tier,
+  membership_tier,
+  created_at,
+  last_active_at,
+  total_spend,
+  era_current,
+  ptp_current,
+  era_label,
+  ptp_status,
+  watch_time,
+  listen_time,
+  livestream_engagement_score,
+  login_streak,
+  inactive_days,
+  is_super_fan
+`;
+
 // Fetch members with pagination and filters
 async function fetchMembersPage({
   page,
@@ -68,7 +96,7 @@ async function fetchMembersPage({
 }: Omit<UseCommunityMembersParams, 'milestoneFilter'>) {
   let query = supabase
     .from('user_profiles')
-    .select('*', { count: 'exact' });
+    .select(MEMBER_COLUMNS, { count: 'exact' });
 
   // Apply search filter
   if (search) {
