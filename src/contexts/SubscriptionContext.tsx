@@ -70,20 +70,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const subData = (subResult as any)?.data;
       if (subData?.subscribed && subData?.subscription?.plan_name) {
         setIsSubscribed(true);
-        const planName = subData.subscription.plan_name;
-        if (planName.includes('Legionnaires')) {
-          setTier(TIERS.LEGIONNAIRES);
-        } else if (planName.includes('Outlaws')) {
-          setTier(TIERS.OUTLAWS);
-        } else if (planName.includes('Rebels')) {
-          setTier(TIERS.REBELS);
+        const planName = subData.subscription.plan_name.toLowerCase();
+        if (planName.includes('legionnaire')) {
+          setTier(TIERS.LEGIONNAIRE);
+        } else if (planName.includes('outlaw')) {
+          setTier(TIERS.OUTLAW);
+        } else if (planName.includes('rebel')) {
+          setTier(TIERS.REBEL);
         } else {
           setTier(TIERS.FREE);
         }
       } else if (adminStatus) {
         // Admins get full access even without subscription
         setIsSubscribed(true);
-        setTier(TIERS.LEGIONNAIRES);
+        setTier(TIERS.LEGIONNAIRE);
       } else {
         setIsSubscribed(false);
         setTier(TIERS.FREE);

@@ -1,8 +1,8 @@
 export const TIERS = {
-  FREE: 'free',
-  REBELS: 'Rebels',
-  OUTLAWS: 'Outlaws',
-  LEGIONNAIRES: 'Legionnaires'
+  FREE: 'Free',
+  REBEL: 'Rebel',
+  OUTLAW: 'Outlaw',
+  LEGIONNAIRE: 'Legionnaire'
 } as const;
 
 export type TierType = typeof TIERS[keyof typeof TIERS];
@@ -16,7 +16,7 @@ export const TIER_FEATURES: Record<TierType, string[]> = {
     'shows',
     'live_studio'
   ],
-  [TIERS.REBELS]: [
+  [TIERS.REBEL]: [
     'power_album',
     'music_library',
     'music_videos',
@@ -26,7 +26,7 @@ export const TIER_FEATURES: Record<TierType, string[]> = {
     'performances',
     'premium_albums'
   ],
-  [TIERS.OUTLAWS]: [
+  [TIERS.OUTLAW]: [
     'power_album',
     'music_library',
     'music_videos',
@@ -39,7 +39,7 @@ export const TIER_FEATURES: Record<TierType, string[]> = {
     'gallery',
     'documentary'
   ],
-  [TIERS.LEGIONNAIRES]: [
+  [TIERS.LEGIONNAIRE]: [
     'power_album',
     'music_library',
     'music_videos',
@@ -59,19 +59,19 @@ export const TIER_FEATURES: Record<TierType, string[]> = {
 
 // Stripe price configuration (placeholders until real IDs are ready)
 export const STRIPE_CONFIG = {
-  [TIERS.REBELS]: {
+  [TIERS.REBEL]: {
     priceId: 'price_rebels_monthly',
     price: 10,
     interval: 'month' as const,
     description: 'Behind-the-scenes videos, community features, and premium albums'
   },
-  [TIERS.OUTLAWS]: {
+  [TIERS.OUTLAW]: {
     priceId: 'price_outlaws_monthly',
     price: 25,
     interval: 'month' as const,
     description: 'Gallery access, documentary content, and advanced community features'
   },
-  [TIERS.LEGIONNAIRES]: {
+  [TIERS.LEGIONNAIRE]: {
     priceId: 'price_legionnaires_monthly',
     price: 50,
     interval: 'month' as const,
@@ -89,9 +89,9 @@ export const hasFeatureAccess = (tier: TierType, feature: string): boolean => {
 export const getTierLevel = (tier: TierType): number => {
   switch (tier) {
     case TIERS.FREE: return 0;
-    case TIERS.REBELS: return 1;
-    case TIERS.OUTLAWS: return 2;
-    case TIERS.LEGIONNAIRES: return 3;
+    case TIERS.REBEL: return 1;
+    case TIERS.OUTLAW: return 2;
+    case TIERS.LEGIONNAIRE: return 3;
     default: return 0;
   }
 };

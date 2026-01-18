@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PTPBehaviorBreakdown } from "./PTPBehaviorBreakdown";
-import { JourneyStageCard } from "./JourneyStageCard";
 import { FanJourneyTimeline } from "./FanJourneyTimeline";
 import { ContentEngagementPanel } from "./ContentEngagementPanel";
 import { CommerceJourneyPanel } from "./CommerceJourneyPanel";
@@ -170,16 +169,16 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
   };
 
   const getTierBadge = (tier: string | null) => {
-    const tierName = tier || "FREE";
+    const tierName = tier || "Free";
     const colors: Record<string, string> = {
-      "Legionnaires": "bg-yellow-500 text-black border-yellow-600",
-      "Outlaws": "bg-orange-500 text-white border-orange-600",
-      "Rebels": "bg-blue-500 text-white border-blue-600",
-      "FREE": "bg-muted text-muted-foreground border-muted-foreground/20",
+      "Legionnaire": "bg-amber-500 text-black border-amber-600",
+      "Outlaw": "bg-purple-500 text-white border-purple-600",
+      "Rebel": "bg-red-500 text-white border-red-600",
+      "Free": "bg-muted text-muted-foreground border-muted-foreground/20",
     };
 
     return (
-      <Badge className={`${colors[tierName] || colors.FREE} font-semibold`}>
+      <Badge className={`${colors[tierName] || colors.Free} font-semibold`}>
         {tierName}
       </Badge>
     );
@@ -297,10 +296,10 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tiers</SelectItem>
-                <SelectItem value="Legionnaires">Legionnaires</SelectItem>
-                <SelectItem value="Outlaws">Outlaws</SelectItem>
-                <SelectItem value="Rebels">Rebels</SelectItem>
-                <SelectItem value="FREE">Free</SelectItem>
+                <SelectItem value="Legionnaire">Legionnaire</SelectItem>
+                <SelectItem value="Outlaw">Outlaw</SelectItem>
+                <SelectItem value="Rebel">Rebel</SelectItem>
+                <SelectItem value="Free">Free</SelectItem>
               </SelectContent>
             </Select>
             <Select value={milestoneFilter} onValueChange={setMilestoneFilter}>
@@ -371,7 +370,6 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         {getTierBadge(member.membership_tier || member.tier)}
                         {getMilestoneBadge(member.milestone)}
-                        {member.user_id && <JourneyStageCard userId={member.user_id} compact />}
                         {member.era_label && (
                           <Badge className={`${
                             member.era_label.toLowerCase() === 'engaged' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
@@ -389,11 +387,6 @@ export function CommunityMembers({ selectedUserId }: CommunityMembersProps) {
                             'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                           }`}>
                             PTP {member.ptp_current || 0}
-                          </Badge>
-                        )}
-                        {member.is_super_fan && (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                            ⭐ Super Fan
                           </Badge>
                         )}
                       </div>

@@ -452,10 +452,6 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
       <Tabs defaultValue="members" className="space-y-6">
         <TabsList>
           <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="journey" className="flex items-center gap-1">
-            <Sparkles className="h-3 w-3" />
-            Fan Journey
-          </TabsTrigger>
           <TabsTrigger value="superfans">Superfan Index</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
           <TabsTrigger value="analytics">AI Analytics</TabsTrigger>

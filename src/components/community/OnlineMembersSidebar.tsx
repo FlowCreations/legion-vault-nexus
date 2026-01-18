@@ -162,7 +162,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
                   <TooltipContent side="left" className="flex flex-col gap-1">
                     <p className="font-semibold">{member.display_name}</p>
                     <Badge className={`${getTierColor(member.tier)} text-xs`}>
-                      {member.tier || 'Free Member'}
+                      {member.tier || 'Free'}
                     </Badge>
                     <p className="text-xs text-green-500">● Online</p>
                     <p className="text-xs text-muted-foreground">Click to message</p>
@@ -196,7 +196,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
                     <TooltipContent side="left" className="flex flex-col gap-1">
                       <p className="font-semibold">{member.display_name}</p>
                       <Badge className={`${getTierColor(member.tier)} text-xs`}>
-                        {member.tier || 'Free Member'}
+                        {member.tier || 'Free'}
                       </Badge>
                       <p className="text-xs text-muted-foreground">● Offline</p>
                       <p className="text-xs text-muted-foreground">Click to message</p>

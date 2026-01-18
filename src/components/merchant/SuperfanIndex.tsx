@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { MemberCard } from "./MemberCard";
 
 interface Member {
   id: string;
@@ -24,6 +27,8 @@ interface Member {
 export function SuperfanIndex() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadSuperfans();
@@ -49,20 +54,17 @@ export function SuperfanIndex() {
   const getTierBadge = (tier: string | null) => {
     const tierName = tier?.toLowerCase() || 'free';
     let badgeClass = 'px-4 py-1.5 text-sm font-semibold rounded-full';
-    let tierDisplay = tier || 'FREE';
+    let tierDisplay = tier || 'Free';
     
-    if (tierName.includes('elite') || tierName.includes('legionnaire')) {
-      badgeClass += ' bg-yellow-600/90 text-black';
-      tierDisplay = 'Legion Elite';
-    } else if (tierName.includes('vip')) {
-      badgeClass += ' bg-amber-700/90 text-white';
-      tierDisplay = 'Legion VIP';
-    } else if (tierName.includes('member') || tierName.includes('outlaw')) {
-      badgeClass += ' bg-amber-600/80 text-white';
-      tierDisplay = 'Legion Member';
-    } else if (tierName.includes('rebel')) {
-      badgeClass += ' bg-blue-500/80 text-white';
-      tierDisplay = 'Rebels';
+    if (tierName === 'legionnaire') {
+      badgeClass += ' bg-amber-500/90 text-black';
+      tierDisplay = 'Legionnaire';
+    } else if (tierName === 'outlaw') {
+      badgeClass += ' bg-purple-600/90 text-white';
+      tierDisplay = 'Outlaw';
+    } else if (tierName === 'rebel') {
+      badgeClass += ' bg-red-500/80 text-white';
+      tierDisplay = 'Rebel';
     } else {
       badgeClass += ' bg-muted text-muted-foreground';
       tierDisplay = 'Free';
@@ -140,7 +142,8 @@ export function SuperfanIndex() {
           {members.map((member, index) => (
             <div 
               key={member.id} 
-              className="flex items-center justify-between p-4 rounded-lg bg-card border hover:bg-accent/30 transition-colors"
+              onClick={() => setSelectedMember(member)}
+              className="flex items-center justify-between p-4 rounded-lg bg-card border hover:bg-accent/30 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-6 flex-1">
                 {/* Rank Number */}
@@ -185,6 +188,34 @@ export function SuperfanIndex() {
           )}
         </div>
       </CardContent>
+
+      {/* Member Profile Sheet */}
+      <Sheet open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto pt-12">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Member Profile</SheetTitle>
+          </SheetHeader>
+          {selectedMember && (
+            <MemberCard 
+              member={{
+                name: selectedMember.display_name,
+                avatar_url: selectedMember.avatar_url,
+                tier: selectedMember.tier || selectedMember.membership_tier,
+                total_spend: selectedMember.total_spend,
+                watch_time_seconds: (selectedMember.watch_time || 0) * 60,
+                listen_time_seconds: (selectedMember.listen_time || 0) * 60,
+                era_score: selectedMember.era_current,
+                ptp_status: selectedMember.ptp_status,
+                user_id: selectedMember.id
+              }}
+              onClose={() => setSelectedMember(null)}
+              onViewProfile={() => {
+                navigate(`/merchant/community/${selectedMember.id}`);
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </Card>
   );
 }
