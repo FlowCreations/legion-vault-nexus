@@ -24,11 +24,11 @@ serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all user profiles
+    // Get all user profiles - increased limit for more demo data
     const { data: users, error: usersError } = await supabase
       .from("user_profiles")
       .select("user_id, display_name, watch_time, listen_time, total_spend")
-      .limit(100);
+      .limit(300);
 
     if (usersError) throw usersError;
 
@@ -45,49 +45,49 @@ serve(async (req: Request) => {
       // Always add awareness milestones
       milestonesToCreate.push('first_portal_visit');
       
-      // Add email_verified with 80% probability
-      if (Math.random() < 0.8) {
+      // Add email_verified with 90% probability
+      if (Math.random() < 0.9) {
         milestonesToCreate.push('email_verified');
       }
 
-      // Add engagement milestones based on watch/listen time
-      if (watchTime > 0 || Math.random() < 0.6) {
+      // Add engagement milestones based on watch/listen time - increased probabilities
+      if (watchTime > 0 || Math.random() < 0.8) {
         milestonesToCreate.push('first_video_start');
-        if (watchTime > 5 || Math.random() < 0.5) {
+        if (watchTime > 5 || Math.random() < 0.7) {
           milestonesToCreate.push('first_video_complete');
         }
       }
 
-      if (listenTime > 0 || Math.random() < 0.7) {
+      if (listenTime > 0 || Math.random() < 0.85) {
         milestonesToCreate.push('first_song_start');
-        if (listenTime > 3 || Math.random() < 0.6) {
+        if (listenTime > 3 || Math.random() < 0.75) {
           milestonesToCreate.push('first_song_finish');
         }
       }
 
-      // Add deeper engagement milestones with lower probability
-      if (Math.random() < 0.3) milestonesToCreate.push('first_replay');
-      if (Math.random() < 0.25) milestonesToCreate.push('first_save');
-      if (Math.random() < 0.2) milestonesToCreate.push('first_download');
+      // Add deeper engagement milestones with increased probabilities
+      if (Math.random() < 0.50) milestonesToCreate.push('first_replay');
+      if (Math.random() < 0.45) milestonesToCreate.push('first_save');
+      if (Math.random() < 0.40) milestonesToCreate.push('first_download');
 
-      // Add conversion milestones based on spend or random
-      if (totalSpend > 0 || Math.random() < 0.4) {
+      // Add conversion milestones based on spend or random - increased probabilities
+      if (totalSpend > 0 || Math.random() < 0.6) {
         milestonesToCreate.push('first_store_visit');
-        if (totalSpend > 0 || Math.random() < 0.3) {
+        if (totalSpend > 0 || Math.random() < 0.5) {
           milestonesToCreate.push('first_add_to_cart');
-          if (totalSpend > 0 || Math.random() < 0.2) {
+          if (totalSpend > 0 || Math.random() < 0.4) {
             milestonesToCreate.push('first_purchase');
-            if (totalSpend > 50 || Math.random() < 0.1) {
+            if (totalSpend > 50 || Math.random() < 0.25) {
               milestonesToCreate.push('repeat_buyer');
             }
           }
         }
       }
 
-      // Add advocacy milestones with very low probability
-      if (Math.random() < 0.1) milestonesToCreate.push('first_referral');
-      if (Math.random() < 0.05) milestonesToCreate.push('super_fan');
-      if (Math.random() < 0.03) milestonesToCreate.push('affiliate_activated');
+      // Add advocacy milestones with increased probabilities
+      if (Math.random() < 0.25) milestonesToCreate.push('first_referral');
+      if (Math.random() < 0.15) milestonesToCreate.push('super_fan');
+      if (Math.random() < 0.10) milestonesToCreate.push('affiliate_activated');
 
       // Insert milestones for this user
       for (const milestone of milestonesToCreate) {

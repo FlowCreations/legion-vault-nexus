@@ -3,13 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, DollarSign, TrendingUp, Sparkles, Loader2, RefreshCw, Trophy } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CommunityMembers } from "./CommunityMembers";
 import { SuperfanIndex } from "./SuperfanIndex";
 import { AIAnalytics } from "./AIAnalytics";
 import { PTPCalculationTrigger } from "./admin/PTPCalculationTrigger";
-import { MilestoneTracker } from "./MilestoneTracker";
 import AdminDashboard from "@/pages/AdminDashboard";
 
 const LoadingSpinner = () => (
@@ -320,12 +319,8 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="milestones" className="space-y-6">
+      <Tabs defaultValue="members" className="space-y-6">
         <TabsList className="bg-card border border-border">
-          <TabsTrigger value="milestones" className="flex items-center gap-1">
-            <Trophy className="w-3 h-3" />
-            Fan Journey
-          </TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="superfan">Superfan Index</TabsTrigger>
           <TabsTrigger value="tiers">Tiers</TabsTrigger>
@@ -334,41 +329,6 @@ export function CommunityManagement({ selectedUserId }: CommunityManagementProps
           <TabsTrigger value="legal">Legal</TabsTrigger>
           <TabsTrigger value="admin">Admin</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="milestones">
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Fan Journey Milestones</p>
-                    <p className="text-sm text-muted-foreground">Track how fans progress through awareness → engagement → conversion → advocacy</p>
-                  </div>
-                  <Button
-                    onClick={handleSeedMilestones}
-                    disabled={seedingMilestones}
-                    variant="outline"
-                  >
-                    {seedingMilestones ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Seeding...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Seed Demo Milestones
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Suspense fallback={<LoadingSpinner />}>
-              <MilestoneTracker />
-            </Suspense>
-          </div>
-        </TabsContent>
 
         <TabsContent value="members">
           <Suspense fallback={<LoadingSpinner />}>

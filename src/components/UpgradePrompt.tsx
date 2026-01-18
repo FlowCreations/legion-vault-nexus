@@ -13,24 +13,24 @@ interface UpgradePromptProps {
 }
 
 const FEATURE_NAMES: Record<string, { name: string; tier: TierType }> = {
-  shows: { name: 'Show Listings', tier: TIERS.REBELS },
-  bts_videos: { name: 'Behind-the-Scenes Videos', tier: TIERS.REBELS },
-  community_post: { name: 'Community Posting', tier: TIERS.REBELS },
-  performances: { name: 'Performance Videos', tier: TIERS.REBELS },
-  premium_albums: { name: 'Premium Albums', tier: TIERS.REBELS },
-  live_studio: { name: 'Live Studio', tier: TIERS.OUTLAWS },
-  gallery: { name: 'Photo Gallery', tier: TIERS.OUTLAWS },
-  documentary: { name: 'Documentary Content', tier: TIERS.OUTLAWS },
-  merch_discount: { name: 'Merch Discounts', tier: TIERS.LEGIONNAIRES },
-  early_access: { name: 'Early Access', tier: TIERS.LEGIONNAIRES },
-  priority_support: { name: 'Priority Support', tier: TIERS.LEGIONNAIRES },
+  shows: { name: 'Show Listings', tier: TIERS.REBEL },
+  bts_videos: { name: 'Behind-the-Scenes Videos', tier: TIERS.REBEL },
+  community_post: { name: 'Community Posting', tier: TIERS.REBEL },
+  performances: { name: 'Performance Videos', tier: TIERS.REBEL },
+  premium_albums: { name: 'Premium Albums', tier: TIERS.REBEL },
+  live_studio: { name: 'Live Studio', tier: TIERS.OUTLAW },
+  gallery: { name: 'Photo Gallery', tier: TIERS.OUTLAW },
+  documentary: { name: 'Documentary Content', tier: TIERS.OUTLAW },
+  merch_discount: { name: 'Merch Discounts', tier: TIERS.LEGIONNAIRE },
+  early_access: { name: 'Early Access', tier: TIERS.LEGIONNAIRE },
+  priority_support: { name: 'Priority Support', tier: TIERS.LEGIONNAIRE },
 };
 
 export function UpgradePrompt({ feature, requiredTier, currentTier, inline = false }: UpgradePromptProps) {
   const navigate = useNavigate();
 
   // Determine the tier needed
-  let tierNeeded: TierType = requiredTier || TIERS.REBELS;
+  let tierNeeded: TierType = requiredTier || TIERS.REBEL;
   if (feature && FEATURE_NAMES[feature]) {
     tierNeeded = FEATURE_NAMES[feature].tier;
   }

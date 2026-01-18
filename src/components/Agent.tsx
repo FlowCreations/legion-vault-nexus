@@ -79,11 +79,7 @@ export const Agent = ({ isExpanded, setIsExpanded }: AgentProps) => {
       setMessages(prev => [newMessage, ...prev]);
       setCurrentMessage(message);
       setIsExpanded(true);
-
-      // Auto-collapse after 15 seconds
-      setTimeout(() => {
-        setIsExpanded(false);
-      }, 15000);
+      // Agent stays visible until user manually dismisses it
     }
   };
 
