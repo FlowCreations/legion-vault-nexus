@@ -544,7 +544,7 @@ export default function AdminDashboard({ selectedUserId }: AdminDashboardProps) 
                               {member.ptp_current !== undefined && member.ptp_status && (
                                 <PTPChip ptp={member.ptp_current} status={member.ptp_status} />
                               )}
-                              <JourneyStageCard userId={member.user_id} compact />
+                              
                             </div>
                             <div className="flex gap-6 text-sm">
                               <div className="text-center">
