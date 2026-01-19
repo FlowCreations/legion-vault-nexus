@@ -43,19 +43,26 @@ interface UseCommunityMembersParams {
   pageSize?: number;
 }
 
-// Fetch milestone data once and cache for 5 minutes
-async function fetchMilestones() {
-  const { data } = await supabase
+// Fetch milestone data for just the current page (fast, avoids scanning entire table)
+async function fetchMilestonesForUserIds(userIds: string[]) {
+  if (!userIds.length) return new Map<string, MilestoneData>();
+
+  const { data, error } = await supabase
     .from('milestone_progress')
-    .select('user_id, current_badge, total_minutes');
-  
+    .select('user_id, current_badge, total_minutes')
+    .in('user_id', userIds);
+
+  if (error) throw error;
+
   const map = new Map<string, MilestoneData>();
-  data?.forEach(m => {
+  data?.forEach((m) => {
+    if (!m.user_id) return;
     map.set(m.user_id, {
       current_badge: m.current_badge,
       total_minutes: m.total_minutes || 0,
     });
   });
+
   return map;
 }
 
@@ -96,7 +103,7 @@ async function fetchMembersPage({
 }: Omit<UseCommunityMembersParams, 'milestoneFilter'>) {
   let query = supabase
     .from('user_profiles')
-    .select(MEMBER_COLUMNS, { count: 'exact' });
+    .select(MEMBER_COLUMNS, { count: 'estimated' });
 
   // Apply search filter
   if (search) {
@@ -135,20 +142,32 @@ export function useCommunityMembers({
   milestoneFilter = "all",
   pageSize = 50
 }: UseCommunityMembersParams) {
-  // Milestone data cached separately - only fetch once per 5 minutes
-  const milestonesQuery = useQuery({
-    queryKey: ['milestones-map'],
-    queryFn: fetchMilestones,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-  });
-
   // Members query with pagination - cache for 2 minutes
   const membersQuery = useQuery({
     queryKey: ['community-members', page, search, tierFilter, pageSize],
     queryFn: () => fetchMembersPage({ page, search, tierFilter, pageSize }),
     staleTime: 2 * 60 * 1000, // 2 minutes
     placeholderData: (previousData) => previousData, // Keep previous data while loading
+  });
+
+  // Fetch milestones for just the users on the current page.
+  // IMPORTANT: This must NOT block initial member list rendering.
+  const pageUserIds = useMemo(() => {
+    const ids = (membersQuery.data?.members ?? [])
+      .map((m: any) => m.user_id)
+      .filter((id: any): id is string => typeof id === 'string' && id.length > 0);
+
+    return Array.from(new Set(ids));
+  }, [membersQuery.data?.members]);
+
+  const milestonesKey = useMemo(() => pageUserIds.slice().sort().join(','), [pageUserIds]);
+
+  const milestonesQuery = useQuery<Map<string, MilestoneData>>({
+    queryKey: ['milestones-map', milestonesKey],
+    queryFn: () => fetchMilestonesForUserIds(pageUserIds),
+    enabled: pageUserIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   // Combine members with milestone data
@@ -183,9 +202,11 @@ export function useCommunityMembers({
     members: enrichedMembers,
     totalCount,
     totalPages,
-    isLoading: membersQuery.isLoading || milestonesQuery.isLoading,
+    // Only gate initial render on the member list query.
+    // Milestones are supplementary and should not make the directory feel "slow".
+    isLoading: membersQuery.isLoading,
     isFetching: membersQuery.isFetching,
-    error: membersQuery.error || milestonesQuery.error,
+    error: membersQuery.error,
     refetch: membersQuery.refetch,
   };
 }
