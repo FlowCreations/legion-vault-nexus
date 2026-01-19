@@ -189,6 +189,16 @@ export function SuperfanIndex() {
                   <p className="text-sm text-muted-foreground">PTP</p>
                   {getPTPIndicator(member.ptp_current)}
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMember(member);
+                  }}
+                >
+                  View Profile
+                </Button>
               </div>
             </div>
           ))}
