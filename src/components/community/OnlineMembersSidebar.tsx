@@ -8,7 +8,8 @@ import { getTierColor } from "@/lib/tierColors";
 import { Users } from "lucide-react";
 
 interface OnlineMember {
-  user_id: string;
+  id: string;
+  user_id: string | null;
   display_name: string;
   avatar_url: string;
   tier: string;
@@ -91,36 +92,30 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
 
   const fetchOnlineMembers = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    
-    // Consider users online if active in last 5 minutes
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('user_id, display_name, avatar_url, tier, last_active_at, is_online')
+      .select('id, user_id, display_name, avatar_url, tier, last_active_at, is_online')
       .eq('is_online', true)
-      .gte('last_active_at', fiveMinutesAgo)
+      .not('display_name', 'is', null)
+      .not('avatar_url', 'is', null)
       .order('last_active_at', { ascending: false })
-      .limit(20); // Reduced from 50 to 20 for better performance
+      .limit(10);
 
     let members = (data || []) as OnlineMember[];
     
-    // Filter out current user
+    // Filter out current user if they have a user_id
     if (user) {
       members = members.filter(m => m.user_id !== user.id);
     }
     
-    // Split into online and offline (no mock members)
-    const online = members.filter(m => m.is_online);
-    const offline = members.filter(m => !m.is_online);
-    
-    setOnlineMembers(online);
+    setOnlineMembers(members);
     setAllMembers(members);
   };
 
   const handleMemberClick = (member: OnlineMember) => {
     onMemberClick({
-      id: member.user_id,
+      id: member.user_id || member.id,
       name: member.display_name,
       avatar: member.avatar_url
     });
