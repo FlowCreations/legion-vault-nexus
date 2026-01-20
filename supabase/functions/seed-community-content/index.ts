@@ -148,24 +148,33 @@ serve(async (req) => {
 
     console.log('Starting community content seeding...');
 
-    // Get user profiles (limit for performance)
-    const { data: profiles, error: profilesError } = await supabaseClient
+    // Get user profiles with VALID user_id (actual auth users) - required for FK constraints
+    const { data: allProfiles, error: profilesError } = await supabaseClient
       .from('user_profiles')
       .select('id, user_id, display_name, tier')
+      .not('user_id', 'is', null)
       .limit(100);
 
     if (profilesError) {
       throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
     }
 
-    if (!profiles || profiles.length === 0) {
+    // Also get demo profiles for display names (we'll use valid user_ids for foreign keys)
+    const { data: demoProfiles } = await supabaseClient
+      .from('user_profiles')
+      .select('id, display_name, tier')
+      .is('user_id', null)
+      .limit(100);
+
+    const profiles = allProfiles || [];
+    console.log(`Found ${profiles.length} profiles with valid auth user_ids`);
+
+    if (profiles.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No profiles found' }),
+        JSON.stringify({ error: 'No profiles with valid user_id found. Need at least one real auth user.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log(`Processing with ${profiles.length} profiles...`);
 
     let totalPosts = 0;
     let totalReactions = 0;
@@ -185,8 +194,12 @@ serve(async (req) => {
     await supabaseClient.from('post_reactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabaseClient.from('post_comments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-    // Get official user ID for announcements
-    const officialUserId = profiles.find(p => p.tier === 'Legionnaires')?.user_id || profiles[0]?.user_id;
+    // Helper to get a valid user_id - cycles through available profiles
+    const getValidUserId = (index: number) => profiles[index % profiles.length].user_id;
+
+    // Get official user ID for announcements - prefer Legionnaires tier
+    const officialProfile = profiles.find(p => p.tier === 'Legionnaires') || profiles[0];
+    const officialUserId = officialProfile.user_id;
 
     // Create announcements
     const announcementPosts = announcementContent.map((announcement, i) => {
@@ -217,14 +230,12 @@ serve(async (req) => {
       console.log(`Inserted ${announcementPosts.length} announcements`);
     }
 
-    // Create Legion Speaks posts
-    const shuffledProfiles = shuffleArray(profiles.filter(p => p.tier === 'Legionnaires' || p.tier === 'Outlaws'));
+    // Create Legion Speaks posts - cycle through valid profiles
     const legionSpeaksPosts = legionSpeaksContent.map((post, i) => {
-      const authorProfile = shuffledProfiles[i % shuffledProfiles.length] || profiles[i % profiles.length];
       const daysAgo = i * 3 + randomBetween(1, 3);
       const createdAt = randomDate(daysAgo);
       return {
-        user_id: authorProfile?.user_id || officialUserId,
+        user_id: getValidUserId(i),
         content: post.content,
         category: 'legion_speaks',
         post_type: 'text',
@@ -235,26 +246,27 @@ serve(async (req) => {
       };
     });
 
+    console.log(`Attempting to insert ${legionSpeaksPosts.length} Legion Speaks posts...`);
     const { data: insertedLegionSpeaks, error: legionSpeaksError } = await supabaseClient
       .from('community_posts')
       .insert(legionSpeaksPosts)
       .select('id');
 
     if (legionSpeaksError) {
-      console.error('Error inserting legion speaks:', legionSpeaksError);
+      console.error('Error inserting legion speaks:', JSON.stringify(legionSpeaksError));
+      console.error('Legion speaks posts that failed:', JSON.stringify(legionSpeaksPosts.slice(0, 2)));
     } else {
       totalPosts += legionSpeaksPosts.length;
       console.log(`Inserted ${legionSpeaksPosts.length} Legion Speaks posts`);
     }
 
-    // Create member intro posts
-    const introProfiles = shuffleArray([...profiles]).slice(0, Math.min(introTemplates.length, profiles.length));
-    const introPosts = introProfiles.map((profile, i) => {
-      const template = introTemplates[i];
+    // Create member intro posts - cycle through valid profiles  
+    const numIntros = Math.min(introTemplates.length, 15);
+    const introPosts = introTemplates.slice(0, numIntros).map((template, i) => {
       const daysAgo = randomBetween(5, 45);
       const createdAt = randomDate(daysAgo);
       return {
-        user_id: profile.user_id,
+        user_id: getValidUserId(i),
         content: template.content,
         category: 'intros',
         post_type: 'text',
@@ -265,13 +277,15 @@ serve(async (req) => {
       };
     });
 
+    console.log(`Attempting to insert ${introPosts.length} intro posts...`);
     const { data: insertedIntros, error: introsError } = await supabaseClient
       .from('community_posts')
       .insert(introPosts)
       .select('id');
 
     if (introsError) {
-      console.error('Error inserting intros:', introsError);
+      console.error('Error inserting intros:', JSON.stringify(introsError));
+      console.error('Intro posts that failed:', JSON.stringify(introPosts.slice(0, 2)));
     } else {
       totalPosts += introPosts.length;
       console.log(`Inserted ${introPosts.length} intro posts`);
@@ -290,12 +304,11 @@ serve(async (req) => {
       
       for (const post of allInsertedPosts) {
         const numReactions = randomBetween(5, 25);
-        const reactingProfiles = shuffleArray([...profiles]).slice(0, numReactions);
         
-        for (const profile of reactingProfiles) {
+        for (let r = 0; r < numReactions; r++) {
           reactions.push({
             post_id: post.id,
-            user_id: profile.user_id,
+            user_id: getValidUserId(r),
             reaction_type: pickRandom(reactionTypes),
             created_at: randomDate(30).toISOString()
           });
@@ -320,12 +333,11 @@ serve(async (req) => {
       
       for (const post of allInsertedPosts) {
         const numComments = randomBetween(1, 6);
-        const commentingProfiles = shuffleArray([...profiles]).slice(0, numComments);
         
-        for (const profile of commentingProfiles) {
+        for (let c = 0; c < numComments; c++) {
           comments.push({
             post_id: post.id,
-            user_id: profile.user_id,
+            user_id: getValidUserId(c),
             content: pickRandom(commentTemplates),
             created_at: randomDate(25).toISOString()
           });

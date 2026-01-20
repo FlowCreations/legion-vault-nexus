@@ -407,12 +407,28 @@ export default function CommunityHub() {
       
       let profileMap = new Map();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase
+        // Query profiles by BOTH user_id and id to support demo profiles
+        // Demo profiles have user_id = null but their profile.id is used as the post's user_id
+        const { data: profilesByUserId } = await supabase
           .from("user_profiles")
-          .select("user_id, display_name, avatar_url, tier")
+          .select("id, user_id, display_name, avatar_url, tier")
           .in("user_id", userIds);
         
-        profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+        const { data: profilesById } = await supabase
+          .from("user_profiles")
+          .select("id, user_id, display_name, avatar_url, tier")
+          .in("id", userIds);
+        
+        // Build map: key is either user_id or profile.id
+        profilesByUserId?.forEach(p => {
+          if (p.user_id) profileMap.set(p.user_id, p);
+        });
+        profilesById?.forEach(p => {
+          // Only add if not already found by user_id
+          if (!profileMap.has(p.id)) {
+            profileMap.set(p.id, p);
+          }
+        });
       }
       
       dbPosts = data.map(post => ({
