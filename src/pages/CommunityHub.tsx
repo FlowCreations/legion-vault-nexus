@@ -175,7 +175,6 @@ export default function CommunityHub() {
     loadUnreadCount();
     loadMessages();
     loadAvailableMembers();
-    clearOldPosts(); // Clear all existing posts
     setupRealtimeSubscription();
 
     // Listen for profile updates to refresh member avatars
