@@ -1899,6 +1899,7 @@ export type Database = {
           category: string | null
           content: string
           created_at: string | null
+          heartbeat_thread_id: string | null
           id: string
           link_url: string | null
           media_url: string | null
@@ -1912,6 +1913,7 @@ export type Database = {
           category?: string | null
           content: string
           created_at?: string | null
+          heartbeat_thread_id?: string | null
           id?: string
           link_url?: string | null
           media_url?: string | null
@@ -1925,6 +1927,7 @@ export type Database = {
           category?: string | null
           content?: string
           created_at?: string | null
+          heartbeat_thread_id?: string | null
           id?: string
           link_url?: string | null
           media_url?: string | null

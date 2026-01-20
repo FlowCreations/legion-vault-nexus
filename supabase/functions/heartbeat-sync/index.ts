@@ -84,6 +84,241 @@ serve(async (req) => {
         );
       }
 
+      case 'get_channels': {
+        console.log('📥 Fetching Heartbeat channels...');
+        
+        const response = await fetch(`${HEARTBEAT_API_URL}/channelCategories`, {
+          headers: {
+            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ Heartbeat API error: ${response.status}`, errorText);
+          throw new Error(`Heartbeat API error: ${response.status} - ${errorText}`);
+        }
+
+        const responseData = await response.json();
+        console.log(`✅ Channels response:`, JSON.stringify(responseData, null, 2));
+
+        return new Response(
+          JSON.stringify({ success: true, channels: responseData }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'sync_announcements': {
+        console.log('🔄 Starting Heartbeat announcements sync...');
+        
+        // Step 1: Fetch all channel categories to find Announcements
+        const channelsResponse = await fetch(`${HEARTBEAT_API_URL}/channelCategories`, {
+          headers: {
+            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!channelsResponse.ok) {
+          const errorText = await channelsResponse.text();
+          console.error(`❌ Failed to fetch channels: ${channelsResponse.status}`, errorText);
+          throw new Error(`Failed to fetch channels: ${channelsResponse.status}`);
+        }
+
+        const channelsData = await channelsResponse.json();
+        console.log('📊 Channel categories:', JSON.stringify(channelsData, null, 2));
+        
+        // Find announcements channel - look through all categories and their channels
+        let announcementChannelId: string | null = null;
+        const categories = channelsData.channelCategories || channelsData || [];
+        
+        for (const category of categories) {
+          const channels = category.channels || [];
+          for (const channel of channels) {
+            const channelName = (channel.name || '').toLowerCase();
+            if (channelName.includes('announcement') || channelName.includes('news') || channelName.includes('update')) {
+              announcementChannelId = channel.id;
+              console.log(`✅ Found announcements channel: ${channel.name} (ID: ${channel.id})`);
+              break;
+            }
+          }
+          if (announcementChannelId) break;
+        }
+
+        if (!announcementChannelId) {
+          // Try getting all channels directly
+          console.log('🔍 Trying direct channels endpoint...');
+          const directChannelsResponse = await fetch(`${HEARTBEAT_API_URL}/channels`, {
+            headers: {
+              'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+              'Accept': 'application/json',
+            },
+          });
+          
+          if (directChannelsResponse.ok) {
+            const directChannels = await directChannelsResponse.json();
+            console.log('📊 Direct channels:', JSON.stringify(directChannels, null, 2));
+            
+            const channelList = directChannels.channels || directChannels || [];
+            for (const channel of channelList) {
+              const channelName = (channel.name || '').toLowerCase();
+              if (channelName.includes('announcement') || channelName.includes('news') || channelName.includes('update')) {
+                announcementChannelId = channel.id;
+                console.log(`✅ Found announcements channel: ${channel.name} (ID: ${channel.id})`);
+                break;
+              }
+            }
+          }
+        }
+
+        if (!announcementChannelId) {
+          console.warn('⚠️ No announcements channel found, returning available channels');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'No announcements channel found',
+              availableChannels: categories
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Step 2: Fetch threads from the announcements channel
+        console.log(`📥 Fetching threads from channel ${announcementChannelId}...`);
+        const threadsResponse = await fetch(`${HEARTBEAT_API_URL}/channels/${announcementChannelId}/threads`, {
+          headers: {
+            'Authorization': `Bearer ${HEARTBEAT_API_KEY}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!threadsResponse.ok) {
+          const errorText = await threadsResponse.text();
+          console.error(`❌ Failed to fetch threads: ${threadsResponse.status}`, errorText);
+          throw new Error(`Failed to fetch threads: ${threadsResponse.status}`);
+        }
+
+        const threadsData = await threadsResponse.json();
+        const threads = threadsData.threads || threadsData || [];
+        console.log(`✅ Found ${threads.length} threads`);
+
+        // Step 3: Get or create official Sons of Legion profile
+        let officialUserId: string | null = null;
+        
+        // First try to find profiles with valid user_id for FK constraint
+        const { data: validProfiles } = await supabase
+          .from('user_profiles')
+          .select('user_id')
+          .not('user_id', 'is', null)
+          .limit(1);
+        
+        if (validProfiles && validProfiles.length > 0) {
+          officialUserId = validProfiles[0].user_id;
+          console.log(`✅ Using existing user_id for posts: ${officialUserId}`);
+        }
+
+        // Step 4: Sync threads to community_posts
+        let syncedCount = 0;
+        let updatedCount = 0;
+        const errors: Array<{ threadId: string; error: string }> = [];
+
+        for (const thread of threads) {
+          try {
+            const threadId = thread.id || thread._id;
+            const content = thread.body || thread.content || thread.text || '';
+            const authorName = thread.author?.name || thread.user?.name || 'Sons of Legion';
+            
+            // Try to find the author by heartbeat_member_id
+            let postUserId = officialUserId;
+            if (thread.author?.id || thread.user?.id) {
+              const authorHeartbeatId = thread.author?.id || thread.user?.id;
+              const { data: authorProfile } = await supabase
+                .from('user_profiles')
+                .select('user_id')
+                .eq('heartbeat_member_id', authorHeartbeatId)
+                .not('user_id', 'is', null)
+                .maybeSingle();
+              
+              if (authorProfile?.user_id) {
+                postUserId = authorProfile.user_id;
+              }
+            }
+
+            if (!postUserId) {
+              console.warn(`⚠️ No valid user_id for thread ${threadId}, skipping...`);
+              errors.push({ threadId, error: 'No valid user_id available for FK constraint' });
+              continue;
+            }
+
+            const postData = {
+              heartbeat_thread_id: threadId,
+              user_id: postUserId,
+              content: content,
+              category: 'announcements',
+              post_type: thread.attachments?.length > 0 ? 'media' : 'text',
+              media_url: thread.attachments?.[0]?.url || null,
+              link_url: thread.links?.[0]?.url || null,
+              created_at: thread.created_at || thread.createdAt || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            // Check if thread already exists
+            const { data: existingPost } = await supabase
+              .from('community_posts')
+              .select('id')
+              .eq('heartbeat_thread_id', threadId)
+              .maybeSingle();
+
+            if (existingPost) {
+              // Update existing post
+              const { error: updateError } = await supabase
+                .from('community_posts')
+                .update(postData)
+                .eq('id', existingPost.id);
+
+              if (updateError) {
+                console.error(`❌ Error updating thread ${threadId}:`, updateError);
+                errors.push({ threadId, error: updateError.message });
+              } else {
+                updatedCount++;
+                console.log(`✅ Updated announcement: ${threadId}`);
+              }
+            } else {
+              // Insert new post
+              const { error: insertError } = await supabase
+                .from('community_posts')
+                .insert(postData);
+
+              if (insertError) {
+                console.error(`❌ Error inserting thread ${threadId}:`, insertError);
+                errors.push({ threadId, error: insertError.message });
+              } else {
+                syncedCount++;
+                console.log(`✅ Created announcement: ${threadId}`);
+              }
+            }
+          } catch (err) {
+            const threadId = thread.id || thread._id || 'unknown';
+            console.error(`❌ Unexpected error syncing thread ${threadId}:`, err);
+            errors.push({ threadId, error: err instanceof Error ? err.message : 'Unknown error' });
+          }
+        }
+
+        console.log(`✅ Announcements sync complete: ${syncedCount} created, ${updatedCount} updated`);
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            synced: syncedCount,
+            updated: updatedCount,
+            total: threads.length,
+            errors: errors.length > 0 ? errors : undefined
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case 'sync_to_database': {
         console.log('🔄 Starting Heartbeat member sync...');
         
@@ -122,7 +357,7 @@ serve(async (req) => {
         // Sync members to user_profiles table
         let syncedCount = 0;
         let updatedCount = 0;
-        const errors = [];
+        const errors: Array<{ memberId: string; error: string }> = [];
         
         for (const member of members) {
           try {
