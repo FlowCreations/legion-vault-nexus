@@ -115,6 +115,10 @@ export default function CommunityHub() {
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [currentUserProfile, setCurrentUserProfile] = useState<{ display_name: string; avatar_url: string } | null>(null);
+  const [showCommentsDialog, setShowCommentsDialog] = useState(false);
+  const [selectedPostComments, setSelectedPostComments] = useState<any[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [newCommentText, setNewCommentText] = useState("");
   const { toast } = useToast();
 
   // Check authentication and subscription on mount
@@ -644,6 +648,53 @@ export default function CommunityHub() {
       setSelectedProfile(data);
       setShowProfileDialog(true);
     }
+  };
+
+  const openComments = async (postId: string) => {
+    const { data } = await supabase
+      .from('post_comments')
+      .select(`
+        id,
+        content,
+        created_at,
+        user_id,
+        user_profiles (
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+    
+    setSelectedPostComments(data || []);
+    setSelectedPostId(postId);
+    setShowCommentsDialog(true);
+  };
+
+  const addComment = async () => {
+    if (!newCommentText.trim() || !selectedPostId) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Please sign in to comment", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("post_comments").insert({
+      post_id: selectedPostId,
+      user_id: user.id,
+      content: newCommentText.trim(),
+    });
+
+    if (error) {
+      toast({ title: "Error adding comment", variant: "destructive" });
+      return;
+    }
+
+    setNewCommentText("");
+    // Refresh comments
+    openComments(selectedPostId);
+    loadPosts();
   };
 
   const sendMessage = async () => {
@@ -1333,7 +1384,12 @@ export default function CommunityHub() {
                         {getReactionCount(post, "heart")}
                       </Button>
                       
-                      <Button variant="ghost" size="sm" className="gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => openComments(post.id)}
+                      >
                         <MessageCircle className="h-4 w-4" />
                         {post.post_comments.length}
                       </Button>
@@ -1940,6 +1996,52 @@ export default function CommunityHub() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Dialog */}
+      <Dialog open={showCommentsDialog} onOpenChange={setShowCommentsDialog}>
+        <DialogContent className="max-w-lg max-h-[600px] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Comments ({selectedPostComments.length})</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4 min-h-0 pr-2">
+            {selectedPostComments.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">No comments yet. Be the first!</p>
+            ) : (
+              selectedPostComments.map((comment: any) => (
+                <div key={comment.id} className="flex gap-3">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage src={comment.user_profiles?.avatar_url} />
+                    <AvatarFallback>{comment.user_profiles?.display_name?.[0] || '?'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-sm">{comment.user_profiles?.display_name || 'Legion Member'}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="text-sm break-words">{comment.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t">
+            <Input
+              placeholder="Write a comment..."
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addComment()}
+              className="flex-1"
+            />
+            <Button onClick={addComment} size="icon">
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
