@@ -189,3 +189,31 @@ select.rdp-dropdown::-webkit-scrollbar-thumb:hover {
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
 }
+
+/* Community post content styling */
+.community-post-content {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.community-post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.community-post-content a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.community-post-content p {
+  margin-bottom: 0.5rem;
+}
+
+.community-post-content .user-reference,
+.community-post-content [data-mention] {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}

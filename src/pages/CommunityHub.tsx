@@ -36,6 +36,7 @@ interface Post {
   view_count: number;
   category: string;
   created_at: string;
+  heartbeat_thread_id: string | null;
   user_profiles: {
     display_name: string;
     avatar_url: string;
@@ -1262,22 +1263,22 @@ export default function CommunityHub() {
                 <div className="flex items-start gap-4">
                   <Avatar 
                     className="h-10 w-10 cursor-pointer"
-                    onClick={() => viewProfile(post.user_id)}
+                    onClick={() => !post.heartbeat_thread_id && viewProfile(post.user_id)}
                   >
-                    <AvatarImage src={post.user_profiles?.avatar_url} />
+                    <AvatarImage src={post.heartbeat_thread_id ? "/lovable-uploads/3cc5eb4f-4aa0-4f74-9aea-206b7331707d.png" : post.user_profiles?.avatar_url} />
                     <AvatarFallback>
-                      {post.user_profiles?.display_name?.[0] || "U"}
+                      {post.heartbeat_thread_id ? "SOL" : (post.user_profiles?.display_name?.[0] || "U")}
                     </AvatarFallback>
                   </Avatar>
                   
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <h3 
                           className="font-semibold cursor-pointer hover:underline"
-                          onClick={() => viewProfile(post.user_id)}
+                          onClick={() => !post.heartbeat_thread_id && viewProfile(post.user_id)}
                         >
-                          {post.user_profiles?.display_name || "User"}
+                          {post.heartbeat_thread_id ? "Sons of Legion" : (post.user_profiles?.display_name || "User")}
                         </h3>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span>
@@ -1295,7 +1296,10 @@ export default function CommunityHub() {
                       )}
                     </div>
                     
-                    <p className="mb-4 whitespace-pre-wrap">{post.content}</p>
+                    <div 
+                      className="mb-4 community-post-content prose prose-invert prose-sm max-w-none break-words"
+                      dangerouslySetInnerHTML={{ __html: post.content }} 
+                    />
                     
                     {post.media_url && (
                       <div className="mb-4 rounded-lg overflow-hidden">
