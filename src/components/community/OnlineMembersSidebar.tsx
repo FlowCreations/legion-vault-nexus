@@ -100,7 +100,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
       .not('display_name', 'is', null)
       .not('avatar_url', 'is', null)
       .order('last_active_at', { ascending: false })
-      .limit(10);
+      .limit(25);
 
     let members = (data || []) as OnlineMember[];
     
