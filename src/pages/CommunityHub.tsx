@@ -172,7 +172,7 @@ export default function CommunityHub() {
 
   useEffect(() => {
     if (activeTab === "announcements" || activeTab === "legion_speaks") {
-      loadPosts();
+      loadPosts(activeTab);
     }
     if (activeTab === "directory") {
       loadDirectoryProfiles();
@@ -180,7 +180,9 @@ export default function CommunityHub() {
     loadUnreadCount();
     loadMessages();
     loadAvailableMembers();
-    setupRealtimeSubscription();
+    
+    // Setup realtime subscription and capture cleanup
+    const cleanupRealtimeSubscription = setupRealtimeSubscription();
 
     // Listen for profile updates to refresh member avatars
     const profileChannel = supabase
@@ -193,7 +195,7 @@ export default function CommunityHub() {
           table: 'user_profiles'
         },
         () => {
-          loadPosts();
+          loadPosts(activeTab);
           loadDirectoryProfiles();
           loadMessages();
           loadCurrentUserProfile(); // Refresh user profile too
@@ -203,6 +205,7 @@ export default function CommunityHub() {
 
     return () => {
       supabase.removeChannel(profileChannel);
+      cleanupRealtimeSubscription();
     };
   }, [activeTab]);
 
@@ -386,7 +389,8 @@ export default function CommunityHub() {
     }
   };
 
-  const loadPosts = async () => {
+  const loadPosts = async (category?: string) => {
+    const targetCategory = category || activeTab;
     const { data, error } = await supabase
       .from("community_posts")
       .select(`
@@ -394,7 +398,7 @@ export default function CommunityHub() {
         post_reactions(reaction_type),
         post_comments(id)
       `)
-      .eq("category", activeTab)
+      .eq("category", targetCategory)
       .order("created_at", { ascending: false })
       .limit(20);
 
