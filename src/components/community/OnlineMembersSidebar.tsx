@@ -139,7 +139,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
                 Online
               </p>
               {onlineMembers.map((member) => (
-                <Tooltip key={member.user_id}>
+                <Tooltip key={member.id}>
                   <TooltipTrigger asChild>
                     <div
                       className="relative cursor-pointer hover:scale-110 transition-transform mx-auto"
@@ -151,7 +151,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
                           {member.display_name?.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="left" className="flex flex-col gap-1">
@@ -159,7 +159,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
                     <Badge className={`${getTierColor(member.tier)} text-xs`}>
                       {member.tier || 'Free'}
                     </Badge>
-                    <p className="text-xs text-green-500">● Online</p>
+                    <p className="text-xs text-emerald-500">● Online</p>
                     <p className="text-xs text-muted-foreground">Click to message</p>
                   </TooltipContent>
                 </Tooltip>
@@ -173,7 +173,7 @@ export const OnlineMembersSidebar = ({ onMemberClick }: OnlineMembersSidebarProp
                   Offline
                 </p>
                 {allMembers.filter(m => !m.is_online).slice(0, 5).map((member) => (
-                  <Tooltip key={member.user_id}>
+                  <Tooltip key={member.id}>
                     <TooltipTrigger asChild>
                       <div
                         className="relative cursor-pointer hover:scale-110 transition-transform mx-auto opacity-60 hover:opacity-100"
