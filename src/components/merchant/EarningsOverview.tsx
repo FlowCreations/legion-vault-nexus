@@ -23,6 +23,16 @@ interface MonthData {
 
 const monthsData: MonthData[] = [
   {
+    month: "January 2026",
+    totalEarnings: 102500,
+    sales: {
+      albums: 40795,
+      merch: 34645,
+      tickets: 19680,
+      community: 7380,
+    },
+  },
+  {
     month: "October 2025",
     totalEarnings: 95300,
     sales: {
@@ -92,7 +102,7 @@ const getPeriodMultiplier = (period: keyof typeof dailySalesData): number => {
 };
 
 export const EarningsOverview = () => {
-  const [selectedMonth, setSelectedMonth] = useState("October 2025");
+  const [selectedMonth, setSelectedMonth] = useState("January 2026");
   const [selectedPeriod, setSelectedPeriod] = useState<keyof typeof dailySalesData>("today");
   
   const currentData = monthsData.find(m => m.month === selectedMonth) || monthsData[0];
