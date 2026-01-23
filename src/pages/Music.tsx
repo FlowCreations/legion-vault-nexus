@@ -52,6 +52,7 @@ export default function Music() {
   const { toast } = useToast();
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isDemoUser, setIsDemoUser] = useState(false);
 
   // Use React Query for data fetching with caching
   const { data: uploadedTracks = [], isLoading } = useMusicTracks();
@@ -63,6 +64,17 @@ export default function Music() {
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setIsAuthenticated(!!session);
+    // Check if this is the demo user
+    if (session?.user?.email === 'adam.kravemedia@gmail.com') {
+      setIsDemoUser(true);
+    }
+  };
+
+  const handleResetDemo = () => {
+    // Clear all purchases from localStorage
+    localStorage.removeItem('sol_purchased_albums');
+    // Force page reload to reflect changes
+    window.location.reload();
   };
 
   // Helper function to get album ID from album name
@@ -355,6 +367,18 @@ export default function Music() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Reset Demo Button - only visible for adam.kravemedia@gmail.com */}
+            {isDemoUser && (
+              <Button 
+                size="lg" 
+                variant="destructive" 
+                className="rounded-full"
+                onClick={handleResetDemo}
+              >
+                Reset Demo
+              </Button>
+            )}
           </div>
         </div>
       </div>
