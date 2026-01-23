@@ -33,17 +33,17 @@ const monthsData: MonthData[] = [
     },
   },
   {
-    month: "October 2025",
+    month: "December 2025",
     totalEarnings: 95300,
     sales: {
-      albums: 37929,  // 39.8% of 95,300
-      merch: 32211,   // 33.8% of 95,300
-      tickets: 18298, // 19.2% of 95,300
-      community: 6862, // 7.2% of 95,300
+      albums: 37929,
+      merch: 32211,
+      tickets: 18298,
+      community: 6862,
     },
   },
   {
-    month: "September 2025",
+    month: "November 2025",
     totalEarnings: 19800,
     sales: {
       albums: 7800,
@@ -53,7 +53,7 @@ const monthsData: MonthData[] = [
     },
   },
   {
-    month: "August 2025",
+    month: "October 2025",
     totalEarnings: 18500,
     sales: {
       albums: 7200,
