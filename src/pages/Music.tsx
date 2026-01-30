@@ -1,5 +1,5 @@
 import { Play, Shuffle, Heart, Share2, MoreHorizontal, Plus, Pause, Lock, ShoppingCart, Download, Link, MessageCircle } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMusicPlayer } from "@/stores/musicPlayerStore";
 import { PurchaseModal } from "@/components/PurchaseModal";
@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useEventTracking } from "@/hooks/useEventTracking";
-import { supabase } from "@/integrations/supabase/client";
 import { SubscribePrompt } from "@/components/SubscribePrompt";
 import { useMusicTracks } from "@/hooks/useMusicTracks";
 import { usePagePerformance } from "@/hooks/usePagePerformance";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { MusicGridSkeleton, HeroSkeleton } from "@/components/ui/skeleton-loaders";
 import powerAlbum from "@/assets/power-album.jpg";
 import outlawAlbum from "@/assets/outlaw-album.jpg";
@@ -51,24 +52,18 @@ export default function Music() {
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const { toast } = useToast();
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isDemoUser, setIsDemoUser] = useState(false);
+  
+  // Use cached auth and subscription hooks instead of repeated API calls
+  const { isAuthenticated, email, loading: authLoading } = useAuthStatus();
+  const { subscribed: hasSubscription, loading: subscriptionLoading } = useSubscriptionStatus();
+  
+  // Memoize demo user check
+  const isDemoUser = useMemo(() => email === 'adam.kravemedia@gmail.com', [email]);
 
   // Use React Query for data fetching with caching
   const { data: uploadedTracks = [], isLoading } = useMusicTracks();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setIsAuthenticated(!!session);
-    // Check if this is the demo user
-    if (session?.user?.email === 'adam.kravemedia@gmail.com') {
-      setIsDemoUser(true);
-    }
-  };
+  // Removed: checkAuth moved to useAuthStatus hook for caching
 
   const handleResetDemo = () => {
     // Clear all purchases from localStorage
@@ -224,49 +219,40 @@ export default function Music() {
   };
 
 
-  const handlePlayTrack = async (track: any, trackList?: any[]) => {
+  const handlePlayTrack = (track: any, trackList?: any[]) => {
     if (!track.url) {
       console.warn('Track has no URL:', track);
       return;
     }
 
-    // Check authentication first
+    // Use cached auth status instead of API call
     if (!isAuthenticated) {
       setShowSubscribePrompt(true);
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setShowSubscribePrompt(true);
-      return;
-    }
-
-    // Check subscription status
-    const { data: subscriptionData } = await supabase.functions.invoke('check-subscription');
-    const hasSubscription = subscriptionData?.subscribed;
     
-    // Special handling for arock user (adam.kravemedia@gmail.com) - all albums locked for testing
-    const isArockUser = user.email === 'adam.kravemedia@gmail.com';
+    // Use cached subscription status instead of API call (major perf improvement)
+    // Special handling for demo user - all albums locked for testing
+    const isArockUser = isDemoUser;
     
     // If track belongs to an album, check if user has access
     if (track.album) {
       const albumId = getAlbumIdFromName(track.album);
       
       if (albumId) {
-        // For arock user: all albums are locked (including Power)
+        // For demo user: all albums are locked (including Power)
         // For everyone else: Power (a1) is free, others require subscription OR purchase
         const isPowerAlbum = albumId === 'a1';
         const albumPurchased = isPurchased(albumId);
         
         if (isArockUser) {
-          // Arock needs subscription OR purchase for ALL albums (including Power)
+          // Demo user needs subscription OR purchase for ALL albums (including Power)
           if (!hasSubscription && !albumPurchased) {
             setShowSubscribePrompt(true);
             return;
           }
         } else {
-          // For non-arock users: Power is free, others need subscription OR purchase
+          // For non-demo users: Power is free, others need subscription OR purchase
           if (!isPowerAlbum && !hasSubscription && !albumPurchased) {
             setShowSubscribePrompt(true);
             return;

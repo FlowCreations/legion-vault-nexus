@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Play, Lock, Shuffle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEventTracking } from "@/hooks/useEventTracking";
@@ -24,6 +24,7 @@ import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
 import { useTranslation } from "react-i18next";
 import { useVideos, useHeroVideo, useFavoriteVideos } from "@/hooks/useVideos";
 import { usePagePerformance } from "@/hooks/usePagePerformance";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { VideoGridSkeleton, HeroSkeleton } from "@/components/ui/skeleton-loaders";
 
 interface VideoItem {
@@ -44,13 +45,14 @@ export default function Videos() {
   
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const [isShuffled, setIsShuffled] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
   const [showLikedOnly, setShowLikedOnly] = useState(false);
+
+  // Use cached auth hook instead of repeated API calls
+  const { isAuthenticated, userId, loading: authLoading } = useAuthStatus();
 
   // Use React Query hooks for data fetching with caching
   const { data: heroVideoUrl = '', isLoading: heroLoading } = useHeroVideo();
@@ -84,8 +86,6 @@ export default function Videos() {
   }, [videoCategories, favoriteVideos, showLikedOnly]);
 
   useEffect(() => {
-    checkAuth();
-
     // Set up realtime subscription to invalidate cache when videos update
     const videosChannel = supabase
       .channel('videos-changes')
@@ -106,12 +106,6 @@ export default function Videos() {
       supabase.removeChannel(favoritesChannel);
     };
   }, [refetchVideos, refetchFavorites]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setIsAuthenticated(!!session);
-    setUserId(session?.user?.id);
-  };
 
 
   const handleVideoClick = async (video: VideoItem) => {
