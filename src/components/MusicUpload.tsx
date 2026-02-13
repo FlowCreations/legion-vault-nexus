@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { Upload, X, Music, Trash2, Play } from "lucide-react";
+import { Upload, X, Music, Trash2, Play, Download, Image } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -29,6 +29,7 @@ interface MusicTrack {
   year: string | null;
   category: string;
   public_url: string;
+  image_url: string | null;
   created_at: string;
 }
 
@@ -476,7 +477,44 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
               <div className="space-y-3">
                 {tracks.map((track) => (
                   <Card key={track.id} className="p-4">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      {/* Cover Art Thumbnail - click to replace */}
+                      <div className="relative flex-shrink-0 group">
+                        <Label
+                          htmlFor={`cover-upload-${track.id}`}
+                          className="cursor-pointer block"
+                        >
+                          {track.image_url ? (
+                            <img
+                              src={track.image_url}
+                              alt={`${track.title} cover`}
+                              className="w-16 h-16 rounded object-cover border border-border group-hover:opacity-70 transition-opacity"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded border border-dashed border-border flex items-center justify-center bg-muted/50 group-hover:border-primary/50 transition-colors">
+                              <Image className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            {uploadingCoverId === track.id ? (
+                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Upload className="w-4 h-4 text-primary drop-shadow-md" />
+                            )}
+                          </div>
+                        </Label>
+                        <Input
+                          id={`cover-upload-${track.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleCoverArtUpload(track.id, file);
+                          }}
+                        />
+                      </div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Music className="w-4 h-4 text-primary flex-shrink-0" />
@@ -497,33 +535,33 @@ export default function MusicUpload({ onUploadComplete }: MusicUploadProps) {
                           {track.year && <span>• {track.year}</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label
-                          htmlFor={`cover-upload-${track.id}`}
-                          className="cursor-pointer"
-                        >
+                      <div className="flex items-center gap-1">
+                        {track.image_url && (
                           <Button
-                            type="button"
                             variant="ghost"
                             size="icon"
-                            disabled={uploadingCoverId === track.id}
-                            asChild
+                            title="Download cover art"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(track.image_url!);
+                                const blob = await response.blob();
+                                const ext = blob.type.split('/')[1] || 'png';
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${track.title.replace(/[^a-zA-Z0-9]/g, '_')}-cover.${ext}`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                              } catch {
+                                toast.error("Failed to download cover art");
+                              }
+                            }}
                           >
-                            <span title="Upload cover art">
-                              <Upload className="w-4 h-4" />
-                            </span>
+                            <Download className="w-4 h-4" />
                           </Button>
-                        </Label>
-                        <Input
-                          id={`cover-upload-${track.id}`}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleCoverArtUpload(track.id, file);
-                          }}
-                        />
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
