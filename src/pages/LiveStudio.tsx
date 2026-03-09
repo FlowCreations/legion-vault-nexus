@@ -75,8 +75,8 @@ export default function LiveStudio() {
       checkLiveStream();
     }, isViewingLive ? 10000 : 5000); // Check every 10s when viewing, 5s otherwise
 
-    // Target date: January 30, 2026 8:00 PM EST
-    const targetDate = new Date('2026-01-30T20:00:00-05:00');
+    // Target date: June 6, 2026 8:00 PM EST
+    const targetDate = new Date('2026-06-06T20:00:00-04:00');
     const updateCountdown = () => {
       const now = new Date();
       const difference = targetDate.getTime() - now.getTime();
