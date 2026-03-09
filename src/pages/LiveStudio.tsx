@@ -276,8 +276,8 @@ export default function LiveStudio() {
             title: 'Acoustic Sessions Live',
             description: 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.',
             location: 'Online - Live Stream',
-            startDate: '2026-01-30T20:00:00-05:00',
-            endDate: '2026-01-30T22:00:00-05:00'
+            startDate: '2026-06-06T20:00:00-04:00',
+            endDate: '2026-06-06T22:00:00-04:00'
           }
         }
       });
