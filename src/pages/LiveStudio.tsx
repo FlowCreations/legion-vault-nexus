@@ -75,8 +75,8 @@ export default function LiveStudio() {
       checkLiveStream();
     }, isViewingLive ? 10000 : 5000); // Check every 10s when viewing, 5s otherwise
 
-    // Target date: January 30, 2026 8:00 PM EST
-    const targetDate = new Date('2026-01-30T20:00:00-05:00');
+    // Target date: June 6, 2026 8:00 PM EST
+    const targetDate = new Date('2026-06-06T20:00:00-04:00');
     const updateCountdown = () => {
       const now = new Date();
       const difference = targetDate.getTime() - now.getTime();
@@ -276,8 +276,8 @@ export default function LiveStudio() {
             title: 'Acoustic Sessions Live',
             description: 'Join us for an intimate acoustic performance featuring stripped down versions of your favorite tracks and unreleased material.',
             location: 'Online - Live Stream',
-            startDate: '2026-01-30T20:00:00-05:00',
-            endDate: '2026-01-30T22:00:00-05:00'
+            startDate: '2026-06-06T20:00:00-04:00',
+            endDate: '2026-06-06T22:00:00-04:00'
           }
         }
       });
@@ -450,7 +450,7 @@ export default function LiveStudio() {
                     <div className="space-y-3 mb-8">
                       <div className="flex items-center space-x-3 text-sm">
                         <Calendar className="w-5 h-5 text-primary" />
-                        <span>​Friday, January 30th, 2026      </span>
+                        <span>Saturday, June 6th, 2026</span>
                       </div>
                       <div className="flex items-center space-x-3 text-sm">
                         <Clock className="w-5 h-5 text-primary" />
