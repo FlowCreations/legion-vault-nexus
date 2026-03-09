@@ -450,7 +450,7 @@ export default function LiveStudio() {
                     <div className="space-y-3 mb-8">
                       <div className="flex items-center space-x-3 text-sm">
                         <Calendar className="w-5 h-5 text-primary" />
-                        <span>​Friday, January 30th, 2026      </span>
+                        <span>Saturday, June 6th, 2026</span>
                       </div>
                       <div className="flex items-center space-x-3 text-sm">
                         <Clock className="w-5 h-5 text-primary" />
