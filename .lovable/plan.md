@@ -1,45 +1,48 @@
+# Restore Member Nodes on the Merchant Globe
 
+## Diagnosis
 
-# Add Cover Art Preview, Update, and Download to Music Upload Tab
+The Global Reach map in the Merchant dashboard is currently blank (no clickable user nodes) because the **app is failing to build**. TypeScript is throwing 14 errors across files that reference `NodeJS.Timeout` and `process.env`, including `GlobalReachMap.tsx` itself (line 88: `loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)`).
 
-## Current State
-The track list in the Music Upload tab shows track metadata (title, artist, album) and has three action buttons: an upload icon (for cover art), play, and delete. However:
-- The current cover art is **not displayed** next to each track, so you can't see what's already set
-- The upload button replaces cover art but gives no visual feedback of the current image
-- There is **no download button** for cover art
+When the build fails, the Geography component never mounts cleanly, so no markers are drawn.
 
-## Changes
+The data side is healthy:
+- `user_profiles` has 568 rows, 563 with valid `latitude`/`longitude`
+- The `members-geojson` edge function correctly returns a FeatureCollection with all required properties (`ptpScore`, `name`, `tier`, etc.)
+- `GlobalReachMap` already has the click handler, hover panel, and `MemberProfileCard` drawer wired up
 
-### Update `src/components/MusicUpload.tsx`
+## Root Cause
 
-**1. Add `image_url` to the `MusicTrack` interface**
-The interface currently omits `image_url`. Add it so each track object carries its cover art URL.
+`tsconfig.app.json` does not include `"node"` in its `types` array, even though `@types/node` is installed. So Node globals (`NodeJS.Timeout`, `process`) are unknown to the compiler.
 
-**2. Show cover art thumbnail in each track card**
-Add a 64x64px thumbnail to the left side of each track card showing the current cover art (or a placeholder icon if none exists). This makes it immediately visible which tracks have cover art and what it looks like.
+## Plan
 
-**3. Add a "Replace Cover Art" interaction on the thumbnail**
-When you hover or click the thumbnail, it will trigger the existing file input for uploading a new cover image (reusing `handleCoverArtUpload`). This replaces the current standalone upload icon with a more intuitive "click the image to change it" pattern.
+### 1. Fix the TypeScript build (unblocks the map)
 
-**4. Add a Download button**
-Add a `Download` icon button next to each track (alongside Play and Delete). When clicked, it will:
-- Fetch the cover art image from its `image_url`
-- Trigger a browser download with a filename like `TrackTitle-cover.png`
-- Only show/enable when the track has an `image_url`
-
-**5. Import the `Download` icon from lucide-react**
-Add `Download` to the existing lucide imports, and `Image` for the placeholder when no cover art exists.
-
-## Visual Layout (per track card)
-
-```text
-+------------------------------------------------------------------+
-| [Cover Art 64x64]  Title                    [Upload] [Download] [Play] [Delete] |
-|  (click to replace) Artist                                       |
-|                     Album - Track # | Category | Duration | Year |
-+------------------------------------------------------------------+
+Add Node types to `tsconfig.app.json`:
+```json
+"types": ["node", "vite/client"]
 ```
 
-## No Database Changes
-The `image_url` column already exists on `music_tracks` and is populated for all current tracks. The `thumbnails` storage bucket is already public with proper policies.
+This single change resolves all 14 reported errors:
+- `NodeJS.Timeout` references in `GlobalReachMap.tsx`, `CommunityGlobe.tsx`, `VideoPlayer.tsx`, `LiveBroadcaster.tsx`, `LiveReactions.tsx`, `useMembersGeojson.ts`, `useProgressiveLoad.ts`, `useQueryBatcher.ts`
+- `process.env` references in `error-boundary-fallback.tsx`, `usePerformanceTracking.ts`, `error-handler.ts`
+- `Error.captureStackTrace` in `error-handler.ts`
 
+### 2. Verify nodes render and are clickable
+
+After the build is green:
+- Confirm the Geography tab loads the Mapbox globe
+- Confirm 563 colored circle markers appear (red/yellow/green by `ptpScore`)
+- Confirm hovering a node shows the name/location tooltip
+- Confirm clicking a node opens the `MemberProfileCard` drawer in the top-right with the member's profile data
+
+### 3. Small UX safeguard
+
+If after the rebuild the click target still feels too small at globe-zoom level, bump `circle-radius` from `8` to `10` and add a subtle `circle-blur` for glow — this is a cosmetic follow-up only if needed.
+
+## Files Changed
+
+- `tsconfig.app.json` — add `"types": ["node", "vite/client"]`
+
+No database, edge function, or component logic changes are required. The map and click-to-profile flow already exist; they just need a successful build to render.
