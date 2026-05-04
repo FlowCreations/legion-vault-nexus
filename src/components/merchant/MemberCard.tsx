@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getTierColor } from "@/lib/tierColors";
-import { MapPin, Calendar, Clock, TrendingUp, Zap, Activity, DollarSign, Target, Award, Heart } from "lucide-react";
+import { MapPin, Calendar, Clock, TrendingUp, Zap, Activity, DollarSign, Target, Award, Heart, ShoppingBag, Star } from "lucide-react";
 
 interface MemberCardProps {
   member: any;
