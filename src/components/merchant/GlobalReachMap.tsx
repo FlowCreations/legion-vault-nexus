@@ -166,6 +166,12 @@ export default function GlobalReachMap({
               listenTime: f.properties.listenTime || f.properties.listen_time || 0,
               ptpScore: f.properties.ptpScore || f.properties.ptp_score || f.properties.ptp_current || 0,
               userId: f.properties.user_id,
+              totalSpend: f.properties.totalSpend ?? f.properties.total_spend ?? 0,
+              purchaseCount: f.properties.purchaseCount ?? f.properties.purchase_count ?? 0,
+              favoriteCount: f.properties.favoriteCount ?? f.properties.favorite_count ?? 0,
+              engagementScore: f.properties.engagementScore ?? f.properties.community_engagement_score ?? 0,
+              lastActive: f.properties.lastActive ?? f.properties.last_active_at,
+              joinedDate: f.properties.joined_at,
             }));
           
           console.log('✅ Converted to members:', membersData.length, 'valid coordinates');

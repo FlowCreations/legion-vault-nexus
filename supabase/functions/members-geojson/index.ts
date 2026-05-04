@@ -28,10 +28,11 @@ serve(async (req) => {
     const { data: profiles, error } = await supabaseClient
       .from('user_profiles')
       .select(`
-        user_id, display_name, avatar_url, location, latitude, longitude, tier, created_at,
+        user_id, display_name, avatar_url, location, latitude, longitude, tier, membership_tier, created_at,
         watch_time, listen_time, livestream_engagement_score, livestream_reaction_count,
         community_engagement_score, login_streak, total_sessions, last_active_at,
-        total_spend, mrr, era_label, ptp_status, ptp_current, is_super_fan
+        total_spend, mrr, purchase_count, favorite_count,
+        era_label, ptp_status, ptp_current, is_super_fan
       `)
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
@@ -57,23 +58,32 @@ serve(async (req) => {
           name: profile.display_name || 'Community Member',
           avatar_url: profile.avatar_url || '',
           location: profile.location || '',
-          tier: profile.tier || 'free',
+          tier: profile.membership_tier || profile.tier || 'free',
           joined_at: profile.created_at,
           profile_url: `/community/${profile.user_id}`,
           watch_time: profile.watch_time || 0,
           listen_time: profile.listen_time || 0,
+          watchTime: profile.watch_time || 0,
+          listenTime: profile.listen_time || 0,
           livestream_engagement_score: profile.livestream_engagement_score || 0,
           livestream_reaction_count: profile.livestream_reaction_count || 0,
           community_engagement_score: profile.community_engagement_score || 0,
+          engagementScore: profile.community_engagement_score || 0,
           login_streak: profile.login_streak || 0,
           total_sessions: profile.total_sessions || 0,
           last_active_at: profile.last_active_at,
+          lastActive: profile.last_active_at,
           total_spend: profile.total_spend || 0,
+          totalSpend: profile.total_spend || 0,
           mrr: profile.mrr || 0,
+          purchase_count: profile.purchase_count || 0,
+          purchaseCount: profile.purchase_count || 0,
+          favorite_count: profile.favorite_count || 0,
+          favoriteCount: profile.favorite_count || 0,
           era_label: profile.era_label || '',
           ptp_status: profile.ptp_status || false,
-          ptp_current: profile.ptp_current ?? 50, // Default to 50 (mid-range) if null
-          ptpScore: profile.ptp_current ?? 50, // Default to 50 for map coloring
+          ptp_current: profile.ptp_current ?? 50,
+          ptpScore: profile.ptp_current ?? 50,
           is_super_fan: profile.is_super_fan || false,
         }
       }))
