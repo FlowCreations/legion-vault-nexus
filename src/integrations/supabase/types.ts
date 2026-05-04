@@ -6188,6 +6188,7 @@ export type Database = {
           era_current: number | null
           era_label: string | null
           external_ids: Json | null
+          favorite_count: number
           full_name: string | null
           gender: string | null
           heartbeat_member_id: string | null
@@ -6224,6 +6225,7 @@ export type Database = {
           ptp_current: number | null
           ptp_score: number | null
           ptp_status: string | null
+          purchase_count: number
           purchase_history: Json | null
           real_name: string | null
           sms_opt_in: boolean | null
@@ -6254,6 +6256,7 @@ export type Database = {
           era_current?: number | null
           era_label?: string | null
           external_ids?: Json | null
+          favorite_count?: number
           full_name?: string | null
           gender?: string | null
           heartbeat_member_id?: string | null
@@ -6290,6 +6293,7 @@ export type Database = {
           ptp_current?: number | null
           ptp_score?: number | null
           ptp_status?: string | null
+          purchase_count?: number
           purchase_history?: Json | null
           real_name?: string | null
           sms_opt_in?: boolean | null
@@ -6320,6 +6324,7 @@ export type Database = {
           era_current?: number | null
           era_label?: string | null
           external_ids?: Json | null
+          favorite_count?: number
           full_name?: string | null
           gender?: string | null
           heartbeat_member_id?: string | null
@@ -6356,6 +6361,7 @@ export type Database = {
           ptp_current?: number | null
           ptp_score?: number | null
           ptp_status?: string | null
+          purchase_count?: number
           purchase_history?: Json | null
           real_name?: string | null
           sms_opt_in?: boolean | null
