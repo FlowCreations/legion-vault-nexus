@@ -117,32 +117,45 @@ export const MemberCard = ({ member, onClose, onViewProfile }: MemberCardProps) 
         </Card>
       </div>
 
-      {/* Engagement Row */}
+      {/* Purchases / Favorites / Score */}
       <div className="grid grid-cols-3 gap-2 mb-6">
         <Card className="p-3 bg-muted/20 text-center">
           <div className="flex items-center justify-center mb-1">
-            <TrendingUp className="w-4 h-4 text-primary" />
+            <ShoppingBag className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-lg font-bold">{member.engagement_score || 0}</p>
-          <p className="text-xs text-muted-foreground">Engagement</p>
-        </Card>
-        
-        <Card className="p-3 bg-muted/20 text-center">
-          <div className="flex items-center justify-center mb-1">
-            <Zap className="w-4 h-4 text-yellow-500" />
-          </div>
-          <p className="text-lg font-bold">{member.activity_score || 0}</p>
-          <p className="text-xs text-muted-foreground">Activity</p>
+          <p className="text-lg font-bold">{member.purchaseCount ?? member.purchase_count ?? 0}</p>
+          <p className="text-xs text-muted-foreground">Purchases</p>
         </Card>
 
         <Card className="p-3 bg-muted/20 text-center">
           <div className="flex items-center justify-center mb-1">
-            <DollarSign className="w-4 h-4 text-green-500" />
+            <Star className="w-4 h-4 text-yellow-500" />
           </div>
-          <p className="text-lg font-bold">{formatCurrency(member.total_revenue || 0)}</p>
-          <p className="text-xs text-muted-foreground">Revenue</p>
+          <p className="text-lg font-bold">{member.favoriteCount ?? member.favorite_count ?? 0}</p>
+          <p className="text-xs text-muted-foreground">Favorites</p>
+        </Card>
+
+        <Card className="p-3 bg-muted/20 text-center">
+          <div className="flex items-center justify-center mb-1">
+            <TrendingUp className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-lg font-bold">{member.engagementScore ?? member.community_engagement_score ?? member.engagement_score ?? 0}</p>
+          <p className="text-xs text-muted-foreground">Score</p>
         </Card>
       </div>
+
+      {/* Revenue */}
+      {(member.totalSpend || member.total_spend || member.total_revenue) ? (
+        <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Total Spend</span>
+            </div>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(member.totalSpend ?? member.total_spend ?? member.total_revenue ?? 0)}</p>
+          </div>
+        </Card>
+      ) : null}
 
       {/* Financial Stats */}
       {(member.total_spend || member.monthly_recurring_revenue) && (
