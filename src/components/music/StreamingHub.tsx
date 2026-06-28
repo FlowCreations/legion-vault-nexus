@@ -62,13 +62,6 @@ export function StreamingHub() {
 
   if (loading || links.length === 0) return null;
 
-  const activeLink = activePlatform
-    ? links.find((l) => l.platform === activePlatform) ?? null
-    : null;
-  const activeEmbed = activeLink
-    ? activeLink.embed_url || toEmbedUrl(activeLink.platform, activeLink.url)
-    : null;
-
   return (
     <section className="px-4 sm:px-8 lg:px-12 py-12 space-y-8">
       <div className="flex items-end justify-between flex-wrap gap-4">
