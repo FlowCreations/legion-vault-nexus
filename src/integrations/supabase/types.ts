@@ -730,6 +730,42 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_streaming_links: {
+        Row: {
+          created_at: string
+          embed_url: string | null
+          id: string
+          is_featured: boolean
+          label: string | null
+          platform: string
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          embed_url?: string | null
+          id?: string
+          is_featured?: boolean
+          label?: string | null
+          platform: string
+          sort_order?: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          embed_url?: string | null
+          id?: string
+          is_featured?: boolean
+          label?: string | null
+          platform?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       automation_enrollments: {
         Row: {
           automation_id: string | null
