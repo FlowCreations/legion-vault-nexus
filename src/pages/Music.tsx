@@ -699,6 +699,10 @@ export default function Music() {
         <YouMightAlsoLike contentType="music" limit={5} />
       </div>
 
+      {/* Streaming Platforms */}
+      <StreamingHub />
+
+
       {/* Subscribe Prompt */}
       <SubscribePrompt
         open={showSubscribePrompt}
