@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { YouMightAlsoLike } from "@/components/YouMightAlsoLike";
+import { YouTubeHub } from "@/components/videos/YouTubeHub";
 import { useTranslation } from "react-i18next";
 import { useVideos, useHeroVideo, useFavoriteVideos } from "@/hooks/useVideos";
 import { usePagePerformance } from "@/hooks/usePagePerformance";
@@ -356,6 +357,9 @@ export default function Videos() {
             )}
           </>
         )}
+
+        {/* You Might Also Like */}
+        <YouTubeHub />
 
         {/* You Might Also Like */}
         <YouMightAlsoLike contentType="video" limit={5} />
