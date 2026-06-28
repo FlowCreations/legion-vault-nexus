@@ -359,6 +359,9 @@ export default function Videos() {
         )}
 
         {/* You Might Also Like */}
+        <YouTubeHub />
+
+        {/* You Might Also Like */}
         <YouMightAlsoLike contentType="video" limit={5} />
       </div>
     </div>
