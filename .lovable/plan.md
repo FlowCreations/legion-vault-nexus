@@ -1,48 +1,107 @@
-# Restore Member Nodes on the Merchant Globe
 
-## Diagnosis
+# Streaming Links + Fan Sign-In Integration
 
-The Global Reach map in the Merchant dashboard is currently blank (no clickable user nodes) because the **app is failing to build**. TypeScript is throwing 14 errors across files that reference `NodeJS.Timeout` and `process.env`, including `GlobalReachMap.tsx` itself (line 88: `loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)`).
+Pure add-on to the Music page — nothing existing is replaced or removed.
 
-When the build fails, the Geography component never mounts cleanly, so no markers are drawn.
+## 1. Database
 
-The data side is healthy:
-- `user_profiles` has 568 rows, 563 with valid `latitude`/`longitude`
-- The `members-geojson` edge function correctly returns a FeatureCollection with all required properties (`ptpScore`, `name`, `tier`, etc.)
-- `GlobalReachMap` already has the click handler, hover panel, and `MemberProfileCard` drawer wired up
+New migration adds artist-level streaming links + per-fan OAuth tokens.
 
-## Root Cause
+```sql
+-- Artist streaming presence (single row, edited by merchant)
+CREATE TABLE public.artist_streaming_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  spotify_artist_url text,
+  spotify_artist_id text,           -- parsed from URL for embed/follow API
+  tidal_artist_url text,
+  youtube_music_url text,
+  soundcloud_url text,
+  bandcamp_url text,
+  featured_spotify_embed text,      -- album/playlist URL for hero embed
+  featured_tidal_embed text,
+  updated_at timestamptz DEFAULT now()
+);
+-- GRANTs + RLS: anon SELECT, admin write only
 
-`tsconfig.app.json` does not include `"node"` in its `types` array, even though `@types/node` is installed. So Node globals (`NodeJS.Timeout`, `process`) are unknown to the compiler.
-
-## Plan
-
-### 1. Fix the TypeScript build (unblocks the map)
-
-Add Node types to `tsconfig.app.json`:
-```json
-"types": ["node", "vite/client"]
+-- Fan -> Spotify connection
+CREATE TABLE public.fan_streaming_connections (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider text NOT NULL CHECK (provider IN ('spotify','tidal')),
+  access_token text NOT NULL,
+  refresh_token text,
+  expires_at timestamptz,
+  provider_user_id text,
+  display_name text,
+  scopes text,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, provider)
+);
+-- GRANTs + RLS: user reads/writes own row only
 ```
 
-This single change resolves all 14 reported errors:
-- `NodeJS.Timeout` references in `GlobalReachMap.tsx`, `CommunityGlobe.tsx`, `VideoPlayer.tsx`, `LiveBroadcaster.tsx`, `LiveReactions.tsx`, `useMembersGeojson.ts`, `useProgressiveLoad.ts`, `useQueryBatcher.ts`
-- `process.env` references in `error-boundary-fallback.tsx`, `usePerformanceTracking.ts`, `error-handler.ts`
-- `Error.captureStackTrace` in `error-handler.ts`
+## 2. Secrets needed
 
-### 2. Verify nodes render and are clickable
+Request via `add_secret`:
+- `SPOTIFY_CLIENT_ID`
+- `SPOTIFY_CLIENT_SECRET`
+- (Tidal OAuth deferred — see "Phase 2" note)
 
-After the build is green:
-- Confirm the Geography tab loads the Mapbox globe
-- Confirm 563 colored circle markers appear (red/yellow/green by `ptpScore`)
-- Confirm hovering a node shows the name/location tooltip
-- Confirm clicking a node opens the `MemberProfileCard` drawer in the top-right with the member's profile data
+User obtains these from developer.spotify.com → create app → add redirect URI `https://<portal>/auth/spotify/callback`.
 
-### 3. Small UX safeguard
+## 3. Edge functions
 
-If after the rebuild the click target still feels too small at globe-zoom level, bump `circle-radius` from `8` to `10` and add a subtle `circle-blur` for glow — this is a cosmetic follow-up only if needed.
+- `spotify-oauth-start` — builds Spotify auth URL with PKCE, scopes: `user-read-email user-follow-modify user-library-modify streaming user-read-playback-state`, returns redirect URL.
+- `spotify-oauth-callback` — exchanges code → tokens, upserts `fan_streaming_connections`, redirects fan back to `/music`.
+- `spotify-token-refresh` — refreshes expired access tokens on demand.
+- `spotify-action` — server-side wrapper for follow-artist / save-track using stored token (keeps secret server-side).
 
-## Files Changed
+## 4. Merchant UI (Content section)
 
-- `tsconfig.app.json` — add `"types": ["node", "vite/client"]`
+New tab/card `StreamingLinksManager.tsx` in the merchant Content area:
+- Inputs for each platform URL (Spotify artist, Tidal artist, YouTube Music, SoundCloud, Bandcamp)
+- Two "Featured embed" fields (Spotify album/playlist URL, Tidal album URL) — used for the hero embed on /music
+- Save button → upserts `artist_streaming_links` row
+- Live preview panel showing what the embed will look like
 
-No database, edge function, or component logic changes are required. The map and click-to-profile flow already exist; they just need a successful build to render.
+## 5. Music page additions (add-on, nothing removed)
+
+New section `StreamingHub.tsx` rendered above or below the existing track list (TBD by user):
+- **Embed strip**: iframe embeds for any configured platform
+  - Spotify: `https://open.spotify.com/embed/album/{id}` (oEmbed, no auth)
+  - Tidal: `https://embed.tidal.com/albums/{id}`
+  - SoundCloud / Bandcamp / YouTube Music: standard iframe embeds
+- **Platform link buttons**: brand-colored buttons linking to each platform profile
+- **"Connect your Spotify" card**: single button → calls `spotify-oauth-start`, opens popup, on success shows "Connected as {display_name}" + Follow Artist / Save Album quick actions powered by `spotify-action`
+- Connection state hook `useStreamingConnection.ts` reads `fan_streaming_connections`
+
+## 6. UI/visual
+
+- Cinematic dark cards consistent with portal: onyx bg, gold accent on connected state
+- Platform brand colors only on small icon dots, not full buttons (keeps look unified)
+- Spotify connect button uses official "Connect with Spotify" wording per their brand guidelines
+
+## Phase 2 (noted, not built now)
+
+- Tidal OAuth (their API requires partner approval — embed-only for v1)
+- Spotify Web Playback SDK for in-portal premium playback (separate scope-heavy effort)
+- Per-track overrides
+
+## Files touched
+
+**New**
+- `supabase/migrations/<ts>_streaming_links.sql`
+- `supabase/functions/spotify-oauth-start/index.ts`
+- `supabase/functions/spotify-oauth-callback/index.ts`
+- `supabase/functions/spotify-token-refresh/index.ts`
+- `supabase/functions/spotify-action/index.ts`
+- `src/components/merchant/StreamingLinksManager.tsx`
+- `src/components/music/StreamingHub.tsx`
+- `src/components/music/SpotifyConnectCard.tsx`
+- `src/hooks/useArtistStreamingLinks.ts`
+- `src/hooks/useStreamingConnection.ts`
+
+**Edited**
+- Merchant Content tab parent → mount `StreamingLinksManager`
+- `src/pages/Music.tsx` → mount `<StreamingHub />` (existing content untouched)
+- `src/integrations/supabase/types.ts` (auto)
