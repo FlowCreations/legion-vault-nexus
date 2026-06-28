@@ -30,6 +30,7 @@ export function StreamingHub() {
       const { data } = await supabase
         .from("artist_streaming_links")
         .select("*")
+        .neq("platform", "youtube_music") // YouTube lives on the Videos page
         .order("sort_order", { ascending: true });
       setLinks((data ?? []) as StreamingLink[]);
       setLoading(false);
@@ -43,6 +44,12 @@ export function StreamingHub() {
       ),
     [links]
   );
+
+  // All links for the active platform (Spotify artist embed only shows top tracks,
+  // so artists can add album/playlist links here to surface the full catalog).
+  const activeLinks = activePlatform
+    ? links.filter((l) => l.platform === activePlatform)
+    : [];
 
   const featured = links.filter((l) => l.is_featured);
 
