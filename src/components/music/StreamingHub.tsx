@@ -145,40 +145,64 @@ export function StreamingHub() {
           })}
         </div>
 
-        {activeLink && (
-          <Card className="mt-4 overflow-hidden bg-card/50 border-border/50">
-            <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-              <span
-                className="text-xs uppercase tracking-wide font-semibold"
-                style={{ color: PLATFORM_COLORS[activeLink.platform] }}
-              >
-                {PLATFORM_LABELS[activeLink.platform]} · Sign in inside the player to follow & save
-              </span>
-              {/* Tiny escape hatch for platforms that block embedding */}
-              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs">
-                <a href={activeLink.url} target="_blank" rel="noreferrer">
-                  Fallback <ExternalLink className="w-3 h-3 ml-1" />
-                </a>
-              </Button>
-            </div>
-            {activeEmbed ? (
-              <iframe
-                src={activeEmbed}
-                width="100%"
-                height={activeLink.platform === "spotify" ? 420 : 460}
-                frameBorder={0}
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-                className="block w-full"
-                title={`${PLATFORM_LABELS[activeLink.platform]} player`}
-              />
-            ) : (
-              <div className="p-6 text-sm text-muted-foreground">
-                {PLATFORM_LABELS[activeLink.platform]} doesn't support inline playback for this
-                link. Use the fallback button above to open it.
-              </div>
+        {activePlatform && activeLinks.length > 0 && (
+          <div className="mt-4 space-y-4">
+            {activeLinks.map((link) => {
+              const embed = link.embed_url || toEmbedUrl(link.platform, link.url);
+              // Spotify artist embeds only show "Popular" — give album/playlist embeds
+              // enough height to surface the full track list.
+              const isSpotify = link.platform === "spotify";
+              const isSpotifyArtist = isSpotify && /\/artist\//.test(link.url);
+              const height = isSpotify
+                ? isSpotifyArtist
+                  ? 480
+                  : 680
+                : 460;
+              return (
+                <Card
+                  key={link.id}
+                  className="overflow-hidden bg-card/50 border-border/50"
+                >
+                  <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3">
+                    <span
+                      className="text-xs uppercase tracking-wide font-semibold truncate"
+                      style={{ color: PLATFORM_COLORS[link.platform] }}
+                    >
+                      {PLATFORM_LABELS[link.platform]}
+                      {link.label ? ` · ${link.label}` : " · Sign in inside the player to follow & save"}
+                    </span>
+                    <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs shrink-0">
+                      <a href={link.url} target="_blank" rel="noreferrer">
+                        Fallback <ExternalLink className="w-3 h-3 ml-1" />
+                      </a>
+                    </Button>
+                  </div>
+                  {embed ? (
+                    <iframe
+                      src={embed}
+                      width="100%"
+                      height={height}
+                      frameBorder={0}
+                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                      loading="lazy"
+                      className="block w-full"
+                      title={`${PLATFORM_LABELS[link.platform]} player`}
+                    />
+                  ) : (
+                    <div className="p-6 text-sm text-muted-foreground">
+                      {PLATFORM_LABELS[link.platform]} doesn't support inline playback for this link.
+                      Use the fallback button above to open it.
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+            {activePlatform === "spotify" && (
+              <p className="text-xs text-muted-foreground">
+                Tip: add album or playlist links from the merchant dashboard to show the full track listing — Spotify artist embeds only display top tracks.
+              </p>
             )}
-          </Card>
+          </div>
         )}
       </div>
     </section>
