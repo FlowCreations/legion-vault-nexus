@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
+import { StreamingHub } from "@/components/music/StreamingHub";
 
 export default function Music() {
   usePagePerformance('Music');
