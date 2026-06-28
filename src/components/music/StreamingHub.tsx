@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
@@ -20,18 +20,10 @@ interface StreamingLink {
   is_featured: boolean;
 }
 
-const PLATFORM_SIGNIN: Record<StreamingPlatform, string> = {
-  spotify: "https://accounts.spotify.com/login",
-  apple_music: "https://music.apple.com",
-  tidal: "https://listen.tidal.com/login",
-  youtube_music: "https://accounts.google.com/ServiceLogin?service=youtube",
-  soundcloud: "https://soundcloud.com/signin",
-  bandcamp: "https://bandcamp.com/login",
-};
-
 export function StreamingHub() {
   const [links, setLinks] = useState<StreamingLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activePlatform, setActivePlatform] = useState<StreamingPlatform | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -44,14 +36,31 @@ export function StreamingHub() {
     })();
   }, []);
 
-  if (loading || links.length === 0) return null;
+  const platformsWithLinks = useMemo(
+    () =>
+      Array.from(new Set(links.map((l) => l.platform))).sort(
+        (a, b) => PLATFORM_ORDER.indexOf(a) - PLATFORM_ORDER.indexOf(b)
+      ),
+    [links]
+  );
 
   const featured = links.filter((l) => l.is_featured);
-  const platformsWithLinks = Array.from(
-    new Set(links.map((l) => l.platform))
-  ).sort(
-    (a, b) => PLATFORM_ORDER.indexOf(a) - PLATFORM_ORDER.indexOf(b)
-  );
+
+  // Default the active inline platform to the first available one
+  useEffect(() => {
+    if (!activePlatform && platformsWithLinks.length > 0) {
+      setActivePlatform(platformsWithLinks[0]);
+    }
+  }, [platformsWithLinks, activePlatform]);
+
+  if (loading || links.length === 0) return null;
+
+  const activeLink = activePlatform
+    ? links.find((l) => l.platform === activePlatform) ?? null
+    : null;
+  const activeEmbed = activeLink
+    ? activeLink.embed_url || toEmbedUrl(activeLink.platform, activeLink.url)
+    : null;
 
   return (
     <section className="px-4 sm:px-8 lg:px-12 py-12 space-y-8">
@@ -61,7 +70,7 @@ export function StreamingHub() {
             Stream Everywhere
           </h2>
           <p className="text-muted-foreground mt-1">
-            Listen on your favorite platform. Sign in to follow & save.
+            Sign in to your account and listen — without leaving the portal.
           </p>
         </div>
       </div>
@@ -71,28 +80,7 @@ export function StreamingHub() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {featured.map((link) => {
             const embed = link.embed_url || toEmbedUrl(link.platform, link.url);
-            if (!embed) {
-              return (
-                <Card
-                  key={link.id}
-                  className="p-6 bg-card/50 border-border/50 flex items-center justify-between"
-                >
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-primary font-semibold mb-1">
-                      {PLATFORM_LABELS[link.platform]}
-                    </div>
-                    <div className="text-foreground font-medium">
-                      {link.label || "Listen now"}
-                    </div>
-                  </div>
-                  <Button asChild>
-                    <a href={link.url} target="_blank" rel="noreferrer">
-                      Open <ExternalLink className="w-4 h-4 ml-2" />
-                    </a>
-                  </Button>
-                </Card>
-              );
-            }
+            if (!embed) return null;
             return (
               <Card
                 key={link.id}
@@ -125,34 +113,73 @@ export function StreamingHub() {
         </div>
       )}
 
-      {/* Connect / open buttons */}
+      {/* Inline platform switcher — player stays in the portal */}
       <div>
         <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3">
-          Follow & connect
+          Listen in your favorite app
         </h3>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {platformsWithLinks.map((p) => {
-            const first = links.find((l) => l.platform === p)!;
+            const isActive = p === activePlatform;
             return (
-              <div key={p} className="flex items-center gap-2">
-                <Button asChild variant="outline" className="gap-2">
-                  <a href={first.url} target="_blank" rel="noreferrer">
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: PLATFORM_COLORS[p] }}
-                    />
-                    Open in {PLATFORM_LABELS[p]}
-                  </a>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <a href={PLATFORM_SIGNIN[p]} target="_blank" rel="noreferrer">
-                    Sign in
-                  </a>
-                </Button>
-              </div>
+              <Button
+                key={p}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                className="gap-2"
+                onClick={() => setActivePlatform(isActive ? null : p)}
+                aria-pressed={isActive}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: PLATFORM_COLORS[p] }}
+                />
+                {PLATFORM_LABELS[p]}
+                {isActive ? (
+                  <ChevronUp className="w-3.5 h-3.5 opacity-70" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                )}
+              </Button>
             );
           })}
         </div>
+
+        {activeLink && (
+          <Card className="mt-4 overflow-hidden bg-card/50 border-border/50">
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+              <span
+                className="text-xs uppercase tracking-wide font-semibold"
+                style={{ color: PLATFORM_COLORS[activeLink.platform] }}
+              >
+                {PLATFORM_LABELS[activeLink.platform]} · Sign in inside the player to follow & save
+              </span>
+              {/* Tiny escape hatch for platforms that block embedding */}
+              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                <a href={activeLink.url} target="_blank" rel="noreferrer">
+                  Fallback <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              </Button>
+            </div>
+            {activeEmbed ? (
+              <iframe
+                src={activeEmbed}
+                width="100%"
+                height={activeLink.platform === "spotify" ? 420 : 460}
+                frameBorder={0}
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                className="block w-full"
+                title={`${PLATFORM_LABELS[activeLink.platform]} player`}
+              />
+            ) : (
+              <div className="p-6 text-sm text-muted-foreground">
+                {PLATFORM_LABELS[activeLink.platform]} doesn't support inline playback for this
+                link. Use the fallback button above to open it.
+              </div>
+            )}
+          </Card>
+        )}
       </div>
     </section>
   );
