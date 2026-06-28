@@ -44,6 +44,7 @@ const CatalystHistory = lazy(() => import("@/components/merchant/intelligence/Ca
 const FunnelOverview = lazy(() => import("@/components/merchant/FunnelOverview"));
 const DistributorIntegration = lazy(() => import("@/components/merchant/DistributorIntegration").then(m => ({ default: m.DistributorIntegration })));
 const ContentLab = lazy(() => import("@/components/merchant/ContentLab").then(m => ({ default: m.ContentLab })));
+const StreamingLinksManager = lazy(() => import("@/components/merchant/StreamingLinksManager").then(m => ({ default: m.StreamingLinksManager })));
 const EmailMarketing = lazy(() => import("@/components/merchant/EmailMarketing").then(m => ({ default: m.EmailMarketing })));
 const SocialTracking = lazy(() => import("@/components/merchant/SocialTracking").then(m => ({ default: m.SocialTracking })));
 const HybridFunnelBuilder = lazy(() => import("@/components/merchant/marketing/HybridFunnelBuilder").then(m => ({ default: m.HybridFunnelBuilder })));
@@ -364,6 +365,7 @@ const Merchant = memo(() => {
                   <TabsTrigger value="lyrics">Lyrics Manager</TabsTrigger>
                   <TabsTrigger value="livestreams">Live Events</TabsTrigger>
                   <TabsTrigger value="tour">Tour Manager</TabsTrigger>
+                  <TabsTrigger value="streaming">Streaming Links</TabsTrigger>
                   <TabsTrigger value="lab">Content Lab</TabsTrigger>
                 </TabsList>
                 
@@ -395,6 +397,11 @@ const Merchant = memo(() => {
                 <TabsContent value="tour">
                   <Suspense fallback={<LoadingSpinner />}>
                     <TourManager />
+                  </Suspense>
+                </TabsContent>
+                <TabsContent value="streaming">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <StreamingLinksManager />
                   </Suspense>
                 </TabsContent>
                 <TabsContent value="lab">
