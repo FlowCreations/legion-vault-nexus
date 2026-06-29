@@ -13,8 +13,9 @@ interface YTLink {
   label: string | null;
 }
 
-type VideoKind = "short" | "live" | "video";
-type DerivedKind = "music_video" | "release" | "video" | "short";
+type VideoKind = "short" | "video";
+type CategoryKey = "all" | "video" | "short";
+
 interface YTVideo {
   id: string;
   title: string;
@@ -23,52 +24,10 @@ interface YTVideo {
   kind?: VideoKind;
   duration?: number;
 }
-interface YTPlaylist {
-  id: string;
-  title: string;
-  videoIds: string[];
-}
 
-type CategoryKey = "all" | "music_video" | "video" | "release" | "short";
-
-const MUSIC_VIDEO_RE = /\b(official\s+(music\s+)?video|music\s+video|\(official\)|\[official\]|mv)\b/i;
-const RELEASE_RE = /\b(album|ep|single|out\s+now|new\s+release|released|debut|stream\s+now|listen\s+now|new\s+single|new\s+album)\b/i;
-const PLAYLIST_MUSIC_VIDEO_RE = /music\s*videos?/i;
-const PLAYLIST_RELEASE_RE = /releases?|albums?|singles?|discography|eps?\b/i;
-
-const buildPlaylistMap = (playlists: YTPlaylist[]): Map<string, DerivedKind> => {
-  const m = new Map<string, DerivedKind>();
-  for (const p of playlists) {
-    let kind: DerivedKind | null = null;
-    if (PLAYLIST_MUSIC_VIDEO_RE.test(p.title)) kind = "music_video";
-    else if (PLAYLIST_RELEASE_RE.test(p.title)) kind = "release";
-    if (!kind) continue;
-    for (const id of p.videoIds) {
-      // Music videos take precedence over releases when a video is in both.
-      const existing = m.get(id);
-      if (!existing || (kind === "music_video" && existing === "release")) {
-        m.set(id, kind);
-      }
-    }
-  }
-  return m;
-};
-
-const deriveKind = (
-  v: YTVideo,
-  playlistMap: Map<string, DerivedKind>
-): DerivedKind => {
-  const fromPlaylist = playlistMap.get(v.id);
-  if (fromPlaylist) return fromPlaylist;
+const deriveKind = (v: YTVideo): VideoKind => {
   const k = v.kind ?? "video";
-  if (k === "short") return "short";
-  // Title-regex fallback only when no playlists were found.
-  if (playlistMap.size === 0) {
-    const t = v.title || "";
-    if (MUSIC_VIDEO_RE.test(t)) return "music_video";
-    if (RELEASE_RE.test(t)) return "release";
-  }
-  return "video";
+  return k === "short" ? "short" : "video";
 };
 
 const formatDuration = (sec?: number) => {
@@ -88,7 +47,6 @@ const formatDuration = (sec?: number) => {
 export function YouTubeHub() {
   const [links, setLinks] = useState<YTLink[]>([]);
   const [videos, setVideos] = useState<YTVideo[]>([]);
-  const [playlists, setPlaylists] = useState<YTPlaylist[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
@@ -145,7 +103,6 @@ export function YouTubeHub() {
         );
         if (!error && res?.videos?.length) {
           setVideos(res.videos as YTVideo[]);
-          if (Array.isArray(res.playlists)) setPlaylists(res.playlists as YTPlaylist[]);
           if (res.channelTitle) setChannelTitle(res.channelTitle);
         }
       } catch {
@@ -157,13 +114,10 @@ export function YouTubeHub() {
 
   if (loading || links.length === 0) return null;
 
-  const playlistMap = buildPlaylistMap(playlists);
-  const derived = videos.map((v) => ({ v, d: deriveKind(v, playlistMap) }));
+  const derived = videos.map((v) => ({ v, d: deriveKind(v) }));
   const counts = {
     all: videos.length,
-    music_video: derived.filter((x) => x.d === "music_video").length,
     video: derived.filter((x) => x.d === "video").length,
-    release: derived.filter((x) => x.d === "release").length,
     short: derived.filter((x) => x.d === "short").length,
   };
   const filtered =
@@ -175,9 +129,7 @@ export function YouTubeHub() {
 
   const tabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: "All" },
-    { key: "music_video", label: "Music Videos" },
     { key: "video", label: "Videos" },
-    { key: "release", label: "Releases" },
     { key: "short", label: "Shorts" },
   ];
 
