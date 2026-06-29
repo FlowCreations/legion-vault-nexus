@@ -85,10 +85,43 @@ Deno.serve(async (req) => {
 
     extractFromHtml(videosHtml);
 
-    // 3. Also scrape /streams.
+    // 3. Also scrape /streams and /shorts (Shorts use shortsLockupViewModel).
     try {
       const streamsRes = await fetchTab(`/channel/${channelId}/streams`);
       extractFromHtml(await streamsRes.text());
+    } catch {
+      /* ignore */
+    }
+    try {
+      const shortsRes = await fetchTab(`/channel/${channelId}/shorts`);
+      const shortsHtml = await shortsRes.text();
+      // Shorts lockup structure: {"videoId":"X"} alongside "headline":{"simpleText":"title"}
+      const sRe =
+        /"shortsLockupViewModel":\{[^]*?"videoId":"([\w-]{11})"[^]*?"text":"((?:[^"\\]|\\.)*)"/g;
+      let s: RegExpExecArray | null;
+      while ((s = sRe.exec(shortsHtml)) !== null) {
+        const id = s[1];
+        if (collected.has(id)) continue;
+        collected.set(id, {
+          id,
+          title: unescapeJson(s[2]),
+          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+          published: "",
+        });
+      }
+      // Fallback: also try reelItemRenderer (older structure)
+      const rRe =
+        /"reelItemRenderer":\{[^]*?"videoId":"([\w-]{11})"[^]*?"headline":\{"simpleText":"((?:[^"\\]|\\.)*)"/g;
+      while ((s = rRe.exec(shortsHtml)) !== null) {
+        const id = s[1];
+        if (collected.has(id)) continue;
+        collected.set(id, {
+          id,
+          title: unescapeJson(s[2]),
+          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+          published: "",
+        });
+      }
     } catch {
       /* ignore */
     }
