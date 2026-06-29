@@ -131,7 +131,7 @@ export function YouTubeHub() {
     category === "all"
       ? videos
       : derived.filter((x) => x.d === category).map((x) => x.v);
-  const visibleVideos = showAll ? filtered : filtered.slice(0, 8);
+  const visibleVideos = filtered;
   const activeVideo = videos.find((v) => v.id === activeId) ?? null;
 
   const tabs: { key: CategoryKey; label: string }[] = [
@@ -152,27 +152,14 @@ export function YouTubeHub() {
             Every {channelTitle} upload — playing inline inside the portal.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {filtered.length > 8 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-              onClick={() => setShowAll((s) => !s)}
-            >
-              {showAll ? "Show Less" : "View All"}
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          )}
-          <Button
-            size="sm"
-            className="gap-2 font-semibold bg-[#FF0000] text-white hover:bg-[#FF0000]/90"
-            onClick={handleYouTubeSignIn}
-          >
-            <LogIn className="w-4 h-4" />
-            Sign in to YouTube
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="gap-2 font-semibold bg-[#FF0000] text-white hover:bg-[#FF0000]/90"
+          onClick={handleYouTubeSignIn}
+        >
+          <LogIn className="w-4 h-4" />
+          Sign in to YouTube
+        </Button>
       </div>
 
       {/* Category tabs */}
@@ -183,10 +170,7 @@ export function YouTubeHub() {
           return (
             <button
               key={t.key}
-              onClick={() => {
-                setCategory(t.key);
-                setShowAll(false);
-              }}
+              onClick={() => setCategory(t.key)}
               disabled={c === 0 && t.key !== "all"}
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm font-medium border transition-colors",
