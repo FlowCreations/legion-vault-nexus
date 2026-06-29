@@ -48,10 +48,12 @@ type Video = {
   duration?: number;
   kind: VideoKind;
 };
+type Playlist = { id: string; title: string; videoIds: string[] };
 type CachedPayload = {
   channelId: string;
   channelTitle: string;
   videos: Video[];
+  playlists?: Playlist[];
   source: string | null;
 };
 
@@ -92,7 +94,8 @@ Deno.serve(async (req) => {
         return json({ ...mem.data, cached: "memory" });
 
       const row = await readDbCache(channelId);
-      if (row) {
+      const hasPlaylists = Array.isArray(row?.payload?.playlists);
+      if (row && hasPlaylists) {
         const age = Date.now() - new Date(row.refreshed_at).getTime();
         if (age < FRESH_TTL_MS) {
           memCache.set(channelId, { at: Date.now(), data: row.payload });
@@ -128,6 +131,14 @@ async function refreshAndStore(channelId: string): Promise<CachedPayload | null>
       if (piped && piped.videos.length > 0) data = piped;
     }
     if (data) await mergeRss(channelId, data);
+    if (data) {
+      try {
+        data.playlists = await scrapeChannelPlaylists(channelId);
+      } catch (e) {
+        console.error("playlist scrape failed", (e as Error).message);
+        data.playlists = [];
+      }
+    }
     if (data && data.videos.length > 0) {
       data.videos.sort(sortByPublished);
       memCache.set(channelId, { at: Date.now(), data });
@@ -495,7 +506,137 @@ function sortByPublished(a: Video, b: Video): number {
   return bd - ad;
 }
 
+// ---------- Playlist scrape ----------
+
+async function scrapeChannelPlaylists(channelId: string): Promise<Playlist[]> {
+  const url = `https://www.youtube.com/channel/${channelId}/playlists`;
+  const html = await (
+    await fetch(url, { headers: YT_HEADERS, signal: AbortSignal.timeout(12000) })
+  ).text();
+  const initial = extractJson(html, "var ytInitialData = ", ";</script>");
+  if (!initial) return [];
+
+  const playlists: { id: string; title: string }[] = [];
+  const seen = new Set<string>();
+  const walk = (node: any) => {
+    if (!node || typeof node !== "object") return;
+    // Modern lockupViewModel for playlists
+    const lv = node.lockupViewModel;
+    if (lv?.contentId && lv?.contentType === "LOCKUP_CONTENT_TYPE_PLAYLIST") {
+      const id = lv.contentId as string;
+      const title =
+        lv.metadata?.lockupMetadataViewModel?.title?.content ??
+        lv.metadata?.lockupMetadataViewModel?.title?.text ??
+        "";
+      if (id && title && !seen.has(id)) {
+        seen.add(id);
+        playlists.push({ id, title });
+      }
+    }
+    // Legacy gridPlaylistRenderer
+    const gp = node.gridPlaylistRenderer;
+    if (gp?.playlistId) {
+      const id = gp.playlistId as string;
+      const title = textOf(gp.title) || "";
+      if (id && title && !seen.has(id)) {
+        seen.add(id);
+        playlists.push({ id, title });
+      }
+    }
+    if (Array.isArray(node)) {
+      for (const c of node) walk(c);
+    } else {
+      for (const k of Object.keys(node)) walk((node as any)[k]);
+    }
+  };
+  walk(initial);
+
+  // For each playlist fetch its video IDs (parallel, capped).
+  const detailed = await Promise.all(
+    playlists.slice(0, 40).map(async (p) => {
+      try {
+        const videoIds = await scrapePlaylistVideoIds(p.id);
+        return { ...p, videoIds };
+      } catch {
+        return { ...p, videoIds: [] };
+      }
+    })
+  );
+  return detailed.filter((p) => p.videoIds.length > 0);
+}
+
+async function scrapePlaylistVideoIds(playlistId: string): Promise<string[]> {
+  const url = `https://www.youtube.com/playlist?list=${playlistId}`;
+  const html = await (
+    await fetch(url, { headers: YT_HEADERS, signal: AbortSignal.timeout(12000) })
+  ).text();
+  const initial = extractJson(html, "var ytInitialData = ", ";</script>");
+  if (!initial) return [];
+  const apiKey = html.match(/"INNERTUBE_API_KEY":"([^"]+)"/)?.[1];
+  const clientVersion =
+    html.match(/"INNERTUBE_CLIENT_VERSION":"([^"]+)"/)?.[1] ?? "2.20240101.00.00";
+  const clientName = html.match(/"INNERTUBE_CLIENT_NAME":"([^"]+)"/)?.[1] ?? "WEB";
+  const visitorData = html.match(/"VISITOR_DATA":"([^"]+)"/)?.[1];
+
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  const harvestIds = (node: any) => {
+    if (!node || typeof node !== "object") return;
+    const pv = node.playlistVideoRenderer;
+    if (pv?.videoId && !seen.has(pv.videoId)) {
+      seen.add(pv.videoId);
+      ids.push(pv.videoId);
+    }
+    // Modern lockupViewModel for playlist items (contentType = VIDEO).
+    const lv = node.lockupViewModel;
+    if (
+      lv?.contentId &&
+      typeof lv.contentId === "string" &&
+      lv.contentId.length === 11 &&
+      lv.contentType === "LOCKUP_CONTENT_TYPE_VIDEO" &&
+      !seen.has(lv.contentId)
+    ) {
+      seen.add(lv.contentId);
+      ids.push(lv.contentId);
+    }
+    if (Array.isArray(node)) for (const c of node) harvestIds(c);
+    else for (const k of Object.keys(node)) harvestIds((node as any)[k]);
+  };
+  harvestIds(initial);
+
+  let token = findNextContinuation(initial);
+  let page = 0;
+  while (token && apiKey && page < 20) {
+    try {
+      const r = await fetch(
+        `https://www.youtube.com/youtubei/v1/browse?key=${apiKey}&prettyPrint=false`,
+        {
+          method: "POST",
+          headers: { ...YT_HEADERS, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            context: { client: { clientName, clientVersion, hl: "en", gl: "US", visitorData } },
+            continuation: token,
+          }),
+          signal: AbortSignal.timeout(10000),
+        }
+      );
+      if (!r.ok) break;
+      const next = await r.json();
+      const before = ids.length;
+      harvestIds(next);
+      token = findNextContinuation(next);
+      if (ids.length === before) break;
+      page++;
+    } catch {
+      break;
+    }
+  }
+  return ids;
+}
+
 // ---------- RSS merge (freshness) ----------
+
+
 
 async function mergeRss(channelId: string, payload: CachedPayload) {
   try {
