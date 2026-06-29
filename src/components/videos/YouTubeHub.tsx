@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Youtube } from "lucide-react";
-import { toEmbedUrl } from "@/lib/streamingPlatforms";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ExternalLink, Youtube, Play } from "lucide-react";
 
 interface YTLink {
   id: string;
@@ -13,12 +13,23 @@ interface YTLink {
   label: string | null;
 }
 
+interface YTVideo {
+  id: string;
+  title: string;
+  thumbnail: string;
+  published: string;
+}
+
 /**
- * YouTube hub for the Videos page. Fans sign in directly inside the YouTube
- * iframe (same as on youtube.com) — no redirect away from the portal.
+ * YouTube hub for the Videos page. Plays every video inline inside the portal
+ * — no redirects. A main 16:9 player sits beside a scrollable list of the
+ * channel's uploads; clicking a video swaps it into the player.
  */
 export function YouTubeHub() {
   const [links, setLinks] = useState<YTLink[]>([]);
+  const [videos, setVideos] = useState<YTVideo[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,12 +39,35 @@ export function YouTubeHub() {
         .select("*")
         .eq("platform", "youtube_music")
         .order("sort_order", { ascending: true });
-      setLinks((data ?? []) as YTLink[]);
+      const ytLinks = (data ?? []) as YTLink[];
+      setLinks(ytLinks);
+
+      if (ytLinks.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Resolve the first link's channel uploads via our edge function.
+      try {
+        const { data: res, error } = await supabase.functions.invoke(
+          "resolve-youtube-uploads",
+          { body: { url: ytLinks[0].url } }
+        );
+        if (!error && res?.videos?.length) {
+          setVideos(res.videos as YTVideo[]);
+          setActiveId(res.videos[0].id);
+          if (res.channelTitle) setChannelTitle(res.channelTitle);
+        }
+      } catch {
+        /* swallow — fallback UI handles it */
+      }
       setLoading(false);
     })();
   }, []);
 
   if (loading || links.length === 0) return null;
+
+  const primary = links[0];
 
   return (
     <section className="space-y-6 pt-8">
@@ -44,74 +78,115 @@ export function YouTubeHub() {
             Watch on YouTube
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Sign in inside the player to like, comment and subscribe — without leaving the portal.
+            Every {channelTitle} upload — playing inline. Sign in inside the
+            player to like, comment and subscribe without leaving the portal.
           </p>
         </div>
+        <Button asChild variant="ghost" size="sm" className="h-8 px-3 text-xs">
+          <a href={primary.url} target="_blank" rel="noreferrer">
+            Open channel <ExternalLink className="w-3 h-3 ml-1" />
+          </a>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {links.map((link) => {
-          const embed =
-            link.embed_url || toEmbedUrl("youtube_music", link.url) || toYouTubeEmbed(link.url);
-          return (
-            <Card key={link.id} className="overflow-hidden bg-card/50 border-border/50">
-              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wide font-semibold text-[#FF0000]">
-                  YouTube {link.label ? `· ${link.label}` : ""}
-                </span>
-                <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs">
-                  <a href={link.url} target="_blank" rel="noreferrer">
-                    Fallback <ExternalLink className="w-3 h-3 ml-1" />
-                  </a>
-                </Button>
-              </div>
-              {embed ? (
-                <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-                  <iframe
-                    src={embed}
-                    className="absolute inset-0 w-full h-full"
-                    frameBorder={0}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading="lazy"
-                    title="YouTube player"
-                  />
-                </div>
-              ) : (
-                <div className="p-6 text-sm text-muted-foreground">
-                  This link can't be embedded. Use the fallback button to open it on YouTube.
-                </div>
-              )}
-            </Card>
-          );
-        })}
-      </div>
+      {activeId ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Inline player */}
+          <Card className="lg:col-span-2 overflow-hidden bg-card/50 border-border/50">
+            <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+              <iframe
+                key={activeId}
+                src={`https://www.youtube.com/embed/${activeId}?autoplay=0&rel=0`}
+                className="absolute inset-0 w-full h-full"
+                frameBorder={0}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                allowFullScreen
+                title="YouTube player"
+              />
+            </div>
+            <div className="px-4 py-3">
+              <h3 className="font-semibold text-foreground line-clamp-2">
+                {videos.find((v) => v.id === activeId)?.title ?? ""}
+              </h3>
+            </div>
+          </Card>
+
+          {/* Video list — every upload, clickable, stays in portal */}
+          <Card className="overflow-hidden bg-card/50 border-border/50">
+            <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                {videos.length} videos
+              </span>
+              <span className="text-xs text-[#FF0000] font-semibold">
+                YOUTUBE
+              </span>
+            </div>
+            <ScrollArea className="h-[480px]">
+              <ul className="divide-y divide-border/30">
+                {videos.map((v) => {
+                  const isActive = v.id === activeId;
+                  return (
+                    <li key={v.id}>
+                      <button
+                        onClick={() => setActiveId(v.id)}
+                        className={`w-full flex gap-3 p-3 text-left transition-colors hover:bg-muted/40 ${
+                          isActive ? "bg-primary/10" : ""
+                        }`}
+                      >
+                        <div className="relative w-28 aspect-video rounded overflow-hidden shrink-0 bg-black">
+                          <img
+                            src={v.thumbnail}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          {isActive && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                              <Play className="w-5 h-5 text-primary fill-primary" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`text-sm line-clamp-2 ${
+                              isActive
+                                ? "text-foreground font-semibold"
+                                : "text-foreground/90"
+                            }`}
+                          >
+                            {v.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(v.published).toLocaleDateString(
+                              undefined,
+                              { year: "numeric", month: "short", day: "numeric" }
+                            )}
+                          </p>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </ScrollArea>
+          </Card>
+        </div>
+      ) : (
+        <Card className="p-6 bg-card/50 border-border/50 text-sm text-muted-foreground">
+          Couldn't load this channel's uploads.{" "}
+          <a
+            href={primary.url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline"
+          >
+            Open on YouTube
+          </a>
+          .
+        </Card>
+      )}
     </section>
   );
-}
-
-/** Accepts youtube.com/channel/<id>, /@handle, /watch?v=, /playlist?list=, youtu.be/<id>. */
-function toYouTubeEmbed(url: string): string | null {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtu.be")) {
-      const id = u.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-    const v = u.searchParams.get("v");
-    const list = u.searchParams.get("list");
-    if (v) return `https://www.youtube.com/embed/${v}${list ? `?list=${list}` : ""}`;
-    if (list) return `https://www.youtube.com/embed/videoseries?list=${list}`;
-    // Channel / handle pages aren't directly embeddable — use uploads playlist via channel id (UC -> UU)
-    const channelMatch = u.pathname.match(/\/channel\/(UC[\w-]+)/);
-    if (channelMatch) {
-      const uploads = "UU" + channelMatch[1].slice(2);
-      return `https://www.youtube.com/embed/videoseries?list=${uploads}`;
-    }
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 export default YouTubeHub;

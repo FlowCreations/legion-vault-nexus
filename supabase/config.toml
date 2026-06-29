@@ -197,3 +197,6 @@ verify_jwt = true
 
 [functions.resolve-spotify-discography]
 verify_jwt = false
+
+[functions.resolve-youtube-uploads]
+verify_jwt = false
