@@ -145,6 +145,7 @@ export function YouTubeHub() {
         );
         if (!error && res?.videos?.length) {
           setVideos(res.videos as YTVideo[]);
+          if (Array.isArray(res.playlists)) setPlaylists(res.playlists as YTPlaylist[]);
           if (res.channelTitle) setChannelTitle(res.channelTitle);
         }
       } catch {
