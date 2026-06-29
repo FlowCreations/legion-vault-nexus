@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ExternalLink, Youtube, Play } from "lucide-react";
+import { ExternalLink, Youtube, Play, LogIn } from "lucide-react";
 
 interface YTLink {
   id: string;
@@ -31,6 +31,38 @@ export function YouTubeHub() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
+  const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
+
+  const handleYouTubeSignIn = () => {
+    const popup = window.open(
+      "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F",
+      "youtube-login",
+      "popup=yes,width=520,height=720,noopener,noreferrer"
+    );
+    if (!popup) {
+      setPlayerRefreshKey((k) => k + 1);
+      return;
+    }
+    const poll = window.setInterval(() => {
+      if (popup.closed) {
+        window.clearInterval(poll);
+        setPlayerRefreshKey((k) => k + 1);
+      }
+    }, 700);
+  };
+
+  useEffect(() => {
+    const refresh = () => setPlayerRefreshKey((k) => k + 1);
+    const onVis = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -82,11 +114,21 @@ export function YouTubeHub() {
             player to like, comment and subscribe without leaving the portal.
           </p>
         </div>
-        <Button asChild variant="ghost" size="sm" className="h-8 px-3 text-xs">
-          <a href={primary.url} target="_blank" rel="noreferrer">
-            Open channel <ExternalLink className="w-3 h-3 ml-1" />
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="gap-2 font-semibold bg-[#FF0000] text-white hover:bg-[#FF0000]/90"
+            onClick={handleYouTubeSignIn}
+          >
+            <LogIn className="w-4 h-4" />
+            Sign in to YouTube
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="h-8 px-3 text-xs">
+            <a href={primary.url} target="_blank" rel="noreferrer">
+              Open channel <ExternalLink className="w-3 h-3 ml-1" />
+            </a>
+          </Button>
+        </div>
       </div>
 
       {activeId ? (
@@ -95,7 +137,7 @@ export function YouTubeHub() {
           <Card className="lg:col-span-2 overflow-hidden bg-card/50 border-border/50">
             <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
               <iframe
-                key={activeId}
+                key={`${activeId}-${playerRefreshKey}`}
                 src={`https://www.youtube.com/embed/${activeId}?autoplay=0&rel=0`}
                 className="absolute inset-0 w-full h-full"
                 frameBorder={0}
