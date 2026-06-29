@@ -146,9 +146,10 @@ async function scrapeYouTubeChannel(channelId: string): Promise<CachedPayload | 
   let channelTitle = "YouTube";
   const tabs: Array<{ path: string; kind: VideoKind }> = [
     { path: "videos", kind: "video" },
-    { path: "shorts", kind: "short" },
     { path: "streams", kind: "live" },
+    { path: "shorts", kind: "short" },
   ];
+
 
   // Run tabs in parallel but collect results per-tab so we can merge with
   // a deterministic priority (videos > live > shorts). Without this, the
