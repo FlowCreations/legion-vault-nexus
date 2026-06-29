@@ -160,7 +160,7 @@ async function readDbCache(channelId: string) {
 
 async function writeDbCache(channelId: string, payload: CachedPayload) {
   try {
-    await admin.from("youtube_channel_cache").upsert(
+    const { error } = await admin.from("youtube_channel_cache").upsert(
       {
         channel_id: channelId,
         channel_title: payload.channelTitle,
@@ -172,8 +172,10 @@ async function writeDbCache(channelId: string, payload: CachedPayload) {
       },
       { onConflict: "channel_id" }
     );
-  } catch {
-    /* best effort */
+    if (error) console.error("cache write failed:", error.message);
+    else console.log("cache wrote", channelId, payload.videos.length);
+  } catch (e) {
+    console.error("cache write threw:", (e as Error).message);
   }
 }
 
