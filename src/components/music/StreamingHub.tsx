@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, LogIn, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, LogIn, RefreshCw, Music2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
