@@ -123,22 +123,27 @@ export function YouTubeHub() {
 
   if (loading || links.length === 0) return null;
 
+  const derived = videos.map((v) => ({ v, d: deriveKind(v) }));
   const counts = {
     all: videos.length,
-    video: videos.filter((v) => (v.kind ?? "video") === "video").length,
-    short: videos.filter((v) => v.kind === "short").length,
-    live: videos.filter((v) => v.kind === "live").length,
+    music_video: derived.filter((x) => x.d === "music_video").length,
+    video: derived.filter((x) => x.d === "video").length,
+    release: derived.filter((x) => x.d === "release").length,
+    short: derived.filter((x) => x.d === "short").length,
+    live: derived.filter((x) => x.d === "live").length,
   };
   const filtered =
     category === "all"
       ? videos
-      : videos.filter((v) => (v.kind ?? "video") === category);
+      : derived.filter((x) => x.d === category).map((x) => x.v);
   const visibleVideos = showAll ? filtered : filtered.slice(0, 8);
   const activeVideo = videos.find((v) => v.id === activeId) ?? null;
 
   const tabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: "All" },
+    { key: "music_video", label: "Music Videos" },
     { key: "video", label: "Videos" },
+    { key: "release", label: "Releases" },
     { key: "short", label: "Shorts" },
     { key: "live", label: "Live" },
   ];
