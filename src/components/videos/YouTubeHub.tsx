@@ -199,44 +199,68 @@ export function YouTubeHub() {
           No {tabs.find((t) => t.key === category)?.label.toLowerCase() ?? "videos"} found.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {visibleVideos.map((v) => {
-            const dur = formatDuration(v.duration);
-            return (
-              <button
-                key={v.id}
-                onClick={() => setActiveId(v.id)}
-                className="group space-y-2 text-left"
-              >
-                <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                  <img
-                    src={v.thumbnail}
-                    alt={v.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                  {dur && (
-                    <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[11px] font-medium leading-none">
-                      {dur}
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
-                      <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+        <div className="relative group">
+          {/* Left arrow */}
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90 focus:opacity-100"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Right arrow */}
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90 focus:opacity-100"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {visibleVideos.map((v) => {
+              const dur = formatDuration(v.duration);
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setActiveId(v.id)}
+                  className="group/card flex-shrink-0 w-64 sm:w-72 text-left snap-start"
+                >
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={v.thumbnail}
+                      alt={v.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
+                    />
+                    {dur && (
+                      <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[11px] font-medium leading-none">
+                        {dur}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
+                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                    {v.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {channelTitle}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+                  <div className="mt-2">
+                    <p className="font-medium text-sm line-clamp-2 group-hover/card:text-primary transition-colors">
+                      {v.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {channelTitle}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
