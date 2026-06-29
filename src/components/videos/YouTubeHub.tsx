@@ -46,6 +46,7 @@ export function YouTubeHub() {
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [category, setCategory] = useState<CategoryKey>("all");
   const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
 
   const youtubeSignInUrl =
