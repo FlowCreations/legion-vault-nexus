@@ -14,7 +14,7 @@ interface YTLink {
 }
 
 type VideoKind = "short" | "live" | "video";
-type DerivedKind = "music_video" | "release" | "video" | "short" | "live";
+type DerivedKind = "music_video" | "release" | "video" | "short";
 interface YTVideo {
   id: string;
   title: string;
@@ -23,19 +23,51 @@ interface YTVideo {
   kind?: VideoKind;
   duration?: number;
 }
+interface YTPlaylist {
+  id: string;
+  title: string;
+  videoIds: string[];
+}
 
-type CategoryKey = "all" | "music_video" | "video" | "release" | "short" | "live";
+type CategoryKey = "all" | "music_video" | "video" | "release" | "short";
 
 const MUSIC_VIDEO_RE = /\b(official\s+(music\s+)?video|music\s+video|\(official\)|\[official\]|mv)\b/i;
 const RELEASE_RE = /\b(album|ep|single|out\s+now|new\s+release|released|debut|stream\s+now|listen\s+now|new\s+single|new\s+album)\b/i;
+const PLAYLIST_MUSIC_VIDEO_RE = /music\s*videos?/i;
+const PLAYLIST_RELEASE_RE = /releases?|albums?|singles?|discography|eps?\b/i;
 
-const deriveKind = (v: YTVideo): DerivedKind => {
+const buildPlaylistMap = (playlists: YTPlaylist[]): Map<string, DerivedKind> => {
+  const m = new Map<string, DerivedKind>();
+  for (const p of playlists) {
+    let kind: DerivedKind | null = null;
+    if (PLAYLIST_MUSIC_VIDEO_RE.test(p.title)) kind = "music_video";
+    else if (PLAYLIST_RELEASE_RE.test(p.title)) kind = "release";
+    if (!kind) continue;
+    for (const id of p.videoIds) {
+      // Music videos take precedence over releases when a video is in both.
+      const existing = m.get(id);
+      if (!existing || (kind === "music_video" && existing === "release")) {
+        m.set(id, kind);
+      }
+    }
+  }
+  return m;
+};
+
+const deriveKind = (
+  v: YTVideo,
+  playlistMap: Map<string, DerivedKind>
+): DerivedKind => {
+  const fromPlaylist = playlistMap.get(v.id);
+  if (fromPlaylist) return fromPlaylist;
   const k = v.kind ?? "video";
   if (k === "short") return "short";
-  if (k === "live") return "live";
-  const t = v.title || "";
-  if (MUSIC_VIDEO_RE.test(t)) return "music_video";
-  if (RELEASE_RE.test(t)) return "release";
+  // Title-regex fallback only when no playlists were found.
+  if (playlistMap.size === 0) {
+    const t = v.title || "";
+    if (MUSIC_VIDEO_RE.test(t)) return "music_video";
+    if (RELEASE_RE.test(t)) return "release";
+  }
   return "video";
 };
 
