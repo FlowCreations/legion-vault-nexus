@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Youtube, LogIn, ExternalLink, Play } from "lucide-react";
+import { Youtube, LogIn, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface YTLink {
@@ -50,9 +50,9 @@ export function YouTubeHub() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false);
   const [category, setCategory] = useState<CategoryKey>("all");
   const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const youtubeSignInUrl =
     "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F";
@@ -66,6 +66,13 @@ export function YouTubeHub() {
     a.click();
     a.remove();
     window.setTimeout(() => setPlayerRefreshKey((k) => k + 1), 1200);
+  };
+
+  const scroll = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const width = el.clientWidth * 0.8;
+    el.scrollBy({ left: direction === "left" ? -width : width, behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -124,7 +131,7 @@ export function YouTubeHub() {
     category === "all"
       ? videos
       : derived.filter((x) => x.d === category).map((x) => x.v);
-  const visibleVideos = showAll ? filtered : filtered.slice(0, 8);
+  const visibleVideos = filtered;
   const activeVideo = videos.find((v) => v.id === activeId) ?? null;
 
   const tabs: { key: CategoryKey; label: string }[] = [
@@ -145,27 +152,14 @@ export function YouTubeHub() {
             Every {channelTitle} upload — playing inline inside the portal.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {filtered.length > 8 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-              onClick={() => setShowAll((s) => !s)}
-            >
-              {showAll ? "Show Less" : "View All"}
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          )}
-          <Button
-            size="sm"
-            className="gap-2 font-semibold bg-[#FF0000] text-white hover:bg-[#FF0000]/90"
-            onClick={handleYouTubeSignIn}
-          >
-            <LogIn className="w-4 h-4" />
-            Sign in to YouTube
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="gap-2 font-semibold bg-[#FF0000] text-white hover:bg-[#FF0000]/90"
+          onClick={handleYouTubeSignIn}
+        >
+          <LogIn className="w-4 h-4" />
+          Sign in to YouTube
+        </Button>
       </div>
 
       {/* Category tabs */}
@@ -176,10 +170,7 @@ export function YouTubeHub() {
           return (
             <button
               key={t.key}
-              onClick={() => {
-                setCategory(t.key);
-                setShowAll(false);
-              }}
+              onClick={() => setCategory(t.key)}
               disabled={c === 0 && t.key !== "all"}
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm font-medium border transition-colors",
@@ -208,44 +199,68 @@ export function YouTubeHub() {
           No {tabs.find((t) => t.key === category)?.label.toLowerCase() ?? "videos"} found.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {visibleVideos.map((v) => {
-            const dur = formatDuration(v.duration);
-            return (
-              <button
-                key={v.id}
-                onClick={() => setActiveId(v.id)}
-                className="group space-y-2 text-left"
-              >
-                <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                  <img
-                    src={v.thumbnail}
-                    alt={v.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                  {dur && (
-                    <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[11px] font-medium leading-none">
-                      {dur}
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
-                      <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+        <div className="relative group">
+          {/* Left arrow */}
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90 focus:opacity-100"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Right arrow */}
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90 focus:opacity-100"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {visibleVideos.map((v) => {
+              const dur = formatDuration(v.duration);
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setActiveId(v.id)}
+                  className="group/card flex-shrink-0 w-64 sm:w-72 text-left snap-start"
+                >
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={v.thumbnail}
+                      alt={v.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
+                    />
+                    {dur && (
+                      <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[11px] font-medium leading-none">
+                        {dur}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
+                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                    {v.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {channelTitle}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+                  <div className="mt-2">
+                    <p className="font-medium text-sm line-clamp-2 group-hover/card:text-primary transition-colors">
+                      {v.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {channelTitle}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
