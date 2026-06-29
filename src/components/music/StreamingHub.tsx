@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, ExternalLink, LogIn } from "lucide-react";
+import { ChevronDown, ChevronUp, LogIn, RefreshCw } from "lucide-react";
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
@@ -24,6 +24,7 @@ export function StreamingHub() {
   const [links, setLinks] = useState<StreamingLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlatform, setActivePlatform] = useState<StreamingPlatform | null>(null);
+  const [spotifyRefreshKey, setSpotifyRefreshKey] = useState(0);
   // artistLinkId -> resolved album IDs (full discography)
   const [spotifyDiscography, setSpotifyDiscography] = useState<Record<string, string[]>>({});
 
@@ -38,6 +39,41 @@ export function StreamingHub() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    const refreshSpotifyEmbeds = () => setSpotifyRefreshKey((key) => key + 1);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshSpotifyEmbeds();
+    };
+
+    window.addEventListener("focus", refreshSpotifyEmbeds);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", refreshSpotifyEmbeds);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  const handleSpotifySignIn = () => {
+    const popup = window.open(
+      "https://accounts.spotify.com/login",
+      "spotify-login",
+      "popup=yes,width=520,height=720,noopener,noreferrer"
+    );
+
+    if (!popup) {
+      setSpotifyRefreshKey((key) => key + 1);
+      return;
+    }
+
+    const poll = window.setInterval(() => {
+      if (popup.closed) {
+        window.clearInterval(poll);
+        setSpotifyRefreshKey((key) => key + 1);
+      }
+    }, 700);
+  };
 
   const platformsWithLinks = useMemo(
     () =>
@@ -173,19 +209,9 @@ export function StreamingHub() {
             {/* Per-platform sign-in CTA so fans can log in once and have every
                 embed below recognize their account (follow, save, like). */}
             {activePlatform === "spotify" && (
-              <Button
-                asChild
-                size="sm"
-                className="gap-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-semibold"
-              >
-                <a
-                  href="https://accounts.spotify.com/login"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Sign in to Spotify
-                </a>
+              <Button size="sm" className="gap-2 font-semibold" onClick={handleSpotifySignIn}>
+                <LogIn className="w-4 h-4" />
+                Sign in to Spotify
               </Button>
             )}
 
@@ -220,18 +246,18 @@ export function StreamingHub() {
                           : " · Sign in inside the player to follow & save"}
                       </span>
                       <Button
-                        asChild
+                        type="button"
                         variant="ghost"
                         size="sm"
                         className="h-7 px-2 text-xs shrink-0"
+                        onClick={() => setSpotifyRefreshKey((key) => key + 1)}
                       >
-                        <a href={link.url} target="_blank" rel="noreferrer">
-                          Fallback <ExternalLink className="w-3 h-3 ml-1" />
-                        </a>
+                        Refresh <RefreshCw className="w-3 h-3 ml-1" />
                       </Button>
                     </div>
                     {artistEmbed ? (
                       <iframe
+                        key={`${link.id}-${spotifyRefreshKey}`}
                         src={artistEmbed}
                         width="100%"
                         height={height}
@@ -263,6 +289,7 @@ export function StreamingHub() {
                             className="overflow-hidden bg-card/50 border-border/50"
                           >
                             <iframe
+                              key={`${albumId}-${spotifyRefreshKey}`}
                               src={`https://open.spotify.com/embed/album/${albumId}`}
                               width="100%"
                               height={420}
