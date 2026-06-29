@@ -154,6 +154,7 @@ async function scrapeYouTubeChannel(channelId: string): Promise<CachedPayload | 
     tabs.map(async ({ path, kind }) => {
       try {
         const res = await scrapeTab(channelId, path, kind);
+        console.log(`tab ${path} yielded ${res.videos.length} items`);
         if (res.channelTitle) channelTitle = res.channelTitle;
         for (const v of res.videos) {
           const existing = out.get(v.id);
