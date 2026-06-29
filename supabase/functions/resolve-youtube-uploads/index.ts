@@ -334,6 +334,60 @@ function harvest(node: any, fallbackKind: VideoKind, out: Video[]): void {
     }
   }
 
+  // lockupViewModel (modern channel page format for both long-form and shorts)
+  if (node.lockupViewModel) {
+    const r = node.lockupViewModel;
+    const id: string | undefined = r.contentId;
+    const title: string | undefined =
+      r.metadata?.lockupMetadataViewModel?.title?.content ??
+      (typeof r.metadata?.lockupMetadataViewModel?.title === "string"
+        ? r.metadata.lockupMetadataViewModel.title
+        : undefined);
+    const sources = r.contentImage?.thumbnailViewModel?.image?.sources ?? [];
+    const thumb =
+      sources?.slice(-1)?.[0]?.url ??
+      (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : undefined);
+    const ct: string = String(r.contentType ?? "");
+    let kind: VideoKind = fallbackKind;
+    if (ct.includes("SHORT")) kind = "short";
+    else if (ct.includes("LIVE") || ct.includes("STREAM")) kind = "live";
+    else if (ct.includes("VIDEO")) kind = "video";
+
+    // Pull duration from the bottom-overlay badge text ("3:23")
+    let duration: number | undefined;
+    const overlays = r.contentImage?.thumbnailViewModel?.overlays ?? [];
+    for (const o of overlays) {
+      const badges = o?.thumbnailBottomOverlayViewModel?.badges ?? [];
+      for (const b of badges) {
+        const t = b?.thumbnailBadgeViewModel?.text;
+        if (t && /^\d{1,2}(:\d{2}){1,2}$/.test(t)) {
+          duration = parseDuration(t);
+          break;
+        }
+        // LIVE badge
+        const accLabel =
+          b?.thumbnailBadgeViewModel?.rendererContext?.accessibilityContext?.label ?? "";
+        if (typeof accLabel === "string" && accLabel.toUpperCase().includes("LIVE")) {
+          kind = "live";
+        }
+      }
+      if (duration != null) break;
+    }
+
+    if (id && title) {
+      out.push({
+        id,
+        title,
+        thumbnail: thumb ?? `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        published: "",
+        duration,
+        kind,
+      });
+    }
+  }
+
+
+
   for (const k in node) {
     if (
       k === "videoRenderer" ||
