@@ -14,6 +14,7 @@ interface YTLink {
 }
 
 type VideoKind = "short" | "live" | "video";
+type DerivedKind = "music_video" | "release" | "video" | "short" | "live";
 interface YTVideo {
   id: string;
   title: string;
@@ -23,7 +24,20 @@ interface YTVideo {
   duration?: number;
 }
 
-type CategoryKey = "all" | "video" | "short" | "live";
+type CategoryKey = "all" | "music_video" | "video" | "release" | "short" | "live";
+
+const MUSIC_VIDEO_RE = /\b(official\s+(music\s+)?video|music\s+video|\(official\)|\[official\]|mv)\b/i;
+const RELEASE_RE = /\b(album|ep|single|out\s+now|new\s+release|released|debut|stream\s+now|listen\s+now|new\s+single|new\s+album)\b/i;
+
+const deriveKind = (v: YTVideo): DerivedKind => {
+  const k = v.kind ?? "video";
+  if (k === "short") return "short";
+  if (k === "live") return "live";
+  const t = v.title || "";
+  if (MUSIC_VIDEO_RE.test(t)) return "music_video";
+  if (RELEASE_RE.test(t)) return "release";
+  return "video";
+};
 
 const formatDuration = (sec?: number) => {
   if (!sec || sec <= 0) return null;
@@ -109,22 +123,27 @@ export function YouTubeHub() {
 
   if (loading || links.length === 0) return null;
 
+  const derived = videos.map((v) => ({ v, d: deriveKind(v) }));
   const counts = {
     all: videos.length,
-    video: videos.filter((v) => (v.kind ?? "video") === "video").length,
-    short: videos.filter((v) => v.kind === "short").length,
-    live: videos.filter((v) => v.kind === "live").length,
+    music_video: derived.filter((x) => x.d === "music_video").length,
+    video: derived.filter((x) => x.d === "video").length,
+    release: derived.filter((x) => x.d === "release").length,
+    short: derived.filter((x) => x.d === "short").length,
+    live: derived.filter((x) => x.d === "live").length,
   };
   const filtered =
     category === "all"
       ? videos
-      : videos.filter((v) => (v.kind ?? "video") === category);
+      : derived.filter((x) => x.d === category).map((x) => x.v);
   const visibleVideos = showAll ? filtered : filtered.slice(0, 8);
   const activeVideo = videos.find((v) => v.id === activeId) ?? null;
 
   const tabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: "All" },
+    { key: "music_video", label: "Music Videos" },
     { key: "video", label: "Videos" },
+    { key: "release", label: "Releases" },
     { key: "short", label: "Shorts" },
     { key: "live", label: "Live" },
   ];
@@ -201,7 +220,7 @@ export function YouTubeHub() {
 
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-border/50 bg-card/50 p-6 text-sm text-muted-foreground">
-          No {category === "all" ? "videos" : category === "short" ? "Shorts" : category === "live" ? "live streams" : "videos"} found.
+          No {tabs.find((t) => t.key === category)?.label.toLowerCase() ?? "videos"} found.
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -256,7 +275,7 @@ export function YouTubeHub() {
               <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
                 <iframe
                   key={`${activeVideo.id}-${playerRefreshKey}`}
-                  src={`https://www.youtube-nocookie.com/embed/${activeVideo.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`}
+                  src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1&origin=${encodeURIComponent(window.location.origin)}`}
                   className="absolute inset-0 w-full h-full"
                   frameBorder={0}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
