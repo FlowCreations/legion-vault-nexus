@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ExternalLink, Youtube, Play, LogIn } from "lucide-react";
+import { Youtube, Play, LogIn } from "lucide-react";
 
 interface YTLink {
   id: string;
@@ -33,22 +33,18 @@ export function YouTubeHub() {
   const [loading, setLoading] = useState(true);
   const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
 
+  const youtubeSignInUrl =
+    "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F";
+
   const handleYouTubeSignIn = () => {
-    const popup = window.open(
-      "https://www.youtube.com/signin",
-      "youtube-login",
-      "popup=yes,width=520,height=720"
-    );
-    if (!popup) {
-      setPlayerRefreshKey((k) => k + 1);
-      return;
-    }
-    const poll = window.setInterval(() => {
-      if (popup.closed) {
-        window.clearInterval(poll);
-        setPlayerRefreshKey((k) => k + 1);
-      }
-    }, 700);
+    const authLink = document.createElement("a");
+    authLink.href = youtubeSignInUrl;
+    authLink.target = "_blank";
+    authLink.rel = "noopener noreferrer";
+    document.body.appendChild(authLink);
+    authLink.click();
+    authLink.remove();
+    window.setTimeout(() => setPlayerRefreshKey((k) => k + 1), 1200);
   };
 
   useEffect(() => {
@@ -110,8 +106,7 @@ export function YouTubeHub() {
             Watch on YouTube
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Every {channelTitle} upload — playing inline. Sign in inside the
-            player to like, comment and subscribe without leaving the portal.
+            Every {channelTitle} upload — playing inline inside the portal.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -123,11 +118,6 @@ export function YouTubeHub() {
             <LogIn className="w-4 h-4" />
             Sign in to YouTube
           </Button>
-          <Button asChild variant="ghost" size="sm" className="h-8 px-3 text-xs">
-            <a href={primary.url} target="_blank" rel="noreferrer">
-              Open channel <ExternalLink className="w-3 h-3 ml-1" />
-            </a>
-          </Button>
         </div>
       </div>
 
@@ -138,7 +128,7 @@ export function YouTubeHub() {
             <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
               <iframe
                 key={`${activeId}-${playerRefreshKey}`}
-                src={`https://www.youtube.com/embed/${activeId}?autoplay=0&rel=0`}
+                src={`https://www.youtube-nocookie.com/embed/${activeId}?autoplay=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
                 className="absolute inset-0 w-full h-full"
                 frameBorder={0}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
