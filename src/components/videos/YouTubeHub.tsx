@@ -157,14 +157,14 @@ export function YouTubeHub() {
 
   if (loading || links.length === 0) return null;
 
-  const derived = videos.map((v) => ({ v, d: deriveKind(v) }));
+  const playlistMap = buildPlaylistMap(playlists);
+  const derived = videos.map((v) => ({ v, d: deriveKind(v, playlistMap) }));
   const counts = {
     all: videos.length,
     music_video: derived.filter((x) => x.d === "music_video").length,
     video: derived.filter((x) => x.d === "video").length,
     release: derived.filter((x) => x.d === "release").length,
     short: derived.filter((x) => x.d === "short").length,
-    live: derived.filter((x) => x.d === "live").length,
   };
   const filtered =
     category === "all"
@@ -179,7 +179,6 @@ export function YouTubeHub() {
     { key: "video", label: "Videos" },
     { key: "release", label: "Releases" },
     { key: "short", label: "Shorts" },
-    { key: "live", label: "Live" },
   ];
 
   return (
