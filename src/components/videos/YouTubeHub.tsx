@@ -31,6 +31,38 @@ export function YouTubeHub() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
+  const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
+
+  const handleYouTubeSignIn = () => {
+    const popup = window.open(
+      "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F",
+      "youtube-login",
+      "popup=yes,width=520,height=720,noopener,noreferrer"
+    );
+    if (!popup) {
+      setPlayerRefreshKey((k) => k + 1);
+      return;
+    }
+    const poll = window.setInterval(() => {
+      if (popup.closed) {
+        window.clearInterval(poll);
+        setPlayerRefreshKey((k) => k + 1);
+      }
+    }, 700);
+  };
+
+  useEffect(() => {
+    const refresh = () => setPlayerRefreshKey((k) => k + 1);
+    const onVis = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
