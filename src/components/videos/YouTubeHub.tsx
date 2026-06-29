@@ -50,9 +50,9 @@ export function YouTubeHub() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false);
   const [category, setCategory] = useState<CategoryKey>("all");
   const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const youtubeSignInUrl =
     "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F";
@@ -66,6 +66,13 @@ export function YouTubeHub() {
     a.click();
     a.remove();
     window.setTimeout(() => setPlayerRefreshKey((k) => k + 1), 1200);
+  };
+
+  const scroll = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const width = el.clientWidth * 0.8;
+    el.scrollBy({ left: direction === "left" ? -width : width, behavior: "smooth" });
   };
 
   useEffect(() => {
