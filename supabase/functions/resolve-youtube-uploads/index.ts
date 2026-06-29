@@ -587,6 +587,18 @@ async function scrapePlaylistVideoIds(playlistId: string): Promise<string[]> {
       seen.add(pv.videoId);
       ids.push(pv.videoId);
     }
+    // Modern lockupViewModel for playlist items (contentType = VIDEO).
+    const lv = node.lockupViewModel;
+    if (
+      lv?.contentId &&
+      typeof lv.contentId === "string" &&
+      lv.contentId.length === 11 &&
+      lv.contentType === "LOCKUP_CONTENT_TYPE_VIDEO" &&
+      !seen.has(lv.contentId)
+    ) {
+      seen.add(lv.contentId);
+      ids.push(lv.contentId);
+    }
     if (Array.isArray(node)) for (const c of node) harvestIds(c);
     else for (const k of Object.keys(node)) harvestIds((node as any)[k]);
   };
