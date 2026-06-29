@@ -227,15 +227,47 @@ async function fetchTabNext(host: string, data: string, nextpage: string) {
   }
 }
 
-function ingestStreams(streams: any[], out: Map<string, Video>) {
+function ingestStreams(
+  streams: any[],
+  out: Map<string, Video>,
+  tabName: string | null
+) {
+  const tabIsShorts = !!tabName && tabName.includes("short");
+  const tabIsLive = !!tabName && (tabName.includes("live") || tabName.includes("stream"));
   for (const s of streams ?? []) {
     if (!s) continue;
-    // url format: "/watch?v=ID" or full URL.
+    const urlStr = String(s.url ?? "");
     const idMatch =
-      (s.url ?? "").match(/[?&]v=([\w-]{11})/) ||
-      (s.url ?? "").match(/\/(?:shorts|embed)\/([\w-]{11})/);
+      urlStr.match(/[?&]v=([\w-]{11})/) ||
+      urlStr.match(/\/(?:shorts|embed)\/([\w-]{11})/);
     const id = idMatch?.[1];
-    if (!id || out.has(id)) continue;
+    if (!id) continue;
+
+    const duration = typeof s.duration === "number" ? s.duration : undefined;
+    const urlIsShort = /\/shorts\//.test(urlStr);
+    const typeStr = String(s.type ?? "").toLowerCase();
+    const isShort =
+      !!s.isShort ||
+      tabIsShorts ||
+      urlIsShort ||
+      (typeof duration === "number" && duration > 0 && duration <= 60);
+    const isLive =
+      tabIsLive ||
+      typeStr === "stream" ||
+      typeStr === "livestream" ||
+      !!s.isLive ||
+      !!s.isLiveStream;
+    const kind: VideoKind = isShort ? "short" : isLive ? "live" : "video";
+
+    const existing = out.get(id);
+    if (existing) {
+      // Upgrade classification: shorts beats live beats video (tabs are most authoritative).
+      if (kind === "short") existing.kind = "short";
+      else if (kind === "live" && existing.kind === "video") existing.kind = "live";
+      if (existing.duration == null && duration != null) existing.duration = duration;
+      continue;
+    }
+
     const uploaded =
       typeof s.uploaded === "number" && s.uploaded > 0
         ? new Date(s.uploaded).toISOString()
@@ -247,7 +279,8 @@ function ingestStreams(streams: any[], out: Map<string, Video>) {
         proxiedToDirect(s.thumbnail) ||
         `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
       published: uploaded,
-      duration: typeof s.duration === "number" ? s.duration : undefined,
+      duration,
+      kind,
     });
   }
 }
