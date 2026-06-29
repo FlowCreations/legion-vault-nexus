@@ -194,3 +194,6 @@ verify_jwt = false
 
 [functions.seed-journey-milestones]
 verify_jwt = true
+
+[functions.resolve-spotify-discography]
+verify_jwt = false
