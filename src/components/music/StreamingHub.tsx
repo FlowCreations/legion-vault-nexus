@@ -126,6 +126,58 @@ export function StreamingHub() {
     });
   }, [links, spotifyDiscography]);
 
+  // Fetch oEmbed metadata (cover + title) for each album ID. Public endpoint,
+  // no API key. Cached in a ref so revisits don't refetch.
+  useEffect(() => {
+    const allIds = Array.from(
+      new Set(Object.values(spotifyDiscography).flat())
+    ).filter((id) => !albumMetaRef.current[id]);
+    if (allIds.length === 0) return;
+
+    let cancelled = false;
+    const CONCURRENCY = 8;
+    let cursor = 0;
+
+    const worker = async () => {
+      while (!cancelled && cursor < allIds.length) {
+        const id = allIds[cursor++];
+        try {
+          const res = await fetch(
+            `https://open.spotify.com/oembed?url=${encodeURIComponent(
+              `https://open.spotify.com/album/${id}`
+            )}`
+          );
+          if (!res.ok) continue;
+          const j = await res.json();
+          // Heuristic for kind based on title; oEmbed doesn't expose track count.
+          const title: string = j.title || "Untitled";
+          const lc = title.toLowerCase();
+          const kind: AlbumMeta["kind"] = /\bep\b/.test(lc)
+            ? "ep"
+            : /\bsingle\b/.test(lc)
+            ? "single"
+            : "album";
+          albumMetaRef.current[id] = {
+            title,
+            thumbnail: j.thumbnail_url || "",
+            kind,
+          };
+        } catch {
+          /* skip */
+        }
+      }
+      if (!cancelled) setAlbumMeta({ ...albumMetaRef.current });
+    };
+
+    Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, allIds.length) }, worker)
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [spotifyDiscography]);
+
   if (loading || links.length === 0) return null;
 
   return (
