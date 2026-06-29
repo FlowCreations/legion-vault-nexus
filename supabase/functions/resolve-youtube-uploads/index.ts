@@ -48,10 +48,12 @@ type Video = {
   duration?: number;
   kind: VideoKind;
 };
+type Playlist = { id: string; title: string; videoIds: string[] };
 type CachedPayload = {
   channelId: string;
   channelTitle: string;
   videos: Video[];
+  playlists?: Playlist[];
   source: string | null;
 };
 
