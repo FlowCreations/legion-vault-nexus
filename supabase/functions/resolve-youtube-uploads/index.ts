@@ -340,12 +340,14 @@ function harvest(node: any, fallbackKind: VideoKind, out: Video[]): void {
       k === "gridVideoRenderer" ||
       k === "playlistVideoRenderer" ||
       k === "shortsLockupViewModel" ||
-      k === "reelItemRenderer"
+      k === "reelItemRenderer" ||
+      k === "lockupViewModel"
     )
       continue;
     harvest(node[k], fallbackKind, out);
   }
 }
+
 
 function findNextContinuation(node: any): string | null {
   if (!node || typeof node !== "object") return null;
