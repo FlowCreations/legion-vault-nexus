@@ -28,6 +28,12 @@ export function StreamingHub() {
   const [spotifyRefreshKey, setSpotifyRefreshKey] = useState(0);
   // artistLinkId -> resolved album IDs (full discography)
   const [spotifyDiscography, setSpotifyDiscography] = useState<Record<string, string[]>>({});
+  // albumId -> { title, thumbnail, kind: 'album'|'ep'|'single' }
+  type AlbumMeta = { title: string; thumbnail: string; kind: "album" | "ep" | "single" };
+  const [albumMeta, setAlbumMeta] = useState<Record<string, AlbumMeta>>({});
+  const albumMetaRef = useRef<Record<string, AlbumMeta>>({});
+  const [selectedAlbum, setSelectedAlbum] = useState<Record<string, string | null>>({});
+  const [albumFilter, setAlbumFilter] = useState<"all" | "album" | "ep" | "single">("all");
 
   useEffect(() => {
     (async () => {
