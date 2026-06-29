@@ -20,12 +20,14 @@ const PIPED_HOSTS = [
   "pipedapi.leptons.xyz",
 ];
 
+type VideoKind = "short" | "live" | "video";
 type Video = {
   id: string;
   title: string;
   thumbnail: string;
   published: string;
   duration?: number;
+  kind: VideoKind;
 };
 
 Deno.serve(async (req) => {
