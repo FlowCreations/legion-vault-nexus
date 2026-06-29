@@ -156,9 +156,6 @@ export function YouTubeHub() {
                     <Play className="w-6 h-6 text-white fill-white ml-0.5" />
                   </div>
                 </div>
-                <div className="absolute top-2 right-2 bg-[#FF0000] text-white text-[10px] font-semibold px-2 py-0.5 rounded">
-                  YOUTUBE
-                </div>
               </div>
               <div>
                 <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
