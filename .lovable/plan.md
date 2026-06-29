@@ -1,35 +1,51 @@
-## Add Category Tabs to YouTube Section
+# Spotify Discography — Native Spotify Layout
 
-Add filter tabs (All / Videos / Shorts / Live) to the YouTube hub on the Videos page so fans can browse by content type.
+Match how Spotify itself presents an artist page: a header artist embed, then a grid of album cards (cover + title), where clicking a card opens the full track list inline — instead of stacking 20+ tall iframes vertically.
 
-### How content is classified
+## What changes
 
-Piped already returns a `duration` (seconds) and stream type per item. We'll capture two extra fields in the edge function and classify on the client:
+File: `src/components/music/StreamingHub.tsx` (Spotify branch only — Apple/Tidal/SoundCloud untouched)
 
-- **Shorts** — `duration ≤ 60s` OR item came from the channel's `/shorts` tab (`isShort` flag).
-- **Live** — Piped stream `type === "stream"` or came from the `/streams` tab (past livestreams / VODs).
-- **Videos** — everything else (standard long-form uploads).
-- **All** — unfiltered (current behavior).
+1. **Artist header** — keep the existing Spotify artist embed at the top (top tracks / "Popular"), height 380.
+2. **"Discography" album grid** — replace the current "every album as a full 420px embed" loop with a responsive grid of compact album cards:
+   - 2 / 3 / 4 / 5 columns at sm / md / lg / xl
+   - Each card = square cover art + album title + year, hover lift, gold ring on active
+   - Cover + title pulled from Spotify's oEmbed endpoint (`https://open.spotify.com/oembed?url=...`) per album — no API key needed, runs client-side, cached in component state
+3. **Inline album player** — clicking a card sets `selectedAlbumId`; a single full-width Spotify album embed (height 420, shows full track list) renders directly under the grid, replacing whatever was previously selected. Second click on the same card collapses it.
+4. **Filter chips** — small chips above the grid: `All · Albums · EPs · Singles`, derived from oEmbed metadata (`type` + track count heuristic: 1 track = single, 2-6 = EP, 7+ = album). Defaults to All.
+5. **Sort** — newest first by release year (from oEmbed where available, else preserve scrape order).
 
-### Changes
+## Technical notes
 
-**`supabase/functions/resolve-youtube-uploads/index.ts`**
-- In `ingestStreams`, also persist `isShort: boolean` and `kind: "short" | "live" | "video"` per item, inferring from `s.isShort`, `s.type`, the tab the item came from, and duration as a fallback.
-- Pass the originating tab name into `ingestStreams` so `/shorts` and `/streams` tab items are tagged correctly even when Piped omits the flag.
-- Re-deploy the function.
+- `resolve-spotify-discography` edge function already returns album IDs — no backend change.
+- Add a small client-side fetcher that calls `https://open.spotify.com/oembed?url=https://open.spotify.com/album/<id>` per ID in parallel (capped at ~8 concurrent) to get `thumbnail_url`, `title`, and `html`. Results cached in a `useRef` map keyed by album ID so revisiting Spotify tab doesn't refetch.
+- Single album embed reuses the existing `spotifyRefreshKey` so the "Refresh" + sign-in flow keeps working.
+- Spotify *artist* link → new layout. Spotify *album/playlist/track* links → unchanged (single embed as today).
+- Featured embeds section unchanged.
 
-**`src/components/videos/YouTubeHub.tsx`**
-- Extend the `YTVideo` type with `kind` and `duration`.
-- Add a tab row above the grid: `All · Videos · Shorts · Live` with counts (e.g. `Shorts (47)`), styled with the existing Onyx/Gold theme (`bg-card`, gold accent on active).
-- Filter `visibleVideos` by the active tab before the `slice(0, 8)` / `View All` logic so "View All" expands only the current category.
-- Show a small duration badge on each thumbnail (bottom-right pill, `mm:ss`) so Shorts are visually distinguishable.
-- Preserve all existing behavior: inline modal player, YouTube sign-in button, refresh-on-focus.
+## Out of scope
 
-### Test & verify
+- No edge-function changes
+- No DB changes
+- No changes to YouTube, Apple Music, Tidal, SoundCloud, Bandcamp branches
+- No Spotify Web API / OAuth (oEmbed is public, no key required)
 
-1. Deploy edge function, then curl it with the Sons of Legion URL to confirm `kind` is populated and the Shorts/Videos/Live split looks right.
-2. Drive the `/videos` route with Playwright headless: screenshot the default grid, click each tab, screenshot to confirm the grid filters and counts match.
-3. Click a Short and a long-form video to confirm the inline modal still plays inside the portal.
-4. Report back the per-category counts and any issues found, then fix and re-verify.
+## Visual reference
 
-No other files, routes, or DB changes are touched.
+```text
+┌─ Spotify · Artist · Top tracks ─────────────┐
+│  [artist embed — 380px, "Popular"]          │
+└─────────────────────────────────────────────┘
+
+Discography · 24 releases          [All] [Albums] [EPs] [Singles]
+
+┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐
+│cover │ │cover │ │cover │ │cover │ │cover │
+│Album │ │Album │ │Album │ │Album │ │Album │
+│ 2024 │ │ 2023 │ │ 2023 │ │ 2022 │ │ 2021 │
+└──────┘ └──────┘ └──────┘ └──────┘ └──────┘
+   ▲ selected
+┌─ Selected album — full track list ──────────┐
+│  [album embed — 420px, all tracks]          │
+└─────────────────────────────────────────────┘
+```

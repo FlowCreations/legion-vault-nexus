@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, LogIn, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, LogIn, RefreshCw, Music2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   PLATFORM_COLORS,
   PLATFORM_LABELS,
@@ -27,6 +28,12 @@ export function StreamingHub() {
   const [spotifyRefreshKey, setSpotifyRefreshKey] = useState(0);
   // artistLinkId -> resolved album IDs (full discography)
   const [spotifyDiscography, setSpotifyDiscography] = useState<Record<string, string[]>>({});
+  // albumId -> { title, thumbnail, kind: 'album'|'ep'|'single' }
+  type AlbumMeta = { title: string; thumbnail: string; kind: "album" | "ep" | "single" };
+  const [albumMeta, setAlbumMeta] = useState<Record<string, AlbumMeta>>({});
+  const albumMetaRef = useRef<Record<string, AlbumMeta>>({});
+  const [selectedAlbum, setSelectedAlbum] = useState<Record<string, string | null>>({});
+  const [albumFilter, setAlbumFilter] = useState<"all" | "album" | "ep" | "single">("all");
 
   useEffect(() => {
     (async () => {
@@ -118,6 +125,58 @@ export function StreamingHub() {
       }
     });
   }, [links, spotifyDiscography]);
+
+  // Fetch oEmbed metadata (cover + title) for each album ID. Public endpoint,
+  // no API key. Cached in a ref so revisits don't refetch.
+  useEffect(() => {
+    const allIds = Array.from(
+      new Set(Object.values(spotifyDiscography).flat())
+    ).filter((id) => !albumMetaRef.current[id]);
+    if (allIds.length === 0) return;
+
+    let cancelled = false;
+    const CONCURRENCY = 8;
+    let cursor = 0;
+
+    const worker = async () => {
+      while (!cancelled && cursor < allIds.length) {
+        const id = allIds[cursor++];
+        try {
+          const res = await fetch(
+            `https://open.spotify.com/oembed?url=${encodeURIComponent(
+              `https://open.spotify.com/album/${id}`
+            )}`
+          );
+          if (!res.ok) continue;
+          const j = await res.json();
+          // Heuristic for kind based on title; oEmbed doesn't expose track count.
+          const title: string = j.title || "Untitled";
+          const lc = title.toLowerCase();
+          const kind: AlbumMeta["kind"] = /\bep\b/.test(lc)
+            ? "ep"
+            : /\bsingle\b/.test(lc)
+            ? "single"
+            : "album";
+          albumMetaRef.current[id] = {
+            title,
+            thumbnail: j.thumbnail_url || "",
+            kind,
+          };
+        } catch {
+          /* skip */
+        }
+      }
+      if (!cancelled) setAlbumMeta({ ...albumMetaRef.current });
+    };
+
+    Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, allIds.length) }, worker)
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [spotifyDiscography]);
 
   if (loading || links.length === 0) return null;
 
@@ -275,35 +334,133 @@ export function StreamingHub() {
                     )}
                   </Card>
 
-                  {/* Full discography — every album as its own embed so the
-                      complete track list is visible inside the portal. */}
-                  {isSpotifyArtist && albums.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-xs uppercase tracking-wider text-muted-foreground pt-2">
-                        Full discography · {albums.length} releases
-                      </h4>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {albums.map((albumId) => (
-                          <Card
-                            key={albumId}
-                            className="overflow-hidden bg-card/50 border-border/50"
-                          >
+                  {/* Discography — Spotify-style album grid with inline player */}
+                  {isSpotifyArtist && albums.length > 0 && (() => {
+                    const selectedId = selectedAlbum[link.id] ?? null;
+                    const filtered = albums.filter((id) => {
+                      const meta = albumMeta[id];
+                      if (albumFilter === "all" || !meta) return true;
+                      return meta.kind === albumFilter;
+                    });
+                    const counts = {
+                      all: albums.length,
+                      album: albums.filter((id) => albumMeta[id]?.kind === "album").length,
+                      ep: albums.filter((id) => albumMeta[id]?.kind === "ep").length,
+                      single: albums.filter((id) => albumMeta[id]?.kind === "single").length,
+                    };
+                    const filters: Array<{ key: typeof albumFilter; label: string }> = [
+                      { key: "all", label: `All · ${counts.all}` },
+                      { key: "album", label: `Albums · ${counts.album}` },
+                      { key: "ep", label: `EPs · ${counts.ep}` },
+                      { key: "single", label: `Singles · ${counts.single}` },
+                    ];
+                    return (
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-end justify-between flex-wrap gap-3">
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground">
+                            Discography · {albums.length} releases
+                          </h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {filters.map((f) => (
+                              <button
+                                key={f.key}
+                                type="button"
+                                onClick={() => setAlbumFilter(f.key)}
+                                className={cn(
+                                  "px-2.5 py-1 rounded-full text-[11px] uppercase tracking-wider border transition-colors",
+                                  albumFilter === f.key
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-card/40 text-muted-foreground border-border/50 hover:text-foreground"
+                                )}
+                              >
+                                {f.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                          {filtered.map((albumId) => {
+                            const meta = albumMeta[albumId];
+                            const isSelected = selectedId === albumId;
+                            return (
+                              <button
+                                key={albumId}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedAlbum((prev) => ({
+                                    ...prev,
+                                    [link.id]: isSelected ? null : albumId,
+                                  }))
+                                }
+                                className={cn(
+                                  "group text-left rounded-lg overflow-hidden bg-card/40 border transition-all hover:-translate-y-0.5",
+                                  isSelected
+                                    ? "border-primary ring-2 ring-primary/60 shadow-lg shadow-primary/20"
+                                    : "border-border/50 hover:border-border"
+                                )}
+                              >
+                                <div className="aspect-square bg-muted/40 relative">
+                                  {meta?.thumbnail ? (
+                                    <img
+                                      src={meta.thumbnail}
+                                      alt={meta.title}
+                                      loading="lazy"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                      <Music2 className="w-8 h-8" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2.5 space-y-0.5">
+                                  <div className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">
+                                    {meta?.title ?? "Loading…"}
+                                  </div>
+                                  {meta && (
+                                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                      {meta.kind}
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {selectedId && (
+                          <Card className="overflow-hidden bg-card/50 border-primary/40">
+                            <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3">
+                              <span className="text-xs uppercase tracking-wide font-semibold text-foreground truncate">
+                                {albumMeta[selectedId]?.title ?? "Now playing"} · Full track list
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedAlbum((prev) => ({ ...prev, [link.id]: null }))
+                                }
+                                className="text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                              >
+                                Close
+                              </button>
+                            </div>
                             <iframe
-                              key={`${albumId}-${spotifyRefreshKey}`}
-                              src={`https://open.spotify.com/embed/album/${albumId}`}
+                              key={`${selectedId}-${spotifyRefreshKey}`}
+                              src={`https://open.spotify.com/embed/album/${selectedId}`}
                               width="100%"
                               height={420}
                               frameBorder={0}
                               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                               loading="lazy"
                               className="block w-full"
-                              title={`Spotify album ${albumId}`}
+                              title={`Spotify album ${selectedId}`}
                             />
                           </Card>
-                        ))}
+                        )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
