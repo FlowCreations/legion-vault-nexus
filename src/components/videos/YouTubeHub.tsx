@@ -114,11 +114,21 @@ export function YouTubeHub() {
             player to like, comment and subscribe without leaving the portal.
           </p>
         </div>
-        <Button asChild variant="ghost" size="sm" className="h-8 px-3 text-xs">
-          <a href={primary.url} target="_blank" rel="noreferrer">
-            Open channel <ExternalLink className="w-3 h-3 ml-1" />
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="gap-2 font-semibold bg-[#FF0000] text-white hover:bg-[#FF0000]/90"
+            onClick={handleYouTubeSignIn}
+          >
+            <LogIn className="w-4 h-4" />
+            Sign in to YouTube
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="h-8 px-3 text-xs">
+            <a href={primary.url} target="_blank" rel="noreferrer">
+              Open channel <ExternalLink className="w-3 h-3 ml-1" />
+            </a>
+          </Button>
+        </div>
       </div>
 
       {activeId ? (
