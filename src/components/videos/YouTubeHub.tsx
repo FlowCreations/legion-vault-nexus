@@ -35,9 +35,9 @@ export function YouTubeHub() {
 
   const handleYouTubeSignIn = () => {
     const popup = window.open(
-      "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F",
+      "https://www.youtube.com/signin",
       "youtube-login",
-      "popup=yes,width=520,height=720,noopener,noreferrer"
+      "popup=yes,width=520,height=720"
     );
     if (!popup) {
       setPlayerRefreshKey((k) => k + 1);
