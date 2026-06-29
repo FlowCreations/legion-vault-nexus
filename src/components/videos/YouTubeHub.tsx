@@ -137,7 +137,7 @@ export function YouTubeHub() {
           <Card className="lg:col-span-2 overflow-hidden bg-card/50 border-border/50">
             <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
               <iframe
-                key={activeId}
+                key={`${activeId}-${playerRefreshKey}`}
                 src={`https://www.youtube.com/embed/${activeId}?autoplay=0&rel=0`}
                 className="absolute inset-0 w-full h-full"
                 frameBorder={0}
