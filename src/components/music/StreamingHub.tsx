@@ -24,6 +24,8 @@ export function StreamingHub() {
   const [links, setLinks] = useState<StreamingLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlatform, setActivePlatform] = useState<StreamingPlatform | null>(null);
+  // artistLinkId -> resolved album IDs (full discography)
+  const [spotifyDiscography, setSpotifyDiscography] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     (async () => {
@@ -45,8 +47,7 @@ export function StreamingHub() {
     [links]
   );
 
-  // All links for the active platform (Spotify artist embed only shows top tracks,
-  // so artists can add album/playlist links here to surface the full catalog).
+  // All links for the active platform.
   const activeLinks = activePlatform
     ? links.filter((l) => l.platform === activePlatform)
     : [];
@@ -59,6 +60,28 @@ export function StreamingHub() {
       setActivePlatform(platformsWithLinks[0]);
     }
   }, [platformsWithLinks, activePlatform]);
+
+  // For any Spotify artist link, resolve the artist's full discography so the
+  // full track listing is rendered (Spotify artist embeds only show "Popular").
+  useEffect(() => {
+    const spotifyArtistLinks = links.filter(
+      (l) => l.platform === "spotify" && /\/artist\//.test(l.url)
+    );
+    spotifyArtistLinks.forEach(async (link) => {
+      if (spotifyDiscography[link.id]) return;
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "resolve-spotify-discography",
+          { body: { artistUrl: link.url } }
+        );
+        if (!error && data?.albums?.length) {
+          setSpotifyDiscography((prev) => ({ ...prev, [link.id]: data.albums }));
+        }
+      } catch {
+        /* fall back to artist embed */
+      }
+    });
+  }, [links, spotifyDiscography]);
 
   if (loading || links.length === 0) return null;
 
