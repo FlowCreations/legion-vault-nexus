@@ -220,7 +220,7 @@ export function YouTubeHub() {
 
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-border/50 bg-card/50 p-6 text-sm text-muted-foreground">
-          No {category === "all" ? "videos" : category === "short" ? "Shorts" : category === "live" ? "live streams" : "videos"} found.
+          No {tabs.find((t) => t.key === category)?.label.toLowerCase() ?? "videos"} found.
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
