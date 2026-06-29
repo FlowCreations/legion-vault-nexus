@@ -47,7 +47,6 @@ const formatDuration = (sec?: number) => {
 export function YouTubeHub() {
   const [links, setLinks] = useState<YTLink[]>([]);
   const [videos, setVideos] = useState<YTVideo[]>([]);
-  const [playlists, setPlaylists] = useState<YTPlaylist[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
@@ -104,7 +103,6 @@ export function YouTubeHub() {
         );
         if (!error && res?.videos?.length) {
           setVideos(res.videos as YTVideo[]);
-          if (Array.isArray(res.playlists)) setPlaylists(res.playlists as YTPlaylist[]);
           if (res.channelTitle) setChannelTitle(res.channelTitle);
         }
       } catch {
@@ -116,13 +114,10 @@ export function YouTubeHub() {
 
   if (loading || links.length === 0) return null;
 
-  const playlistMap = buildPlaylistMap(playlists);
-  const derived = videos.map((v) => ({ v, d: deriveKind(v, playlistMap) }));
+  const derived = videos.map((v) => ({ v, d: deriveKind(v) }));
   const counts = {
     all: videos.length,
-    music_video: derived.filter((x) => x.d === "music_video").length,
     video: derived.filter((x) => x.d === "video").length,
-    release: derived.filter((x) => x.d === "release").length,
     short: derived.filter((x) => x.d === "short").length,
   };
   const filtered =
@@ -134,9 +129,7 @@ export function YouTubeHub() {
 
   const tabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: "All" },
-    { key: "music_video", label: "Music Videos" },
     { key: "video", label: "Videos" },
-    { key: "release", label: "Releases" },
     { key: "short", label: "Shorts" },
   ];
 
