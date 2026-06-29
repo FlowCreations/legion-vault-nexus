@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
               title,
               thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
               published: isoPub,
+              kind: "video",
             });
           }
         }
