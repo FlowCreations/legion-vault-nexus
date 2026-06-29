@@ -60,52 +60,35 @@ Deno.serve(async (req) => {
       { id: string; title: string; thumbnail: string; published: string }
     >();
 
-    // Extract every videoRenderer block from the page's initial data.
-    const rendererRe = /"videoRenderer":\{([^]*?)"trackingParams"/g;
-    let r: RegExpExecArray | null;
-    while ((r = rendererRe.exec(videosHtml)) !== null) {
-      const block = r[1];
-      const id = block.match(/"videoId":"([\w-]{11})"/)?.[1];
-      if (!id || collected.has(id)) continue;
-      const title =
-        block.match(/"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/)?.[1] ??
-        block.match(/"simpleText":"((?:[^"\\]|\\.)*)"/)?.[1] ??
-        "";
-      const published =
-        block.match(/"publishedTimeText":\{"simpleText":"([^"]+)"/)?.[1] ?? "";
-      collected.set(id, {
-        id,
-        title: unescapeJson(title),
-        thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-        published,
-      });
-    }
-
-    // 3. Also scrape /streams (live/past streams aren't in /videos for some channels).
-    try {
-      const streamsRes = await fetch(
-        `https://www.youtube.com/channel/${channelId}/streams`,
-        { headers: { "User-Agent": UA, "Accept-Language": "en-US,en" } }
-      );
-      const streamsHtml = await streamsRes.text();
-      const sRe = /"videoRenderer":\{([^]*?)"trackingParams"/g;
-      let s: RegExpExecArray | null;
-      while ((s = sRe.exec(streamsHtml)) !== null) {
-        const block = s[1];
-        const id = block.match(/"videoId":"([\w-]{11})"/)?.[1];
-        if (!id || collected.has(id)) continue;
-        const title =
-          block.match(/"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/)?.[1] ??
-          "";
-        const published =
-          block.match(/"publishedTimeText":\{"simpleText":"([^"]+)"/)?.[1] ?? "";
+    // Generic extractor: finds any {"videoId":"...", ...,"title":{"runs":[{"text":"..."}]}}
+    // followed by a lengthText (= long-form video, excludes Shorts which have no duration).
+    const extractFromHtml = (html: string) => {
+      const re =
+        /"videoId":"([\w-]{11})"[^]*?"title":\{(?:"runs":\[\{"text":"((?:[^"\\]|\\.)*)"|"simpleText":"((?:[^"\\]|\\.)*)")[^]*?(?:"lengthText":\{[^}]*"simpleText":"([^"]+)"|"publishedTimeText":\{"simpleText":"([^"]+)")/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(html)) !== null) {
+        const id = m[1];
+        if (collected.has(id)) continue;
+        const title = unescapeJson(m[2] ?? m[3] ?? "");
+        const published = m[5] ?? "";
+        // Skip if it's clearly a short (no lengthText AND title contains #shorts)
+        if (!m[4] && /#shorts/i.test(title)) continue;
+        if (!title) continue;
         collected.set(id, {
           id,
-          title: unescapeJson(title),
+          title,
           thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
           published,
         });
       }
+    };
+
+    extractFromHtml(videosHtml);
+
+    // 3. Also scrape /streams.
+    try {
+      const streamsRes = await fetchTab(`/channel/${channelId}/streams`);
+      extractFromHtml(await streamsRes.text());
     } catch {
       /* ignore */
     }
