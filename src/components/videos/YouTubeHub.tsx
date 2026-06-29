@@ -14,6 +14,7 @@ interface YTLink {
 }
 
 type VideoKind = "short" | "live" | "video";
+type DerivedKind = "music_video" | "release" | "video" | "short" | "live";
 interface YTVideo {
   id: string;
   title: string;
@@ -23,7 +24,20 @@ interface YTVideo {
   duration?: number;
 }
 
-type CategoryKey = "all" | "video" | "short" | "live";
+type CategoryKey = "all" | "music_video" | "video" | "release" | "short" | "live";
+
+const MUSIC_VIDEO_RE = /\b(official\s+(music\s+)?video|music\s+video|\(official\)|\[official\]|mv)\b/i;
+const RELEASE_RE = /\b(album|ep|single|out\s+now|new\s+release|released|debut|stream\s+now|listen\s+now|new\s+single|new\s+album)\b/i;
+
+const deriveKind = (v: YTVideo): DerivedKind => {
+  const k = v.kind ?? "video";
+  if (k === "short") return "short";
+  if (k === "live") return "live";
+  const t = v.title || "";
+  if (MUSIC_VIDEO_RE.test(t)) return "music_video";
+  if (RELEASE_RE.test(t)) return "release";
+  return "video";
+};
 
 const formatDuration = (sec?: number) => {
   if (!sec || sec <= 0) return null;
