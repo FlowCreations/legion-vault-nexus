@@ -6726,6 +6726,36 @@ export type Database = {
           },
         ]
       }
+      youtube_channel_cache: {
+        Row: {
+          channel_id: string
+          channel_title: string | null
+          expires_at: string
+          payload: Json
+          refreshed_at: string
+          source: string | null
+          video_count: number
+        }
+        Insert: {
+          channel_id: string
+          channel_title?: string | null
+          expires_at?: string
+          payload: Json
+          refreshed_at?: string
+          source?: string | null
+          video_count?: number
+        }
+        Update: {
+          channel_id?: string
+          channel_title?: string | null
+          expires_at?: string
+          payload?: Json
+          refreshed_at?: string
+          source?: string | null
+          video_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       cron_job_status: {
