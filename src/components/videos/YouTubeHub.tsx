@@ -225,16 +225,6 @@ export function YouTubeHub() {
                       {dur}
                     </div>
                   )}
-                  {v.kind === "short" && (
-                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#FF0000]/90 text-white text-[10px] font-bold uppercase tracking-wide leading-none">
-                      Short
-                    </div>
-                  )}
-                  {v.kind === "live" && (
-                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[10px] font-bold uppercase tracking-wide leading-none">
-                      Live
-                    </div>
-                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
                       <Play className="w-6 h-6 text-white fill-white ml-0.5" />
