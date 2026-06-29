@@ -88,6 +88,7 @@ const formatDuration = (sec?: number) => {
 export function YouTubeHub() {
   const [links, setLinks] = useState<YTLink[]>([]);
   const [videos, setVideos] = useState<YTVideo[]>([]);
+  const [playlists, setPlaylists] = useState<YTPlaylist[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
