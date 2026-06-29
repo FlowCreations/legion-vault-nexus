@@ -156,8 +156,7 @@ export function YouTubeHub() {
                     <Play className="w-6 h-6 text-white fill-white ml-0.5" />
                   </div>
                 </div>
-                <div className="absolute top-2 right-2 bg-[#FF0000] text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                  <Youtube className="w-3 h-3" />
+                <div className="absolute top-2 right-2 bg-[#FF0000] text-white text-[10px] font-semibold px-2 py-0.5 rounded">
                   YOUTUBE
                 </div>
               </div>
