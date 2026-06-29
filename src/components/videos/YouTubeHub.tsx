@@ -13,12 +13,26 @@ interface YTLink {
   label: string | null;
 }
 
+type VideoKind = "short" | "live" | "video";
 interface YTVideo {
   id: string;
   title: string;
   thumbnail: string;
   published: string;
+  kind?: VideoKind;
+  duration?: number;
 }
+
+type CategoryKey = "all" | "video" | "short" | "live";
+
+const formatDuration = (sec?: number) => {
+  if (!sec || sec <= 0) return null;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+};
 
 /**
  * YouTube hub — renders the channel's uploads as a 4-column thumbnail grid
@@ -32,6 +46,7 @@ export function YouTubeHub() {
   const [channelTitle, setChannelTitle] = useState<string>("YouTube");
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [category, setCategory] = useState<CategoryKey>("all");
   const [playerRefreshKey, setPlayerRefreshKey] = useState(0);
 
   const youtubeSignInUrl =
@@ -94,8 +109,25 @@ export function YouTubeHub() {
 
   if (loading || links.length === 0) return null;
 
-  const visibleVideos = showAll ? videos : videos.slice(0, 8);
+  const counts = {
+    all: videos.length,
+    video: videos.filter((v) => (v.kind ?? "video") === "video").length,
+    short: videos.filter((v) => v.kind === "short").length,
+    live: videos.filter((v) => v.kind === "live").length,
+  };
+  const filtered =
+    category === "all"
+      ? videos
+      : videos.filter((v) => (v.kind ?? "video") === category);
+  const visibleVideos = showAll ? filtered : filtered.slice(0, 8);
   const activeVideo = videos.find((v) => v.id === activeId) ?? null;
+
+  const tabs: { key: CategoryKey; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "video", label: "Videos" },
+    { key: "short", label: "Shorts" },
+    { key: "live", label: "Live" },
+  ];
 
   return (
     <section className="space-y-6 pt-8">
@@ -110,7 +142,7 @@ export function YouTubeHub() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {videos.length > 8 && (
+          {filtered.length > 8 && (
             <Button
               variant="ghost"
               size="sm"
@@ -132,41 +164,94 @@ export function YouTubeHub() {
         </div>
       </div>
 
-      {videos.length === 0 ? (
+      {/* Category tabs */}
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((t) => {
+          const c = counts[t.key];
+          const active = category === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => {
+                setCategory(t.key);
+                setShowAll(false);
+              }}
+              disabled={c === 0 && t.key !== "all"}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-sm font-medium border transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card/50 text-foreground border-border/60 hover:bg-card hover:border-border",
+                c === 0 && t.key !== "all" && "opacity-40 cursor-not-allowed"
+              )}
+            >
+              {t.label}
+              <span
+                className={cn(
+                  "ml-2 text-xs",
+                  active ? "text-primary-foreground/80" : "text-muted-foreground"
+                )}
+              >
+                {c}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="rounded-lg border border-border/50 bg-card/50 p-6 text-sm text-muted-foreground">
-          Couldn't load this channel's uploads.
+          No {category === "all" ? "videos" : category === "short" ? "Shorts" : category === "live" ? "live streams" : "videos"} found.
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {visibleVideos.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setActiveId(v.id)}
-              className="group space-y-2 text-left"
-            >
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={v.thumbnail}
-                  alt={v.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
-                    <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+          {visibleVideos.map((v) => {
+            const dur = formatDuration(v.duration);
+            return (
+              <button
+                key={v.id}
+                onClick={() => setActiveId(v.id)}
+                className="group space-y-2 text-left"
+              >
+                <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={v.thumbnail}
+                    alt={v.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  {dur && (
+                    <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[11px] font-medium leading-none">
+                      {dur}
+                    </div>
+                  )}
+                  {v.kind === "short" && (
+                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#FF0000]/90 text-white text-[10px] font-bold uppercase tracking-wide leading-none">
+                      Short
+                    </div>
+                  )}
+                  {v.kind === "live" && (
+                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[10px] font-bold uppercase tracking-wide leading-none">
+                      Live
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-[#FF0000]/90 flex items-center justify-center">
+                      <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div>
-                <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                  {v.title}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {channelTitle}
-                </p>
-              </div>
-            </button>
-          ))}
+                <div>
+                  <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                    {v.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {channelTitle}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
