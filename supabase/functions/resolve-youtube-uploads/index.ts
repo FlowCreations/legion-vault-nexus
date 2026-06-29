@@ -1,7 +1,6 @@
-// Resolve a YouTube channel/handle URL to its full video list by scraping the
-// channel's /videos tab (long-form) AND /streams tab, merging with the RSS
-// feed for freshness. No API key required. Shorts are excluded.
-// POST { url } -> { channelId, channelTitle, videos: [{id,title,thumbnail,published}] }
+// Resolve a YouTube channel/handle URL to its full upload list using public
+// Piped API instances (privacy-respecting YouTube frontends). No API key.
+// POST { url } -> { channelId, channelTitle, videos: [{id,title,thumbnail,published,duration}] }
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +11,23 @@ const CORS = {
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
+// Public Piped API mirrors — tried in order until one responds.
+const PIPED_HOSTS = [
+  "api.piped.private.coffee",
+  "pipedapi.kavin.rocks",
+  "pipedapi.adminforge.de",
+  "pipedapi.r4fo.com",
+  "pipedapi.leptons.xyz",
+];
+
+type Video = {
+  id: string;
+  title: string;
+  thumbnail: string;
+  published: string;
+  duration?: number;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
 
@@ -20,162 +36,225 @@ Deno.serve(async (req) => {
     if (!url || typeof url !== "string")
       return json({ error: "url required" }, 400);
 
-    // 1. Resolve channelId
-    let channelId: string | null = null;
-    const channelMatch = url.match(/\/channel\/(UC[\w-]+)/);
-    if (channelMatch) channelId = channelMatch[1];
-
-    if (!channelId) {
-      const res = await fetch(url, {
-        headers: { "User-Agent": UA, "Accept-Language": "en-US,en" },
-      });
-      const html = await res.text();
-      const m =
-        html.match(/"externalId":"(UC[\w-]+)"/) ||
-        html.match(/"channelId":"(UC[\w-]+)"/);
-      if (m) channelId = m[1];
-    }
+    // 1. Resolve channelId (UC...) from any YouTube URL form.
+    const channelId = await resolveChannelId(url);
     if (!channelId) return json({ error: "channel not found" }, 404);
 
-    // 2. Scrape the /videos tab — long-form uploads, excludes shorts.
-    // Pass a CONSENT cookie + hl=en to bypass EU consent gate.
-    const fetchTab = (path: string) =>
-      fetch(`https://www.youtube.com${path}?hl=en&gl=US`, {
-        headers: {
-          "User-Agent": UA,
-          "Accept-Language": "en-US,en;q=0.9",
-          Cookie: "CONSENT=YES+cb.20210328-17-p0.en+FX+000; SOCS=CAI",
-        },
-      });
-    const videosRes = await fetchTab(`/channel/${channelId}/videos`);
-    const videosHtml = await videosRes.text();
+    // 2. Try each Piped host in turn until one returns channel data.
+    let channelTitle = "YouTube";
+    const collected = new Map<string, Video>();
 
-    const channelTitle =
-      videosHtml.match(/<meta property="og:title" content="([^"]+)"/)?.[1] ??
-      videosHtml.match(/"title":"([^"]+)","navigationEndpoint"/)?.[1] ??
-      "YouTube";
-
-    const collected = new Map<
-      string,
-      { id: string; title: string; thumbnail: string; published: string }
-    >();
-
-    // Generic extractor: finds any {"videoId":"...", ...,"title":{"runs":[{"text":"..."}]}}
-    // followed by a lengthText (= long-form video, excludes Shorts which have no duration).
-    const extractFromHtml = (html: string) => {
-      const re =
-        /"videoId":"([\w-]{11})"[^]*?"title":\{(?:"runs":\[\{"text":"((?:[^"\\]|\\.)*)"|"simpleText":"((?:[^"\\]|\\.)*)")[^]*?(?:"lengthText":\{[^}]*"simpleText":"([^"]+)"|"publishedTimeText":\{"simpleText":"([^"]+)")/g;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(html)) !== null) {
-        const id = m[1];
-        if (collected.has(id)) continue;
-        const title = unescapeJson(m[2] ?? m[3] ?? "");
-        const published = m[5] ?? "";
-        // Skip if it's clearly a short (no lengthText AND title contains #shorts)
-        if (!m[4] && /#shorts/i.test(title)) continue;
-        if (!title) continue;
-        collected.set(id, {
-          id,
-          title,
-          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-          published,
+    let usedHost: string | null = null;
+    for (const host of PIPED_HOSTS) {
+      try {
+        const rootRes = await fetch(`https://${host}/channel/${channelId}`, {
+          signal: AbortSignal.timeout(8000),
         });
-      }
-    };
+        if (!rootRes.ok) continue;
+        const root = await rootRes.json();
+        if (!root?.id) continue;
 
-    extractFromHtml(videosHtml);
+        usedHost = host;
+        channelTitle = root.name ?? channelTitle;
 
-    // 3. Also scrape /streams and /shorts (Shorts use shortsLockupViewModel).
-    try {
-      const streamsRes = await fetchTab(`/channel/${channelId}/streams`);
-      extractFromHtml(await streamsRes.text());
-    } catch {
-      /* ignore */
-    }
-    try {
-      const shortsRes = await fetchTab(`/channel/${channelId}/shorts`);
-      const shortsHtml = await shortsRes.text();
-      // Shorts lockup structure: {"videoId":"X"} alongside "headline":{"simpleText":"title"}
-      const sRe =
-        /"shortsLockupViewModel":\{[^]*?"videoId":"([\w-]{11})"[^]*?"text":"((?:[^"\\]|\\.)*)"/g;
-      let s: RegExpExecArray | null;
-      while ((s = sRe.exec(shortsHtml)) !== null) {
-        const id = s[1];
-        if (collected.has(id)) continue;
-        collected.set(id, {
-          id,
-          title: unescapeJson(s[2]),
-          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-          published: "",
-        });
+        // Root "Home/Latest" streams
+        ingestStreams(root.relatedStreams ?? [], collected);
+
+        // Paginate Home/Latest
+        let nextpage: string | null = root.nextpage ?? null;
+        let pages = 0;
+        while (nextpage && pages < 20) {
+          const np = await fetchNext(host, channelId, nextpage);
+          if (!np) break;
+          ingestStreams(np.relatedStreams ?? [], collected);
+          nextpage = np.nextpage ?? null;
+          pages++;
+        }
+
+        // Each tab (videos / shorts / streams) — fetch + paginate.
+        for (const tab of root.tabs ?? []) {
+          if (!tab?.data) continue;
+          // Most channels duplicate Home content in /videos so we always include all tabs.
+          let tabRes = await fetchTab(host, tab.data);
+          let tp = 0;
+          while (tabRes && tp < 25) {
+            ingestStreams(tabRes.content ?? [], collected);
+            if (!tabRes.nextpage) break;
+            tabRes = await fetchTabNext(host, tab.data, tabRes.nextpage);
+            tp++;
+          }
+        }
+
+        if (collected.size > 0) break;
+      } catch {
+        /* try next host */
       }
-      // Fallback: also try reelItemRenderer (older structure)
-      const rRe =
-        /"reelItemRenderer":\{[^]*?"videoId":"([\w-]{11})"[^]*?"headline":\{"simpleText":"((?:[^"\\]|\\.)*)"/g;
-      while ((s = rRe.exec(shortsHtml)) !== null) {
-        const id = s[1];
-        if (collected.has(id)) continue;
-        collected.set(id, {
-          id,
-          title: unescapeJson(s[2]),
-          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-          published: "",
-        });
-      }
-    } catch {
-      /* ignore */
     }
 
-    // 4. Merge RSS feed (provides ISO timestamps for the most recent 15).
+    // 3. Always merge RSS feed as a freshness/safety net (ISO timestamps).
     try {
       const feedRes = await fetch(
-        `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+        `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`,
+        { headers: { "User-Agent": UA } }
       );
-      const xml = await feedRes.text();
-      const entryRe = /<entry>([\s\S]*?)<\/entry>/g;
-      let entry: RegExpExecArray | null;
-      while ((entry = entryRe.exec(xml)) !== null) {
-        const block = entry[1];
-        const id = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1];
-        if (!id) continue;
-        const isoPub =
-          block.match(/<published>([^<]+)<\/published>/)?.[1] ?? "";
-        const existing = collected.get(id);
-        if (existing) {
-          if (isoPub) existing.published = isoPub;
-        } else {
+      if (feedRes.ok) {
+        const xml = await feedRes.text();
+        const entryRe = /<entry>([\s\S]*?)<\/entry>/g;
+        let entry: RegExpExecArray | null;
+        while ((entry = entryRe.exec(xml)) !== null) {
+          const block = entry[1];
+          const id = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1];
+          if (!id) continue;
+          const isoPub =
+            block.match(/<published>([^<]+)<\/published>/)?.[1] ?? "";
           const title = decodeXml(
             block.match(/<title>([^<]+)<\/title>/)?.[1] ?? ""
           );
-          collected.set(id, {
-            id,
-            title,
-            thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-            published: isoPub,
-          });
+          const existing = collected.get(id);
+          if (existing) {
+            if (isoPub) existing.published = isoPub;
+          } else {
+            collected.set(id, {
+              id,
+              title,
+              thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+              published: isoPub,
+            });
+          }
         }
       }
     } catch {
       /* ignore */
     }
 
-    const videos = Array.from(collected.values());
+    if (collected.size === 0) {
+      return json({ error: "no videos found", channelId, channelTitle, videos: [] }, 200);
+    }
 
-    return json({ channelId, channelTitle, videos });
+    // Sort newest first when we have ISO dates; otherwise preserve insertion order.
+    const videos = Array.from(collected.values()).sort((a, b) => {
+      const ad = Date.parse(a.published);
+      const bd = Date.parse(b.published);
+      if (isNaN(ad) && isNaN(bd)) return 0;
+      if (isNaN(ad)) return 1;
+      if (isNaN(bd)) return -1;
+      return bd - ad;
+    });
+
+    return json({ channelId, channelTitle, videos, source: usedHost });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
 });
 
-function unescapeJson(s: string) {
-  try {
-    return JSON.parse(`"${s.replace(/"/g, '\\"').replace(/\\\\"/g, '\\"')}"`);
-  } catch {
-    return s
-      .replace(/\\u0026/g, "&")
-      .replace(/\\"/g, '"')
-      .replace(/\\\//g, "/");
+async function resolveChannelId(url: string): Promise<string | null> {
+  const direct = url.match(/\/channel\/(UC[\w-]+)/);
+  if (direct) return direct[1];
+
+  // Try Piped first (works with /@handle, /c/, /user/).
+  for (const host of PIPED_HOSTS) {
+    try {
+      const m = url.match(/youtube\.com\/(@[^/?#]+|c\/[^/?#]+|user\/[^/?#]+)/);
+      if (!m) break;
+      const res = await fetch(
+        `https://${host}/channel/${encodeURIComponent(m[1])}`,
+        { signal: AbortSignal.timeout(7000) }
+      );
+      if (res.ok) {
+        const d = await res.json();
+        if (d?.id?.startsWith("UC")) return d.id;
+      }
+    } catch {
+      /* next host */
+    }
   }
+
+  // Fallback: scrape the channel page for externalId.
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA, "Accept-Language": "en-US,en" },
+    });
+    const html = await res.text();
+    const m =
+      html.match(/"externalId":"(UC[\w-]+)"/) ||
+      html.match(/"channelId":"(UC[\w-]+)"/);
+    if (m) return m[1];
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
+async function fetchNext(host: string, channelId: string, nextpage: string) {
+  try {
+    const res = await fetch(
+      `https://${host}/nextpage/channel/${channelId}?nextpage=${encodeURIComponent(nextpage)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchTab(host: string, data: string) {
+  try {
+    const res = await fetch(
+      `https://${host}/channels/tabs?data=${encodeURIComponent(data)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchTabNext(host: string, data: string, nextpage: string) {
+  try {
+    const res = await fetch(
+      `https://${host}/channels/tabs?data=${encodeURIComponent(data)}&nextpage=${encodeURIComponent(nextpage)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function ingestStreams(streams: any[], out: Map<string, Video>) {
+  for (const s of streams ?? []) {
+    if (!s) continue;
+    // url format: "/watch?v=ID" or full URL.
+    const idMatch =
+      (s.url ?? "").match(/[?&]v=([\w-]{11})/) ||
+      (s.url ?? "").match(/\/(?:shorts|embed)\/([\w-]{11})/);
+    const id = idMatch?.[1];
+    if (!id || out.has(id)) continue;
+    const uploaded =
+      typeof s.uploaded === "number" && s.uploaded > 0
+        ? new Date(s.uploaded).toISOString()
+        : s.uploadedDate ?? "";
+    out.set(id, {
+      id,
+      title: s.title ?? "",
+      thumbnail:
+        proxiedToDirect(s.thumbnail) ||
+        `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      published: uploaded,
+      duration: typeof s.duration === "number" ? s.duration : undefined,
+    });
+  }
+}
+
+// Piped thumbnails are routed through proxies; swap to direct ytimg URLs.
+function proxiedToDirect(thumb?: string): string | null {
+  if (!thumb) return null;
+  const m = thumb.match(/\/vi(?:_webp)?\/([\w-]{11})\//);
+  if (m) return `https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`;
+  return thumb.startsWith("http") ? thumb : null;
 }
 
 function decodeXml(s: string) {
