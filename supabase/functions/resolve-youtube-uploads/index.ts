@@ -131,6 +131,14 @@ async function refreshAndStore(channelId: string): Promise<CachedPayload | null>
       if (piped && piped.videos.length > 0) data = piped;
     }
     if (data) await mergeRss(channelId, data);
+    if (data) {
+      try {
+        data.playlists = await scrapeChannelPlaylists(channelId);
+      } catch (e) {
+        console.error("playlist scrape failed", (e as Error).message);
+        data.playlists = [];
+      }
+    }
     if (data && data.videos.length > 0) {
       data.videos.sort(sortByPublished);
       memCache.set(channelId, { at: Date.now(), data });
