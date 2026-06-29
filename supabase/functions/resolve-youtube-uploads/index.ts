@@ -38,10 +38,16 @@ Deno.serve(async (req) => {
     if (!channelId) return json({ error: "channel not found" }, 404);
 
     // 2. Scrape the /videos tab — long-form uploads, excludes shorts.
-    const videosUrl = `https://www.youtube.com/channel/${channelId}/videos`;
-    const videosRes = await fetch(videosUrl, {
-      headers: { "User-Agent": UA, "Accept-Language": "en-US,en" },
-    });
+    // Pass a CONSENT cookie + hl=en to bypass EU consent gate.
+    const fetchTab = (path: string) =>
+      fetch(`https://www.youtube.com${path}?hl=en&gl=US`, {
+        headers: {
+          "User-Agent": UA,
+          "Accept-Language": "en-US,en;q=0.9",
+          Cookie: "CONSENT=YES+cb.20210328-17-p0.en+FX+000; SOCS=CAI",
+        },
+      });
+    const videosRes = await fetchTab(`/channel/${channelId}/videos`);
     const videosHtml = await videosRes.text();
 
     const channelTitle =
