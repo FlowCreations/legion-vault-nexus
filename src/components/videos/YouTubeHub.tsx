@@ -275,7 +275,7 @@ export function YouTubeHub() {
               <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
                 <iframe
                   key={`${activeVideo.id}-${playerRefreshKey}`}
-                  src={`https://www.youtube-nocookie.com/embed/${activeVideo.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`}
+                  src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1&origin=${encodeURIComponent(window.location.origin)}`}
                   className="absolute inset-0 w-full h-full"
                   frameBorder={0}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
