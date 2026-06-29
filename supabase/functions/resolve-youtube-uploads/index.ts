@@ -150,29 +150,40 @@ async function scrapeYouTubeChannel(channelId: string): Promise<CachedPayload | 
     { path: "streams", kind: "live" },
   ];
 
-  await Promise.all(
+  // Run tabs in parallel but collect results per-tab so we can merge with
+  // a deterministic priority (videos > live > shorts). Without this, the
+  // Promise.all race could let the shorts tab's "short" classification
+  // overwrite long-form videos that legitimately appear in the videos tab.
+  const perTab = await Promise.all(
     tabs.map(async ({ path, kind }) => {
       try {
         const res = await scrapeTab(channelId, path, kind);
         console.log(`tab ${path} yielded ${res.videos.length} items`);
-        if (res.channelTitle) channelTitle = res.channelTitle;
-        for (const v of res.videos) {
-          const existing = out.get(v.id);
-          if (!existing) out.set(v.id, v);
-          else {
-            // Tab-derived kind is authoritative: video < live < short ordering matters
-            // less than "tab said so". We trust the most specific tab.
-            if (kind === "short") existing.kind = "short";
-            else if (kind === "live" && existing.kind === "video") existing.kind = "live";
-            if (existing.duration == null && v.duration != null) existing.duration = v.duration;
-            if (!existing.published && v.published) existing.published = v.published;
-          }
-        }
+        return { path, kind, ...res };
       } catch (e) {
         console.error(`yt scrape ${path} failed:`, (e as Error).message);
+        return { path, kind, channelTitle: "", videos: [] as Video[] };
       }
     })
   );
+
+  for (const t of perTab) {
+    if (t.channelTitle && channelTitle === "YouTube") channelTitle = t.channelTitle;
+  }
+  // Merge in tab-priority order. First tab to claim an ID wins its kind.
+  for (const t of perTab) {
+    for (const v of t.videos) {
+      const existing = out.get(v.id);
+      if (!existing) {
+        out.set(v.id, v);
+      } else {
+        if (existing.duration == null && v.duration != null) existing.duration = v.duration;
+        if (!existing.published && v.published) existing.published = v.published;
+        // Do NOT override kind — first tab wins.
+      }
+    }
+  }
+
 
   if (out.size === 0) return null;
   return {
