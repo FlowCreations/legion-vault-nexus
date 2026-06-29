@@ -94,7 +94,8 @@ Deno.serve(async (req) => {
         return json({ ...mem.data, cached: "memory" });
 
       const row = await readDbCache(channelId);
-      if (row) {
+      const hasPlaylists = Array.isArray(row?.payload?.playlists);
+      if (row && hasPlaylists) {
         const age = Date.now() - new Date(row.refreshed_at).getTime();
         if (age < FRESH_TTL_MS) {
           memCache.set(channelId, { at: Date.now(), data: row.payload });
