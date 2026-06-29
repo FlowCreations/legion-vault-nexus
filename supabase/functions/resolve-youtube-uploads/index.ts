@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         channelTitle = root.name ?? channelTitle;
 
         // Root "Home/Latest" streams
-        ingestStreams(root.relatedStreams ?? [], collected);
+        ingestStreams(root.relatedStreams ?? [], collected, null);
 
         // Paginate Home/Latest
         let nextpage: string | null = root.nextpage ?? null;
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
         while (nextpage && pages < 20) {
           const np = await fetchNext(host, channelId, nextpage);
           if (!np) break;
-          ingestStreams(np.relatedStreams ?? [], collected);
+          ingestStreams(np.relatedStreams ?? [], collected, null);
           nextpage = np.nextpage ?? null;
           pages++;
         }
@@ -76,11 +76,11 @@ Deno.serve(async (req) => {
         // Each tab (videos / shorts / streams) — fetch + paginate.
         for (const tab of root.tabs ?? []) {
           if (!tab?.data) continue;
-          // Most channels duplicate Home content in /videos so we always include all tabs.
+          const tabName = String(tab.name ?? "").toLowerCase();
           let tabRes = await fetchTab(host, tab.data);
           let tp = 0;
           while (tabRes && tp < 25) {
-            ingestStreams(tabRes.content ?? [], collected);
+            ingestStreams(tabRes.content ?? [], collected, tabName);
             if (!tabRes.nextpage) break;
             tabRes = await fetchTabNext(host, tab.data, tabRes.nextpage);
             tp++;
