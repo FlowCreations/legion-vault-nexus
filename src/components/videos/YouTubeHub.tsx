@@ -13,12 +13,26 @@ interface YTLink {
   label: string | null;
 }
 
+type VideoKind = "short" | "live" | "video";
 interface YTVideo {
   id: string;
   title: string;
   thumbnail: string;
   published: string;
+  kind?: VideoKind;
+  duration?: number;
 }
+
+type CategoryKey = "all" | "video" | "short" | "live";
+
+const formatDuration = (sec?: number) => {
+  if (!sec || sec <= 0) return null;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+};
 
 /**
  * YouTube hub — renders the channel's uploads as a 4-column thumbnail grid
